@@ -1,0 +1,9 @@
+[workspace]
+# When adding new members, consider updating the log filter in rust/bridge/shared/src/logging.rs.
+members = [
+    "server"
+]
+default-members = [
+    "server"
+]
+resolver = "2" # so that our dev-dependency features don't leak into products
