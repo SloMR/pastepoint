@@ -1,0 +1,40 @@
+<div>
+  <h1>Chat!</h1>
+
+  <div>
+    <button (click)="connect()" id="connect">Connect</button>
+    <span>Status:</span>
+    <span id="status">disconnected</span>
+  </div>
+
+  <div id="log" [innerHTML]="messages.join('')"></div>
+
+  <form (submit)="sendMessage(); $event.preventDefault();" id="chatform">
+    <input type="text" [(ngModel)]="message" id="text" autocomplete="off" name="text" />
+    <input type="submit" id="send" />
+  </form>
+
+  <hr />
+
+  <section>
+    <h2>Commands</h2>
+    <table style="border-spacing: 0.5em">
+      <tr>
+        <td><code>/list</code></td>
+        <td>list all available rooms</td>
+      </tr>
+      <tr>
+        <td><code>/join name</code></td>
+        <td>join room, if room does not exist, create new one</td>
+      </tr>
+      <tr>
+        <td><code>/name name</code></td>
+        <td>set session name</td>
+      </tr>
+      <tr>
+        <td><code>some message</code></td>
+        <td>just string, send message to all peers in same room</td>
+      </tr>
+    </table>
+  </section>
+</div>

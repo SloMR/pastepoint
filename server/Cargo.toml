@@ -3,4 +3,18 @@ name = "server"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "server"
+path = "src/main.rs"
+
 [dependencies]
+actix = "0.13"
+actix-files = "0.6"
+actix-broker = "0.4"
+actix-web = "4.7"
+actix-web-actors = "4.1"
+#rust_socketio = "0.6.0"
+
+env_logger = "0.11"
+log = "0.4"
+rand = "0.8"
