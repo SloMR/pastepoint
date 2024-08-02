@@ -1,6 +1,8 @@
-use actix_files::{Files, NamedFile};
-use actix_web::{middleware::Logger, web, App, Error, HttpRequest, HttpServer, Responder, get, HttpResponse};
+use actix_web::{
+    get, middleware::Logger, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder,
+};
 use actix_web_actors::ws;
+use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 
 mod message;
 mod server;
@@ -25,8 +27,18 @@ async fn chat_ws(req: HttpRequest, stream: web::Payload) -> Result<impl Responde
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
+    log::info!("starting HTTPS server at https://127.0.0.1:9000");
 
-    log::info!("starting HTTP server at http://0.0.0.0:9000");
+    // load TLS keys
+    // to create a self-signed temporary cert for testing:
+    // `openssl req -x509 -newkey rsa:4096 -nodes -keyout key.pem -out cert.pem -days 365 -subj '/CN=localhost'`
+    let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls()).unwrap();
+    builder
+        .set_private_key_file("../certs/key.pem", SslFiletype::PEM)
+        .unwrap();
+    builder
+        .set_certificate_chain_file("../certs/cert.pem")
+        .unwrap();
 
     HttpServer::new(move || {
         App::new()
@@ -37,8 +49,8 @@ async fn main() -> std::io::Result<()> {
             .service(chat_ws)
             .wrap(Logger::default())
     })
-        .workers(2)
-        .bind(("0.0.0.0", 9000))?
-        .run()
-        .await
+    .workers(2)
+    .bind_openssl("127.0.0.1:9000", builder)?
+    .run()
+    .await
 }
