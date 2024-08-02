@@ -1,0 +1,44 @@
+<div class="chat-container">
+  <header class="chat-header">
+    <h1>PasteDrop Chat</h1>
+  </header>
+
+  <div class="chat-main">
+    <div class="chat-sidebar">
+      <h2>Available Rooms</h2>
+      <ul class="room-list">
+        <li *ngFor="let room of rooms" [class.active]="room === currentRoom">
+          <button (click)="joinRoom(room)" [disabled]="room === currentRoom">{{ room }}</button>
+        </li>
+      </ul>
+
+      <div class="room-form">
+        <input
+          type="text"
+          [(ngModel)]="newRoomName"
+          name="newRoomName"
+          placeholder="Enter new room name"
+        />
+        <button (click)="createRoom()">Join/Create Room</button>
+      </div>
+    </div>
+
+    <div class="chat-messages">
+      <div *ngFor="let msg of messages" [innerHTML]="msg" class="message"></div>
+    </div>
+  </div>
+
+  <div class="chat-footer">
+    <form (submit)="sendMessage(); $event.preventDefault();" class="message-form">
+      <input
+        type="text"
+        [(ngModel)]="message"
+        name="text"
+        placeholder="Type your message"
+        autocomplete="off"
+        required
+      />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</div>

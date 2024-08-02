@@ -1,0 +1,151 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f9;
+  color: #333;
+  line-height: 1.6;
+}
+
+.chat-container {
+  max-width: 900px;
+  margin: 20px auto;
+  background-color: #fff;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 80vh;
+}
+
+.chat-header {
+  background-color: #4a76a8;
+  color: #fff;
+  padding: 10px;
+  text-align: center;
+}
+
+.chat-main {
+  display: flex;
+  flex: 1;
+}
+
+.chat-sidebar {
+  flex: 1;
+  max-width: 300px;
+  background-color: #f0f0f5;
+  padding: 20px;
+  border-right: 1px solid #ddd;
+  display: flex;
+  flex-direction: column;
+}
+
+.room-list {
+  list-style: none;
+  margin-bottom: 20px;
+}
+
+.room-list li {
+  margin-bottom: 10px;
+}
+
+.room-list li button {
+  background-color: #4a76a8;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 10px;
+  width: 100%;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.room-list li button:disabled {
+  background-color: #777;
+  cursor: default;
+}
+
+.room-list li button:hover:not(:disabled) {
+  background-color: #395a8e;
+}
+
+.room-list .active button {
+  background-color: #395a8e;
+}
+
+.room-form input[type="text"] {
+  width: calc(100% - 20px);
+  padding: 8px;
+  margin-bottom: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.room-form button {
+  width: 100%;
+  padding: 10px;
+  background-color: #4a76a8;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.room-form button:hover {
+  background-color: #395a8e;
+}
+
+.chat-messages {
+  flex: 2;
+  padding: 20px;
+  overflow-y: auto;
+  background-color: #f7f7f7;
+  display: flex;
+  flex-direction: column;
+}
+
+.message {
+  margin-bottom: 10px;
+  padding: 10px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+}
+
+.chat-footer {
+  background-color: #f0f0f5;
+  padding: 20px;
+  border-top: 1px solid #ddd;
+}
+
+.message-form {
+  display: flex;
+  align-items: center;
+}
+
+.message-form input[type="text"] {
+  flex: 1;
+  padding: 10px;
+  margin-right: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.message-form button {
+  padding: 10px 20px;
+  background-color: #4a76a8;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.message-form button:hover {
+  background-color: #395a8e;
+}
