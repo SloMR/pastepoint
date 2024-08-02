@@ -41,6 +41,7 @@ impl WsChatServer {
 
         room.insert(id, client);
         self.rooms.insert(room_name.to_owned(), room);
+        self.broadcast_room_list();
 
         id
     }
@@ -55,6 +56,28 @@ impl WsChatServer {
         }
 
         Some(())
+    }
+
+    fn broadcast_room_list(&self) {
+        let room_list = self
+            .rooms
+            .keys()
+            .cloned()
+            .collect::<Vec<String>>()
+            .join(", ");
+        let message = format!("Rooms available: {}", room_list);
+
+        for room in self.rooms.values() {
+            for client in room.values() {
+                let _ = client.try_send(ChatMessage(message.clone()));
+            }
+        }
+    }
+
+    fn remove_empty_rooms(&mut self) {
+        self.rooms
+            .retain(|name, room| !room.is_empty() || name == "main");
+        self.broadcast_room_list();
     }
 }
 
@@ -74,10 +97,7 @@ impl Handler<JoinRoom> for WsChatServer {
         let JoinRoom(room_name, client_name, client) = msg;
 
         let id = self.add_client_to_room(&room_name, None, client);
-        let join_msg = format!(
-            "{} joined {room_name}",
-            client_name.unwrap_or_else(|| "anon".to_owned()),
-        );
+        let join_msg = format!("{} joined {}", client_name, room_name,);
 
         self.send_chat_message(&room_name, &join_msg, id);
         MessageResult(id)
@@ -89,7 +109,27 @@ impl Handler<LeaveRoom> for WsChatServer {
 
     fn handle(&mut self, msg: LeaveRoom, _ctx: &mut Self::Context) {
         if let Some(room) = self.rooms.get_mut(&msg.0) {
+            // Send a confirmation message back to the client
+            if let Some(client) = room.get(&msg.1) {
+                let _ = client.try_send(ChatMessage(format!("You have left the room: {}", msg.0)));
+            }
+
             room.remove(&msg.1);
+            // Remove the room if it's empty
+            if room.is_empty() && msg.0 != "main" {
+                self.rooms.remove(&msg.0);
+            }
+
+            self.remove_empty_rooms();
+            self.broadcast_room_list();
+
+            // Log for debugging purposes
+            log::info!(
+                "User {} left room {}. Current rooms: {:?}",
+                msg.1,
+                msg.0,
+                self.rooms.keys().collect::<Vec<_>>()
+            );
         }
     }
 }
