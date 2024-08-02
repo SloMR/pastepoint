@@ -1,22 +1,53 @@
 use actix::prelude::*;
 use actix_broker::BrokerIssue;
+use actix_web::{HttpResponse, ResponseError};
 use actix_web_actors::ws;
+use derive_more::{Display, From};
+use names::Generator;
 
 use crate::{
     message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, SendMessage},
     server::WsChatServer,
 };
 
-#[derive(Default)]
+#[derive(Debug, Display, From)]
+pub enum MyError {
+    #[display(fmt = "Internal Server Error")]
+    InternalServerError,
+}
+
+impl ResponseError for MyError {
+    fn error_response(&self) -> HttpResponse {
+        match *self {
+            MyError::InternalServerError => {
+                HttpResponse::InternalServerError().body("Internal Server Error")
+            }
+        }
+    }
+}
+
 pub struct WsChatSession {
     id: usize,
     room: String,
-    name: Option<String>,
+    name: String,
+}
+
+impl Default for WsChatSession {
+    fn default() -> Self {
+        let mut generator = Generator::default();
+        let name = generator.next().unwrap();
+        Self {
+            id: 0,
+            room: "main".to_owned(),
+            name,
+        }
+    }
 }
 
 impl WsChatSession {
     pub fn join_room(&mut self, room_name: &str, ctx: &mut ws::WebsocketContext<Self>) {
         let room_name = room_name.to_owned();
+        let name = self.name.clone();
 
         // First send a leave message for the current room
         let leave_msg = LeaveRoom(self.room.clone(), self.id);
@@ -38,6 +69,7 @@ impl WsChatSession {
                 if let Ok(id) = id {
                     act.id = id;
                     act.room = room_name;
+                    act.name = name
                 }
 
                 fut::ready(())
@@ -51,22 +83,18 @@ impl WsChatSession {
             .into_actor(self)
             .then(|res, _, ctx| {
                 if let Ok(rooms) = res {
-                    for room in rooms {
-                        ctx.text(room);
-                    }
+                    let room_list = rooms.join(", ");
+                    ctx.text(format!("Rooms available: {}", room_list));
+                } else {
+                    ctx.text("Failed to retrieve room list.");
                 }
-
                 fut::ready(())
             })
             .wait(ctx);
     }
 
     pub fn send_msg(&self, msg: &str) {
-        let content = format!(
-            "{}: {msg}",
-            self.name.clone().unwrap_or_else(|| "anon".to_owned()),
-        );
-
+        let content = format!("{}: {msg}", self.name.clone(),);
         let msg = SendMessage(self.room.clone(), self.id, content);
 
         // issue_async comes from having the `BrokerIssue` trait in scope.
@@ -84,7 +112,7 @@ impl Actor for WsChatSession {
     fn stopped(&mut self, _ctx: &mut Self::Context) {
         log::info!(
             "WsChatSession closed for {}({}) in room {}",
-            self.name.clone().unwrap_or_else(|| "anon".to_owned()),
+            self.name.clone(),
             self.id,
             self.room
         );
@@ -125,20 +153,11 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             if let Some(room_name) = command.next() {
                                 self.join_room(room_name, ctx);
                             } else {
-                                ctx.text("!!! room name is required");
+                                ctx.text("Room name is required for /join command.");
                             }
                         }
 
-                        Some("/name") => {
-                            if let Some(name) = command.next() {
-                                self.name = Some(name.to_owned());
-                                ctx.text(format!("name changed to: {name}"));
-                            } else {
-                                ctx.text("!!! name is required");
-                            }
-                        }
-
-                        _ => ctx.text(format!("!!! unknown command: {msg:?}")),
+                        _ => ctx.text(format!("Unknown command: {msg}")),
                     }
 
                     return;
