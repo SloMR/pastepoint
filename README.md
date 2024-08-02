@@ -1,1 +1,1 @@
-# pastedrop
+# pastepoint
