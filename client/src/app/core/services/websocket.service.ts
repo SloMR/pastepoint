@@ -1,5 +1,6 @@
 import {Injectable} from '@angular/core';
 import {BehaviorSubject} from "rxjs";
+
 import {environment} from '../../environments/environment';
 
 @Injectable({
@@ -8,7 +9,9 @@ import {environment} from '../../environments/environment';
 export class WebsocketService {
   public message$: BehaviorSubject<string> = new BehaviorSubject('');
   public rooms$: BehaviorSubject<string []> = new BehaviorSubject(['']);
+
   private socket: WebSocket | undefined;
+
   private user: string = 'User';
   private room: string = 'main';
 

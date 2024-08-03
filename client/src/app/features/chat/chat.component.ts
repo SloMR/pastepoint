@@ -1,7 +1,9 @@
 import {Component, Inject, OnDestroy, OnInit, PLATFORM_ID} from '@angular/core';
-import {WebsocketService} from "../../core/services/websocket.service";
 import {Subscription} from 'rxjs';
 import {isPlatformBrowser} from "@angular/common";
+
+import {ThemeService} from "../../core/services/theme.service";
+import {WebsocketService} from "../../core/services/websocket.service";
 
 @Component({
   selector: 'app-chat',
@@ -10,8 +12,10 @@ import {isPlatformBrowser} from "@angular/common";
 })
 export class ChatComponent implements OnInit, OnDestroy {
   message: string = '';
+
   messages: string[] = [];
   rooms: string[] = [];
+
   newRoomName: string = '';
   currentRoom: string = 'main';
   isDarkMode: boolean = false;
@@ -21,6 +25,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   constructor(
     private chatService: WebsocketService,
+    private themeService: ThemeService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {
   }
@@ -46,17 +51,22 @@ export class ChatComponent implements OnInit, OnDestroy {
         console.warn('WebSocket connection closed');
       }
     })
+
+    if (isPlatformBrowser(this.platformId)) {
+      const themePreference = localStorage.getItem('themePreference');
+      this.isDarkMode = themePreference === 'dark';
+    }
   }
 
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.connect();
     }
-
   }
 
-  toggleTheme() {
+  toggleTheme(): void {
     this.isDarkMode = !this.isDarkMode;
+    this.themeService.setThemePreference(this.isDarkMode);
   }
 
   connect(): void {
