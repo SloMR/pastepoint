@@ -4,7 +4,7 @@ html, body {
   height: 100%;
   margin: 0;
   font-family: 'Roboto', 'Helvetica Neue', sans-serif;
-  background-color: #e0e0e0; /* Softer light gray for the background */
+  background-color: #575757; /* Softer light gray for the background */
   color: #333; /* Default text color */
   display: flex;
   justify-content: center;
@@ -58,21 +58,21 @@ a {
 :root {
   --background-color: #e0e0e0;
   --text-color: #333;
-  --container-bg-color: #ffffff;
-  --header-bg-color: #607d8b;
-  --header-text-color: #ffffff;
-  --sidebar-bg-color: #f4f4f4;
+  --container-bg-color: #e8e8e8;
+  --header-bg-color: #222943;
+  --header-text-color: #e8e8e8;
+  --sidebar-bg-color: #e8e8e8;
   --border-color: #bdbdbd;
   --button-bg-color: #d6d6d6;
   --button-hover-bg-color: #c4c4c4;
   --active-button-bg-color: #607d8b;
-  --active-button-text-color: #ffffff;
-  --messages-bg-color: #ffffff;
+  --active-button-text-color: #e8e8e8;
+  --messages-bg-color: #e8e8e8;
   --message-bg-color: #e0e0e0;
-  --footer-bg-color: #f4f4f4;
-  --input-bg-color: #ffffff;
+  --footer-bg-color: #afaeae;
+  --input-bg-color: #d5d4d4;
   --input-border-color: #cccccc;
-  --button-text-color: #ffffff;
+  --button-text-color: #424242;
 }
 
 /* Dark Mode */
