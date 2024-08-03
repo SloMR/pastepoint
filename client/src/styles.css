@@ -1,1 +1,106 @@
-/* You can add global styles to this file, and also import other style files */
+/* Global Styles and Variables */
+
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Roboto', 'Helvetica Neue', sans-serif;
+  background-color: #e0e0e0; /* Softer light gray for the background */
+  color: #333; /* Default text color */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#app-root {
+  width: 95%;
+  max-width: 1600px; /* Increased max-width for larger screens */
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 90vh;
+  box-sizing: border-box;
+  overflow: hidden;
+  padding: 20px;
+}
+
+/* Reset styles */
+* {
+  box-sizing: border-box;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #333;
+  margin: 0;
+}
+
+p, ul, ol, li, input, button {
+  margin: 0;
+  padding: 0;
+  font-family: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  outline: none;
+  background-color: transparent;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+/* Global variables for theme */
+:root {
+  --background-color: #e0e0e0;
+  --text-color: #333;
+  --container-bg-color: #ffffff;
+  --header-bg-color: #607d8b;
+  --header-text-color: #ffffff;
+  --sidebar-bg-color: #f4f4f4;
+  --border-color: #bdbdbd;
+  --button-bg-color: #d6d6d6;
+  --button-hover-bg-color: #c4c4c4;
+  --active-button-bg-color: #607d8b;
+  --active-button-text-color: #ffffff;
+  --messages-bg-color: #ffffff;
+  --message-bg-color: #e0e0e0;
+  --footer-bg-color: #f4f4f4;
+  --input-bg-color: #ffffff;
+  --input-border-color: #cccccc;
+  --button-text-color: #ffffff;
+}
+
+/* Dark Mode */
+.dark-mode {
+  --background-color: #121212;
+  --text-color: #e0e0e0;
+  --container-bg-color: #1e1e1e;
+  --header-bg-color: #333333;
+  --header-text-color: #e0e0e0;
+  --sidebar-bg-color: #2a2a2a;
+  --border-color: #444444;
+  --button-bg-color: #3b3b3b;
+  --button-hover-bg-color: #555555;
+  --active-button-bg-color: #1a73e8;
+  --active-button-text-color: #e0e0e0;
+  --messages-bg-color: #2a2a2a;
+  --message-bg-color: #3b3b3b;
+  --footer-bg-color: #2a2a2a;
+  --input-bg-color: #3b3b3b;
+  --input-border-color: #555555;
+  --button-text-color: #e0e0e0;
+}
+
+/* Global responsive styles */
+@media (max-width: 768px) {
+  #app-root {
+    flex-direction: column;
+    width: 95%;
+    padding: 10px;
+  }
+}

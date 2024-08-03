@@ -1,44 +1,58 @@
-<div class="chat-container">
-  <header class="chat-header">
-    <h1>PasteDrop Chat</h1>
-  </header>
+<div class="chat-container" [ngClass]="{'dark-mode': isDarkMode}">
+  <mat-toolbar color="primary" class="chat-header">
+    <span>PastePoint Chat</span>
+    <button mat-icon-button (click)="toggleTheme()" class="theme-toggle">
+      <mat-icon>{{ isDarkMode ? 'brightness_7' : 'brightness_4' }}</mat-icon>
+    </button>
+  </mat-toolbar>
 
   <div class="chat-main">
     <div class="chat-sidebar">
-      <h2>Available Rooms</h2>
-      <ul class="room-list">
-        <li *ngFor="let room of rooms" [class.active]="room === currentRoom">
-          <button (click)="joinRoom(room)" [disabled]="room === currentRoom">{{ room }}</button>
-        </li>
-      </ul>
+      <h5 class="sidebar-title">Available Rooms</h5>
+      <mat-list class="room-list">
+        <mat-list-item *ngFor="let room of rooms" [class.active]="room === currentRoom">
+          <button
+            mat-button
+            (click)="joinRoom(room)"
+            [disabled]="room === currentRoom"
+          >
+            {{ room }}
+          </button>
+        </mat-list-item>
+      </mat-list>
 
       <div class="room-form">
-        <input
-          type="text"
-          [(ngModel)]="newRoomName"
-          name="newRoomName"
-          placeholder="Enter new room name"
-        />
-        <button (click)="createRoom()">Join/Create Room</button>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>New Room Name</mat-label>
+          <input matInput [(ngModel)]="newRoomName" name="newRoomName" />
+        </mat-form-field>
+        <button mat-raised-button color="accent" (click)="createRoom()">Join/Create Room</button>
       </div>
     </div>
 
     <div class="chat-messages">
-      <div *ngFor="let msg of messages" [innerHTML]="msg" class="message"></div>
+      <div *ngFor="let msg of messages" class="message">
+        <p>{{ msg }}</p>
+      </div>
     </div>
   </div>
 
   <div class="chat-footer">
     <form (submit)="sendMessage(); $event.preventDefault();" class="message-form">
-      <input
-        type="text"
-        [(ngModel)]="message"
-        name="text"
-        placeholder="Type your message"
-        autocomplete="off"
-        required
-      />
-      <button type="submit">Send</button>
+      <mat-form-field appearance="outline" class="message-input">
+        <mat-label>Type your message</mat-label>
+        <input
+          matInput
+          [(ngModel)]="message"
+          name="text"
+          placeholder="Type your message"
+          autocomplete="off"
+          required
+        />
+      </mat-form-field>
+      <button mat-icon-button color="primary" type="submit" class="send-button">
+        <mat-icon>send</mat-icon>
+      </button>
     </form>
   </div>
 </div>

@@ -14,6 +14,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   rooms: string[] = [];
   newRoomName: string = '';
   currentRoom: string = 'main';
+  isDarkMode: boolean = false;
 
   private messageSubscription: Subscription = new Subscription();
   private roomSubscription: Subscription = new Subscription();
@@ -27,7 +28,9 @@ export class ChatComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.messageSubscription = this.chatService.message$.subscribe({
       next: (message) => {
-        this.messages.push(message);
+        if (message.trim()) {
+          this.messages.push(message);
+        }
       }, error: (error) => {
         console.error('WebSocket error:', error);
       }, complete: () => {
@@ -52,6 +55,10 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   }
 
+  toggleTheme() {
+    this.isDarkMode = !this.isDarkMode;
+  }
+
   connect(): void {
     this.chatService.connect()
       .then(() => {
@@ -63,8 +70,10 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   sendMessage(): void {
-    this.chatService.sendMessage(this.message);
-    this.message = '';
+    if (this.message.trim()) {
+      this.chatService.sendMessage(this.message.trim());
+      this.message = '';
+    }
   }
 
   listRooms(): void {

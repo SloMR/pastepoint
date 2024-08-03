@@ -34,7 +34,6 @@ export class WebsocketService {
           const message = ev.data.trim();
           this.log(`Received: ${message}`, false);
 
-          // Parse the incoming message
           if (this.isSystemMessage(message)) {
             this.handleSystemMessage(message);
           } else {
@@ -55,11 +54,11 @@ export class WebsocketService {
   }
 
   public sendMessage(message: string): void {
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.log(`${this.user}:  ${message}`, false);
-      this.socket.send(message);
+    if (this.socket && this.socket.readyState === WebSocket.OPEN && message.trim()) {
+      this.log(`${this.user}: ${message}`, false);
+      this.socket.send(message.trim());
     } else {
-      this.log('WebSocket is not open. Ready state: ' + this.socket?.readyState, false);
+      this.log('WebSocket is not open or message is empty. Ready state: ' + this.socket?.readyState, false);
     }
   }
 
@@ -100,19 +99,18 @@ export class WebsocketService {
       this.rooms$.next(matchRooms[1].split(',').map((room: string) => room.trim()));
       return;
     }
-
-    // Handle other system messages if needed
   }
 
   private handleUserMessage(message: string): void {
-    // Assume user messages are simple chat messages from other users
-    this.message$.next(`<p>${message}</p>`);
+    if (message.trim()) {
+      this.message$.next(`${message}`);
+    }
   }
 
   private log(msg: string, show: boolean): void {
     if (show) {
-      this.message$.next(`<p>${msg}</p>`);
+      this.message$.next(`${msg}`);
     }
-    console.log(`[WebSocket] ${msg}`); // Prefix for better logging
+    console.log(`[WebSocket] ${msg}`);
   }
 }
