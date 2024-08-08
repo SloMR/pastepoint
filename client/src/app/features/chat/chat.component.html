@@ -26,7 +26,7 @@
           <mat-label>New Room Name</mat-label>
           <input matInput [(ngModel)]="newRoomName" name="newRoomName" />
         </mat-form-field>
-        <button mat-raised-button color="accent" (click)="createRoom()">Join/Create Room</button>
+        <button mat-raised-button color="accent" (click)="createRoom()" class="join-room-button">Join/Create Room</button>
       </div>
     </div>
 
@@ -45,7 +45,6 @@
           matInput
           [(ngModel)]="message"
           name="text"
-          placeholder="Type your message"
           autocomplete="off"
           required
         />

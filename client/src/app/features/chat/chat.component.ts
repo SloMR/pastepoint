@@ -67,6 +67,12 @@ export class ChatComponent implements OnInit, OnDestroy {
   toggleTheme(): void {
     this.isDarkMode = !this.isDarkMode;
     this.themeService.setThemePreference(this.isDarkMode);
+    this.applyTheme(this.isDarkMode);
+  }
+
+  private applyTheme(isDarkMode: boolean): void {
+    document.body.classList.toggle('dark-mode', isDarkMode);
+    document.body.classList.toggle('light-mode', !isDarkMode);
   }
 
   connect(): void {

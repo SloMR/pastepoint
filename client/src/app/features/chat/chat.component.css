@@ -1,5 +1,6 @@
 .chat-container {
   width: 100%;
+  min-width: 700px;
   max-width: 1500px;
   background-color: var(--container-bg-color);
   border-radius: 8px;
@@ -106,6 +107,18 @@
 }
 
 .send-button:hover {
+  background-color: var(--button-hover-bg-color);
+}
+
+.join-room-button{
+  width: 100%;
+  padding: 30px;
+  background-color: #353535 !important;
+  color: #fff !important;
+  transition: background-color 0.3s;
+}
+
+.join-room-button:hover {
   background-color: var(--button-hover-bg-color);
 }
 

@@ -11,12 +11,8 @@ export class ThemeService {
 
   initializeTheme(): void {
     if (isPlatformBrowser(this.platformId)) {
-      const themePreference = localStorage.getItem(this.THEME_KEY);
-      if (themePreference === 'dark') {
-        document.body.classList.add('dark-mode');
-      } else {
-        document.body.classList.add('light-mode');
-      }
+      const themePreference = this.getThemePreference();
+      this.applyTheme(themePreference);
     }
   }
 
@@ -24,8 +20,16 @@ export class ThemeService {
     if (isPlatformBrowser(this.platformId)) {
       const themePreference = isDarkMode ? 'dark' : 'light';
       localStorage.setItem(this.THEME_KEY, themePreference);
-      document.body.classList.toggle('dark-mode', isDarkMode);
-      document.body.classList.toggle('light-mode', !isDarkMode);
+      this.applyTheme(themePreference);
     }
+  }
+
+  private getThemePreference(): string | null {
+    return localStorage.getItem(this.THEME_KEY);
+  }
+
+  private applyTheme(themePreference: string | null): void {
+    document.body.classList.toggle('dark-mode', themePreference === 'dark');
+    document.body.classList.toggle('light-mode', themePreference !== 'dark');
   }
 }
