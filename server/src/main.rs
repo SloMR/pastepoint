@@ -7,8 +7,8 @@ use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 mod message;
 mod server;
 mod session;
-
-use session::WsChatSession;
+mod error;
+use message::WsChatSession;
 
 struct AppState {
     _app_name: String,

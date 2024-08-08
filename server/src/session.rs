@@ -1,44 +1,10 @@
 use std::collections::HashMap;
 use actix::prelude::*;
 use actix_broker::BrokerIssue;
-use actix_web::{HttpResponse, ResponseError};
 use actix_web_actors::ws;
-use derive_more::{Display, From};
 use names::Generator;
 
-use crate::{
-    message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, SendFile, SendMessage},
-    server::WsChatServer,
-};
-
-#[derive(Debug, Display, From)]
-pub enum MyError {
-    #[display(fmt = "Internal Server Error")]
-    InternalServerError,
-}
-
-impl ResponseError for MyError {
-    fn error_response(&self) -> HttpResponse {
-        match *self {
-            MyError::InternalServerError => {
-                HttpResponse::InternalServerError().body("Internal Server Error")
-            }
-        }
-    }
-}
-
-#[derive(serde::Deserialize)]
-struct FileChunkMetadata {
-    file_name: String,
-    mime_type: String,
-    total_chunks: usize,
-    current_chunk: usize,
-}
-
-struct FileReassembler {
-    chunks: HashMap<usize, Vec<u8>>,
-    total_chunks: usize,
-}
+use crate::message::{WsChatServer, FileChunkMetadata, FileReassembler, JoinRoom, LeaveRoom, ListRooms, SendFile, SendMessage, WsChatSession};
 
 impl FileReassembler {
     fn new(total_chunks: usize) -> Self {
@@ -71,13 +37,6 @@ impl FileReassembler {
         }
         Ok(file_data)
     }
-}
-
-pub struct WsChatSession {
-    id: usize,
-    room: String,
-    name: String,
-    file_reassemblers: HashMap<String, FileReassembler>,
 }
 
 impl Default for WsChatSession {
@@ -187,14 +146,6 @@ impl Actor for WsChatSession {
             self.id,
             self.room
         );
-    }
-}
-
-impl Handler<ChatMessage> for WsChatSession {
-    type Result = ();
-
-    fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) {
-        ctx.text(msg.0);
     }
 }
 

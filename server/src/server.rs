@@ -1,17 +1,8 @@
 use std::collections::HashMap;
-
 use actix::prelude::*;
 use actix_broker::BrokerSubscribe;
 
-use crate::message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, SendFile, SendMessage};
-
-type Client = Recipient<ChatMessage>;
-type Room = HashMap<usize, Client>;
-
-#[derive(Default)]
-pub struct WsChatServer {
-    rooms: HashMap<String, Room>,
-}
+use crate::message::{ChatMessage, Client, JoinRoom, LeaveRoom, ListRooms, Room, SendFile, SendMessage, WsChatServer, WsChatSession};
 
 impl WsChatServer {
     fn take_room(&mut self, room_name: &str) -> Option<Room> {
@@ -182,6 +173,14 @@ impl Handler<ListRooms> for WsChatServer {
 
     fn handle(&mut self, _: ListRooms, _ctx: &mut Self::Context) -> Self::Result {
         MessageResult(self.rooms.keys().cloned().collect())
+    }
+}
+
+impl Handler<ChatMessage> for WsChatSession {
+    type Result = ();
+
+    fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) {
+        ctx.text(msg.0);
     }
 }
 
