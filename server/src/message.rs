@@ -19,3 +19,7 @@ pub struct ListRooms;
 #[derive(Clone, Message)]
 #[rtype(result = "()")]
 pub struct SendMessage(pub String, pub usize, pub String);
+
+#[derive(Clone, Message)]
+#[rtype(result = "()")]
+pub struct SendFile (pub String, pub usize, pub String, pub String, pub Vec<u8>);

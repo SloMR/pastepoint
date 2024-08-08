@@ -31,7 +31,7 @@
     </div>
 
     <div class="chat-messages">
-      <div *ngFor="let msg of messages" class="message">
+      <div *ngFor="let msg of messages" class="message" [innerHTML]="msg">
         <p>{{ msg }}</p>
       </div>
     </div>
@@ -50,6 +50,10 @@
           required
         />
       </mat-form-field>
+      <button mat-icon-button color="primary" type="button" (click)="fileInput.click()" class="send-button" style="margin: 10px;">
+        <mat-icon>attach_file</mat-icon>
+      </button>
+      <input type="file" #fileInput (change)="sendAttachment($event)" style="display: none;" />
       <button mat-icon-button color="primary" type="submit" class="send-button">
         <mat-icon>send</mat-icon>
       </button>

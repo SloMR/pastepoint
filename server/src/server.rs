@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use actix::prelude::*;
 use actix_broker::BrokerSubscribe;
 
-use crate::message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, SendMessage};
+use crate::message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, SendFile, SendMessage};
 
 type Client = Recipient<ChatMessage>;
 type Room = HashMap<usize, Client>;
@@ -58,6 +58,30 @@ impl WsChatServer {
         Some(())
     }
 
+    fn send_chat_attachment(&mut self, room_name: &str, file_name: &str, mime_type: &str, file_data: Vec<u8>, _src: usize) -> Option<()> {
+        let mut room = self.take_room(room_name)?;
+
+        for (id, client) in room.drain() {
+            log::info!(
+                "Sending file {} to client {} in room {}",
+                file_name,
+                id,
+                room_name
+            );
+
+            if client.try_send(ChatMessage(format!(
+                "File Sending:{}:{}:{}",
+                file_name,
+                mime_type,
+                base64::encode(&file_data)
+            )).to_owned()).is_ok() {
+                self.add_client_to_room(room_name, Some(id), client);
+            }
+        }
+
+        Some(())
+    }
+
     fn broadcast_room_list(&self) {
         let room_list = self
             .rooms
@@ -87,6 +111,25 @@ impl Actor for WsChatServer {
     fn started(&mut self, ctx: &mut Self::Context) {
         self.subscribe_system_async::<LeaveRoom>(ctx);
         self.subscribe_system_async::<SendMessage>(ctx);
+        self.subscribe_system_async::<SendFile>(ctx);
+    }
+}
+
+impl Handler<SendMessage> for WsChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: SendMessage, _ctx: &mut Self::Context) {
+        let SendMessage(room_name, id, msg) = msg;
+        self.send_chat_message(&room_name, &msg, id);
+    }
+}
+
+impl Handler<SendFile> for WsChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: SendFile, _ctx: &mut Self::Context) {
+        let SendFile (room_name, id, file_name, mime_type, file_data) = msg;
+        self.send_chat_attachment(&room_name, &file_name, &mime_type, file_data, id);
     }
 }
 
@@ -97,7 +140,7 @@ impl Handler<JoinRoom> for WsChatServer {
         let JoinRoom(room_name, client_name, client) = msg;
 
         let id = self.add_client_to_room(&room_name, None, client);
-        let join_msg = format!("{} joined {}", client_name, room_name,);
+        let join_msg = format!("{} joined {}", client_name, room_name);
 
         self.send_chat_message(&room_name, &join_msg, id);
         MessageResult(id)
@@ -142,14 +185,14 @@ impl Handler<ListRooms> for WsChatServer {
     }
 }
 
-impl Handler<SendMessage> for WsChatServer {
-    type Result = ();
-
-    fn handle(&mut self, msg: SendMessage, _ctx: &mut Self::Context) {
-        let SendMessage(room_name, id, msg) = msg;
-        self.send_chat_message(&room_name, &msg, id);
+impl SystemService for WsChatServer {
+    fn service_started(&mut self, _ctx: &mut Context<Self>) {
+        log::info!("WsChatServer started");
     }
 }
 
-impl SystemService for WsChatServer {}
-impl Supervised for WsChatServer {}
+impl Supervised for WsChatServer {
+    fn restarting(&mut self, _ctx: &mut Context<Self>) {
+        log::info!("WsChatServer restarting");
+    }
+}
