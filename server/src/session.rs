@@ -14,14 +14,14 @@ use crate::{
 };
 
 impl FileReassembler {
-    fn new(total_chunks: usize) -> Self {
+    pub fn new(total_chunks: usize) -> Self {
         FileReassembler {
             chunks: HashMap::new(),
             total_chunks,
         }
     }
 
-    fn add_chunk(&mut self, index: usize, data: Vec<u8>) -> Result<(), ServerError> {
+    pub fn add_chunk(&mut self, index: usize, data: Vec<u8>) -> Result<(), ServerError> {
         if index >= self.total_chunks {
             return Err(ServerError::IndexOutOfBounds);
         }
@@ -29,11 +29,11 @@ impl FileReassembler {
         Ok(())
     }
 
-    fn is_complete(&self) -> bool {
+    pub fn is_complete(&self) -> bool {
         self.chunks.len() == self.total_chunks
     }
 
-    fn reassemble(&self) -> Result<Vec<u8>, ServerError> {
+    pub fn reassemble(&self) -> Result<Vec<u8>, ServerError> {
         let mut file_data = Vec::new();
         for i in 0..self.total_chunks {
             if let Some(chunk) = self.chunks.get(&i) {

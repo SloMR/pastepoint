@@ -17,7 +17,7 @@ impl WsChatServer {
         Some(room)
     }
 
-    fn add_client_to_room(
+    pub fn add_client_to_room(
         &mut self,
         room_name: &str,
         id: Option<usize>,
@@ -61,7 +61,7 @@ impl WsChatServer {
         id
     }
 
-    fn send_chat_message(&mut self, room_name: &str, msg: &str, _src: usize) -> Option<()> {
+    pub fn send_chat_message(&mut self, room_name: &str, msg: &str, _src: usize) -> Option<()> {
         log::debug!("Sending message to room {}: {}", room_name, msg);
         let mut room = self.take_room(room_name)?;
 
@@ -78,7 +78,7 @@ impl WsChatServer {
         Some(())
     }
 
-    fn send_chat_attachment(
+    pub fn send_chat_attachment(
         &mut self,
         room_name: &str,
         file_name: &str,
@@ -175,7 +175,7 @@ impl WsChatServer {
         Some(())
     }
 
-    fn broadcast_room_list(&self) {
+    pub fn broadcast_room_list(&self) {
         let room_list = self
             .rooms
             .keys()
@@ -207,7 +207,7 @@ impl WsChatServer {
         }
     }
 
-    fn remove_empty_rooms(&mut self) {
+    pub fn remove_empty_rooms(&mut self) {
         self.rooms
             .retain(|name, room| !room.is_empty() || name == "main");
         self.broadcast_room_list();

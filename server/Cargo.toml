@@ -15,13 +15,17 @@ actix-web = { version = "4.7", features = ["openssl"] }
 actix-web-actors = "4.1"
 actix-cors = "0.7.0"
 actix-http = "3.8.0"
+actix-rt = "2.5"
+
 names = { version = "0.14.0", default-features = false }
 derive_more = { version = "1", features = ["full"] }
 openssl = { version = "0.10" }
 serde_json = "1.0"
 serde = { version = "1.0", features = ["derive"] }
 base64 = "0.22.1"
-
 env_logger = "0.11"
 log = "0.4"
 rand = "0.8"
+
+[dev-dependencies]
+actix-rt = "2.5"

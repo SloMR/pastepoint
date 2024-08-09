@@ -3,12 +3,7 @@ use actix_web::{
 };
 use actix_web_actors::ws;
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
-
-mod message;
-mod server;
-mod session;
-mod error;
-use message::WsChatSession;
+use server::WsChatSession;
 
 struct AppState {
     _app_name: String,
