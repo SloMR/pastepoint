@@ -16,7 +16,7 @@ struct AppState {
 
 #[get("/")]
 async fn index() -> impl Responder {
-    HttpResponse::Ok().body("Hello, this is PasteDrop!")
+    HttpResponse::Ok().body("Hello, this is PastePoint!")
 }
 
 #[get("/ws")]
@@ -26,8 +26,8 @@ async fn chat_ws(req: HttpRequest, stream: web::Payload) -> Result<impl Responde
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    log::info!("starting HTTPS server at https://127.0.0.1:9000");
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+    log::debug!("starting HTTPS server at https://127.0.0.1:9000");
 
     // load TLS keys
     // to create a self-signed temporary cert for testing:
@@ -43,7 +43,7 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(AppState {
-                _app_name: String::from("PasteDrop"),
+                _app_name: String::from("PastePoint"),
             }))
             .service(index)
             .service(chat_ws)

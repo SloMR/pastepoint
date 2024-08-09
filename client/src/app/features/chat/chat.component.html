@@ -52,10 +52,14 @@
       <button mat-icon-button color="primary" type="button" (click)="fileInput.click()" class="send-button" style="margin: 10px;">
         <mat-icon>attach_file</mat-icon>
       </button>
-      <input type="file" #fileInput (change)="sendAttachment($event)" style="display: none;" />
+      <input type="file" #fileInput (change)="sendAttachments($event)" multiple style="display: none;" />
       <button mat-icon-button color="primary" type="submit" class="send-button">
         <mat-icon>send</mat-icon>
       </button>
     </form>
+  </div>
+  <div *ngIf="uploadProgress > 0">
+    <p *ngIf="uploadProgress < 100">Upload progress: {{ uploadProgress }}%</p>
+    <p *ngIf="uploadProgress === 100">Upload complete!</p>
   </div>
 </div>
