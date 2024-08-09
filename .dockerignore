@@ -1,0 +1,27 @@
+# Ignore node_modules directory
+client/node_modules
+node_modules
+
+# Ignore temporary files
+*.tmp
+*.swp
+
+# Ignore build directories
+server/target
+/target
+
+# Ignore environment files
+.env
+.env.local
+
+# Ignore Docker-related files
+Dockerfile
+docker-compose.yml
+
+# Ignore Git-related files
+.git
+.gitignore
+
+# Ignore IDE-specific files
+.vscode
+.idea
