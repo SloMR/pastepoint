@@ -1,8 +1,9 @@
 use std::collections::HashMap;
+
 use actix::prelude::*;
 
 pub type Client = Recipient<ChatMessage>;
-pub type Room = HashMap<usize, Client>;
+pub type Room = HashMap<usize, ClientMetadata>;
 
 #[derive(Default)]
 pub struct WsChatServer {
@@ -14,6 +15,11 @@ pub struct WsChatSession {
     pub room: String,
     pub name: String,
     pub file_reassemblers: HashMap<String, FileReassembler>,
+}
+
+pub struct ClientMetadata {
+    pub recipient: Client,
+    pub name: String,
 }
 
 #[derive(Clone, Message)]
@@ -38,7 +44,7 @@ pub struct SendMessage(pub String, pub usize, pub String);
 
 #[derive(Clone, Message)]
 #[rtype(result = "()")]
-pub struct SendFile (pub String, pub usize, pub String, pub String, pub Vec<u8>);
+pub struct SendFile(pub String, pub usize, pub String, pub String, pub Vec<u8>);
 
 #[derive(serde::Deserialize)]
 pub struct FileChunkMetadata {

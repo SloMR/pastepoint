@@ -28,6 +28,13 @@
         </mat-form-field>
         <button mat-raised-button color="accent" (click)="createRoom()" class="join-room-button">Join/Create Room</button>
       </div>
+
+      <h5 class="sidebar-title" style="margin-top: 20px;">Joined members</h5>
+      <mat-list class="room-list">
+        <mat-list-item *ngFor="let member of members">
+          <p>{{ member }}</p>
+        </mat-list-item>
+      </mat-list>
     </div>
 
     <div class="chat-messages">

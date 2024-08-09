@@ -8,6 +8,7 @@ import { environment } from "../../environments/environment";
 export class WebsocketService {
   public message$: BehaviorSubject<string> = new BehaviorSubject("");
   public rooms$: BehaviorSubject<string[]> = new BehaviorSubject([""]);
+  public members$: BehaviorSubject<string[]> = new BehaviorSubject([""]);
   public uploadProgress$: BehaviorSubject<number> = new BehaviorSubject(0);
 
   private socket: WebSocket | undefined;
@@ -258,11 +259,18 @@ export class WebsocketService {
       message.includes("[SystemMessage]") ||
       message.includes("[SystemJoin]") ||
       message.includes("[SystemRooms]") ||
-      message.includes("[SystemFile]")
+      message.includes("[SystemFile]") ||
+      message.includes("[SystemAck]") ||
+      message.includes("[SystemMembers]")
     );
   }
 
   private handleSystemMessage(message: string): void {
+    if (message.startsWith("[SystemAck]:")) {
+      this.message$.next("File uploaded successfully");
+      return;
+    }
+
     const matchJoin = message.match(/^(.*?)\s*\[SystemJoin\]\s*(.*?)$/);
     if (matchJoin) {
       console.log("matchJoin", matchJoin[1]);
@@ -276,6 +284,14 @@ export class WebsocketService {
     if (matchRooms) {
       this.rooms$.next(
         matchRooms[1].split(",").map((room: string) => room.trim())
+      );
+      return;
+    }
+
+    const matchMeber = message.match(/\[SystemMembers\]:\s*(.*?)$/);
+    if (matchMeber) {
+      this.members$.next(
+        matchMeber[1].split(",").map((room: string) => room.trim())
       );
       return;
     }

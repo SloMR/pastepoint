@@ -23,12 +23,14 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   messages: string[] = [];
   rooms: string[] = [];
+  members: string[] = [];
 
   currentRoom: string = "main";
   isDarkMode: boolean = false;
 
   private messageSubscription: Subscription = new Subscription();
   private roomSubscription: Subscription = new Subscription();
+  private membersSubscription: Subscription = new Subscription();
   private progressSubscription: Subscription = new Subscription();
 
   constructor(
@@ -55,6 +57,18 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.roomSubscription = this.chatService.rooms$.subscribe({
       next: (room) => {
         this.rooms = room;
+      },
+      error: (error) => {
+        console.error("WebSocket error:", error);
+      },
+      complete: () => {
+        console.warn("WebSocket connection closed");
+      },
+    });
+
+    this.membersSubscription = this.chatService.members$.subscribe({
+      next: (member) => {
+        this.members = member;
       },
       error: (error) => {
         console.error("WebSocket error:", error);
@@ -148,5 +162,6 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.messageSubscription.unsubscribe();
     this.roomSubscription.unsubscribe();
     this.progressSubscription.unsubscribe();
+    this.membersSubscription.unsubscribe();
   }
 }
