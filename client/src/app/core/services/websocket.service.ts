@@ -233,7 +233,8 @@ export class WebsocketService {
 
   public listRooms(): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send("/list");
+      let message = "[UserCommand] /list";
+      this.socket.send(message);
     } else {
       this.log(
         "WebSocket is not open. Ready state: " + this.socket?.readyState,
@@ -245,7 +246,8 @@ export class WebsocketService {
   public joinRoom(room: string): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(`Leaving room: ${this.room}, joining room: ${room}<br>`);
-      this.socket.send(`/join ${room}`);
+      let message = `[UserCommand] /join ${room}`;
+      this.socket.send(message);
     } else {
       this.log(
         "WebSocket is not open. Ready state: " + this.socket?.readyState,

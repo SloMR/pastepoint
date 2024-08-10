@@ -117,6 +117,7 @@ impl WsChatSession {
     }
 
     pub fn send_msg(&self, msg: &str) {
+        let msg = msg.replace("[UserMessage]", "");
         let content = format!("{}: {msg}", self.name.clone(),);
         let msg = SendMessage(self.room.clone(), self.id, content);
 
@@ -170,28 +171,35 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
         match msg {
             ws::Message::Text(text) => {
                 log::debug!("Received message: {}", text);
+                
                 let msg = text.trim();
 
-                if msg.starts_with('/') {
+                if msg.contains("[UserCommand]") {
+                    let msg = msg.replace("[UserCommand]", "");
                     let mut command = msg.splitn(2, ' ');
-
-                    match command.next() {
-                        Some("/list") => self.list_rooms(ctx),
-
-                        Some("/join") => {
-                            if let Some(room_name) = command.next() {
-                                self.join_room(room_name, ctx);
-                            } else {
-                                ctx.text(format!("[SystemError] Room name is required: {}", ServerError::InternalServerError))
+                    log::debug!("Received command: {}", msg);
+                    if msg.starts_with("/") {
+                        match command.next() {
+                            Some("/list") => self.list_rooms(ctx),
+    
+                            Some("/join") => {
+                                if let Some(room_name) = command.next() {
+                                    self.join_room(room_name, ctx);
+                                } else {
+                                    ctx.text(format!("[SystemError] Room name is required: {}", ServerError::InternalServerError))
+                                }
                             }
+    
+                            _ => ctx.text(format!("[SystemError] Error Unknown command: {}", ServerError::NotFound)),
                         }
-
-                        _ => ctx.text(format!("[SystemError] Error Unknown command: {}", ServerError::NotFound)),
                     }
-
                     return;
+                } else if msg.contains("[UserMessage]") {
+                    self.send_msg(msg);
+                } else {
+                    log::error!("Unknown command: {}", msg);
+                    ctx.text(format!("[SystemError] Error Unknown command: {}", ServerError::NotFound));
                 }
-                self.send_msg(msg);
             },
             ws::Message::Binary(bin) => {
                 log::debug!("Received binary message");
