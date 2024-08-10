@@ -1,6 +1,6 @@
 [package]
 name = "server"
-version = "0.1.0"
+version = "0.1.2"
 edition = "2021"
 
 [[bin]]
@@ -9,12 +9,9 @@ path = "src/main.rs"
 
 [dependencies]
 actix = "0.13"
-actix-files = "0.6"
 actix-broker = "0.4"
 actix-web = { version = "4.7", features = ["openssl"] }
 actix-web-actors = "4.1"
-actix-cors = "0.7.0"
-actix-http = "3.8.0"
 actix-rt = "2.5"
 
 names = { version = "0.14.0", default-features = false }
