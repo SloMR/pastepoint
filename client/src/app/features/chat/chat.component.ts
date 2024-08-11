@@ -1,4 +1,5 @@
 import {
+  ChangeDetectorRef,
   Component,
   Inject,
   OnDestroy,
@@ -36,6 +37,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   constructor(
     private chatService: WebsocketService,
     private themeService: ThemeService,
+    private cdr: ChangeDetectorRef,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -45,6 +47,7 @@ export class ChatComponent implements OnInit, OnDestroy {
         if (message.trim()) {
           this.messages.push(message);
         }
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error("WebSocket error:", error);
@@ -157,6 +160,14 @@ export class ChatComponent implements OnInit, OnDestroy {
       this.joinRoom(this.newRoomName.trim());
       this.newRoomName = "";
     }
+  }
+
+  isMyMessage(msg: string): boolean {
+    return msg.startsWith(this.chatService.user);
+  }
+
+  isMyUser(member: string): boolean {
+    return member.trim() === this.chatService.user.trim();
   }
 
   ngOnDestroy(): void {

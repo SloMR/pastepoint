@@ -14,7 +14,7 @@ export class WebsocketService {
   private socket: WebSocket | undefined;
   private worker: Worker | undefined;
 
-  private user: string = "User";
+  public user: string = "user";
   private room: string = "main";
 
   private webSocketProto = "wss";
@@ -32,6 +32,7 @@ export class WebsocketService {
 
       this.socket.onopen = () => {
         this.log("Connected", false);
+        this.getUsername();
         resolve();
       };
 
@@ -52,12 +53,7 @@ export class WebsocketService {
       };
 
       this.socket.onclose = (event) => {
-        console.warn(
-          "WebSocket closed with code:",
-          event.code,
-          "reason:",
-          event.reason
-        );
+        this.sendUserDisconnected();
         this.log(
           `Disconnected with code: ${event.code}, reason: ${event.reason}`,
           false
@@ -75,6 +71,20 @@ export class WebsocketService {
   private reconnect() {
     console.log("Attempting to reconnect...");
     this.connect().catch((err) => console.error("Reconnection failed: ", err));
+  }
+
+  private sendUserDisconnected(): void {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(`[UserDisconnected] ${this.user}`);
+      this.log(`Sent disconnect notification for user: ${this.user}`, false);
+    }
+  }
+
+  private getUsername(): void {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(`[UserCommand] /name`);
+      this.log(`get username`, false);
+    }
   }
 
   public sendMessage(message: string): void {
@@ -245,7 +255,7 @@ export class WebsocketService {
 
   public joinRoom(room: string): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      this.socket.send(`Leaving room: ${this.room}, joining room: ${room}<br>`);
+      this.message$.next(`Leaving room: ${this.room}, joining room: ${room}`);
       let message = `[UserCommand] /join ${room}`;
       this.socket.send(message);
     } else {
@@ -263,21 +273,28 @@ export class WebsocketService {
       message.includes("[SystemRooms]") ||
       message.includes("[SystemFile]") ||
       message.includes("[SystemAck]") ||
-      message.includes("[SystemMembers]")
+      message.includes("[SystemMembers]") ||
+      message.includes("[SystemName]")
     );
   }
 
   private handleSystemMessage(message: string): void {
+    console.log("System message:", message);
     if (message.startsWith("[SystemAck]:")) {
       this.message$.next("File uploaded successfully");
       return;
     }
 
+    const matchName = message.match(/\[SystemName\]\s*:\s*(.*?)$/);
+    if (matchName && matchName[1]) {
+      const userName = matchName[1].trim();
+      console.log("Username updated from:", this.user, "to:", userName);
+      this.user = userName;
+      return;
+    }
+
     const matchJoin = message.match(/^(.*?)\s*\[SystemJoin\]\s*(.*?)$/);
     if (matchJoin) {
-      console.log("matchJoin", matchJoin[1]);
-      console.log("matchJoin", matchJoin[2]);
-      this.user = matchJoin[1];
       this.room = matchJoin[2];
       return;
     }
@@ -322,6 +339,8 @@ export class WebsocketService {
       console.error(`System Error: ${matchSystemError}`);
       return;
     }
+
+    console.error("Unhandled system message:", message);
   }
 
   private showFile(blob: Blob, fileName: string): void {

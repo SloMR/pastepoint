@@ -32,14 +32,18 @@
       <h5 class="sidebar-title" style="margin-top: 20px;">Joined members</h5>
       <mat-list class="room-list">
         <mat-list-item *ngFor="let member of members">
-          <p>{{ member }}</p>
+          <div class="member-item">
+            <mat-icon *ngIf="isMyUser(member)" class="user-icon">account_circle</mat-icon>
+            <p>{{ member }}</p>
+          </div>
         </mat-list-item>
       </mat-list>
     </div>
 
     <div class="chat-messages">
-      <div *ngFor="let msg of messages" class="message" [innerHTML]="msg">
-        <p>{{ msg }}</p>
+      <div *ngFor="let msg of messages" class="message" [ngClass]="{'my-message': isMyMessage(msg)}">
+        <mat-icon *ngIf="isMyMessage(msg)" class="user-icon">account_circle</mat-icon>
+        <p [innerHTML]="msg"></p>
       </div>
     </div>
   </div>

@@ -197,6 +197,7 @@ impl WsChatServer {
                 .values()
                 .map(|client_metadata| client_metadata.name.clone())
                 .collect();
+            log::debug!("Broadcasting members of room {}: {:?}", room_name, member_list);
             let member_message = format!("[SystemMembers]: {}", member_list.join(", "));
 
             for client_metadata in room.values() {
@@ -262,12 +263,6 @@ impl Handler<LeaveRoom> for WsChatServer {
 
     fn handle(&mut self, msg: LeaveRoom, _ctx: &mut Self::Context) {
         if let Some(room) = self.rooms.get_mut(&msg.0) {
-            if let Some(client) = room.get(&msg.1) {
-                let _ = client
-                    .recipient
-                    .try_send(ChatMessage(format!("You have left the room: {}", msg.0)));
-            }
-
             room.remove(&msg.1);
 
             if room.is_empty() && msg.0 != "main" {

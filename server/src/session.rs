@@ -135,6 +135,12 @@ impl WsChatSession {
 
         self.issue_system_async(msg);
     }
+
+    fn handle_user_disconnect(&self) {
+        let leave_msg = LeaveRoom(self.room.clone(), self.id);
+        self.issue_system_async(leave_msg);
+        log::debug!("User {} disconnected", self.name);
+    }
 }
 
 impl Actor for WsChatSession {
@@ -175,27 +181,42 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 let msg = text.trim();
 
                 if msg.contains("[UserCommand]") {
-                    let msg = msg.replace("[UserCommand]", "");
-                    let mut command = msg.splitn(2, ' ');
-                    log::debug!("Received command: {}", msg);
+                    let msg = msg.replace("[UserCommand]", "").trim().to_string();
                     if msg.starts_with("/") {
+                        let mut command = msg.splitn(2, ' ');
+                
                         match command.next() {
-                            Some("/list") => self.list_rooms(ctx),
-    
+                            Some("/list") => {
+                                log::debug!("Received list command");
+                                self.list_rooms(ctx)
+                            },
+                
                             Some("/join") => {
                                 if let Some(room_name) = command.next() {
+                                    log::debug!("Received join command");
                                     self.join_room(room_name, ctx);
                                 } else {
                                     ctx.text(format!("[SystemError] Room name is required: {}", ServerError::InternalServerError))
                                 }
-                            }
-    
-                            _ => ctx.text(format!("[SystemError] Error Unknown command: {}", ServerError::NotFound)),
+                            },
+                
+                            Some("/name") => {
+                                log::debug!("Received name command");
+                                ctx.text(format!("[SystemName]: {}", self.name))
+                            },
+                
+                            _ => {
+                                log::error!("Unknown command: {}", msg);
+                                ctx.text(format!("[SystemError] Error Unknown command: {}", ServerError::NotFound))
+                            },
                         }
                     }
                     return;
                 } else if msg.contains("[UserMessage]") {
                     self.send_msg(msg);
+                } else if msg.contains("[UserDisconnected]") {
+                    log::debug!("Received disconnect command");
+                    self.handle_user_disconnect();
                 } else {
                     log::error!("Unknown command: {}", msg);
                     ctx.text(format!("[SystemError] Error Unknown command: {}", ServerError::NotFound));
@@ -261,6 +282,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
             } 
             ws::Message::Close(reason) => {
                 log::debug!("Closing connection: {:?}", reason);
+                self.handle_user_disconnect();
                 ctx.close(reason);
                 ctx.stop();
             }
