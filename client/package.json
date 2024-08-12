@@ -3,7 +3,7 @@
   "version": "0.0.2",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve",
+    "start": "ng serve --ssl --ssl-key $(if [ \"$USE_DOCKER_CERTS\" = true ]; then echo '/etc/ssl/certs/key.pem'; else echo '../certs/key.pem'; fi) --ssl-cert $(if [ \"$USE_DOCKER_CERTS\" = true ]; then echo '/etc/ssl/certs/cert.pem'; else echo '../certs/cert.pem'; fi)",
     "start-local": "ng serve --host 0.0.0.0",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
@@ -47,6 +47,6 @@
     "karma-coverage": "~2.2.0",
     "karma-jasmine": "~5.1.0",
     "karma-jasmine-html-reporter": "~2.1.0",
-    "typescript": "~5.5.2"
+    "typescript": "~5.5.4"
   }
 }

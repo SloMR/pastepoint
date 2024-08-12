@@ -1,0 +1,26 @@
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    ports:
+      - "9000:9000"
+    environment:
+      RUST_LOG: "info"
+      RUN_ENV: "production"
+    volumes:
+      - ./certs:/etc/ssl/certs
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "443:443"  # Nginx will serve over HTTPS on port 443
+    environment:
+      - USE_DOCKER_CERTS=true
+      - SERVER_NAME=${API_URL}
+    env_file:
+      - .env 
+    depends_on:
+      - server
