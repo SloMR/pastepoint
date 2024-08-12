@@ -19,7 +19,7 @@ services:
       - "443:443"  # Nginx will serve over HTTPS on port 443
     environment:
       - USE_DOCKER_CERTS=true
-      - SERVER_NAME=${API_URL}
+      - SERVER_NAME=127.0.0.1
     env_file:
       - .env 
     depends_on:
