@@ -3,10 +3,10 @@
   "version": "0.0.2",
   "scripts": {
     "ng": "ng",
-    "start": "ng serve --ssl --ssl-key $(if [ \"$USE_DOCKER_CERTS\" = true ]; then echo '/etc/ssl/certs/key.pem'; else echo '../certs/key.pem'; fi) --ssl-cert $(if [ \"$USE_DOCKER_CERTS\" = true ]; then echo '/etc/ssl/certs/cert.pem'; else echo '../certs/cert.pem'; fi)",
+    "start": "ng serve",
     "start-local": "ng serve --host 0.0.0.0",
     "build": "ng build",
-    "watch": "ng build --watch --configuration development",
+    "watch": "ng build --watch",
     "test": "ng test",
     "serve:ssr:client": "node dist/client/server/server.mjs"
   },

@@ -67,6 +67,21 @@
               "optimization": false,
               "extractLicenses": false,
               "sourceMap": true
+            },
+            "docker": {
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "500kB",
+                  "maximumError": "1MB"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "2kB",
+                  "maximumError": "4kB"
+                }
+              ],
+              "outputHashing": "all"
             }
           },
           "defaultConfiguration": "production"
@@ -78,15 +93,21 @@
               "buildTarget": "client:build:production"
             },
             "development": {
-              "buildTarget": "client:build:development"
+              "buildTarget": "client:build:development",
+              "ssl": true,
+              "sslKey": "../certs/key.pem",
+              "sslCert": "../certs/cert.pem",
+              "port": 443
+            },
+            "docker": {
+              "buildTarget": "client:build:docker",
+              "ssl": true,
+              "sslKey": "/etc/ssl/certs/key.pem",
+              "sslCert": "/etc/ssl/certs/cert.pem",
+              "port": 443
             }
           },
-          "defaultConfiguration": "development",
-          "options": {
-            "ssl": true,
-            "sslKey": "../certs/key.pem",
-            "sslCert": "../certs/cert.pem"
-          }
+          "defaultConfiguration": "development"
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n"
