@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use actix_web::{test, App, HttpResponse, web, http::StatusCode};
+    use actix_web::{http::StatusCode, test, web, App, HttpResponse};
 
     async fn index() -> HttpResponse {
         HttpResponse::Ok().body("Hello, world!")

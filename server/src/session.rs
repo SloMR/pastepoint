@@ -54,6 +54,7 @@ impl Default for WsChatSession {
             id: rand::random::<usize>(),
             room: "main".to_owned(),
             name,
+            local_network: "0.0.0.0".to_owned(),
             file_reassemblers: HashMap::new(),
         }
     }
@@ -73,7 +74,7 @@ impl WsChatSession {
     pub fn join_room(&mut self, room_name: &str, ctx: &mut ws::WebsocketContext<Self>) {
         let room_name = room_name.to_owned();
         let name = self.name.clone();
-        let leave_msg = LeaveRoom(self.room.clone(), self.id);
+        let leave_msg = LeaveRoom(self.room.clone(), self.id, self.local_network.clone());
 
         self.issue_system_sync(leave_msg, ctx);
 
@@ -81,6 +82,7 @@ impl WsChatSession {
             room_name.to_owned(),
             self.name.clone(),
             ctx.address().recipient(),
+            self.local_network.clone(),
         );
 
         WsChatServer::from_registry()
@@ -119,7 +121,12 @@ impl WsChatSession {
     pub fn send_msg(&self, msg: &str) {
         let msg = msg.replace("[UserMessage]", "");
         let content = format!("{}: {msg}", self.name.clone(),);
-        let msg = SendMessage(self.room.clone(), self.id, content);
+        let msg = SendMessage(
+            self.room.clone(),
+            self.id,
+            content,
+            self.local_network.clone(),
+        );
 
         self.issue_system_async(msg);
     }
@@ -131,13 +138,14 @@ impl WsChatSession {
             file_name.to_string(),
             mime_type.to_string(),
             file_data.to_vec(),
+            self.local_network.clone(),
         );
 
         self.issue_system_async(msg);
     }
 
     fn handle_user_disconnect(&self) {
-        let leave_msg = LeaveRoom(self.room.clone(), self.id);
+        let leave_msg = LeaveRoom(self.room.clone(), self.id, self.local_network.clone());
         self.issue_system_async(leave_msg);
         log::debug!("User {} disconnected", self.name);
     }
@@ -167,7 +175,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
     fn handle(&mut self, msg: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
         let msg = match msg {
             Err(_) => {
-                ctx.text(format!("[SystemError] Invalid message format: {}", ServerError::InternalServerError));
+                ctx.text(format!(
+                    "[SystemError] Invalid message format: {}",
+                    ServerError::InternalServerError
+                ));
                 ctx.stop();
                 return;
             }
@@ -177,38 +188,44 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
         match msg {
             ws::Message::Text(text) => {
                 log::debug!("Received message: {}", text);
-                
+
                 let msg = text.trim();
 
                 if msg.contains("[UserCommand]") {
                     let msg = msg.replace("[UserCommand]", "").trim().to_string();
                     if msg.starts_with("/") {
                         let mut command = msg.splitn(2, ' ');
-                
+
                         match command.next() {
                             Some("/list") => {
                                 log::debug!("Received list command");
                                 self.list_rooms(ctx)
-                            },
-                
+                            }
+
                             Some("/join") => {
                                 if let Some(room_name) = command.next() {
                                     log::debug!("Received join command");
                                     self.join_room(room_name, ctx);
                                 } else {
-                                    ctx.text(format!("[SystemError] Room name is required: {}", ServerError::InternalServerError))
+                                    ctx.text(format!(
+                                        "[SystemError] Room name is required: {}",
+                                        ServerError::InternalServerError
+                                    ))
                                 }
-                            },
-                
+                            }
+
                             Some("/name") => {
                                 log::debug!("Received name command");
                                 ctx.text(format!("[SystemName]: {}", self.name))
-                            },
-                
+                            }
+
                             _ => {
                                 log::error!("Unknown command: {}", msg);
-                                ctx.text(format!("[SystemError] Error Unknown command: {}", ServerError::NotFound))
-                            },
+                                ctx.text(format!(
+                                    "[SystemError] Error Unknown command: {}",
+                                    ServerError::NotFound
+                                ))
+                            }
                         }
                     }
                     return;
@@ -219,9 +236,12 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     self.handle_user_disconnect();
                 } else {
                     log::error!("Unknown command: {}", msg);
-                    ctx.text(format!("[SystemError] Error Unknown command: {}", ServerError::NotFound));
+                    ctx.text(format!(
+                        "[SystemError] Error Unknown command: {}",
+                        ServerError::NotFound
+                    ));
                 }
-            },
+            }
             ws::Message::Binary(bin) => {
                 log::debug!("Received binary message");
 
@@ -236,21 +256,24 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                     chunk_metadata.file_name,
                                     chunk_metadata.total_chunks
                                 );
-    
+
                                 let reassembler = self
                                     .file_reassemblers
                                     .entry(chunk_metadata.file_name.clone())
                                     .or_insert_with(|| {
                                         FileReassembler::new(chunk_metadata.total_chunks)
                                     });
-    
+
                                 if let Err(e) =
                                     reassembler.add_chunk(chunk_metadata.current_chunk, chunk_data)
                                 {
                                     log::error!("Failed to add chunk: {:?}", e);
-                                    ctx.text(format!("[SystemError] Error file cannot be processed: {}", ServerError::FileReassemblyError));
+                                    ctx.text(format!(
+                                        "[SystemError] Error file cannot be processed: {}",
+                                        ServerError::FileReassemblyError
+                                    ));
                                 }
-    
+
                                 if reassembler.is_complete() {
                                     match reassembler.reassemble() {
                                         Ok(file_data) => {
@@ -262,7 +285,10 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                                         }
                                         Err(e) => {
                                             log::error!("Failed to reassemble file: {:?}", e);
-                                            ctx.text(format!("[SystemError] Error file cannot be processed: {}", e));
+                                            ctx.text(format!(
+                                                "[SystemError] Error file cannot be processed: {}",
+                                                e
+                                            ));
                                         }
                                     }
                                     self.file_reassemblers.remove(&chunk_metadata.file_name);
@@ -270,16 +296,22 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                             }
                             Err(e) => {
                                 log::error!("Failed to parse file chunk metadata: {:?}", e);
-                                ctx.text(format!("[SystemError] Error: {:?}", ServerError::MetadataParsingError));
+                                ctx.text(format!(
+                                    "[SystemError] Error: {:?}",
+                                    ServerError::MetadataParsingError
+                                ));
                             }
                         }
                     }
                     Err(e) => {
                         log::error!("Invalid file message format: {:?}", e);
-                        ctx.text(format!("[SystemError] Error: {:?}", ServerError::InvalidFile));
+                        ctx.text(format!(
+                            "[SystemError] Error: {:?}",
+                            ServerError::InvalidFile
+                        ));
                     }
                 }
-            } 
+            }
             ws::Message::Close(reason) => {
                 log::debug!("Closing connection: {:?}", reason);
                 self.handle_user_disconnect();

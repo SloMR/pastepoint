@@ -8,12 +8,14 @@ pub type Room = HashMap<usize, ClientMetadata>;
 #[derive(Default)]
 pub struct WsChatServer {
     pub rooms: HashMap<String, Room>,
+    pub local_networks: HashMap<String, Vec<usize>>,
 }
 
 pub struct WsChatSession {
     pub id: usize,
     pub room: String,
     pub name: String,
+    pub local_network: String,
     pub file_reassemblers: HashMap<String, FileReassembler>,
 }
 
@@ -24,15 +26,20 @@ pub struct ClientMetadata {
 
 #[derive(Clone, Message)]
 #[rtype(result = "()")]
-pub struct ChatMessage(pub String);
+pub struct ChatMessage(pub String, pub String);
 
 #[derive(Clone, Message)]
 #[rtype(result = "usize")]
-pub struct JoinRoom(pub String, pub String, pub Recipient<ChatMessage>);
+pub struct JoinRoom(
+    pub String,
+    pub String,
+    pub Recipient<ChatMessage>,
+    pub String,
+);
 
 #[derive(Clone, Message)]
 #[rtype(result = "()")]
-pub struct LeaveRoom(pub String, pub usize);
+pub struct LeaveRoom(pub String, pub usize, pub String);
 
 #[derive(Clone, Message)]
 #[rtype(result = "Vec<String>")]
@@ -40,11 +47,18 @@ pub struct ListRooms;
 
 #[derive(Clone, Message)]
 #[rtype(result = "()")]
-pub struct SendMessage(pub String, pub usize, pub String);
+pub struct SendMessage(pub String, pub usize, pub String, pub String);
 
 #[derive(Clone, Message)]
 #[rtype(result = "()")]
-pub struct SendFile(pub String, pub usize, pub String, pub String, pub Vec<u8>);
+pub struct SendFile(
+    pub String,
+    pub usize,
+    pub String,
+    pub String,
+    pub Vec<u8>,
+    pub String,
+);
 
 #[derive(serde::Deserialize)]
 pub struct FileChunkMetadata {
