@@ -14,6 +14,7 @@ actix-web = { version = "4.7", features = ["openssl"] }
 actix-web-actors = "4.1"
 actix-rt = "2.5"
 
+uuid = { version = "1.10", features = ["v4"] }
 names = { version = "0.14.0", default-features = false }
 derive_more = { version = "1", features = ["full"] }
 openssl = { version = "0.10" }

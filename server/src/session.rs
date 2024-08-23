@@ -54,7 +54,6 @@ impl Default for WsChatSession {
             id: rand::random::<usize>(),
             room: "main".to_owned(),
             name,
-            local_network: "0.0.0.0".to_owned(),
             file_reassemblers: HashMap::new(),
         }
     }
@@ -74,7 +73,7 @@ impl WsChatSession {
     pub fn join_room(&mut self, room_name: &str, ctx: &mut ws::WebsocketContext<Self>) {
         let room_name = room_name.to_owned();
         let name = self.name.clone();
-        let leave_msg = LeaveRoom(self.room.clone(), self.id, self.local_network.clone());
+        let leave_msg = LeaveRoom(self.room.clone(), self.id);
 
         self.issue_system_sync(leave_msg, ctx);
 
@@ -82,7 +81,6 @@ impl WsChatSession {
             room_name.to_owned(),
             self.name.clone(),
             ctx.address().recipient(),
-            self.local_network.clone(),
         );
 
         WsChatServer::from_registry()
@@ -121,12 +119,7 @@ impl WsChatSession {
     pub fn send_msg(&self, msg: &str) {
         let msg = msg.replace("[UserMessage]", "");
         let content = format!("{}: {msg}", self.name.clone(),);
-        let msg = SendMessage(
-            self.room.clone(),
-            self.id,
-            content,
-            self.local_network.clone(),
-        );
+        let msg = SendMessage(self.room.clone(), self.id, content);
 
         self.issue_system_async(msg);
     }
@@ -138,14 +131,13 @@ impl WsChatSession {
             file_name.to_string(),
             mime_type.to_string(),
             file_data.to_vec(),
-            self.local_network.clone(),
         );
 
         self.issue_system_async(msg);
     }
 
     fn handle_user_disconnect(&self) {
-        let leave_msg = LeaveRoom(self.room.clone(), self.id, self.local_network.clone());
+        let leave_msg = LeaveRoom(self.room.clone(), self.id);
         self.issue_system_async(leave_msg);
         log::debug!("User {} disconnected", self.name);
     }
