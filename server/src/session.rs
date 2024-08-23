@@ -46,38 +46,28 @@ impl FileReassembler {
     }
 }
 
-impl Default for WsChatSession {
-    fn default() -> Self {
+impl WsChatSession {
+    pub fn new(session_id: &str) -> Self {
         let mut generator = Generator::default();
         let name = generator.next().unwrap();
-        Self {
-            id: rand::random::<usize>(),
+        WsChatSession {
+            session_id: session_id.to_owned(),
+            id: 0,
             room: "main".to_owned(),
             name,
             file_reassemblers: HashMap::new(),
-        }
-    }
-}
-
-impl WsChatSession {
-    fn split_metadata_and_data(&self, bin: &[u8]) -> Result<(Vec<u8>, Vec<u8>), ServerError> {
-        if let Some(pos) = bin.iter().position(|&byte| byte == 0) {
-            let metadata = bin[..pos].to_vec();
-            let data = bin[pos + 1..].to_vec();
-            Ok((metadata, data))
-        } else {
-            Err(ServerError::MetadataParsingError)
         }
     }
 
     pub fn join_room(&mut self, room_name: &str, ctx: &mut ws::WebsocketContext<Self>) {
         let room_name = room_name.to_owned();
         let name = self.name.clone();
-        let leave_msg = LeaveRoom(self.room.clone(), self.id);
+        let leave_msg = LeaveRoom(self.session_id.clone(), self.room.clone(), self.id);
 
         self.issue_system_sync(leave_msg, ctx);
 
         let join_msg = JoinRoom(
+            self.session_id.clone(),
             room_name.to_owned(),
             self.name.clone(),
             ctx.address().recipient(),
@@ -100,7 +90,7 @@ impl WsChatSession {
 
     pub fn list_rooms(&mut self, ctx: &mut ws::WebsocketContext<Self>) {
         WsChatServer::from_registry()
-            .send(ListRooms)
+            .send(ListRooms(self.session_id.clone()))
             .into_actor(self)
             .then(|res, _, ctx| {
                 if let Ok(rooms) = res {
@@ -119,13 +109,14 @@ impl WsChatSession {
     pub fn send_msg(&self, msg: &str) {
         let msg = msg.replace("[UserMessage]", "");
         let content = format!("{}: {msg}", self.name.clone(),);
-        let msg = SendMessage(self.room.clone(), self.id, content);
+        let msg = SendMessage(self.session_id.clone(), self.room.clone(), self.id, content);
 
         self.issue_system_async(msg);
     }
 
     fn send_file(&self, file_name: &str, mime_type: &str, file_data: &[u8]) {
         let msg = SendFile(
+            self.session_id.clone(),
             self.room.clone(),
             self.id,
             file_name.to_string(),
@@ -136,8 +127,18 @@ impl WsChatSession {
         self.issue_system_async(msg);
     }
 
+    fn split_metadata_and_data(&self, bin: &[u8]) -> Result<(Vec<u8>, Vec<u8>), ServerError> {
+        if let Some(pos) = bin.iter().position(|&byte| byte == 0) {
+            let metadata = bin[..pos].to_vec();
+            let data = bin[pos + 1..].to_vec();
+            Ok((metadata, data))
+        } else {
+            Err(ServerError::MetadataParsingError)
+        }
+    }
+
     fn handle_user_disconnect(&self) {
-        let leave_msg = LeaveRoom(self.room.clone(), self.id);
+        let leave_msg = LeaveRoom(self.session_id.clone(), self.room.clone(), self.id);
         self.issue_system_async(leave_msg);
         log::debug!("User {} disconnected", self.name);
     }

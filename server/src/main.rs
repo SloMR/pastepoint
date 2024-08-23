@@ -7,10 +7,6 @@ use actix_web_actors::ws;
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use server::WsChatSession;
 
-struct AppState {
-    _app_name: String,
-}
-
 #[get("/")]
 async fn index() -> impl Responder {
     HttpResponse::Ok().body("Hello, this is PastePoint!")
@@ -18,7 +14,13 @@ async fn index() -> impl Responder {
 
 #[get("/ws")]
 async fn chat_ws(req: HttpRequest, stream: web::Payload) -> Result<impl Responder, Error> {
-    ws::start(WsChatSession::default(), &req, stream)
+    if let Some(ip) = req.peer_addr() {
+        log::info!("Peer address: {}", &ip.ip().to_string());
+        ws::start(WsChatSession::new(&ip.ip().to_string()), &req, stream)
+    } else {
+        log::error!("No Public IP Address found");
+        Ok(HttpResponse::BadRequest().body("No Public IP Address found"))
+    }
 }
 
 #[actix_web::main]
@@ -51,9 +53,6 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .app_data(web::Data::new(AppState {
-                _app_name: String::from("PastePoint"),
-            }))
             .service(index)
             .service(chat_ws)
             .wrap(Logger::default())

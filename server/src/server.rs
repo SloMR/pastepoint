@@ -10,40 +10,35 @@ use crate::message::{
 };
 
 impl WsChatServer {
-    fn take_room(&mut self, room_name: &str) -> Option<Room> {
+    fn take_room(&mut self, session_id: &str, room_name: &str) -> Option<Room> {
         log::debug!("Getting room: {}", room_name);
-        let room = self.rooms.get_mut(room_name)?;
+        let session_id = self.rooms.get_mut(session_id)?;
+        let room = session_id.get_mut(room_name)?;
         let room = std::mem::take(room);
         Some(room)
     }
 
     pub fn add_client_to_room(
         &mut self,
+        session_id: &str,
         room_name: &str,
         id: Option<usize>,
         client: Client,
         name: String,
     ) -> usize {
         log::debug!("Adding client to room: {}", room_name);
-        let mut id = id.unwrap_or_else(rand::random::<usize>);
-
-        if let Some(room) = self.rooms.get_mut(room_name) {
-            loop {
-                if room.contains_key(&id) {
-                    id = rand::random::<usize>();
-                } else {
-                    break;
-                }
+        let id = id.unwrap_or_else(rand::random::<usize>);
+        if let Some(room) = self.rooms.get_mut(session_id) {
+            if let Some(room) = room.get_mut(room_name) {
+                room.insert(
+                    id,
+                    ClientMetadata {
+                        recipient: client,
+                        name,
+                    },
+                );
+                return id;
             }
-
-            room.insert(
-                id,
-                ClientMetadata {
-                    recipient: client,
-                    name,
-                },
-            );
-            return id;
         }
 
         let mut room: Room = HashMap::new();
@@ -55,15 +50,25 @@ impl WsChatServer {
                 name,
             },
         );
-        self.rooms.insert(room_name.to_owned(), room);
-        self.broadcast_room_list();
+
+        self.rooms
+            .entry(session_id.to_string())
+            .or_insert_with(HashMap::new)
+            .insert(room_name.to_owned(), room);
+        self.broadcast_room_list(session_id);
 
         id
     }
 
-    pub fn send_chat_message(&mut self, room_name: &str, msg: &str, _src: usize) -> Option<()> {
+    pub fn send_chat_message(
+        &mut self,
+        session_id: &str,
+        room_name: &str,
+        msg: &str,
+        _src: usize,
+    ) -> Option<()> {
         log::debug!("Sending message to room {}: {}", room_name, msg);
-        let mut room = self.take_room(room_name)?;
+        let mut room = self.take_room(session_id, room_name)?;
 
         for (id, client) in room.drain() {
             if client
@@ -71,7 +76,13 @@ impl WsChatServer {
                 .try_send(ChatMessage(msg.to_owned()))
                 .is_ok()
             {
-                self.add_client_to_room(room_name, Some(id), client.recipient, client.name);
+                self.add_client_to_room(
+                    session_id,
+                    room_name,
+                    Some(id),
+                    client.recipient,
+                    client.name,
+                );
             }
         }
 
@@ -80,13 +91,14 @@ impl WsChatServer {
 
     pub fn send_chat_attachment(
         &mut self,
+        session_id: &str,
         room_name: &str,
         file_name: &str,
         mime_type: &str,
         file_data: Vec<u8>,
         src: usize,
     ) -> Option<()> {
-        let mut room = self.take_room(room_name)?;
+        let mut room = self.take_room(session_id, room_name)?;
 
         for (id, client) in room.drain() {
             if id == src {
@@ -118,7 +130,13 @@ impl WsChatServer {
                     )
                     .is_ok()
                 {
-                    self.add_client_to_room(room_name, Some(id), client.recipient, client.name);
+                    self.add_client_to_room(
+                        session_id,
+                        room_name,
+                        Some(id),
+                        client.recipient,
+                        client.name,
+                    );
                 }
             }
         }
@@ -126,8 +144,11 @@ impl WsChatServer {
         Some(())
     }
 
+    #[allow(dead_code)]
+    // TODO: Implement this method
     fn send_chat_attachment_in_chunks(
         &mut self,
+        session_id: &str,
         room_name: &str,
         file_name: &str,
         mime_type: &str,
@@ -137,7 +158,7 @@ impl WsChatServer {
         let chunk_size = 64 * 1024;
         let total_chunks = (file_data.len() as f64 / chunk_size as f64).ceil() as usize;
 
-        let mut room = self.take_room(room_name)?;
+        let mut room = self.take_room(session_id, room_name)?;
 
         for (id, client) in room.drain() {
             for (i, chunk) in file_data.chunks(chunk_size).enumerate() {
@@ -163,6 +184,7 @@ impl WsChatServer {
 
                 if client.recipient.try_send(ChatMessage(chat_message)).is_ok() {
                     self.add_client_to_room(
+                        session_id,
                         room_name,
                         Some(id),
                         client.recipient.clone(),
@@ -175,47 +197,46 @@ impl WsChatServer {
         Some(())
     }
 
-    pub fn broadcast_room_list(&self) {
-        let room_list = self
-            .rooms
-            .keys()
-            .cloned()
-            .collect::<Vec<String>>()
-            .join(", ");
-        let message = format!("[SystemRooms]: {}", room_list);
+    pub fn broadcast_room_list(&self, session_id: &str) {
+        if let Some(users) = self.rooms.get(session_id) {
+            let room_list = users.keys().cloned().collect::<Vec<String>>().join(", ");
+            let message = format!("[SystemRooms]: {}", room_list);
 
-        for room in self.rooms.values() {
-            for client in room.values() {
-                let _ = client.recipient.try_send(ChatMessage(message.clone()));
+            for room in users.values() {
+                for client in room.values() {
+                    let _ = client.recipient.try_send(ChatMessage(message.clone()));
+                }
             }
         }
     }
 
-    pub fn broadcast_room_members(&self, room_name: &str) {
-        if let Some(room) = self.rooms.get(room_name) {
-            let member_list: Vec<String> = room
-                .values()
-                .map(|client_metadata| client_metadata.name.clone())
-                .collect();
-            log::debug!(
-                "Broadcasting members of room {}: {:?}",
-                room_name,
-                member_list
-            );
-            let member_message = format!("[SystemMembers]: {}", member_list.join(", "));
+    pub fn broadcast_room_members(&self, session_id: &str, room_name: &str) {
+        if let Some(users) = self.rooms.get(session_id) {
+            if let Some(room) = users.get(room_name) {
+                let member_list: Vec<String> = room
+                    .values()
+                    .map(|client_metadata| client_metadata.name.clone())
+                    .collect();
+                log::debug!(
+                    "Broadcasting members of room {}: {:?}",
+                    room_name,
+                    member_list
+                );
+                let member_message = format!("[SystemMembers]: {}", member_list.join(", "));
 
-            for client_metadata in room.values() {
-                client_metadata
-                    .recipient
-                    .do_send(ChatMessage(member_message.clone()));
+                for client_metadata in room.values() {
+                    client_metadata
+                        .recipient
+                        .do_send(ChatMessage(member_message.clone()));
+                }
             }
         }
     }
 
-    pub fn remove_empty_rooms(&mut self) {
+    pub fn remove_empty_rooms(&mut self, session_id: &str) {
         self.rooms
             .retain(|name, room| !room.is_empty() || name == "main");
-        self.broadcast_room_list();
+        self.broadcast_room_list(session_id);
     }
 }
 
@@ -233,8 +254,8 @@ impl Handler<SendMessage> for WsChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: SendMessage, _ctx: &mut Self::Context) {
-        let SendMessage(room_name, id, msg) = msg;
-        self.send_chat_message(&room_name, &msg, id);
+        let SendMessage(session_id, room_name, id, msg) = msg;
+        self.send_chat_message(&session_id, &room_name, &msg, id);
     }
 }
 
@@ -242,8 +263,15 @@ impl Handler<SendFile> for WsChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: SendFile, _ctx: &mut Self::Context) {
-        let SendFile(room_name, id, file_name, mime_type, file_data) = msg;
-        self.send_chat_attachment(&room_name, &file_name, &mime_type, file_data, id);
+        let SendFile(session_id, room_name, id, file_name, mime_type, file_data) = msg;
+        self.send_chat_attachment(
+            &session_id,
+            &room_name,
+            &file_name,
+            &mime_type,
+            file_data,
+            id,
+        );
     }
 }
 
@@ -251,13 +279,14 @@ impl Handler<JoinRoom> for WsChatServer {
     type Result = MessageResult<JoinRoom>;
 
     fn handle(&mut self, msg: JoinRoom, _ctx: &mut Self::Context) -> Self::Result {
-        let JoinRoom(room_name, client_name, client) = msg;
+        let JoinRoom(session_id, room_name, client_name, client) = msg;
 
-        let id = self.add_client_to_room(&room_name, None, client, client_name.clone());
+        let id =
+            self.add_client_to_room(&session_id, &room_name, None, client, client_name.clone());
         let join_msg = format!("{} [SystemJoin] {}", client_name, room_name);
 
-        self.send_chat_message(&room_name, &join_msg, id);
-        self.broadcast_room_members(&room_name);
+        self.send_chat_message(&session_id, &room_name, &join_msg, id);
+        self.broadcast_room_members(&session_id, &room_name);
         MessageResult(id)
     }
 }
@@ -266,23 +295,26 @@ impl Handler<LeaveRoom> for WsChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: LeaveRoom, _ctx: &mut Self::Context) {
-        if let Some(room) = self.rooms.get_mut(&msg.0) {
-            room.remove(&msg.1);
+        if let Some(rooms) = self.rooms.get_mut(&msg.0) {
+            if let Some(room) = rooms.get_mut(&msg.1) {
+                room.remove(&msg.2);
 
-            if room.is_empty() && msg.0 != "main" {
-                self.rooms.remove(&msg.0);
+                if room.is_empty() && msg.1 != "main" {
+                    self.rooms.remove(&msg.1);
+                }
+
+                self.remove_empty_rooms(&msg.0);
+                self.broadcast_room_list(&msg.0);
+                self.broadcast_room_members(&msg.0, &msg.1);
+
+                log::debug!(
+                    "User {} in {} left room {}. Current rooms: {:?}",
+                    msg.0,
+                    msg.2,
+                    msg.1,
+                    self.rooms.keys().collect::<Vec<_>>()
+                );
             }
-
-            self.remove_empty_rooms();
-            self.broadcast_room_list();
-            self.broadcast_room_members(&msg.0);
-
-            log::debug!(
-                "User {} left room {}. Current rooms: {:?}",
-                msg.1,
-                msg.0,
-                self.rooms.keys().collect::<Vec<_>>()
-            );
         }
     }
 }
@@ -290,8 +322,16 @@ impl Handler<LeaveRoom> for WsChatServer {
 impl Handler<ListRooms> for WsChatServer {
     type Result = MessageResult<ListRooms>;
 
-    fn handle(&mut self, _: ListRooms, _ctx: &mut Self::Context) -> Self::Result {
-        MessageResult(self.rooms.keys().cloned().collect())
+    fn handle(&mut self, msg: ListRooms, _ctx: &mut Self::Context) -> Self::Result {
+        let ListRooms(session_id) = msg;
+        MessageResult(
+            self.rooms
+                .get(&session_id)
+                .unwrap()
+                .keys()
+                .cloned()
+                .collect(),
+        )
     }
 }
 
