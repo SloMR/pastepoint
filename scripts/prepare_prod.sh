@@ -14,10 +14,10 @@ ANGULAR_CONFIG="../client/src/app/environments/environment.ts"
 cp $NGINX_CONFIG "${NGINX_CONFIG}.bak"
 cp $ANGULAR_CONFIG "${ANGULAR_CONFIG}.bak"
 
-# Use sed to find and replace the PROD_URL in the config file
-sed -i "s|server_name PROD_URL;|server_name $NEW_URL;|g" $NGINX_CONFIG
-sed -i "s|proxy_pass https://PROD_URL:9000/ws;|proxy_pass https://$NEW_URL:9000/ws;|g" $NGINX_CONFIG
+# Use sed to find and replace the 127.0.0.1 in the config file
+sed -i "s|server_name 127.0.0.1;|server_name $NEW_URL;|g" $NGINX_CONFIG
+sed -i "s|proxy_pass https://127.0.0.1:9000/ws;|proxy_pass https://$NEW_URL:9000/ws;|g" $NGINX_CONFIG
 
-sed -i "s|apiUrl: 'PROD_URL:9000',|apiUrl: '$NEW_URL:9000',|g" $ANGULAR_CONFIG
+sed -i "s|apiUrl: '127.0.0.1:9000',|apiUrl: '$NEW_URL:9000',|g" $ANGULAR_CONFIG
 
-echo "PROD_URL updated successfully to $NEW_URL in $NGINX_CONFIG and $ANGULAR_CONFIG"
+echo "127.0.0.1 updated successfully to $NEW_URL in $NGINX_CONFIG and $ANGULAR_CONFIG"

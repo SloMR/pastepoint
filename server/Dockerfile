@@ -5,6 +5,7 @@ WORKDIR /usr/src/app
 
 # Copy the Cargo.toml and Cargo.lock files
 COPY server/Cargo.toml ./Cargo.lock ./
+COPY ../rust-toolchain rust-toolchain
 
 # Create an empty main.rs to allow cargo to build dependencies
 RUN mkdir -p src && echo "fn main() {}" > src/main.rs
