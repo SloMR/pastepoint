@@ -127,6 +127,71 @@ impl WsChatSession {
         self.issue_system_async(msg);
     }
 
+    fn handle_file_chunk(
+        &mut self,
+        chunk_metadata: FileChunkMetadata,
+        chunk_data: Vec<u8>,
+    ) -> Result<(), ServerError> {
+        let reassembler = self
+            .file_reassemblers
+            .entry(chunk_metadata.file_name.clone())
+            .or_insert_with(|| FileReassembler::new(chunk_metadata.total_chunks));
+
+        reassembler.add_chunk(chunk_metadata.current_chunk, chunk_data)?;
+
+        if reassembler.is_complete() {
+            let file_data = reassembler.reassemble()?;
+            self.send_file(
+                &chunk_metadata.file_name,
+                &chunk_metadata.mime_type,
+                &file_data,
+            );
+            self.file_reassemblers.remove(&chunk_metadata.file_name);
+        }
+
+        Ok(())
+    }
+
+    fn handle_binary_message(&mut self, bin: &[u8], ctx: &mut ws::WebsocketContext<Self>) {
+        match self.split_metadata_and_data(bin) {
+            Ok((metadata, chunk_data)) => {
+                log::debug!("Received file chunk");
+                match serde_json::from_slice::<FileChunkMetadata>(&metadata) {
+                    Ok(chunk_metadata) => {
+                        log::debug!(
+                            "Received chunk {} of file {} (total chunks: {})",
+                            chunk_metadata.current_chunk,
+                            chunk_metadata.file_name,
+                            chunk_metadata.total_chunks
+                        );
+
+                        if let Err(e) = self.handle_file_chunk(chunk_metadata, chunk_data) {
+                            log::error!("Failed to process file chunk: {:?}", e);
+                            ctx.text(format!(
+                                "[SystemError] Error processing file chunk: {}",
+                                e
+                            ));
+                        }
+                    }
+                    Err(e) => {
+                        log::error!("Failed to parse file chunk metadata: {:?}", e);
+                        ctx.text(format!(
+                            "[SystemError] Error: {:?}",
+                            ServerError::MetadataParsingError
+                        ));
+                    }
+                }
+            }
+            Err(e) => {
+                log::error!("Invalid file message format: {:?}", e);
+                ctx.text(format!(
+                    "[SystemError] Error: {:?}",
+                    ServerError::InvalidFile
+                ));
+            }
+        }
+    }
+
     fn split_metadata_and_data(&self, bin: &[u8]) -> Result<(Vec<u8>, Vec<u8>), ServerError> {
         if let Some(pos) = bin.iter().position(|&byte| byte == 0) {
             let metadata = bin[..pos].to_vec();
@@ -237,73 +302,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
             }
             ws::Message::Binary(bin) => {
                 log::debug!("Received binary message");
-
-                match self.split_metadata_and_data(&bin) {
-                    Ok((metadata, chunk_data)) => {
-                        log::debug!("Received file chunk");
-                        match serde_json::from_slice::<FileChunkMetadata>(&metadata) {
-                            Ok(chunk_metadata) => {
-                                log::debug!(
-                                    "Received chunk {} of file {} (total chunks: {})",
-                                    chunk_metadata.current_chunk,
-                                    chunk_metadata.file_name,
-                                    chunk_metadata.total_chunks
-                                );
-
-                                let reassembler = self
-                                    .file_reassemblers
-                                    .entry(chunk_metadata.file_name.clone())
-                                    .or_insert_with(|| {
-                                        FileReassembler::new(chunk_metadata.total_chunks)
-                                    });
-
-                                if let Err(e) =
-                                    reassembler.add_chunk(chunk_metadata.current_chunk, chunk_data)
-                                {
-                                    log::error!("Failed to add chunk: {:?}", e);
-                                    ctx.text(format!(
-                                        "[SystemError] Error file cannot be processed: {}",
-                                        ServerError::FileReassemblyError
-                                    ));
-                                }
-
-                                if reassembler.is_complete() {
-                                    match reassembler.reassemble() {
-                                        Ok(file_data) => {
-                                            self.send_file(
-                                                &chunk_metadata.file_name,
-                                                &chunk_metadata.mime_type,
-                                                &file_data,
-                                            );
-                                        }
-                                        Err(e) => {
-                                            log::error!("Failed to reassemble file: {:?}", e);
-                                            ctx.text(format!(
-                                                "[SystemError] Error file cannot be processed: {}",
-                                                e
-                                            ));
-                                        }
-                                    }
-                                    self.file_reassemblers.remove(&chunk_metadata.file_name);
-                                }
-                            }
-                            Err(e) => {
-                                log::error!("Failed to parse file chunk metadata: {:?}", e);
-                                ctx.text(format!(
-                                    "[SystemError] Error: {:?}",
-                                    ServerError::MetadataParsingError
-                                ));
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        log::error!("Invalid file message format: {:?}", e);
-                        ctx.text(format!(
-                            "[SystemError] Error: {:?}",
-                            ServerError::InvalidFile
-                        ));
-                    }
-                }
+                self.handle_binary_message(&bin, ctx);
             }
             ws::Message::Close(reason) => {
                 log::debug!("Closing connection: {:?}", reason);
