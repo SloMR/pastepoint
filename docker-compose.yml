@@ -19,7 +19,8 @@ services:
     volumes:
       - ssl-certs:/etc/ssl/certs
     depends_on:
-      - certs-generator
+      certs-generator:
+        condition: service_completed_successfully
 
   client:
     build:
@@ -27,10 +28,9 @@ services:
       dockerfile: client/Dockerfile
     ports:
       - "443:443"
-    environment:
-      - SERVER_NAME=127.0.0.1
     depends_on:
-      - server
+      server:
+        condition: service_started
     volumes:
       - ssl-certs:/etc/ssl/certs
 
