@@ -234,8 +234,9 @@ impl WsChatServer {
     }
 
     pub fn remove_empty_rooms(&mut self, session_id: &str) {
-        self.rooms
-            .retain(|name, room| !room.is_empty() || name == "main");
+        self.rooms.get_mut(session_id).map(|rooms| {
+            rooms.retain(|name, room| !room.is_empty() || name == "main");
+        });
         self.broadcast_room_list(session_id);
     }
 }
