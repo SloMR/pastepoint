@@ -7,8 +7,7 @@ import { environment } from '../../environments/environment';
 export class LoggerService {
   public log(msg: string): void {
     if (environment.production === false) {
-      console.log(`[WebSocket] ${msg}`);
-      console.log(new Date() + " [WebSocket]: " + JSON.stringify(msg));
+      console.log(new Date().toLocaleTimeString() + " [WebSocket]: " + JSON.stringify(msg));
     }
   }
 }
