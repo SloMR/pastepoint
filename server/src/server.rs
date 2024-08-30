@@ -21,23 +21,32 @@ impl WsChatServer {
         client: Client,
         name: String,
     ) -> usize {
-        log::debug!("Adding client to room: {}", room_name);
         let id = id.unwrap_or_else(rand::random::<usize>);
+
         if let Some(room) = self.rooms.get_mut(session_id) {
-            if let Some(room) = room.get_mut(room_name) {
-                room.insert(
-                    id,
-                    ClientMetadata {
-                        recipient: client,
-                        name,
-                    },
-                );
-                return id;
+            if let Some(existing_room) = room.get_mut(room_name) {
+                if existing_room.contains_key(&id) {
+                    log::debug!(
+                        "Client {} already in room: {}, skipping addition",
+                        id,
+                        room_name
+                    );
+                    return id;
+                } else {
+                    log::debug!("Adding client to room: {}", room_name);
+                    existing_room.insert(
+                        id,
+                        ClientMetadata {
+                            recipient: client,
+                            name,
+                        },
+                    );
+                    return id;
+                }
             }
         }
 
         let mut room: Room = HashMap::new();
-
         room.insert(
             id,
             ClientMetadata {
@@ -50,8 +59,8 @@ impl WsChatServer {
             .entry(session_id.to_string())
             .or_insert_with(HashMap::new)
             .insert(room_name.to_owned(), room);
-        self.broadcast_room_list(session_id);
 
+        self.broadcast_room_list(session_id);
         id
     }
 
@@ -63,25 +72,38 @@ impl WsChatServer {
         _src: usize,
     ) -> Option<()> {
         log::debug!("Sending message to room {}: {}", room_name, msg);
-        let mut room = self.take_room(session_id, room_name)?;
 
-        for (id, client) in room.drain() {
-            if client
-                .recipient
-                .try_send(ChatMessage(msg.to_owned()))
-                .is_ok()
-            {
-                self.add_client_to_room(
-                    session_id,
-                    room_name,
-                    Some(id),
-                    client.recipient,
-                    client.name,
-                );
+        if let Some(room) = self.rooms.get_mut(session_id)?.get_mut(room_name) {
+            let client_ids: Vec<usize> = room.keys().cloned().collect();
+
+            for id in client_ids {
+                if let Some(client) = room.get(&id) {
+                    if client
+                        .recipient
+                        .try_send(ChatMessage(msg.to_owned()))
+                        .is_ok()
+                    {
+                        log::debug!(
+                            "Message sent to client {}, staying in room: {}",
+                            id,
+                            room_name
+                        );
+                    } else {
+                        log::warn!(
+                            "Failed to send message to client {}, removing from room: {}",
+                            id,
+                            room_name
+                        );
+                        room.remove(&id);
+                    }
+                }
             }
-        }
 
-        Some(())
+            Some(())
+        } else {
+            log::error!("Room {} not found in session {}", room_name, session_id);
+            None
+        }
     }
 
     pub fn broadcast_room_list(&self, session_id: &str) {

@@ -5,7 +5,7 @@ use base64::{engine::general_purpose, Engine as _};
 
 use crate::{
     message::FileChunkMetadata, ChatMessage, FileReassembler, ServerError, WsChatServer,
-    WsChatSession,
+    WsChatSession, MAX_FRAME_SIZE
 };
 
 impl FileReassembler {
@@ -42,6 +42,7 @@ impl FileReassembler {
 }
 
 impl WsChatServer {
+    #[allow(dead_code)]
     pub fn send_chat_attachment(
         &mut self,
         session_id: &str,
@@ -51,45 +52,65 @@ impl WsChatServer {
         file_data: Vec<u8>,
         src: usize,
     ) -> Option<()> {
-        let mut room = self.take_room(session_id, room_name)?;
+        let rooms = self.rooms.get_mut(session_id)?;
+        let room = rooms.get_mut(room_name)?;
 
-        for (id, client) in room.drain() {
-            if id == src {
-                client
-                    .recipient
-                    .try_send(ChatMessage(format!(
-                        "[SystemAck]: File '{}' sent successfully.",
-                        file_name
-                    )))
-                    .ok();
-            } else {
-                log::debug!(
-                    "Sending file {} to client {} in room {}",
-                    file_name,
-                    id,
-                    room_name
-                );
+        let client_ids: Vec<usize> = room.keys().cloned().collect();
 
-                if client
-                    .recipient
-                    .try_send(
-                        ChatMessage(format!(
+        for id in client_ids {
+            if let Some(client) = room.get(&id) {
+                if id == src {
+                    log::debug!(
+                        "Sending confirmation to sender {} in room {}",
+                        id,
+                        room_name
+                    );
+                    client
+                        .recipient
+                        .try_send(ChatMessage(format!(
+                            "[SystemAck]: File '{}' sent successfully.",
+                            file_name
+                        )))
+                        .ok();
+                    continue;
+                }
+
+                if id == src {
+                    client
+                        .recipient
+                        .try_send(ChatMessage(format!(
+                            "[SystemAck]: File '{}' sent successfully.",
+                            file_name
+                        )))
+                        .ok();
+                } else {
+                    log::debug!(
+                        "Sending file {} to client {} in room {}",
+                        file_name,
+                        id,
+                        room_name
+                    );
+
+                    if client
+                        .recipient
+                        .try_send(ChatMessage(format!(
                             "[SystemFile]:{}:{}:{}",
                             file_name,
                             mime_type,
                             general_purpose::STANDARD.encode(&file_data)
-                        ))
-                        .to_owned(),
-                    )
-                    .is_ok()
-                {
-                    self.add_client_to_room(
-                        session_id,
-                        room_name,
-                        Some(id),
-                        client.recipient,
-                        client.name,
-                    );
+                        )))
+                        .is_ok()
+                    {
+                        continue;
+                    } else {
+                        log::warn!(
+                            "Failed to send file {} to client {}, removing from room: {}",
+                            file_name,
+                            id,
+                            room_name
+                        );
+                        room.remove(&id);
+                    }
                 }
             }
         }
@@ -97,8 +118,6 @@ impl WsChatServer {
         Some(())
     }
 
-    #[allow(dead_code)]
-    // TODO: Implement this method
     pub fn send_chat_attachment_in_chunks(
         &mut self,
         session_id: &str,
@@ -106,43 +125,98 @@ impl WsChatServer {
         file_name: &str,
         mime_type: &str,
         file_data: Vec<u8>,
-        _src: usize,
+        src: usize,
     ) -> Option<()> {
-        let chunk_size = 64 * 1024;
-        let total_chunks = (file_data.len() as f64 / chunk_size as f64).ceil() as usize;
+        let total_chunks = (file_data.len() as f64 / MAX_FRAME_SIZE as f64).ceil() as usize;
+        let max_retries = 3;
+        let delay_between_chunks = std::time::Duration::from_millis(10);
 
-        let mut room = self.take_room(session_id, room_name)?;
+        let rooms = self.rooms.get_mut(session_id)?;
+        let room = rooms.get_mut(room_name)?;
 
-        for (id, client) in room.drain() {
-            for (i, chunk) in file_data.chunks(chunk_size).enumerate() {
-                let encoded_chunk = general_purpose::STANDARD.encode(chunk);
+        let client_ids: Vec<usize> = room.keys().cloned().collect();
 
-                log::debug!(
-                    "Sending chunk {} of {} for file {} to client {} in room {}",
-                    i + 1,
-                    total_chunks,
-                    file_name,
-                    id,
-                    room_name
-                );
-
-                let chat_message = format!(
-                    "[SystemFileChunk]:{}:{}:{}:{}:{}",
-                    file_name,
-                    mime_type,
-                    i + 1,
-                    total_chunks,
-                    encoded_chunk
-                );
-
-                if client.recipient.try_send(ChatMessage(chat_message)).is_ok() {
-                    self.add_client_to_room(
-                        session_id,
-                        room_name,
-                        Some(id),
-                        client.recipient.clone(),
-                        client.name.clone(),
+        for id in client_ids {
+            if let Some(client) = room.get(&id) {
+                if id == src {
+                    log::debug!(
+                        "Sending confirmation to sender {} in room {}",
+                        id,
+                        room_name
                     );
+                    client
+                        .recipient
+                        .try_send(ChatMessage(format!(
+                            "[SystemAck]: File '{}' sent successfully.",
+                            file_name
+                        )))
+                        .ok();
+                    continue;
+                }
+
+                let mut success = true;
+
+                for (i, chunk) in file_data.chunks(MAX_FRAME_SIZE).enumerate() {
+                    let encoded_chunk = general_purpose::STANDARD.encode(chunk);
+
+                    log::debug!(
+                        "Sending chunk {} of {} for file {} to client {} in room {}",
+                        i + 1,
+                        total_chunks,
+                        file_name,
+                        id,
+                        room_name
+                    );
+
+                    let chat_message = format!(
+                        "[SystemFileChunk]:{}:{}:{}:{}:{}",
+                        file_name,
+                        mime_type,
+                        i + 1,
+                        total_chunks,
+                        encoded_chunk
+                    );
+
+                    let mut retries = 0;
+                    while retries < max_retries {
+                        if client
+                            .recipient
+                            .try_send(ChatMessage(chat_message.clone()))
+                            .is_ok()
+                        {
+                            break;
+                        } else {
+                            retries += 1;
+                            log::warn!(
+                                "Failed to send chunk {} of file {} to client {}, retrying ({}/{})",
+                                i + 1,
+                                file_name,
+                                id,
+                                retries,
+                                max_retries
+                            );
+                            std::thread::sleep(delay_between_chunks);
+                        }
+                    }
+
+                    if retries == max_retries {
+                        log::warn!(
+                            "Failed to send chunk {} of file {} to client {} after {} retries, removing from room: {}",
+                            i + 1,
+                            file_name,
+                            id,
+                            max_retries,
+                            room_name
+                        );
+                        success = false;
+                        break;
+                    }
+
+                    std::thread::sleep(delay_between_chunks);
+                }
+
+                if !success {
+                    room.remove(&id);
                 }
             }
         }
