@@ -1245,6 +1245,7 @@ version = "0.1.2"
 dependencies = [
  "actix",
  "actix-broker",
+ "actix-http",
  "actix-rt",
  "actix-web",
  "actix-web-actors",
