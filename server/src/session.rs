@@ -7,44 +7,8 @@ use names::Generator;
 
 use crate::{
     error::ServerError,
-    message::{
-        FileChunkMetadata, FileReassembler, JoinRoom, LeaveRoom, ListRooms, SendFile, SendMessage,
-        WsChatServer, WsChatSession,
-    },
+    message::{JoinRoom, LeaveRoom, ListRooms, SendFile, SendMessage, WsChatServer, WsChatSession},
 };
-
-impl FileReassembler {
-    pub fn new(total_chunks: usize) -> Self {
-        FileReassembler {
-            chunks: HashMap::new(),
-            total_chunks,
-        }
-    }
-
-    pub fn add_chunk(&mut self, index: usize, data: Vec<u8>) -> Result<(), ServerError> {
-        if index >= self.total_chunks {
-            return Err(ServerError::IndexOutOfBounds);
-        }
-        self.chunks.insert(index, data);
-        Ok(())
-    }
-
-    pub fn is_complete(&self) -> bool {
-        self.chunks.len() == self.total_chunks
-    }
-
-    pub fn reassemble(&self) -> Result<Vec<u8>, ServerError> {
-        let mut file_data = Vec::new();
-        for i in 0..self.total_chunks {
-            if let Some(chunk) = self.chunks.get(&i) {
-                file_data.extend(chunk);
-            } else {
-                return Err(ServerError::ChunkMissing);
-            }
-        }
-        Ok(file_data)
-    }
-}
 
 impl WsChatSession {
     pub fn new(session_id: &str) -> Self {
@@ -114,7 +78,7 @@ impl WsChatSession {
         self.issue_system_async(msg);
     }
 
-    fn send_file(&self, file_name: &str, mime_type: &str, file_data: &[u8]) {
+    pub fn send_file(&self, file_name: &str, mime_type: &str, file_data: &[u8]) {
         let msg = SendFile(
             self.session_id.clone(),
             self.room.clone(),
@@ -127,78 +91,42 @@ impl WsChatSession {
         self.issue_system_async(msg);
     }
 
-    fn handle_file_chunk(
+    fn user_command(
         &mut self,
-        chunk_metadata: FileChunkMetadata,
-        chunk_data: Vec<u8>,
-    ) -> Result<(), ServerError> {
-        let reassembler = self
-            .file_reassemblers
-            .entry(chunk_metadata.file_name.clone())
-            .or_insert_with(|| FileReassembler::new(chunk_metadata.total_chunks));
+        mut command: std::str::SplitN<'_, char>,
+        msg: &str,
+        ctx: &mut ws::WebsocketContext<WsChatSession>,
+    ) {
+        match command.next() {
+            Some("/list") => {
+                log::debug!("Received list command");
+                self.list_rooms(ctx)
+            }
 
-        reassembler.add_chunk(chunk_metadata.current_chunk, chunk_data)?;
-
-        if reassembler.is_complete() {
-            let file_data = reassembler.reassemble()?;
-            self.send_file(
-                &chunk_metadata.file_name,
-                &chunk_metadata.mime_type,
-                &file_data,
-            );
-            self.file_reassemblers.remove(&chunk_metadata.file_name);
-        }
-
-        Ok(())
-    }
-
-    fn handle_binary_message(&mut self, bin: &[u8], ctx: &mut ws::WebsocketContext<Self>) {
-        match self.split_metadata_and_data(bin) {
-            Ok((metadata, chunk_data)) => {
-                log::debug!("Received file chunk");
-                match serde_json::from_slice::<FileChunkMetadata>(&metadata) {
-                    Ok(chunk_metadata) => {
-                        log::debug!(
-                            "Received chunk {} of file {} (total chunks: {})",
-                            chunk_metadata.current_chunk,
-                            chunk_metadata.file_name,
-                            chunk_metadata.total_chunks
-                        );
-
-                        if let Err(e) = self.handle_file_chunk(chunk_metadata, chunk_data) {
-                            log::error!("Failed to process file chunk: {:?}", e);
-                            ctx.text(format!(
-                                "[SystemError] Error processing file chunk: {}",
-                                e
-                            ));
-                        }
-                    }
-                    Err(e) => {
-                        log::error!("Failed to parse file chunk metadata: {:?}", e);
-                        ctx.text(format!(
-                            "[SystemError] Error: {:?}",
-                            ServerError::MetadataParsingError
-                        ));
-                    }
+            Some("/join") => {
+                if let Some(room_name) = command.next() {
+                    log::debug!("Received join command");
+                    self.join_room(room_name, ctx);
+                } else {
+                    ctx.text(format!(
+                        "[SystemError] Room name is required: {}",
+                        ServerError::InternalServerError
+                    ))
                 }
             }
-            Err(e) => {
-                log::error!("Invalid file message format: {:?}", e);
-                ctx.text(format!(
-                    "[SystemError] Error: {:?}",
-                    ServerError::InvalidFile
-                ));
-            }
-        }
-    }
 
-    fn split_metadata_and_data(&self, bin: &[u8]) -> Result<(Vec<u8>, Vec<u8>), ServerError> {
-        if let Some(pos) = bin.iter().position(|&byte| byte == 0) {
-            let metadata = bin[..pos].to_vec();
-            let data = bin[pos + 1..].to_vec();
-            Ok((metadata, data))
-        } else {
-            Err(ServerError::MetadataParsingError)
+            Some("/name") => {
+                log::debug!("Received name command");
+                ctx.text(format!("[SystemName]: {}", self.name))
+            }
+
+            _ => {
+                log::error!("Unknown command: {}", msg);
+                ctx.text(format!(
+                    "[SystemError] Error Unknown command: {}",
+                    ServerError::NotFound
+                ))
+            }
         }
     }
 
@@ -206,26 +134,6 @@ impl WsChatSession {
         let leave_msg = LeaveRoom(self.session_id.clone(), self.room.clone(), self.id);
         self.issue_system_async(leave_msg);
         log::debug!("User {} disconnected", self.name);
-    }
-}
-
-impl Actor for WsChatSession {
-    type Context = ws::WebsocketContext<Self>;
-
-    fn started(&mut self, ctx: &mut Self::Context) {
-        self.id = rand::random::<usize>();
-        log::debug!("Session started for {} with ID {}", self.name, self.id);
-
-        self.join_room("main", ctx);
-    }
-
-    fn stopped(&mut self, _ctx: &mut Self::Context) {
-        log::debug!(
-            "WsChatSession closed for {}({}) in room {}",
-            self.name.clone(),
-            self.id,
-            self.room
-        );
     }
 }
 
@@ -252,39 +160,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 if msg.contains("[UserCommand]") {
                     let msg = msg.replace("[UserCommand]", "").trim().to_string();
                     if msg.starts_with("/") {
-                        let mut command = msg.splitn(2, ' ');
-
-                        match command.next() {
-                            Some("/list") => {
-                                log::debug!("Received list command");
-                                self.list_rooms(ctx)
-                            }
-
-                            Some("/join") => {
-                                if let Some(room_name) = command.next() {
-                                    log::debug!("Received join command");
-                                    self.join_room(room_name, ctx);
-                                } else {
-                                    ctx.text(format!(
-                                        "[SystemError] Room name is required: {}",
-                                        ServerError::InternalServerError
-                                    ))
-                                }
-                            }
-
-                            Some("/name") => {
-                                log::debug!("Received name command");
-                                ctx.text(format!("[SystemName]: {}", self.name))
-                            }
-
-                            _ => {
-                                log::error!("Unknown command: {}", msg);
-                                ctx.text(format!(
-                                    "[SystemError] Error Unknown command: {}",
-                                    ServerError::NotFound
-                                ))
-                            }
-                        }
+                        let command = msg.splitn(2, ' ');
+                        self.user_command(command, &msg, ctx);
                     }
                     return;
                 } else if msg.contains("[UserMessage]") {
