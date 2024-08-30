@@ -1,37 +1,40 @@
 import { Injectable } from "@angular/core";
 import { BehaviorSubject } from "rxjs";
 import { environment } from "../../environments/environment";
+import { LoggerService } from "./logger.service";
 
 @Injectable({
   providedIn: "root",
 })
 export class WebsocketService {
-  public message$: BehaviorSubject<string> = new BehaviorSubject("");
-  public rooms$: BehaviorSubject<string[]> = new BehaviorSubject([""]);
-  public members$: BehaviorSubject<string[]> = new BehaviorSubject([""]);
-  public uploadProgress$: BehaviorSubject<number> = new BehaviorSubject(0);
+  public message$ = new BehaviorSubject<string>("");
+  public rooms$ = new BehaviorSubject<string[]>([""]);
+  public members$ = new BehaviorSubject<string[]>([""]);
+  public uploadProgress$ = new BehaviorSubject<number>(0);
+  public downloadProgress$ = new BehaviorSubject<number>(0);
 
   private socket: WebSocket | undefined;
   private worker: Worker | undefined;
+  private fileChunks = new Map<string, { chunks: string[], totalChunks: number }>();
 
-  public user: string = "user";
-  private room: string = "main";
+  public user = "user";
+  private room = "main";
 
   private webSocketProto = "wss";
   private host = environment.apiUrl;
 
-  private CHUNK_SIZE = 16 * 1024;
+  private CHUNK_SIZE = 32 * 1024;
 
   private wsUri = `${this.webSocketProto}://${this.host}/ws`;
 
-  constructor() {}
+  constructor(private logger: LoggerService) {}
 
   public connect(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this.socket = new WebSocket(this.wsUri);
 
       this.socket.onopen = () => {
-        this.log("Connected", false);
+        this.logger.log("Connected");
         this.getUsername();
         resolve();
       };
@@ -47,43 +50,40 @@ export class WebsocketService {
           }
         } else if (ev.data instanceof Blob) {
           const blob = ev.data;
-          this.log(`Received attachment: ${blob.size} bytes`, false);
+          this.logger.log(`Received attachment: ${blob.size} bytes`);
           return;
         }
       };
 
       this.socket.onclose = (event) => {
         this.sendUserDisconnected();
-        this.log(
-          `Disconnected with code: ${event.code}, reason: ${event.reason}`,
-          false
-        );
+        this.logger.log(`Disconnected with code: ${event.code}, reason: ${event.reason}`);
         setTimeout(() => this.reconnect(), 1000);
       };
 
       this.socket.onerror = (error) => {
-        this.log("WebSocket Error: " + error, false);
+        this.logger.log("WebSocket Error: " + error);
         reject(error);
       };
     });
   }
 
   private reconnect() {
-    console.log("Attempting to reconnect...");
+    this.logger.log("Attempting to reconnect...");
     this.connect().catch((err) => console.error("Reconnection failed: ", err));
   }
 
   private sendUserDisconnected(): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(`[UserDisconnected] ${this.user}`);
-      this.log(`Sent disconnect notification for user: ${this.user}`, false);
+      this.logger.log(`Sent disconnect notification for user: ${this.user}`);
     }
   }
 
   private getUsername(): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(`[UserCommand] /name`);
-      this.log(`get username`, false);
+      this.logger.log(`get username`);
     }
   }
 
@@ -93,14 +93,13 @@ export class WebsocketService {
       this.socket.readyState === WebSocket.OPEN &&
       message.trim()
     ) {
-      this.log(`${this.user}: ${message}`, false);
+      this.logger.log(`${this.user}: ${message}`);
       this.socket.send(message.trim());
     } else {
-      this.log(
+      this.logger.log(
         "WebSocket is not open or message is empty. Ready state: " +
-          this.socket?.readyState,
-        false
-      );
+          this.socket?.readyState
+        );
     }
   }
 
@@ -117,12 +116,7 @@ export class WebsocketService {
             console.error(`File at index ${currentFileIndex} is undefined.`);
             return;
           }
-
-          this.log(
-            `Starting upload for file: ${file.name} (${file.size} bytes)`,
-            false
-          );
-
+          this.logger.log( `Starting upload for file: ${file.name} (${file.size} bytes)`);
           this.sendSingleFile(file, () => {
             currentFileIndex++;
             processNextFile();
@@ -132,10 +126,7 @@ export class WebsocketService {
 
       processNextFile();
     } else {
-      this.log(
-        "WebSocket is not open. Ready state: " + this.socket?.readyState,
-        false
-      );
+      this.logger.log("WebSocket is not open. Ready state: " + this.socket?.readyState);
     }
   }
 
@@ -159,7 +150,7 @@ export class WebsocketService {
             sendNextChunk();
           } else {
             this.uploadProgress$.next(100);
-            this.log(`File sent: ${file.name}`, false);
+            this.logger.log(`File sent: ${file.name}`);
             this.resetProgressAfterDelay();
             callback();
           }
@@ -238,31 +229,26 @@ export class WebsocketService {
   private resetProgressAfterDelay(): void {
     setTimeout(() => {
       this.uploadProgress$.next(0);
+      this.downloadProgress$.next(0);
     }, 2000);
   }
 
   public listRooms(): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      let message = "[UserCommand] /list";
+      const message = "[UserCommand] /list";
       this.socket.send(message);
     } else {
-      this.log(
-        "WebSocket is not open. Ready state: " + this.socket?.readyState,
-        false
-      );
+      this.logger.log("WebSocket is not open. Ready state: " + this.socket?.readyState);
     }
   }
 
   public joinRoom(room: string): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.message$.next(`Leaving room: ${this.room}, joining room: ${room}`);
-      let message = `[UserCommand] /join ${room}`;
+      const message = `[UserCommand] /join ${room}`;
       this.socket.send(message);
     } else {
-      this.log(
-        "WebSocket is not open. Ready state: " + this.socket?.readyState,
-        false
-      );
+      this.logger.log("WebSocket is not open. Ready state: " + this.socket?.readyState);
     }
   }
 
@@ -272,6 +258,7 @@ export class WebsocketService {
       message.includes("[SystemJoin]") ||
       message.includes("[SystemRooms]") ||
       message.includes("[SystemFile]") ||
+      message.includes("[SystemFileChunk]") ||
       message.includes("[SystemAck]") ||
       message.includes("[SystemMembers]") ||
       message.includes("[SystemName]")
@@ -279,8 +266,8 @@ export class WebsocketService {
   }
 
   private handleSystemMessage(message: string): void {
-    console.log("System message:", message);
     if (message.startsWith("[SystemAck]:")) {
+      this.logger.log("Received ack from server");
       this.message$.next("File uploaded successfully");
       return;
     }
@@ -288,19 +275,21 @@ export class WebsocketService {
     const matchName = message.match(/\[SystemName\]\s*:\s*(.*?)$/);
     if (matchName && matchName[1]) {
       const userName = matchName[1].trim();
-      console.log("Username updated from:", this.user, "to:", userName);
+      this.logger.log(`Username updated from: ${this.user}, to: ${userName}`);
       this.user = userName;
       return;
     }
 
     const matchJoin = message.match(/^(.*?)\s*\[SystemJoin\]\s*(.*?)$/);
     if (matchJoin) {
+      this.logger.log(`User joined room ${matchJoin[2]}`);
       this.room = matchJoin[2];
       return;
     }
 
     const matchRooms = message.match(/\[SystemRooms\]:\s*(.*?)$/);
     if (matchRooms) {
+      this.logger.log(`Rooms: ${matchRooms[1]}`);
       this.rooms$.next(
         matchRooms[1].split(",").map((room: string) => room.trim())
       );
@@ -309,33 +298,29 @@ export class WebsocketService {
 
     const matchMeber = message.match(/\[SystemMembers\]:\s*(.*?)$/);
     if (matchMeber) {
+      this.logger.log(`Members: ${matchMeber[1]}`);
       this.members$.next(
         matchMeber[1].split(",").map((room: string) => room.trim())
       );
       return;
     }
 
-    const matchFiles = message.match(/\[SystemFile]:([^:]+):([^:]+):(.+)/);
-    if (matchFiles) {
-      const fileName = matchFiles[1];
-      const mimeType = matchFiles[2];
-      const base64Data = matchFiles[3];
+    const matchFileChunk = message.match(/\[SystemFileChunk\]:(.*?):(.*?):(\d+):(\d+):(.+)/);
+    if (matchFileChunk) {
+      this.logger.log("Received file chunk");
+      const fileName = matchFileChunk[1];
+      const mimeType = matchFileChunk[2];
+      const currentChunk = parseInt(matchFileChunk[3], 10);
+      const totalChunks = parseInt(matchFileChunk[4], 10);
+      const base64Data = matchFileChunk[5];
 
-      const binaryData = atob(base64Data);
-      const len = binaryData.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binaryData.charCodeAt(i);
-      }
-
-      const blob = new Blob([bytes], { type: mimeType });
-
-      this.showFile(blob, fileName);
+      this.receiveFileChunk(fileName, mimeType, currentChunk, totalChunks, base64Data);
       return;
     }
 
     const matchSystemError = message.replace(/^\[SystemError\]\s*/, "");
     if (matchSystemError) {
+      this.logger.log(`System Error: ${matchSystemError}`);
       console.error(`System Error: ${matchSystemError}`);
       return;
     }
@@ -343,11 +328,54 @@ export class WebsocketService {
     console.error("Unhandled system message:", message);
   }
 
-  private showFile(blob: Blob, fileName: string): void {
+  private receiveFileChunk(
+    fileName: string,
+    mimeType: string,
+    currentChunk: number,
+    totalChunks: number,
+    base64Data: string
+  ): void {
+    if (!this.fileChunks.has(fileName)) {
+      this.fileChunks.set(fileName, { chunks: new Array(totalChunks), totalChunks });
+    }
+
+    const fileData = this.fileChunks.get(fileName);
+    if (!fileData) return;
+
+    fileData.chunks[currentChunk - 1] = base64Data;
+    this.logger.log(`Received chunk ${currentChunk}/${totalChunks} for file: ${fileName}`);
+
+    const receivedChunksCount = fileData.chunks.filter(chunk => !!chunk).length;
+    const progress = Math.floor((receivedChunksCount / totalChunks) * 100);
+    this.downloadProgress$.next(progress);
+
+    if (fileData.chunks.filter(chunk => !!chunk).length === totalChunks) {
+      this.logger.log(`All chunks received for file: ${fileName}. Reassembling...`);
+      this.assembleAndDownloadFile(fileName, mimeType, fileData.chunks);
+      this.fileChunks.delete(fileName);
+      this.downloadProgress$.next(100);
+
+      this.resetProgressAfterDelay();
+    }
+  }
+
+  private assembleAndDownloadFile(fileName: string, mimeType: string, chunks: string[]): void {
+    const byteArrays = chunks.map(chunk => {
+      const binaryString = atob(chunk);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes;
+    });
+
+    const blob = new Blob(byteArrays, { type: mimeType });
+
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = fileName;
-    link.textContent = `${this.user} sent a file: ${fileName} [click to download];`;
+    link.textContent = `${fileName} [click to download]`;
     link.style.display = "block";
     link.style.margin = "10px 0";
 
@@ -361,12 +389,5 @@ export class WebsocketService {
     if (message.trim()) {
       this.message$.next(`${message}`);
     }
-  }
-
-  private log(msg: string, show: boolean): void {
-    if (show) {
-      this.message$.next(`${msg}`);
-    }
-    console.log(`[WebSocket] ${msg}`);
   }
 }

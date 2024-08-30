@@ -7,7 +7,7 @@ import { isPlatformBrowser } from '@angular/common';
 export class ThemeService {
   private readonly THEME_KEY = 'themePreference';
 
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+  constructor(@Inject(PLATFORM_ID) private platformId: object) {}
 
   initializeTheme(): void {
     if (isPlatformBrowser(this.platformId)) {

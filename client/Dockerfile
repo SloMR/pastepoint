@@ -10,14 +10,11 @@ RUN npm ci
 # Copy the rest of the application code
 COPY client/ .
 
-# Build the application
-RUN npm run build --prod
+# Build the application with the Docker configuration
+RUN npm run build -- --configuration=docker
 
 # Stage 2: Serve the application using nginx
 FROM nginx:alpine
-
-# Copy the certificates
-COPY certs /etc/ssl/certs/
 
 # Copy the build output from the builder stage
 COPY --from=builder /usr/src/app/dist/client/browser /usr/share/nginx/html/browser

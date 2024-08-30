@@ -4,30 +4,32 @@ import {
   Inject,
   OnDestroy,
   OnInit,
-  PLATFORM_ID,
+  PLATFORM_ID, AfterViewInit,
 } from "@angular/core";
 import { Subscription } from "rxjs";
 import { isPlatformBrowser } from "@angular/common";
 
 import { ThemeService } from "../../core/services/theme.service";
 import { WebsocketService } from "../../core/services/websocket.service";
+import { LoggerService } from "../../core/services/logger.service";
 
 @Component({
   selector: "app-chat",
   templateUrl: "./chat.component.html",
   styleUrls: ["./chat.component.css"],
 })
-export class ChatComponent implements OnInit, OnDestroy {
-  message: string = "";
-  newRoomName: string = "";
-  uploadProgress: number = 0;
+export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
+  message = "";
+  newRoomName = "";
+  uploadProgress = 0;
+  downloadProgress = 0;
 
   messages: string[] = [];
   rooms: string[] = [];
   members: string[] = [];
 
-  currentRoom: string = "main";
-  isDarkMode: boolean = false;
+  currentRoom = "main";
+  isDarkMode = false;
 
   private messageSubscription: Subscription = new Subscription();
   private roomSubscription: Subscription = new Subscription();
@@ -38,7 +40,8 @@ export class ChatComponent implements OnInit, OnDestroy {
     private chatService: WebsocketService,
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
-    @Inject(PLATFORM_ID) private platformId: Object
+    private logger: LoggerService,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   ngOnInit(): void {
@@ -84,6 +87,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     this.progressSubscription = this.chatService.uploadProgress$.subscribe({
       next: (progress) => {
         this.uploadProgress = progress;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error("WebSocket error:", error);
@@ -92,6 +96,18 @@ export class ChatComponent implements OnInit, OnDestroy {
         console.warn("WebSocket connection closed");
       },
     });
+
+    this.progressSubscription.add(
+      this.chatService.downloadProgress$.subscribe({
+        next: (progress) => {
+          this.downloadProgress = progress;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error("Download Progress error:", error);
+        },
+      })
+    );
 
     if (isPlatformBrowser(this.platformId)) {
       const themePreference = localStorage.getItem("themePreference");
@@ -129,7 +145,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   sendMessage(): void {
     if (this.message.trim()) {
-      let userMessage = "[UserMessage] " + this.message.trim();
+      const userMessage = "[UserMessage] " + this.message.trim();
       this.chatService.sendMessage(userMessage);
       this.message = "";
     }
@@ -144,7 +160,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   listRooms(): void {
-    console.log("Listing rooms");
+    this.logger.log("Listing rooms");
     this.chatService.listRooms();
   }
 

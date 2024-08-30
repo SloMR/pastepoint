@@ -1,4 +1,12 @@
 services:
+  certs-generator:
+    image: alpine
+    entrypoint: /bin/sh -c "apk add --no-cache openssl && /usr/local/bin/generate-certs.sh"
+    volumes:
+      - ssl-certs:/etc/ssl/certs
+      - ./scripts/generate-certs.sh:/usr/local/bin/generate-certs.sh:ro
+    restart: "no"
+
   server:
     build:
       context: .
@@ -9,18 +17,22 @@ services:
       RUST_LOG: "info"
       RUN_ENV: "production"
     volumes:
-      - ./certs:/etc/ssl/certs
+      - ssl-certs:/etc/ssl/certs
+    depends_on:
+      certs-generator:
+        condition: service_completed_successfully
 
   client:
     build:
       context: .
       dockerfile: client/Dockerfile
     ports:
-      - "443:443"  # Nginx will serve over HTTPS on port 443
-    environment:
-      - USE_DOCKER_CERTS=true
-      - SERVER_NAME=127.0.0.1
-    env_file:
-      - .env 
+      - "443:443"
     depends_on:
-      - server
+      server:
+        condition: service_started
+    volumes:
+      - ssl-certs:/etc/ssl/certs
+
+volumes:
+  ssl-certs:
