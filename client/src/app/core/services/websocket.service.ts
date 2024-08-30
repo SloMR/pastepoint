@@ -69,7 +69,7 @@ export class WebsocketService {
   }
 
   private reconnect() {
-    console.log("Attempting to reconnect...");
+    this.log("Attempting to reconnect...", false);
     this.connect().catch((err) => console.error("Reconnection failed: ", err));
   }
 
@@ -279,7 +279,7 @@ export class WebsocketService {
   }
 
   private handleSystemMessage(message: string): void {
-    console.log("System message:", message);
+    this.log(`System message: ${message}`, false);
     if (message.startsWith("[SystemAck]:")) {
       this.message$.next("File uploaded successfully");
       return;
@@ -288,7 +288,7 @@ export class WebsocketService {
     const matchName = message.match(/\[SystemName\]\s*:\s*(.*?)$/);
     if (matchName && matchName[1]) {
       const userName = matchName[1].trim();
-      console.log("Username updated from:", this.user, "to:", userName);
+      this.log(`Username updated from: ${this.user}, to: ${userName}`, false);
       this.user = userName;
       return;
     }
@@ -363,10 +363,13 @@ export class WebsocketService {
     }
   }
 
-  private log(msg: string, show: boolean): void {
+  public log(msg: string, show: boolean): void {
+    if (environment.production === false) {
+      console.log(`[WebSocket] ${msg}`);
+    }
+
     if (show) {
       this.message$.next(`${msg}`);
     }
-    console.log(`[WebSocket] ${msg}`);
   }
 }

@@ -144,7 +144,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   listRooms(): void {
-    console.log("Listing rooms");
+    this.chatService.log("Listing rooms", false);
     this.chatService.listRooms();
   }
 
