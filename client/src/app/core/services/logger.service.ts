@@ -5,9 +5,7 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class LoggerService {
-  constructor() { }
-
-  public log(msg: any, show: boolean): void {
+  public log(msg: string): void {
     if (environment.production === false) {
       console.log(`[WebSocket] ${msg}`);
       console.log(new Date() + " [WebSocket]: " + JSON.stringify(msg));

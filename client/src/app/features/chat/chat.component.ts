@@ -4,7 +4,7 @@ import {
   Inject,
   OnDestroy,
   OnInit,
-  PLATFORM_ID,
+  PLATFORM_ID, AfterViewInit,
 } from "@angular/core";
 import { Subscription } from "rxjs";
 import { isPlatformBrowser } from "@angular/common";
@@ -18,17 +18,17 @@ import { LoggerService } from "../../core/services/logger.service";
   templateUrl: "./chat.component.html",
   styleUrls: ["./chat.component.css"],
 })
-export class ChatComponent implements OnInit, OnDestroy {
-  message: string = "";
-  newRoomName: string = "";
-  uploadProgress: number = 0;
+export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
+  message = "";
+  newRoomName = "";
+  uploadProgress = 0;
 
   messages: string[] = [];
   rooms: string[] = [];
   members: string[] = [];
 
-  currentRoom: string = "main";
-  isDarkMode: boolean = false;
+  currentRoom = "main";
+  isDarkMode = false;
 
   private messageSubscription: Subscription = new Subscription();
   private roomSubscription: Subscription = new Subscription();
@@ -40,7 +40,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
-    @Inject(PLATFORM_ID) private platformId: Object
+    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   ngOnInit(): void {
@@ -131,7 +131,7 @@ export class ChatComponent implements OnInit, OnDestroy {
 
   sendMessage(): void {
     if (this.message.trim()) {
-      let userMessage = "[UserMessage] " + this.message.trim();
+      const userMessage = "[UserMessage] " + this.message.trim();
       this.chatService.sendMessage(userMessage);
       this.message = "";
     }
@@ -146,7 +146,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   listRooms(): void {
-    this.logger.log("Listing rooms", false);
+    this.logger.log("Listing rooms");
     this.chatService.listRooms();
   }
 

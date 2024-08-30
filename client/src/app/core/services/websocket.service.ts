@@ -7,16 +7,16 @@ import { LoggerService } from "./logger.service";
   providedIn: "root",
 })
 export class WebsocketService {
-  public message$: BehaviorSubject<string> = new BehaviorSubject("");
-  public rooms$: BehaviorSubject<string[]> = new BehaviorSubject([""]);
-  public members$: BehaviorSubject<string[]> = new BehaviorSubject([""]);
-  public uploadProgress$: BehaviorSubject<number> = new BehaviorSubject(0);
+  public message$ = new BehaviorSubject<string>("");
+  public rooms$ = new BehaviorSubject<string[]>([""]);
+  public members$ = new BehaviorSubject<string[]>([""]);
+  public uploadProgress$ = new BehaviorSubject<number>(0);
 
   private socket: WebSocket | undefined;
   private worker: Worker | undefined;
 
-  public user: string = "user";
-  private room: string = "main";
+  public user = "user";
+  private room = "main";
 
   private webSocketProto = "wss";
   private host = environment.apiUrl;
@@ -32,7 +32,7 @@ export class WebsocketService {
       this.socket = new WebSocket(this.wsUri);
 
       this.socket.onopen = () => {
-        this.logger.log("Connected", false);
+        this.logger.log("Connected");
         this.getUsername();
         resolve();
       };
@@ -48,43 +48,40 @@ export class WebsocketService {
           }
         } else if (ev.data instanceof Blob) {
           const blob = ev.data;
-          this.logger.log(`Received attachment: ${blob.size} bytes`, false);
+          this.logger.log(`Received attachment: ${blob.size} bytes`);
           return;
         }
       };
 
       this.socket.onclose = (event) => {
         this.sendUserDisconnected();
-        this.logger.log(
-          `Disconnected with code: ${event.code}, reason: ${event.reason}`,
-          false
-        );
+        this.logger.log(`Disconnected with code: ${event.code}, reason: ${event.reason}`);
         setTimeout(() => this.reconnect(), 1000);
       };
 
       this.socket.onerror = (error) => {
-        this.logger.log("WebSocket Error: " + error, false);
+        this.logger.log("WebSocket Error: " + error);
         reject(error);
       };
     });
   }
 
   private reconnect() {
-    this.logger.log("Attempting to reconnect...", false);
+    this.logger.log("Attempting to reconnect...");
     this.connect().catch((err) => console.error("Reconnection failed: ", err));
   }
 
   private sendUserDisconnected(): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(`[UserDisconnected] ${this.user}`);
-      this.logger.log(`Sent disconnect notification for user: ${this.user}`, false);
+      this.logger.log(`Sent disconnect notification for user: ${this.user}`);
     }
   }
 
   private getUsername(): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(`[UserCommand] /name`);
-      this.logger.log(`get username`, false);
+      this.logger.log(`get username`);
     }
   }
 
@@ -94,14 +91,13 @@ export class WebsocketService {
       this.socket.readyState === WebSocket.OPEN &&
       message.trim()
     ) {
-      this.logger.log(`${this.user}: ${message}`, false);
+      this.logger.log(`${this.user}: ${message}`);
       this.socket.send(message.trim());
     } else {
       this.logger.log(
         "WebSocket is not open or message is empty. Ready state: " +
-          this.socket?.readyState,
-        false
-      );
+          this.socket?.readyState
+        );
     }
   }
 
@@ -118,12 +114,7 @@ export class WebsocketService {
             console.error(`File at index ${currentFileIndex} is undefined.`);
             return;
           }
-
-          this.logger.log(
-            `Starting upload for file: ${file.name} (${file.size} bytes)`,
-            false
-          );
-
+          this.logger.log( `Starting upload for file: ${file.name} (${file.size} bytes)`);
           this.sendSingleFile(file, () => {
             currentFileIndex++;
             processNextFile();
@@ -133,10 +124,7 @@ export class WebsocketService {
 
       processNextFile();
     } else {
-      this.logger.log(
-        "WebSocket is not open. Ready state: " + this.socket?.readyState,
-        false
-      );
+      this.logger.log("WebSocket is not open. Ready state: " + this.socket?.readyState);
     }
   }
 
@@ -160,7 +148,7 @@ export class WebsocketService {
             sendNextChunk();
           } else {
             this.uploadProgress$.next(100);
-            this.logger.log(`File sent: ${file.name}`, false);
+            this.logger.log(`File sent: ${file.name}`);
             this.resetProgressAfterDelay();
             callback();
           }
@@ -244,27 +232,20 @@ export class WebsocketService {
 
   public listRooms(): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
-      let message = "[UserCommand] /list";
+      const message = "[UserCommand] /list";
       this.socket.send(message);
     } else {
-      this.logger.log(
-        "WebSocket is not open. Ready state: " + this.socket?.readyState,
-        false
-      );
+      this.logger.log("WebSocket is not open. Ready state: " + this.socket?.readyState);
     }
   }
 
   public joinRoom(room: string): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.message$.next(`Leaving room: ${this.room}, joining room: ${room}`);
-      let message = `[UserCommand] /join ${room}`;
+      const message = `[UserCommand] /join ${room}`;
       this.socket.send(message);
     } else {
-      this
-      this.logger.log(
-        "WebSocket is not open. Ready state: " + this.socket?.readyState,
-        false
-      );
+      this.logger.log("WebSocket is not open. Ready state: " + this.socket?.readyState);
     }
   }
 
@@ -281,7 +262,7 @@ export class WebsocketService {
   }
 
   private handleSystemMessage(message: string): void {
-    this.logger.log(`System message: ${message}`, false);
+    this.logger.log(`System message: ${message}`);
     if (message.startsWith("[SystemAck]:")) {
       this.message$.next("File uploaded successfully");
       return;
@@ -290,7 +271,7 @@ export class WebsocketService {
     const matchName = message.match(/\[SystemName\]\s*:\s*(.*?)$/);
     if (matchName && matchName[1]) {
       const userName = matchName[1].trim();
-      this.logger.log(`Username updated from: ${this.user}, to: ${userName}`, false);
+      this.logger.log(`Username updated from: ${this.user}, to: ${userName}`);
       this.user = userName;
       return;
     }

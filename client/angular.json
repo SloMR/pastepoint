@@ -95,8 +95,8 @@
             "development": {
               "buildTarget": "client:build:development",
               "ssl": true,
-              "sslKey": "../certs/key.pem",
-              "sslCert": "../certs/cert.pem",
+              "sslKey": "../../../../../certs/key.pem",
+              "sslCert": "../../../../../certs/cert.pem",
               "port": 443
             },
             "docker": {
@@ -132,8 +132,22 @@
             ],
             "scripts": []
           }
+        },
+        "lint": {
+          "builder": "@angular-eslint/builder:lint",
+          "options": {
+            "lintFilePatterns": [
+              "src/**/*.ts",
+              "src/**/*.html"
+            ]
+          }
         }
       }
     }
+  },
+  "cli": {
+    "schematicCollections": [
+      "@angular-eslint/schematics"
+    ]
   }
 }
