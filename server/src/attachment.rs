@@ -5,7 +5,7 @@ use base64::{engine::general_purpose, Engine as _};
 
 use crate::{
     message::FileChunkMetadata, ChatMessage, FileReassembler, ServerError, WsChatServer,
-    WsChatSession, MAX_FRAME_SIZE
+    WsChatSession, MAX_FRAME_SIZE,
 };
 
 impl FileReassembler {

@@ -163,7 +163,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         let command = msg.splitn(2, ' ');
                         self.user_command(command, &msg, ctx);
                     }
-                    return;
                 } else if msg.contains("[UserMessage]") {
                     self.send_msg(msg);
                 } else if msg.contains("[UserDisconnected]") {
