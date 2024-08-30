@@ -1,4 +1,5 @@
 <div class="chat-container" [ngClass]="{'dark-mode': isDarkMode}">
+  <!-- Header -->
   <mat-toolbar color="primary" class="chat-header">
     <span>PastePoint Chat</span>
     <button mat-icon-button (click)="toggleTheme()" class="theme-toggle">
@@ -6,30 +7,31 @@
     </button>
   </mat-toolbar>
 
+  <!-- Main Content -->
   <div class="chat-main">
     <div class="chat-sidebar">
       <h5 class="sidebar-title">Available Rooms</h5>
       <mat-list class="room-list">
         <mat-list-item *ngFor="let room of rooms" [class.active]="room === currentRoom">
-          <button
-            mat-button
-            (click)="joinRoom(room)"
-            [disabled]="room === currentRoom"
-          >
+          <button mat-button (click)="joinRoom(room)" [disabled]="room === currentRoom">
             {{ room }}
           </button>
         </mat-list-item>
       </mat-list>
 
+      <!-- Create/Join Room Form -->
       <div class="room-form">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>New Room Name</mat-label>
           <input matInput [(ngModel)]="newRoomName" name="newRoomName" />
         </mat-form-field>
-        <button mat-raised-button color="accent" (click)="createRoom()" class="join-room-button">Join/Create Room</button>
+        <button mat-raised-button color="accent" (click)="createRoom()" class="join-room-button">
+          Join/Create Room
+        </button>
       </div>
 
-      <h5 class="sidebar-title" style="margin-top: 20px;">Joined members</h5>
+      <!-- Joined Members List -->
+      <h5 class="sidebar-title" style="margin-top: 20px;">Joined Members</h5>
       <mat-list class="room-list">
         <mat-list-item *ngFor="let member of members">
           <div class="member-item">
@@ -40,14 +42,15 @@
       </mat-list>
     </div>
 
+    <!-- Chat Messages Area -->
     <div class="chat-messages">
-      <div *ngFor="let msg of messages" class="message" [ngClass]="{'my-message': isMyMessage(msg)}">
-        <mat-icon *ngIf="isMyMessage(msg)" class="user-icon">account_circle</mat-icon>
-        <p [innerHTML]="msg"></p>
+      <div *ngFor="let msg of messages">
+        <p [class.my-message]="isMyMessage(msg)">{{ msg }}</p>
       </div>
     </div>
   </div>
 
+  <!-- Chat Footer with Message Input and File Attachment -->
   <div class="chat-footer">
     <form (submit)="sendMessage(); $event.preventDefault();" class="message-form">
       <mat-form-field appearance="outline" class="message-input">
@@ -60,17 +63,29 @@
           required
         />
       </mat-form-field>
+      
+      <!-- File Attachment Button -->
       <button mat-icon-button color="primary" type="button" (click)="fileInput.click()" class="send-button" style="margin: 10px;">
         <mat-icon>attach_file</mat-icon>
       </button>
       <input type="file" #fileInput (change)="sendAttachments($event)" multiple style="display: none;" />
+      
+      <!-- Send Message Button -->
       <button mat-icon-button color="primary" type="submit" class="send-button">
         <mat-icon>send</mat-icon>
       </button>
     </form>
   </div>
-  <div *ngIf="uploadProgress > 0">
-    <p *ngIf="uploadProgress < 100">Upload progress: {{ uploadProgress }}%</p>
-    <p *ngIf="uploadProgress === 100">Upload complete!</p>
+
+  <!-- Upload Progress Indicator -->
+  <div *ngIf="uploadProgress > 0" class="progress-bar">
+    <span>Upload Progress: {{ uploadProgress }}%</span>
+    <progress [value]="uploadProgress" max="100"></progress>
+  </div>
+
+  <!-- Download Progress Indicator -->
+  <div *ngIf="downloadProgress > 0" class="progress-bar">
+    <span>Download Progress: {{ downloadProgress }}%</span>
+    <progress [value]="downloadProgress" max="100"></progress>
   </div>
 </div>

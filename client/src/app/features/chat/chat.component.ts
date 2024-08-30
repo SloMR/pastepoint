@@ -22,6 +22,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   message = "";
   newRoomName = "";
   uploadProgress = 0;
+  downloadProgress = 0;
 
   messages: string[] = [];
   rooms: string[] = [];
@@ -86,6 +87,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.progressSubscription = this.chatService.uploadProgress$.subscribe({
       next: (progress) => {
         this.uploadProgress = progress;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         console.error("WebSocket error:", error);
@@ -94,6 +96,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         console.warn("WebSocket connection closed");
       },
     });
+
+    this.progressSubscription.add(
+      this.chatService.downloadProgress$.subscribe({
+        next: (progress) => {
+          this.downloadProgress = progress;
+          this.cdr.detectChanges();
+        },
+        error: (error) => {
+          console.error("Download Progress error:", error);
+        },
+      })
+    );
 
     if (isPlatformBrowser(this.platformId)) {
       const themePreference = localStorage.getItem("themePreference");
