@@ -25,7 +25,7 @@ async fn chat_ws(
     if let Some(ip) = req.peer_addr() {
         log::info!("Peer address: {}", &ip.ip().to_string());
         let network = &ip.ip().to_string();
-        let uuid = manager.get_or_create_uuid(&network);
+        let uuid = manager.get_or_create_uuid(network);
         log::info!("Assigned UUID for {}: {}", &network, &uuid);
 
         ws::WsResponseBuilder::new(WsChatSession::new(&uuid), &req, stream)

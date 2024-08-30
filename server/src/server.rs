@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-
+use std::collections::hash_map::Entry::Vacant;
 use actix::prelude::*;
 
 use crate::message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer};
@@ -25,21 +25,18 @@ impl WsChatServer {
 
         if let Some(room) = self.rooms.get_mut(session_id) {
             if let Some(existing_room) = room.get_mut(room_name) {
-                if existing_room.contains_key(&id) {
+                if let Vacant(e) = existing_room.entry(id) {
+                    log::debug!("Adding client to room: {}", room_name);
+                    e.insert(ClientMetadata {
+                        recipient: client,
+                        name,
+                    });
+                    return id;
+                } else {
                     log::debug!(
                         "Client {} already in room: {}, skipping addition",
                         id,
                         room_name
-                    );
-                    return id;
-                } else {
-                    log::debug!("Adding client to room: {}", room_name);
-                    existing_room.insert(
-                        id,
-                        ClientMetadata {
-                            recipient: client,
-                            name,
-                        },
                     );
                     return id;
                 }
@@ -57,7 +54,7 @@ impl WsChatServer {
 
         self.rooms
             .entry(session_id.to_string())
-            .or_insert_with(HashMap::new)
+            .or_default()
             .insert(room_name.to_owned(), room);
 
         self.broadcast_room_list(session_id);
@@ -143,9 +140,9 @@ impl WsChatServer {
     }
 
     pub fn remove_empty_rooms(&mut self, session_id: &str) {
-        self.rooms.get_mut(session_id).map(|rooms| {
+        if let Some(rooms) = self.rooms.get_mut(session_id) {
             rooms.retain(|name, room| !room.is_empty() || name == "main");
-        });
+        }
         self.broadcast_room_list(session_id);
     }
 }
