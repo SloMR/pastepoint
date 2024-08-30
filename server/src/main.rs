@@ -1,8 +1,4 @@
-use std::{
-    collections::HashMap,
-    env,
-    sync::{Arc, Mutex},
-};
+use std::env;
 
 use actix_web::{
     get, middleware::Logger, web, App, Error, HttpRequest, HttpResponse, HttpServer, Responder,
@@ -10,14 +6,9 @@ use actix_web::{
 use actix_web_actors::ws;
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use server::{
-    WsChatSession, DEV_CERT_FILE, DEV_KEY_FILE, MAX_FRAME_SIZE, PROD_CERT_FILE, PROD_KEY_FILE,
+    SessionManager, WsChatSession, DEV_CERT_FILE, DEV_KEY_FILE, MAX_FRAME_SIZE, PROD_CERT_FILE,
+    PROD_KEY_FILE,
 };
-use uuid::Uuid;
-
-#[derive(Default)]
-pub struct HomeSessionManager {
-    pub ip_to_uuid: Arc<Mutex<HashMap<String, Uuid>>>,
-}
 
 #[get("/")]
 async fn index() -> impl Responder {
@@ -25,12 +16,19 @@ async fn index() -> impl Responder {
 }
 
 #[get("/ws")]
-async fn chat_ws(req: HttpRequest, stream: web::Payload) -> Result<impl Responder, Error> {
+async fn chat_ws(
+    req: HttpRequest,
+    stream: web::Payload,
+    manager: web::Data<SessionManager>,
+) -> Result<impl Responder, Error> {
+    // "0.0.0.0" to test in development mode
     if let Some(ip) = req.peer_addr() {
         log::info!("Peer address: {}", &ip.ip().to_string());
         let network = &ip.ip().to_string();
-        // ws::start(WsChatSession::new(&"0.0.0.0".to_string()), &req, stream)
-        ws::WsResponseBuilder::new(WsChatSession::new(network), &req, stream)
+        let uuid = manager.get_or_create_uuid(&network);
+        log::info!("Assigned UUID for {}: {}", &network, &uuid);
+
+        ws::WsResponseBuilder::new(WsChatSession::new(&uuid), &req, stream)
             .codec(actix_http::ws::Codec::new())
             .frame_size(MAX_FRAME_SIZE)
             .start()
@@ -60,8 +58,12 @@ async fn main() -> std::io::Result<()> {
     log::debug!("Using key file: {}", key_file);
     log::debug!("Using cert file: {}", cert_file);
 
+    // Initialize SessionManager
+    let session_manager = web::Data::new(SessionManager::default());
+
     HttpServer::new(move || {
         App::new()
+            .app_data(session_manager.clone())
             .service(index)
             .service(chat_ws)
             .wrap(Logger::default())
