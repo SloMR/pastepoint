@@ -11,6 +11,7 @@ import { isPlatformBrowser } from "@angular/common";
 
 import { ThemeService } from "../../core/services/theme.service";
 import { WebsocketService } from "../../core/services/websocket.service";
+import { LoggerService } from "../../core/services/logger.service";
 
 @Component({
   selector: "app-chat",
@@ -38,6 +39,7 @@ export class ChatComponent implements OnInit, OnDestroy {
     private chatService: WebsocketService,
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
+    private logger: LoggerService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
@@ -144,7 +146,7 @@ export class ChatComponent implements OnInit, OnDestroy {
   }
 
   listRooms(): void {
-    this.chatService.log("Listing rooms", false);
+    this.logger.log("Listing rooms", false);
     this.chatService.listRooms();
   }
 
