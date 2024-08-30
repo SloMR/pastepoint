@@ -11,9 +11,11 @@ export class WebsocketService {
   public rooms$ = new BehaviorSubject<string[]>([""]);
   public members$ = new BehaviorSubject<string[]>([""]);
   public uploadProgress$ = new BehaviorSubject<number>(0);
+  public downloadProgress$ = new BehaviorSubject<number>(0);
 
   private socket: WebSocket | undefined;
   private worker: Worker | undefined;
+  private fileChunks = new Map<string, { chunks: string[], totalChunks: number }>();
 
   public user = "user";
   private room = "main";
@@ -21,7 +23,7 @@ export class WebsocketService {
   private webSocketProto = "wss";
   private host = environment.apiUrl;
 
-  private CHUNK_SIZE = 16 * 1024;
+  private CHUNK_SIZE = 32 * 1024;
 
   private wsUri = `${this.webSocketProto}://${this.host}/ws`;
 
@@ -227,6 +229,7 @@ export class WebsocketService {
   private resetProgressAfterDelay(): void {
     setTimeout(() => {
       this.uploadProgress$.next(0);
+      this.downloadProgress$.next(0);
     }, 2000);
   }
 
@@ -255,6 +258,7 @@ export class WebsocketService {
       message.includes("[SystemJoin]") ||
       message.includes("[SystemRooms]") ||
       message.includes("[SystemFile]") ||
+      message.includes("[SystemFileChunk]") ||
       message.includes("[SystemAck]") ||
       message.includes("[SystemMembers]") ||
       message.includes("[SystemName]")
@@ -262,8 +266,8 @@ export class WebsocketService {
   }
 
   private handleSystemMessage(message: string): void {
-    this.logger.log(`System message: ${message}`);
     if (message.startsWith("[SystemAck]:")) {
+      this.logger.log("Received ack from server");
       this.message$.next("File uploaded successfully");
       return;
     }
@@ -278,12 +282,14 @@ export class WebsocketService {
 
     const matchJoin = message.match(/^(.*?)\s*\[SystemJoin\]\s*(.*?)$/);
     if (matchJoin) {
+      this.logger.log(`User joined room ${matchJoin[2]}`);
       this.room = matchJoin[2];
       return;
     }
 
     const matchRooms = message.match(/\[SystemRooms\]:\s*(.*?)$/);
     if (matchRooms) {
+      this.logger.log(`Rooms: ${matchRooms[1]}`);
       this.rooms$.next(
         matchRooms[1].split(",").map((room: string) => room.trim())
       );
@@ -292,33 +298,29 @@ export class WebsocketService {
 
     const matchMeber = message.match(/\[SystemMembers\]:\s*(.*?)$/);
     if (matchMeber) {
+      this.logger.log(`Members: ${matchMeber[1]}`);
       this.members$.next(
         matchMeber[1].split(",").map((room: string) => room.trim())
       );
       return;
     }
 
-    const matchFiles = message.match(/\[SystemFile]:([^:]+):([^:]+):(.+)/);
-    if (matchFiles) {
-      const fileName = matchFiles[1];
-      const mimeType = matchFiles[2];
-      const base64Data = matchFiles[3];
+    const matchFileChunk = message.match(/\[SystemFileChunk\]:(.*?):(.*?):(\d+):(\d+):(.+)/);
+    if (matchFileChunk) {
+      this.logger.log("Received file chunk");
+      const fileName = matchFileChunk[1];
+      const mimeType = matchFileChunk[2];
+      const currentChunk = parseInt(matchFileChunk[3], 10);
+      const totalChunks = parseInt(matchFileChunk[4], 10);
+      const base64Data = matchFileChunk[5];
 
-      const binaryData = atob(base64Data);
-      const len = binaryData.length;
-      const bytes = new Uint8Array(len);
-      for (let i = 0; i < len; i++) {
-        bytes[i] = binaryData.charCodeAt(i);
-      }
-
-      const blob = new Blob([bytes], { type: mimeType });
-
-      this.showFile(blob, fileName);
+      this.receiveFileChunk(fileName, mimeType, currentChunk, totalChunks, base64Data);
       return;
     }
 
     const matchSystemError = message.replace(/^\[SystemError\]\s*/, "");
     if (matchSystemError) {
+      this.logger.log(`System Error: ${matchSystemError}`);
       console.error(`System Error: ${matchSystemError}`);
       return;
     }
@@ -326,11 +328,54 @@ export class WebsocketService {
     console.error("Unhandled system message:", message);
   }
 
-  private showFile(blob: Blob, fileName: string): void {
+  private receiveFileChunk(
+    fileName: string,
+    mimeType: string,
+    currentChunk: number,
+    totalChunks: number,
+    base64Data: string
+  ): void {
+    if (!this.fileChunks.has(fileName)) {
+      this.fileChunks.set(fileName, { chunks: new Array(totalChunks), totalChunks });
+    }
+
+    const fileData = this.fileChunks.get(fileName);
+    if (!fileData) return;
+
+    fileData.chunks[currentChunk - 1] = base64Data;
+    this.logger.log(`Received chunk ${currentChunk}/${totalChunks} for file: ${fileName}`);
+
+    const receivedChunksCount = fileData.chunks.filter(chunk => !!chunk).length;
+    const progress = Math.floor((receivedChunksCount / totalChunks) * 100);
+    this.downloadProgress$.next(progress);
+
+    if (fileData.chunks.filter(chunk => !!chunk).length === totalChunks) {
+      this.logger.log(`All chunks received for file: ${fileName}. Reassembling...`);
+      this.assembleAndDownloadFile(fileName, mimeType, fileData.chunks);
+      this.fileChunks.delete(fileName);
+      this.downloadProgress$.next(100);
+
+      this.resetProgressAfterDelay();
+    }
+  }
+
+  private assembleAndDownloadFile(fileName: string, mimeType: string, chunks: string[]): void {
+    const byteArrays = chunks.map(chunk => {
+      const binaryString = atob(chunk);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes;
+    });
+
+    const blob = new Blob(byteArrays, { type: mimeType });
+
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
     link.download = fileName;
-    link.textContent = `${this.user} sent a file: ${fileName} [click to download];`;
+    link.textContent = `${fileName} [click to download]`;
     link.style.display = "block";
     link.style.margin = "10px 0";
 
