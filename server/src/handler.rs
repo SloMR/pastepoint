@@ -18,7 +18,7 @@ impl Handler<SendFile> for WsChatServer {
 
     fn handle(&mut self, msg: SendFile, _ctx: &mut Self::Context) {
         let SendFile(session_id, room_name, id, file_name, mime_type, file_data) = msg;
-        self.send_chat_attachment(
+        self.send_chat_attachment_in_chunks(
             &session_id,
             &room_name,
             &file_name,
