@@ -1,1 +1,24 @@
-name: Rust CI
+name: Rust CI/CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: nightly-2024-08-29
+          override: true
+      - name: Build
+        run: cargo build --verbose
+      - name: Test
+        run: cargo test --verbose
