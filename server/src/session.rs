@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use actix::prelude::*;
 use actix_broker::BrokerIssue;
 use actix_web_actors::ws;
@@ -19,7 +17,6 @@ impl WsChatSession {
             id: 0,
             room: "main".to_owned(),
             name,
-            file_reassemblers: HashMap::new(),
         }
     }
 

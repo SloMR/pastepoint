@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-use std::collections::hash_map::Entry::Vacant;
 use actix::prelude::*;
+use std::collections::{hash_map::Entry::Vacant, HashMap};
 
 use crate::message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer};
 

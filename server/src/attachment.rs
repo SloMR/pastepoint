@@ -1,45 +1,10 @@
-use std::collections::HashMap;
-
 use actix_web_actors::ws;
 use base64::{engine::general_purpose, Engine as _};
 
 use crate::{
-    message::FileChunkMetadata, ChatMessage, FileReassembler, ServerError, WsChatServer,
-    WsChatSession, MAX_FRAME_SIZE,
+    message::FileChunkMetadata, ChatMessage, ServerError, WsChatServer, WsChatSession,
+    MAX_FRAME_SIZE,
 };
-
-impl FileReassembler {
-    pub fn new(total_chunks: usize) -> Self {
-        FileReassembler {
-            chunks: HashMap::new(),
-            total_chunks,
-        }
-    }
-
-    pub fn add_chunk(&mut self, index: usize, data: Vec<u8>) -> Result<(), ServerError> {
-        if index >= self.total_chunks {
-            return Err(ServerError::IndexOutOfBounds);
-        }
-        self.chunks.insert(index, data);
-        Ok(())
-    }
-
-    pub fn is_complete(&self) -> bool {
-        self.chunks.len() == self.total_chunks
-    }
-
-    pub fn reassemble(&self) -> Result<Vec<u8>, ServerError> {
-        let mut file_data = Vec::new();
-        for i in 0..self.total_chunks {
-            if let Some(chunk) = self.chunks.get(&i) {
-                file_data.extend(chunk);
-            } else {
-                return Err(ServerError::ChunkMissing);
-            }
-        }
-        Ok(file_data)
-    }
-}
 
 impl WsChatServer {
     #[allow(dead_code)]
