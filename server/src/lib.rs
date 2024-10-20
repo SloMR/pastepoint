@@ -44,8 +44,8 @@ pub async fn chat_ws(
         let network = &ip.ip().to_string();
         let uuid = manager.get_or_create_uuid(network);
         log::debug!("Assigned UUID for {}: {}", &network, &uuid);
-        let uuid = match Uuid::parse_str(uuid) {
-            Ok(u) => u,
+        match Uuid::parse_str(&uuid) {
+            Ok(_) => {}
             Err(e) => {
                 log::error!("Invalid fixed UUID: {}", e);
                 return Ok(HttpResponse::InternalServerError().body("Server configuration error"));

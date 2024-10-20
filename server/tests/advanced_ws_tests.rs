@@ -131,6 +131,7 @@ async fn test_ws_rejoin_room() {
     framed.close().await.unwrap();
 }
 
+#[allow(clippy::assertions_on_constants)]
 #[actix_rt::test]
 async fn test_ws_unexpected_message() {
     let srv = init_test_server(true);
