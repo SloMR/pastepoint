@@ -1,6 +1,7 @@
 use crate::{
     error::ServerError,
     message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer, WsChatSession},
+    SessionManager,
 };
 use actix::prelude::*;
 use actix_broker::BrokerIssue;
@@ -9,14 +10,16 @@ use names::Generator;
 use serde_json::Value;
 
 impl WsChatSession {
-    pub fn new(session_id: &str) -> Self {
+    pub fn new(session_id: &str, auto_join: bool, session_manager: SessionManager) -> Self {
         let mut generator = Generator::default();
-        let name = generator.next().unwrap();
+        let name = generator.next().unwrap_or_else(|| "Anonymous".to_string());
         WsChatSession {
             session_id: session_id.to_owned(),
             id: 0,
             room: "main".to_owned(),
             name,
+            auto_join,
+            session_manager,
         }
     }
 
@@ -58,7 +61,7 @@ impl WsChatSession {
                     log::debug!("[SystemRooms] Rooms Availabe: {:?}", rooms);
 
                     let room_list = rooms.join(", ");
-                    ctx.text(format!("[SystemRooms]: {}", room_list));
+                    ctx.text(format!("[SystemRooms] {}", room_list));
                 } else {
                     ctx.text("[SystemError] Failed to retrieve room list.");
                 }
@@ -67,37 +70,32 @@ impl WsChatSession {
             .wait(ctx);
     }
 
-    fn user_command(
-        &mut self,
-        mut command: std::str::SplitN<'_, char>,
-        msg: &str,
-        ctx: &mut ws::WebsocketContext<WsChatSession>,
-    ) {
-        match command.next() {
-            Some("/list") => {
-                log::debug!("Received list command");
-                self.list_rooms(ctx)
-            }
+    fn user_command(&mut self, command_str: &str, ctx: &mut ws::WebsocketContext<WsChatSession>) {
+        let command_str = command_str.trim();
+        log::debug!("Processing command: '{}'", command_str);
 
-            Some("/join") => {
-                if let Some(room_name) = command.next() {
-                    log::debug!("Received join command");
+        let mut parts = command_str.splitn(2, ' ');
+        let cmd = parts.next().unwrap_or("");
+        let args = parts.next();
+        match cmd {
+            "/list" => {
+                log::debug!("Received list command");
+                self.list_rooms(ctx);
+            }
+            "/join" => {
+                if let Some(room_name) = args {
+                    log::debug!("Received join command for room '{}'", room_name);
                     self.join_room(room_name, ctx);
                 } else {
-                    ctx.text(format!(
-                        "[SystemError] Room name is required: {}",
-                        ServerError::InternalServerError
-                    ))
+                    ctx.text("[SystemError] Room name is required");
                 }
             }
-
-            Some("/name") => {
+            "/name" => {
                 log::debug!("Received name command");
-                ctx.text(format!("[SystemName]: {}", self.name))
+                ctx.text(format!("[SystemName] {}", self.name));
             }
-
             _ => {
-                log::error!("Unknown command: {}", msg);
+                log::error!("Unknown command: '{}'", cmd);
                 ctx.text(format!(
                     "[SystemError] Error Unknown command: {}",
                     ServerError::NotFound
@@ -109,10 +107,8 @@ impl WsChatSession {
     fn handle_signal_message(&self, msg: &str, ctx: &mut ws::WebsocketContext<Self>) {
         let payload = msg.trim_start_matches("[SignalMessage]").trim();
 
-        // Parse the payload to get 'to' field
         if let Ok(value) = serde_json::from_str::<Value>(payload) {
             if let Some(to_user) = value.get("to").and_then(|v| v.as_str()) {
-                // Relay the message to the intended recipient
                 let relay_msg = ChatMessage(format!("[SignalMessage] {}", payload));
 
                 WsChatServer::from_registry().do_send(crate::message::RelaySignalMessage {
@@ -154,16 +150,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 log::debug!("Received message: {}", text);
 
                 let msg = text.trim();
-
+                log::debug!("Received message: '{}'", msg);
                 if msg.starts_with("[SignalMessage]") {
                     self.handle_signal_message(msg, ctx);
-                } else if msg.contains("[UserCommand]") {
-                    let msg = msg.replace("[UserCommand]", "").trim().to_string();
-                    if msg.starts_with("/") {
-                        let command = msg.splitn(2, ' ');
-                        self.user_command(command, &msg, ctx);
-                    }
-                } else if msg.contains("[UserDisconnected]") {
+                } else if msg.starts_with("[UserCommand]") {
+                    let command_str = msg.trim_start_matches("[UserCommand]").trim();
+                    log::debug!("Command string after trimming: '{}'", command_str);
+                    self.user_command(command_str, ctx);
+                } else if msg.starts_with("[UserDisconnected]") {
                     log::debug!("Received disconnect command");
                     self.handle_user_disconnect();
                 } else {

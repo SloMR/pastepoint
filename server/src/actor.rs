@@ -1,8 +1,8 @@
+use crate::{LeaveRoom, WsChatServer, WsChatSession};
 use actix::{prelude::Actor, Context};
 use actix_broker::BrokerSubscribe;
 use actix_web_actors::ws;
-
-use crate::{LeaveRoom, WsChatServer, WsChatSession};
+use uuid::Uuid;
 
 impl Actor for WsChatServer {
     type Context = Context<Self>;
@@ -18,8 +18,11 @@ impl Actor for WsChatSession {
     fn started(&mut self, ctx: &mut Self::Context) {
         self.id = rand::random::<usize>();
         log::debug!("Session started for {} with ID {}", self.name, self.id);
+        log::debug!("Auto-join is set to: {}", self.auto_join);
 
-        self.join_room("main", ctx);
+        if self.auto_join {
+            self.join_room("main", ctx);
+        }
     }
 
     fn stopped(&mut self, _ctx: &mut Self::Context) {
@@ -29,5 +32,11 @@ impl Actor for WsChatSession {
             self.id,
             self.room
         );
+
+        if let Ok(uuid) = Uuid::parse_str(&self.session_id) {
+            self.session_manager.remove_client(&uuid);
+        } else {
+            log::error!("Invalid UUID format for session_id: {}", self.session_id);
+        }
     }
 }

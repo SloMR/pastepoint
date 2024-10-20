@@ -38,11 +38,14 @@ impl Handler<LeaveRoom> for WsChatServer {
                 self.broadcast_room_members(&msg.0, &msg.1);
 
                 log::debug!(
-                    "User {} in {} left room {}. Current rooms: {:?}",
-                    msg.0,
+                    "User {} in {} left room {}. Rooms: {:?}",
                     msg.2,
+                    msg.0,
                     msg.1,
-                    self.rooms.keys().collect::<Vec<_>>()
+                    self.rooms
+                        .values()
+                        .map(|r| r.keys().cloned().collect::<Vec<String>>())
+                        .collect::<Vec<Vec<String>>>()
                 );
             }
         }
@@ -80,12 +83,11 @@ impl Handler<RelaySignalMessage> for WsChatServer {
         #[allow(unused_variables)]
         let RelaySignalMessage { from, to, message } = msg;
 
-        // Find the recipient's session and send the message
         for rooms in self.rooms.values() {
             for room in rooms.values() {
                 for client in room.values() {
                     if client.name == to {
-                        let _ = client.recipient.do_send(message.clone());
+                        client.recipient.do_send(message.clone());
                         return;
                     }
                 }

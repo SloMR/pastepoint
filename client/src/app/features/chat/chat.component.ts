@@ -202,7 +202,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   listRooms(): void {
-    this.logger.log('Listing rooms');
     this.roomService.listRooms();
   }
 
@@ -234,6 +233,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private initiateConnectionsWithMembers(): void {
+    this.logger.log('Initiating connections with other members');
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
     otherMembers.forEach((member) => {
       if (this.userService.user < member) {
