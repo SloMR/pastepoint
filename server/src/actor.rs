@@ -18,8 +18,11 @@ impl Actor for WsChatSession {
     fn started(&mut self, ctx: &mut Self::Context) {
         self.id = rand::random::<usize>();
         log::debug!("Session started for {} with ID {}", self.name, self.id);
+        log::debug!("Auto-join is set to: {}", self.auto_join);
 
-        self.join_room("main", ctx);
+        if self.auto_join {
+            self.join_room("main", ctx);
+        }
     }
 
     fn stopped(&mut self, _ctx: &mut Self::Context) {
