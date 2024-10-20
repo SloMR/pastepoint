@@ -107,7 +107,7 @@ impl WsChatServer {
     pub fn broadcast_room_list(&self, session_id: &str) {
         if let Some(users) = self.rooms.get(session_id) {
             let room_list = users.keys().cloned().collect::<Vec<String>>().join(", ");
-            let message = format!("[SystemRooms]: {}", room_list);
+            let message = format!("[SystemRooms] {}", room_list);
 
             for room in users.values() {
                 for client in room.values() {
@@ -129,7 +129,7 @@ impl WsChatServer {
                     room_name,
                     member_list
                 );
-                let member_message = format!("[SystemMembers]: {}", member_list.join(", "));
+                let member_message = format!("[SystemMembers] {}", member_list.join(", "));
 
                 for client_metadata in room.values() {
                     client_metadata

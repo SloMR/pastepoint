@@ -55,7 +55,7 @@ export class ChatService {
 
   private handleSystemMessage(message: string): void {
     if (message.includes('[SystemName]')) {
-      const matchName = message.match(/\[SystemName\]\s*:\s*(.*?)$/);
+      const matchName = message.match(/\[SystemName\]\s*(.*?)$/);
       if (matchName && matchName[1]) {
         const userName = matchName[1].trim();
         this.logger.log(`Username updated from: ${this.user}, to: ${userName}`);
