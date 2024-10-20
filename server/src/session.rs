@@ -1,6 +1,7 @@
 use crate::{
     error::ServerError,
     message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer, WsChatSession},
+    SessionManager,
 };
 use actix::prelude::*;
 use actix_broker::BrokerIssue;
@@ -9,14 +10,16 @@ use names::Generator;
 use serde_json::Value;
 
 impl WsChatSession {
-    pub fn new(session_id: &str) -> Self {
+    pub fn new(session_id: &str, auto_join: bool, session_manager: SessionManager) -> Self {
         let mut generator = Generator::default();
-        let name = generator.next().unwrap();
+        let name = generator.next().unwrap_or_else(|| "Anonymous".to_string());
         WsChatSession {
             session_id: session_id.to_owned(),
             id: 0,
             room: "main".to_owned(),
             name,
+            auto_join,
+            session_manager,
         }
     }
 
@@ -109,10 +112,8 @@ impl WsChatSession {
     fn handle_signal_message(&self, msg: &str, ctx: &mut ws::WebsocketContext<Self>) {
         let payload = msg.trim_start_matches("[SignalMessage]").trim();
 
-        // Parse the payload to get 'to' field
         if let Ok(value) = serde_json::from_str::<Value>(payload) {
             if let Some(to_user) = value.get("to").and_then(|v| v.as_str()) {
-                // Relay the message to the intended recipient
                 let relay_msg = ChatMessage(format!("[SignalMessage] {}", payload));
 
                 WsChatServer::from_registry().do_send(crate::message::RelaySignalMessage {

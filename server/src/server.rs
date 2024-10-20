@@ -1,7 +1,9 @@
+use crate::{
+    message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer},
+    LeaveRoom,
+};
 use actix::prelude::*;
 use std::collections::{hash_map::Entry::Vacant, HashMap};
-
-use crate::message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer};
 
 impl WsChatServer {
     pub fn take_room(&mut self, session_id: &str, room_name: &str) -> Option<Room> {
@@ -143,6 +145,22 @@ impl WsChatServer {
             rooms.retain(|name, room| !room.is_empty() || name == "main");
         }
         self.broadcast_room_list(session_id);
+    }
+
+    pub fn handle_leave_room(&mut self, msg: LeaveRoom) {
+        if let Some(rooms) = self.rooms.get_mut(&msg.0) {
+            if let Some(room) = rooms.get_mut(&msg.1) {
+                room.remove(&msg.2);
+
+                if room.is_empty() && msg.1 != "main" {
+                    rooms.remove(&msg.1);
+                }
+
+                self.remove_empty_rooms(&msg.0);
+                self.broadcast_room_list(&msg.0);
+                self.broadcast_room_members(&msg.0, &msg.1);
+            }
+        }
     }
 }
 

@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::SessionManager;
 use actix::prelude::*;
 
 pub type Client = Recipient<ChatMessage>;
@@ -12,10 +13,12 @@ pub struct WsChatServer {
 
 #[derive(Default, Clone)]
 pub struct WsChatSession {
-    pub session_id: String, // session id
-    pub id: usize,          // client id
-    pub room: String,       // room name
-    pub name: String,       // client name
+    pub session_id: String,              // session id
+    pub id: usize,                       // client id
+    pub room: String,                    // room name
+    pub name: String,                    // client name
+    pub auto_join: bool,                 // flag to control auto-join
+    pub session_manager: SessionManager, // reference to SessionManager
 }
 
 pub struct ClientMetadata {
@@ -50,7 +53,7 @@ pub struct ListRooms(pub String /* session_id */);
 
 #[derive(Message)]
 #[rtype(result = "()")]
-pub(crate) struct RelaySignalMessage {
+pub struct RelaySignalMessage {
     pub(crate) from: String,
     pub(crate) to: String,
     pub(crate) message: ChatMessage,

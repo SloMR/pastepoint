@@ -1,8 +1,8 @@
+use crate::{LeaveRoom, WsChatServer, WsChatSession};
 use actix::{prelude::Actor, Context};
 use actix_broker::BrokerSubscribe;
 use actix_web_actors::ws;
-
-use crate::{LeaveRoom, WsChatServer, WsChatSession};
+use uuid::Uuid;
 
 impl Actor for WsChatServer {
     type Context = Context<Self>;
@@ -29,5 +29,11 @@ impl Actor for WsChatSession {
             self.id,
             self.room
         );
+
+        if let Ok(uuid) = Uuid::parse_str(&self.session_id) {
+            self.session_manager.remove_client(&uuid);
+        } else {
+            log::error!("Invalid UUID format for session_id: {}", self.session_id);
+        }
     }
 }
