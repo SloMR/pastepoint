@@ -60,14 +60,14 @@ impl WsChatServer {
         id
     }
 
-    pub fn send_chat_message(
+    pub fn send_join_message(
         &mut self,
         session_id: &str,
         room_name: &str,
         msg: &str,
         _src: usize,
     ) -> Option<()> {
-        log::debug!("Sending message to room {}: {}", room_name, msg);
+        log::debug!("Sending join message to room {}: {}", room_name, msg);
 
         if let Some(room) = self.rooms.get_mut(session_id)?.get_mut(room_name) {
             let client_ids: Vec<usize> = room.keys().cloned().collect();
@@ -80,13 +80,13 @@ impl WsChatServer {
                         .is_ok()
                     {
                         log::debug!(
-                            "Message sent to client {}, staying in room: {}",
+                            "Join Message sent to client {}, staying in room: {}",
                             id,
                             room_name
                         );
                     } else {
                         log::warn!(
-                            "Failed to send message to client {}, removing from room: {}",
+                            "Failed to send join message to client {}, removing from room: {}",
                             id,
                             room_name
                         );

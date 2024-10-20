@@ -7,68 +7,51 @@ pub type Room = HashMap<usize, ClientMetadata>;
 
 #[derive(Default)]
 pub struct WsChatServer {
-    pub rooms: HashMap<String, HashMap<String, Room>>,
+    pub rooms: HashMap<String, HashMap<String, Room>>, // session_id -> room_name -> clients
 }
 
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct WsChatSession {
-    pub session_id: String,
-    pub id: usize,
-    pub room: String,
-    pub name: String,
-    pub file_reassemblers: HashMap<String, FileReassembler>,
+    pub session_id: String, // session id
+    pub id: usize,          // client id
+    pub room: String,       // room name
+    pub name: String,       // client name
 }
 
 pub struct ClientMetadata {
-    pub recipient: Client,
-    pub name: String,
+    pub recipient: Client, // client
+    pub name: String,      // client name
 }
 
 #[derive(Clone, Message)]
 #[rtype(result = "()")]
-pub struct ChatMessage(pub String);
+pub struct ChatMessage(pub String /* message */);
 
 #[derive(Clone, Message)]
 #[rtype(result = "usize")]
 pub struct JoinRoom(
-    pub String,
-    pub String,
-    pub String,
-    pub Recipient<ChatMessage>,
+    pub String,                 // session_id
+    pub String,                 // room_name
+    pub String,                 // client_name
+    pub Recipient<ChatMessage>, // client
 );
 
 #[derive(Clone, Message)]
 #[rtype(result = "()")]
-pub struct LeaveRoom(pub String, pub String, pub usize);
+pub struct LeaveRoom(
+    pub String, // session_id
+    pub String, // room_name
+    pub usize,  // id
+);
 
 #[derive(Clone, Message)]
 #[rtype(result = "Vec<String>")]
-pub struct ListRooms(pub String);
+pub struct ListRooms(pub String /* session_id */);
 
-#[derive(Clone, Message)]
+#[derive(Message)]
 #[rtype(result = "()")]
-pub struct SendMessage(pub String, pub String, pub usize, pub String);
-
-#[derive(Clone, Message)]
-#[rtype(result = "()")]
-pub struct SendFile(
-    pub String,
-    pub String,
-    pub usize,
-    pub String,
-    pub String,
-    pub Vec<u8>,
-);
-
-#[derive(serde::Deserialize)]
-pub struct FileChunkMetadata {
-    pub file_name: String,
-    pub mime_type: String,
-    pub total_chunks: usize,
-    pub current_chunk: usize,
-}
-
-pub struct FileReassembler {
-    pub chunks: HashMap<usize, Vec<u8>>,
-    pub total_chunks: usize,
+pub(crate) struct RelaySignalMessage {
+    pub(crate) from: String,
+    pub(crate) to: String,
+    pub(crate) message: ChatMessage,
 }
