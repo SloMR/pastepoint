@@ -4,6 +4,7 @@ import { LoggerService } from './logger.service';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { WebRTCService } from './webrtc.service';
 import { UserService } from './user.service';
+import {DATA_CHANNEL_MESSAGE_TYPES} from "../../utils/constants";
 
 @Injectable({
   providedIn: 'root',
@@ -38,7 +39,7 @@ export class ChatService {
   public sendMessage(content: string, targetUser: string): void {
     if (content.trim()) {
       const message = {
-        type: 'chat',
+        type: DATA_CHANNEL_MESSAGE_TYPES.CHAT,
         payload: `${this.user}: ${content.trim()}`,
       };
       this.webrtcService.sendData(message, targetUser);

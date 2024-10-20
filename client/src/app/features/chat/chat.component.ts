@@ -176,7 +176,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           .pipe(take(1))
           .subscribe((isOpen) => {
             if (isOpen) {
-              this.fileTransferService.sendFileOffer();
+              this.fileTransferService.sendFileOffer(member);
             }
           });
       });

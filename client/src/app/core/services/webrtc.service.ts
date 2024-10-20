@@ -3,12 +3,25 @@ import { BehaviorSubject, Subject } from 'rxjs';
 import { LoggerService } from './logger.service';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { UserService } from './user.service';
+import {
+  BUFFERED_AMOUNT_LOW_THRESHOLD,
+  OFFER_OPTIONS,
+  DATA_CHANNEL_OPTIONS,
+  SIGNAL_MESSAGE_TYPES,
+  DATA_CHANNEL_MESSAGE_TYPES, FILE_TRANSFER_MESSAGE_TYPES
+} from '../../utils/constants';
 
 interface SignalMessage {
-  type: 'offer' | 'answer' | 'candidate';
+  type: SignalMessageType;
   data: any;
   from: string;
   to: string;
+}
+
+enum SignalMessageType {
+  OFFER = 'offer',
+  ANSWER = 'answer',
+  CANDIDATE = 'candidate',
 }
 
 interface DataChannelMessage {
@@ -54,16 +67,16 @@ export class WebRTCService {
     this.logger.log(`Initiating connection with ${targetUser}`);
 
     const peerConnection = this.createPeerConnection(targetUser);
-    const dataChannel = peerConnection.createDataChannel('data');
+    const dataChannel = peerConnection.createDataChannel('data', DATA_CHANNEL_OPTIONS);
     this.setupDataChannel(dataChannel, targetUser);
     this.dataChannels.set(targetUser, dataChannel);
 
     peerConnection
-      .createOffer()
+      .createOffer(OFFER_OPTIONS)
       .then((offer) => peerConnection.setLocalDescription(offer))
       .then(() => {
         const message: SignalMessage = {
-          type: 'offer',
+          type: SignalMessageType.OFFER,
           data: peerConnection.localDescription,
           from: this.userService.user,
           to: targetUser,
@@ -85,7 +98,7 @@ export class WebRTCService {
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
         const message: SignalMessage = {
-          type: 'candidate',
+          type: SignalMessageType.CANDIDATE,
           data: event.candidate,
           from: this.userService.user,
           to: targetUser,
@@ -150,7 +163,7 @@ export class WebRTCService {
       }
     };
 
-    channel.bufferedAmountLowThreshold = 128 * 1024; // 128 KB
+    channel.bufferedAmountLowThreshold = BUFFERED_AMOUNT_LOW_THRESHOLD;
     channel.onbufferedamountlow = () => {
       this.bufferedAmountLow$.next();
     };
@@ -160,10 +173,10 @@ export class WebRTCService {
     if (typeof data === 'string') {
       const message: DataChannelMessage = JSON.parse(data);
       switch (message.type) {
-        case 'chat':
+        case DATA_CHANNEL_MESSAGE_TYPES.CHAT:
           this.chatMessages$.next(message.payload);
           break;
-        case 'file-offer':
+        case FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER:
           this.logger.log(`Received file offer from ${targetUser}`);
           this.fileOffers$.next({
             fileName: message.payload.fileName,
@@ -171,11 +184,11 @@ export class WebRTCService {
             fromUser: targetUser,
           });
           break;
-        case 'file-accept':
+        case FILE_TRANSFER_MESSAGE_TYPES.FILE_ACCEPT:
           this.logger.log(`Received file acceptance from ${targetUser}`);
           this.fileResponses$.next({ accepted: true, fromUser: targetUser });
           break;
-        case 'file-decline':
+        case FILE_TRANSFER_MESSAGE_TYPES.FILE_DECLINE:
           this.logger.log(`Received file decline from ${targetUser}`);
           this.fileResponses$.next({ accepted: false, fromUser: targetUser });
           break;
@@ -265,13 +278,13 @@ export class WebRTCService {
     }
 
     switch (message.type) {
-      case 'offer':
+      case SIGNAL_MESSAGE_TYPES.OFFER:
         this.handleOffer(message);
         break;
-      case 'answer':
+      case SIGNAL_MESSAGE_TYPES.ANSWER:
         this.handleAnswer(message);
         break;
-      case 'candidate':
+      case SIGNAL_MESSAGE_TYPES.CANDIDATE:
         this.handleCandidate(message);
         break;
       default:
@@ -293,7 +306,7 @@ export class WebRTCService {
       })
       .then(() => {
         const response: SignalMessage = {
-          type: 'answer',
+          type: SignalMessageType.ANSWER,
           data: peerConnection.localDescription,
           from: this.userService.user,
           to: targetUser,

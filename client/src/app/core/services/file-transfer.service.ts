@@ -2,6 +2,11 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { LoggerService } from './logger.service';
 import { WebRTCService } from './webrtc.service';
+import {
+  CHUNK_SIZE,
+  FILE_TRANSFER_MESSAGE_TYPES,
+  MAX_BUFFERED_AMOUNT
+} from '../../utils/constants';
 
 @Injectable({
   providedIn: 'root',
@@ -18,9 +23,6 @@ export class FileTransferService {
   private isPaused = false;
   private incomingFileSize = 0;
   private isReceivingFile = false;
-
-  private readonly CHUNK_SIZE = 32 * 1024;
-  private readonly MAX_BUFFERED_AMOUNT = 256 * 1024;
 
   constructor(
     private logger: LoggerService,
@@ -64,20 +66,20 @@ export class FileTransferService {
     this.targetUser = targetUser;
   }
 
-  public sendFileOffer(): void {
+  public sendFileOffer(targetUser: string): void {
     if (!this.fileToSend) {
       console.error('No file to send.');
       return;
     }
-    this.logger.log(`Sending file offer to ${this.targetUser}`);
+    this.logger.log(`Sending file offer to ${targetUser}`);
     const message = {
-      type: 'file-offer',
+      type: FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER,
       payload: {
         fileName: this.fileToSend.name,
         fileSize: this.fileToSend.size,
       },
     };
-    this.webrtcService.sendData(message, this.targetUser);
+    this.webrtcService.sendData(message, targetUser);
   }
 
   public startSavingFile(): void {
@@ -164,14 +166,14 @@ export class FileTransferService {
       return;
     }
 
-    if (dataChannel.bufferedAmount > this.MAX_BUFFERED_AMOUNT) {
+    if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
       this.isPaused = true;
       return;
     }
 
     const fileReader = new FileReader();
     const start = (this.uploadProgress$.value / 100) * this.fileToSend.size;
-    const end = Math.min(start + this.CHUNK_SIZE, this.fileToSend.size);
+    const end = Math.min(start + CHUNK_SIZE, this.fileToSend.size);
     const blob = this.fileToSend.slice(start, end);
 
     fileReader.onload = (e) => {
