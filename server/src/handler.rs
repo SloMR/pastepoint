@@ -87,7 +87,7 @@ impl Handler<RelaySignalMessage> for WsChatServer {
             for room in rooms.values() {
                 for client in room.values() {
                     if client.name == to {
-                        let _ = client.recipient.do_send(message.clone());
+                        client.recipient.do_send(message.clone());
                         return;
                     }
                 }

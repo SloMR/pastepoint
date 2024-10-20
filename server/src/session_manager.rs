@@ -18,14 +18,11 @@ impl SessionManager {
     /// Increments the client count for the session.
     pub fn get_or_create_uuid(&self, ip: &str) -> String {
         let mut ip_map = self.ip_to_uuid.lock().expect("lock poisoned");
-        let uuid = ip_map
-            .entry(ip.to_string())
-            .or_insert_with(|| {
-                let new_uuid = Uuid::new_v4();
-                log::debug!("Created new UUID {} for IP {}", new_uuid, ip);
-                new_uuid
-            })
-            .clone();
+        let uuid = *ip_map.entry(ip.to_string()).or_insert_with(|| {
+            let new_uuid = Uuid::new_v4();
+            log::debug!("Created new UUID {} for IP {}", new_uuid, ip);
+            new_uuid
+        });
 
         let mut client_map = self.uuid_to_client_count.lock().expect("lock poisoned");
         let counter = client_map
