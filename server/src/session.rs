@@ -1,14 +1,12 @@
-use std::collections::HashMap;
-
+use crate::{
+    error::ServerError,
+    message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer, WsChatSession},
+};
 use actix::prelude::*;
 use actix_broker::BrokerIssue;
 use actix_web_actors::ws;
 use names::Generator;
-
-use crate::{
-    error::ServerError,
-    message::{JoinRoom, LeaveRoom, ListRooms, SendFile, SendMessage, WsChatServer, WsChatSession},
-};
+use serde_json::Value;
 
 impl WsChatSession {
     pub fn new(session_id: &str) -> Self {
@@ -19,7 +17,6 @@ impl WsChatSession {
             id: 0,
             room: "main".to_owned(),
             name,
-            file_reassemblers: HashMap::new(),
         }
     }
 
@@ -70,27 +67,6 @@ impl WsChatSession {
             .wait(ctx);
     }
 
-    pub fn send_msg(&self, msg: &str) {
-        let msg = msg.replace("[UserMessage]", "");
-        let content = format!("{}: {msg}", self.name.clone(),);
-        let msg = SendMessage(self.session_id.clone(), self.room.clone(), self.id, content);
-
-        self.issue_system_async(msg);
-    }
-
-    pub fn send_file(&self, file_name: &str, mime_type: &str, file_data: &[u8]) {
-        let msg = SendFile(
-            self.session_id.clone(),
-            self.room.clone(),
-            self.id,
-            file_name.to_string(),
-            mime_type.to_string(),
-            file_data.to_vec(),
-        );
-
-        self.issue_system_async(msg);
-    }
-
     fn user_command(
         &mut self,
         mut command: std::str::SplitN<'_, char>,
@@ -130,6 +106,28 @@ impl WsChatSession {
         }
     }
 
+    fn handle_signal_message(&self, msg: &str, ctx: &mut ws::WebsocketContext<Self>) {
+        let payload = msg.trim_start_matches("[SignalMessage]").trim();
+
+        // Parse the payload to get 'to' field
+        if let Ok(value) = serde_json::from_str::<Value>(payload) {
+            if let Some(to_user) = value.get("to").and_then(|v| v.as_str()) {
+                // Relay the message to the intended recipient
+                let relay_msg = ChatMessage(format!("[SignalMessage] {}", payload));
+
+                WsChatServer::from_registry().do_send(crate::message::RelaySignalMessage {
+                    from: self.name.clone(),
+                    to: to_user.to_string(),
+                    message: relay_msg,
+                });
+            } else {
+                ctx.text("[SystemError] Invalid signaling message format");
+            }
+        } else {
+            ctx.text("[SystemError] Failed to parse signaling message");
+        }
+    }
+
     fn handle_user_disconnect(&self) {
         let leave_msg = LeaveRoom(self.session_id.clone(), self.room.clone(), self.id);
         self.issue_system_async(leave_msg);
@@ -157,14 +155,14 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
 
                 let msg = text.trim();
 
-                if msg.contains("[UserCommand]") {
+                if msg.starts_with("[SignalMessage]") {
+                    self.handle_signal_message(msg, ctx);
+                } else if msg.contains("[UserCommand]") {
                     let msg = msg.replace("[UserCommand]", "").trim().to_string();
                     if msg.starts_with("/") {
                         let command = msg.splitn(2, ' ');
                         self.user_command(command, &msg, ctx);
                     }
-                } else if msg.contains("[UserMessage]") {
-                    self.send_msg(msg);
                 } else if msg.contains("[UserDisconnected]") {
                     log::debug!("Received disconnect command");
                     self.handle_user_disconnect();
@@ -175,10 +173,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         ServerError::NotFound
                     ));
                 }
-            }
-            ws::Message::Binary(bin) => {
-                log::debug!("Received binary message");
-                self.handle_binary_message(&bin, ctx);
             }
             ws::Message::Close(reason) => {
                 log::debug!("Closing connection: {:?}", reason);

@@ -1,33 +1,9 @@
 use actix::{Handler, MessageResult};
 
 use crate::{
-    ChatMessage, JoinRoom, LeaveRoom, ListRooms, SendFile, SendMessage, WsChatServer, WsChatSession,
+    message::RelaySignalMessage, ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer,
+    WsChatSession,
 };
-
-impl Handler<SendMessage> for WsChatServer {
-    type Result = ();
-
-    fn handle(&mut self, msg: SendMessage, _ctx: &mut Self::Context) {
-        let SendMessage(session_id, room_name, id, msg) = msg;
-        self.send_chat_message(&session_id, &room_name, &msg, id);
-    }
-}
-
-impl Handler<SendFile> for WsChatServer {
-    type Result = ();
-
-    fn handle(&mut self, msg: SendFile, _ctx: &mut Self::Context) {
-        let SendFile(session_id, room_name, id, file_name, mime_type, file_data) = msg;
-        self.send_chat_attachment_in_chunks(
-            &session_id,
-            &room_name,
-            &file_name,
-            &mime_type,
-            file_data,
-            id,
-        );
-    }
-}
 
 impl Handler<JoinRoom> for WsChatServer {
     type Result = MessageResult<JoinRoom>;
@@ -39,7 +15,7 @@ impl Handler<JoinRoom> for WsChatServer {
             self.add_client_to_room(&session_id, &room_name, None, client, client_name.clone());
         let join_msg = format!("{} [SystemJoin] {}", client_name, room_name);
 
-        self.send_chat_message(&session_id, &room_name, &join_msg, id);
+        self.send_join_message(&session_id, &room_name, &join_msg, id);
         self.broadcast_room_members(&session_id, &room_name);
         MessageResult(id)
     }
@@ -94,5 +70,26 @@ impl Handler<ChatMessage> for WsChatSession {
 
     fn handle(&mut self, msg: ChatMessage, ctx: &mut Self::Context) {
         ctx.text(msg.0);
+    }
+}
+
+impl Handler<RelaySignalMessage> for WsChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: RelaySignalMessage, _ctx: &mut Self::Context) {
+        #[allow(unused_variables)]
+        let RelaySignalMessage { from, to, message } = msg;
+
+        // Find the recipient's session and send the message
+        for rooms in self.rooms.values() {
+            for room in rooms.values() {
+                for client in room.values() {
+                    if client.name == to {
+                        let _ = client.recipient.do_send(message.clone());
+                        return;
+                    }
+                }
+            }
+        }
     }
 }

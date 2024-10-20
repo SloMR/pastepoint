@@ -47,6 +47,17 @@
       <div *ngFor="let msg of messages">
         <p [class.my-message]="isMyMessage(msg)">{{ msg }}</p>
       </div>
+
+      <!-- Incoming File Prompt -->
+      <div *ngIf="incomingFile" class="incoming-file-prompt">
+        <p>
+          You have an incoming file:
+          <strong>{{ incomingFile.fileName }}</strong>
+          ({{ incomingFile.fileSize | number }} bytes)
+        </p>
+        <button mat-button color="primary" (click)="acceptIncomingFile()">Accept</button>
+        <button mat-button color="warn" (click)="declineIncomingFile()">Decline</button>
+      </div>
     </div>
   </div>
 
@@ -63,13 +74,13 @@
           required
         />
       </mat-form-field>
-      
+
       <!-- File Attachment Button -->
       <button mat-icon-button color="primary" type="button" (click)="fileInput.click()" class="send-button" style="margin: 10px;">
         <mat-icon>attach_file</mat-icon>
       </button>
       <input type="file" #fileInput (change)="sendAttachments($event)" multiple style="display: none;" />
-      
+
       <!-- Send Message Button -->
       <button mat-icon-button color="primary" type="submit" class="send-button">
         <mat-icon>send</mat-icon>
@@ -79,13 +90,13 @@
 
   <!-- Upload Progress Indicator -->
   <div *ngIf="uploadProgress > 0" class="progress-bar">
-    <span>Upload Progress: {{ uploadProgress }}%</span>
+    <span style="margin-right: 12px">Upload Progress: {{ uploadProgress }}%</span>
     <progress [value]="uploadProgress" max="100"></progress>
   </div>
 
   <!-- Download Progress Indicator -->
   <div *ngIf="downloadProgress > 0" class="progress-bar">
-    <span>Download Progress: {{ downloadProgress }}%</span>
+    <span style="margin-right: 12px">Download Progress: {{ downloadProgress }}%</span>
     <progress [value]="downloadProgress" max="100"></progress>
   </div>
 </div>

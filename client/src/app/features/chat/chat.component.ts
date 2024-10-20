@@ -4,23 +4,30 @@ import {
   Inject,
   OnDestroy,
   OnInit,
-  PLATFORM_ID, AfterViewInit,
-} from "@angular/core";
-import { Subscription } from "rxjs";
-import { isPlatformBrowser } from "@angular/common";
+  PLATFORM_ID,
+  AfterViewInit,
+} from '@angular/core';
+import { Subscription } from 'rxjs';
+import { isPlatformBrowser } from '@angular/common';
 
-import { ThemeService } from "../../core/services/theme.service";
-import { WebsocketService } from "../../core/services/websocket.service";
-import { LoggerService } from "../../core/services/logger.service";
+import { ThemeService } from '../../core/services/theme.service';
+import { ChatService } from '../../core/services/chat.service';
+import { RoomService } from '../../core/services/room.service';
+import { FileTransferService } from '../../core/services/file-transfer.service';
+import { WebRTCService } from '../../core/services/webrtc.service';
+import { LoggerService } from '../../core/services/logger.service';
+import { WebSocketConnectionService } from '../../core/services/websocket-connection.service';
+import { UserService } from '../../core/services/user.service';
+import { take } from 'rxjs/operators';
 
 @Component({
-  selector: "app-chat",
-  templateUrl: "./chat.component.html",
-  styleUrls: ["./chat.component.css"],
+  selector: 'app-chat',
+  templateUrl: './chat.component.html',
+  styleUrls: ['./chat.component.css'],
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
-  message = "";
-  newRoomName = "";
+  message = '';
+  newRoomName = '';
   uploadProgress = 0;
   downloadProgress = 0;
 
@@ -28,91 +35,85 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   rooms: string[] = [];
   members: string[] = [];
 
-  currentRoom = "main";
+  currentRoom = 'main';
   isDarkMode = false;
 
-  private messageSubscription: Subscription = new Subscription();
-  private roomSubscription: Subscription = new Subscription();
-  private membersSubscription: Subscription = new Subscription();
-  private progressSubscription: Subscription = new Subscription();
+  incomingFile: { fileName: string; fileSize: number } | null = null;
+  private subscriptions: Subscription[] = [];
 
   constructor(
-    private chatService: WebsocketService,
+    private chatService: ChatService,
+    private roomService: RoomService,
+    private fileTransferService: FileTransferService,
+    private webrtcService: WebRTCService,
+    private wsConnectionService: WebSocketConnectionService,
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
+    private userService: UserService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   ngOnInit(): void {
-    this.messageSubscription = this.chatService.message$.subscribe({
-      next: (message) => {
-        if (message.trim()) {
-          this.messages.push(message);
+    this.subscriptions.push(
+      this.userService.user$.subscribe((username) => {
+        if (username) {
+          this.logger.log(`Username is set to: ${username}`);
+          this.initializeChat();
         }
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error("WebSocket error:", error);
-      },
-      complete: () => {
-        console.warn("WebSocket connection closed");
-      },
-    });
-
-    this.roomSubscription = this.chatService.rooms$.subscribe({
-      next: (room) => {
-        this.rooms = room;
-      },
-      error: (error) => {
-        console.error("WebSocket error:", error);
-      },
-      complete: () => {
-        console.warn("WebSocket connection closed");
-      },
-    });
-
-    this.membersSubscription = this.chatService.members$.subscribe({
-      next: (member) => {
-        this.members = member;
-      },
-      error: (error) => {
-        console.error("WebSocket error:", error);
-      },
-      complete: () => {
-        console.warn("WebSocket connection closed");
-      },
-    });
-
-    this.progressSubscription = this.chatService.uploadProgress$.subscribe({
-      next: (progress) => {
-        this.uploadProgress = progress;
-        this.cdr.detectChanges();
-      },
-      error: (error) => {
-        console.error("WebSocket error:", error);
-      },
-      complete: () => {
-        console.warn("WebSocket connection closed");
-      },
-    });
-
-    this.progressSubscription.add(
-      this.chatService.downloadProgress$.subscribe({
-        next: (progress) => {
-          this.downloadProgress = progress;
-          this.cdr.detectChanges();
-        },
-        error: (error) => {
-          console.error("Download Progress error:", error);
-        },
       })
     );
 
     if (isPlatformBrowser(this.platformId)) {
-      const themePreference = localStorage.getItem("themePreference");
-      this.isDarkMode = themePreference === "dark";
+      const themePreference = localStorage.getItem('themePreference');
+      this.isDarkMode = themePreference === 'dark';
+      this.applyTheme(this.isDarkMode);
     }
+  }
+
+  private initializeChat() {
+    this.subscriptions.push(
+      this.chatService.messages$.subscribe((messages) => {
+        this.messages = messages;
+        this.cdr.detectChanges();
+      })
+    );
+
+    this.subscriptions.push(
+      this.roomService.rooms$.subscribe((rooms) => {
+        this.rooms = rooms;
+        this.cdr.detectChanges();
+      })
+    );
+
+    this.subscriptions.push(
+      this.roomService.members$.subscribe((members) => {
+        this.members = members;
+        this.cdr.detectChanges();
+        this.initiateConnectionsWithMembers();
+      })
+    );
+
+    this.subscriptions.push(
+      this.fileTransferService.uploadProgress$.subscribe((progress) => {
+        this.uploadProgress = progress;
+        this.cdr.detectChanges();
+      })
+    );
+
+    this.subscriptions.push(
+      this.fileTransferService.downloadProgress$.subscribe((progress) => {
+        this.downloadProgress = progress;
+        this.cdr.detectChanges();
+      })
+    );
+
+    this.subscriptions.push(
+      this.fileTransferService.incomingFile$.subscribe((fileInfo) => {
+        this.incomingFile = fileInfo;
+        this.cdr.detectChanges();
+      })
+    );
   }
 
   ngAfterViewInit(): void {
@@ -128,45 +129,86 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private applyTheme(isDarkMode: boolean): void {
-    document.body.classList.toggle("dark-mode", isDarkMode);
-    document.body.classList.toggle("light-mode", !isDarkMode);
+    document.body.classList.toggle('dark-mode', isDarkMode);
+    document.body.classList.toggle('light-mode', !isDarkMode);
   }
 
   connect(): void {
-    this.chatService
+    this.wsConnectionService
       .connect()
       .then(() => {
-        this.listRooms();
+        this.roomService.listRooms();
+        this.chatService.getUsername();
       })
       .catch((error) => {
-        console.error("WebSocket connection failed:", error);
+        console.error('WebSocket connection failed:', error);
       });
   }
 
   sendMessage(): void {
-    if (this.message.trim()) {
-      const userMessage = "[UserMessage] " + this.message.trim();
-      this.chatService.sendMessage(userMessage);
-      this.message = "";
-    }
+    const otherMembers = this.members.filter((m) => m !== this.userService.user);
+    otherMembers.forEach((member) => {
+      if (this.message.trim()) {
+        this.chatService.sendMessage(this.message, member);
+        this.message = '';
+      }
+    });
   }
 
   sendAttachments(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      this.chatService.sendAttachments(input.files);
-      input.value = "";
+      const fileToSend = input.files[0];
+      input.value = '';
+
+      const otherMembers = this.members.filter((m) => m !== this.userService.user);
+      if (otherMembers.length === 0) {
+        alert('No other users available to send the file.');
+        return;
+      }
+      otherMembers.forEach((member) => {
+        this.fileTransferService.prepareFileForSending(fileToSend, member);
+        if (!this.webrtcService.isConnected(member)) {
+          this.webrtcService.initiateConnection(member);
+        }
+
+        this.webrtcService.dataChannelOpen$
+          .pipe(take(1))
+          .subscribe((isOpen) => {
+            if (isOpen) {
+              this.fileTransferService.sendFileOffer(member);
+            }
+          });
+      });
+    }
+  }
+
+  public acceptIncomingFile(): void {
+    this.fileTransferService.startSavingFile();
+  }
+
+  public declineIncomingFile(): void {
+    this.incomingFile = null;
+    this.fileTransferService.incomingFile$.next(null);
+
+    const fromUser = this.fileTransferService.incomingFile$.value?.fromUser;
+    if (fromUser) {
+      const message = {
+        type: 'file-decline',
+        payload: {},
+      };
+      this.webrtcService.sendData(message, fromUser);
     }
   }
 
   listRooms(): void {
-    this.logger.log("Listing rooms");
-    this.chatService.listRooms();
+    this.logger.log('Listing rooms');
+    this.roomService.listRooms();
   }
 
   joinRoom(room: string): void {
     if (room !== this.currentRoom) {
-      this.chatService.joinRoom(room);
+      this.roomService.joinRoom(room);
       this.currentRoom = room;
     }
   }
@@ -174,22 +216,29 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   createRoom(): void {
     if (this.newRoomName.trim() && this.newRoomName !== this.currentRoom) {
       this.joinRoom(this.newRoomName.trim());
-      this.newRoomName = "";
+      this.newRoomName = '';
     }
   }
 
   isMyMessage(msg: string): boolean {
-    return msg.startsWith(this.chatService.user);
+    return msg.startsWith(this.userService.user);
   }
 
   isMyUser(member: string): boolean {
-    return member.trim() === this.chatService.user.trim();
+    return member.trim() === this.userService.user.trim();
   }
 
   ngOnDestroy(): void {
-    this.messageSubscription.unsubscribe();
-    this.roomSubscription.unsubscribe();
-    this.progressSubscription.unsubscribe();
-    this.membersSubscription.unsubscribe();
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
+    this.webrtcService.closeAllConnections();
+  }
+
+  private initiateConnectionsWithMembers(): void {
+    const otherMembers = this.members.filter((m) => m !== this.userService.user);
+    otherMembers.forEach((member) => {
+      if (this.userService.user < member) {
+        this.webrtcService.initiateConnection(member);
+      }
+    });
   }
 }

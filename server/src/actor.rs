@@ -2,15 +2,13 @@ use actix::{prelude::Actor, Context};
 use actix_broker::BrokerSubscribe;
 use actix_web_actors::ws;
 
-use crate::{LeaveRoom, SendFile, SendMessage, WsChatServer, WsChatSession};
+use crate::{LeaveRoom, WsChatServer, WsChatSession};
 
 impl Actor for WsChatServer {
     type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
         self.subscribe_system_async::<LeaveRoom>(ctx);
-        self.subscribe_system_async::<SendMessage>(ctx);
-        self.subscribe_system_async::<SendFile>(ctx);
     }
 }
 

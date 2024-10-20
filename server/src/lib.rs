@@ -1,5 +1,4 @@
 mod actor;
-mod attachment;
 mod consts;
 mod error;
 mod handler;
@@ -10,8 +9,7 @@ mod session_manager;
 
 pub use error::ServerError;
 pub use message::{
-    ChatMessage, ClientMetadata, FileReassembler, JoinRoom, LeaveRoom, ListRooms, SendFile,
-    SendMessage, WsChatServer, WsChatSession,
+    ChatMessage, ClientMetadata, JoinRoom, LeaveRoom, ListRooms, WsChatServer, WsChatSession,
 };
 pub use session_manager::SessionManager;
 
