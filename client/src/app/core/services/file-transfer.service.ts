@@ -5,7 +5,7 @@ import { WebRTCService } from './webrtc.service';
 import {
   CHUNK_SIZE,
   FILE_TRANSFER_MESSAGE_TYPES,
-  MAX_BUFFERED_AMOUNT
+  MAX_BUFFERED_AMOUNT,
 } from '../../utils/constants';
 
 @Injectable({
@@ -14,15 +14,20 @@ import {
 export class FileTransferService {
   public uploadProgress$ = new BehaviorSubject<number>(0);
   public downloadProgress$ = new BehaviorSubject<number>(0);
-  public incomingFile$ = new BehaviorSubject<{ fileName: string; fileSize: number; fromUser: string } | null>(null);
+  public incomingFile$ = new BehaviorSubject<{
+    fileName: string;
+    fileSize: number;
+    fromUser: string;
+  } | null>(null);
 
   private fileToSend: File | null = null;
   private targetUser = '';
   private receivedSize = 0;
-  private dataQueue: ArrayBuffer[] = [];
+  private receivedDataBuffer: Uint8Array[] = [];
   private isPaused = false;
   private incomingFileSize = 0;
   private isReceivingFile = false;
+  private currentOffset = 0;
 
   constructor(
     private logger: LoggerService,
@@ -93,7 +98,7 @@ export class FileTransferService {
     this.isReceivingFile = true;
 
     const message = {
-      type: 'file-accept',
+      type: FILE_TRANSFER_MESSAGE_TYPES.FILE_ACCEPT,
       payload: {},
     };
 
@@ -101,16 +106,18 @@ export class FileTransferService {
 
     this.webrtcService.sendData(message, fromUser);
     this.receivedSize = 0;
-    this.dataQueue = [];
+    this.receivedDataBuffer = [];
   }
 
   private async handleDataChunk(data: ArrayBuffer): Promise<void> {
     if (!this.isReceivingFile) {
-      this.logger.log('Received data chunk when not expecting a file transfer. Ignoring.');
+      this.logger.log(
+        'Received data chunk when not expecting a file transfer. Ignoring.'
+      );
       return;
     }
 
-    this.dataQueue.push(data);
+    this.receivedDataBuffer.push(new Uint8Array(data));
     this.receivedSize += data.byteLength;
     const fileSize = this.incomingFileSize;
 
@@ -129,19 +136,34 @@ export class FileTransferService {
 
     if (this.receivedSize >= fileSize) {
       this.logger.log('File received successfully');
-      const receivedBlob = new Blob(this.dataQueue);
+
+      const totalLength = this.receivedDataBuffer.reduce(
+        (acc, curr) => acc + curr.length,
+        0
+      );
+      const combinedArray = new Uint8Array(totalLength);
+      let offset = 0;
+      for (const chunk of this.receivedDataBuffer) {
+        combinedArray.set(chunk, offset);
+        offset += chunk.length;
+      }
+
+      const receivedBlob = new Blob([combinedArray]);
       const downloadUrl = URL.createObjectURL(receivedBlob);
-      const fileName = this.incomingFile$.value?.fileName || 'downloaded_file';
+      const fileName =
+        this.incomingFile$.value?.fileName || 'downloaded_file';
 
       const anchor = document.createElement('a');
       anchor.href = downloadUrl;
       anchor.download = fileName;
+      document.body.appendChild(anchor);
       anchor.click();
+      document.body.removeChild(anchor);
 
       this.downloadProgress$.next(100);
       this.resetProgressAfterDelay();
       this.incomingFile$.next(null);
-      this.dataQueue = [];
+      this.receivedDataBuffer = [];
       this.receivedSize = 0;
       this.incomingFileSize = 0;
       this.isReceivingFile = false;
@@ -154,12 +176,13 @@ export class FileTransferService {
       return;
     }
     this.logger.log(`Starting to send file to ${targetUser}`);
+    this.currentOffset = 0;
     this.sendNextChunk(targetUser);
   }
 
-  private sendNextChunk(targetUser: string): void {
+  private async sendNextChunk(targetUser: string): Promise<void> {
     if (this.isPaused || !this.fileToSend) return;
-
+    const { fileToSend } = this;
     const dataChannel = this.webrtcService.getDataChannel(targetUser);
     if (!dataChannel) {
       console.error(`Data channel is not available for ${targetUser}`);
@@ -171,16 +194,22 @@ export class FileTransferService {
       return;
     }
 
-    const fileReader = new FileReader();
-    const start = (this.uploadProgress$.value / 100) * this.fileToSend.size;
-    const end = Math.min(start + CHUNK_SIZE, this.fileToSend.size);
-    const blob = this.fileToSend.slice(start, end);
+    const start = this.currentOffset;
+    const end = Math.min(start + CHUNK_SIZE, fileToSend.size);
+    const blob = fileToSend.slice(start, end);
 
-    fileReader.onload = (e) => {
+    const fileReader = new FileReader();
+    fileReader.onload = async (e) => {
       if (e.target?.result) {
         const arrayBuffer = e.target.result as ArrayBuffer;
+        while (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+          await new Promise((resolve) => setTimeout(resolve, 100));
+        }
+
         this.webrtcService.sendRawData(arrayBuffer, targetUser);
-        const progress = (end / this.fileToSend!.size) * 100;
+        this.currentOffset = end;
+
+        const progress = (this.currentOffset / fileToSend.size) * 100;
 
         if (isFinite(progress)) {
           this.uploadProgress$.next(parseFloat(progress.toFixed(2)));
@@ -188,13 +217,14 @@ export class FileTransferService {
           console.error('Upload progress is non-finite');
         }
 
-        if (end < this.fileToSend!.size) {
+        if (this.currentOffset < fileToSend.size) {
           this.sendNextChunk(targetUser);
         } else {
           this.logger.log('File sent successfully');
           this.uploadProgress$.next(100);
           this.resetProgressAfterDelay();
           this.fileToSend = null;
+          this.currentOffset = 0;
         }
       }
     };

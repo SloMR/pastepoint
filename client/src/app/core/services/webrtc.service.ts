@@ -8,7 +8,9 @@ import {
   OFFER_OPTIONS,
   DATA_CHANNEL_OPTIONS,
   SIGNAL_MESSAGE_TYPES,
-  DATA_CHANNEL_MESSAGE_TYPES, FILE_TRANSFER_MESSAGE_TYPES
+  DATA_CHANNEL_MESSAGE_TYPES,
+  FILE_TRANSFER_MESSAGE_TYPES,
+  ICE_SERVERS,
 } from '../../utils/constants';
 
 interface SignalMessage {
@@ -36,7 +38,11 @@ export class WebRTCService {
   public dataChannelOpen$ = new BehaviorSubject<boolean>(false);
 
   public chatMessages$ = new Subject<string>();
-  public fileOffers$ = new Subject<{ fileName: string; fileSize: number; fromUser: string }>();
+  public fileOffers$ = new Subject<{
+    fileName: string;
+    fileSize: number;
+    fromUser: string;
+  }>();
   public fileResponses$ = new Subject<{ accepted: boolean; fromUser: string }>();
   public incomingData$ = new Subject<ArrayBuffer>();
   public bufferedAmountLow$ = new Subject<void>();
@@ -90,7 +96,7 @@ export class WebRTCService {
 
   private createPeerConnection(targetUser: string): RTCPeerConnection {
     const configuration = {
-      iceServers: [{ urls: 'stun:stun.l.google.com:19302' }],
+      iceServers: ICE_SERVERS,
     };
 
     const peerConnection = new RTCPeerConnection(configuration);
@@ -126,6 +132,7 @@ export class WebRTCService {
   }
 
   private setupDataChannel(channel: RTCDataChannel, targetUser: string): void {
+    channel.binaryType = 'arraybuffer';
     channel.onopen = () => {
       this.logger.log(`Data channel with ${targetUser} is open`);
       this.dataChannelOpen$.next(true);
@@ -197,6 +204,8 @@ export class WebRTCService {
       }
     } else if (data instanceof ArrayBuffer) {
       this.incomingData$.next(data);
+    } else {
+      console.warn('Unknown data type received:', data);
     }
   }
 
@@ -206,7 +215,9 @@ export class WebRTCService {
     if (channel && channel.readyState === 'open') {
       channel.send(JSON.stringify(message));
     } else if (channel && channel.readyState === 'connecting') {
-      console.warn(`Data channel with ${targetUser} is connecting. Message will be queued.`);
+      console.warn(
+        `Data channel with ${targetUser} is connecting. Message will be queued.`
+      );
 
       if (!this.messageQueues.has(targetUser)) {
         this.messageQueues.set(targetUser, []);

@@ -9,6 +9,12 @@ export const OFFER_OPTIONS = {
   offerToReceiveVideo: false,
 };
 
+export const ICE_SERVERS = [
+  {
+    urls: 'stun:stun.l.google.com:19302',
+  },
+];
+
 // WebRTC data channel constants
 export const DATA_CHANNEL_OPTIONS = {
   ordered: true,
