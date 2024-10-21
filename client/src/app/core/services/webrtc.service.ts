@@ -10,7 +10,9 @@ import {
   SIGNAL_MESSAGE_TYPES,
   DATA_CHANNEL_MESSAGE_TYPES,
   FILE_TRANSFER_MESSAGE_TYPES,
-  ICE_SERVERS, MAX_RECONNECT_ATTEMPTS, RECONNECT_DELAY,
+  ICE_SERVERS,
+  MAX_RECONNECT_ATTEMPTS,
+  RECONNECT_DELAY,
 } from '../../utils/constants';
 
 interface SignalMessage {
@@ -140,15 +142,19 @@ export class WebRTCService {
     };
 
     peerConnection.onconnectionstatechange = () => {
-      if (peerConnection.connectionState === 'failed' ||
-        peerConnection.connectionState === 'disconnected') {
+      if (
+        peerConnection.connectionState === 'failed' ||
+        peerConnection.connectionState === 'disconnected'
+      ) {
         this.handleDisconnection(targetUser);
       }
     };
 
     peerConnection.oniceconnectionstatechange = () => {
-      if (peerConnection.iceConnectionState === 'disconnected' ||
-        peerConnection.iceConnectionState === 'failed') {
+      if (
+        peerConnection.iceConnectionState === 'disconnected' ||
+        peerConnection.iceConnectionState === 'failed'
+      ) {
         this.handleDisconnection(targetUser);
       }
     };
@@ -207,14 +213,15 @@ export class WebRTCService {
   private handleDisconnection(targetUser: string) {
     if (this.reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
       this.reconnectAttempts++;
-      this.logger.warn(`Attempt ${this.reconnectAttempts}: Reconnecting in ${RECONNECT_DELAY / 1000} seconds...`);
+      this.logger.warn(
+        `Attempt ${this.reconnectAttempts}: Reconnecting in ${RECONNECT_DELAY / 1000} seconds...`
+      );
 
       setTimeout(() => {
         if (!this.peerConnections.has(targetUser)) {
           this.reconnect(targetUser);
         }
       }, RECONNECT_DELAY);
-
     } else {
       this.logger.error('Max reconnection attempts reached. Could not reconnect.');
       alert('Could not reconnect to the user. Please try again later.');
@@ -261,9 +268,7 @@ export class WebRTCService {
     if (channel && channel.readyState === 'open') {
       channel.send(JSON.stringify(message));
     } else if (channel && channel.readyState === 'connecting') {
-      this.logger.warn(
-        `Data channel with ${targetUser} is connecting. Message will be queued.`
-      );
+      this.logger.warn(`Data channel with ${targetUser} is connecting. Message will be queued.`);
 
       if (!this.messageQueues.has(targetUser)) {
         this.messageQueues.set(targetUser, []);
@@ -401,11 +406,9 @@ export class WebRTCService {
     const peerConnection = this.peerConnections.get(targetUser);
 
     if (peerConnection?.remoteDescription?.type) {
-      peerConnection
-        .addIceCandidate(candidate)
-        .catch((error) => {
-          this.logger.error(`Error adding received ICE candidate: ${error}`);
-        });
+      peerConnection.addIceCandidate(candidate).catch((error) => {
+        this.logger.error(`Error adding received ICE candidate: ${error}`);
+      });
     } else {
       const queue = this.candidateQueues.get(targetUser);
       if (queue) {
@@ -421,11 +424,9 @@ export class WebRTCService {
     if (queue && peerConnection) {
       queue.forEach((candidateInit) => {
         const candidate = new RTCIceCandidate(candidateInit);
-        peerConnection
-          .addIceCandidate(candidate)
-          .catch((error) => {
-            this.logger.error(`Error adding queued ICE candidate ${error}`);
-          });
+        peerConnection.addIceCandidate(candidate).catch((error) => {
+          this.logger.error(`Error adding queued ICE candidate ${error}`);
+        });
       });
       queue.length = 0;
     }

@@ -123,7 +123,7 @@
   background-color: var(--button-hover-bg-color);
 }
 
-.join-room-button{
+.join-room-button {
   width: 100%;
   padding: 30px;
   background-color: #353535 !important;
@@ -175,7 +175,6 @@
   background-color: var(--active-button-bg-color);
   color: var(--active-button-text-color);
 }
-
 
 .incoming-file-prompt {
   display: flex;

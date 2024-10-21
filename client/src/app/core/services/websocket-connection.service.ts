@@ -38,9 +38,7 @@ export class WebSocketConnectionService {
           const message = ev.data.trim();
 
           if (message.startsWith('[SignalMessage]')) {
-            const signalMessage = JSON.parse(
-              message.replace('[SignalMessage]', '').trim()
-            );
+            const signalMessage = JSON.parse(message.replace('[SignalMessage]', '').trim());
             this.signalMessages$.next(signalMessage);
           } else if (this.isSystemMessage(message)) {
             this.systemMessages$.next(message);
@@ -51,9 +49,7 @@ export class WebSocketConnectionService {
       };
 
       this.socket.onclose = (event) => {
-        this.logger.error(
-          `WebSocket disconnected: code ${event.code}, reason ${event.reason}`
-        );
+        this.logger.error(`WebSocket disconnected: code ${event.code}, reason ${event.reason}`);
         setTimeout(() => this.reconnect(), 1000);
       };
 
@@ -66,9 +62,7 @@ export class WebSocketConnectionService {
 
   private reconnect() {
     this.logger.warn('Attempting to reconnect WebSocket...');
-    this.connect().catch((err) =>
-      this.logger.error(`WebSocket reconnection failed: ${err}`)
-    );
+    this.connect().catch((err) => this.logger.error(`WebSocket reconnection failed: ${err}`));
   }
 
   public send(message: string): void {

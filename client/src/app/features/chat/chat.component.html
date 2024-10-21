@@ -1,4 +1,4 @@
-<div class="chat-container" [ngClass]="{'dark-mode': isDarkMode}">
+<div class="chat-container" [ngClass]="{ 'dark-mode': isDarkMode }">
   <!-- Header -->
   <mat-toolbar color="primary" class="chat-header">
     <span>PastePoint Chat</span>
@@ -31,7 +31,7 @@
       </div>
 
       <!-- Joined Members List -->
-      <h5 class="sidebar-title" style="margin-top: 20px;">Joined Members</h5>
+      <h5 class="sidebar-title" style="margin-top: 20px">Joined Members</h5>
       <mat-list class="room-list">
         <mat-list-item *ngFor="let member of members">
           <div class="member-item">
@@ -76,23 +76,30 @@
 
   <!-- Chat Footer with Message Input and File Attachment -->
   <div class="chat-footer">
-    <form (submit)="sendMessage(); $event.preventDefault();" class="message-form">
+    <form (submit)="sendMessage(); $event.preventDefault()" class="message-form">
       <mat-form-field appearance="outline" class="message-input">
         <mat-label>Type your message</mat-label>
-        <input
-          matInput
-          [(ngModel)]="message"
-          name="text"
-          autocomplete="off"
-          required
-        />
+        <input matInput [(ngModel)]="message" name="text" autocomplete="off" required />
       </mat-form-field>
 
       <!-- File Attachment Button -->
-      <button mat-icon-button color="primary" type="button" (click)="fileInput.click()" class="send-button" style="margin: 10px;">
+      <button
+        mat-icon-button
+        color="primary"
+        type="button"
+        (click)="fileInput.click()"
+        class="send-button"
+        style="margin: 10px"
+      >
         <mat-icon>attach_file</mat-icon>
       </button>
-      <input type="file" #fileInput (change)="sendAttachments($event)" multiple style="display: none;" />
+      <input
+        type="file"
+        #fileInput
+        (change)="sendAttachments($event)"
+        multiple
+        style="display: none"
+      />
 
       <!-- Send Message Button -->
       <button mat-icon-button color="primary" type="submit" class="send-button">

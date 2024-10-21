@@ -172,13 +172,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           this.webrtcService.initiateConnection(member);
         }
 
-        this.webrtcService.dataChannelOpen$
-          .pipe(take(1))
-          .subscribe((isOpen) => {
-            if (isOpen) {
-              this.fileTransferService.sendFileOffer(member);
-            }
-          });
+        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen) => {
+          if (isOpen) {
+            this.fileTransferService.sendFileOffer(member);
+          }
+        });
       });
     }
   }

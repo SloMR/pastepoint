@@ -111,9 +111,7 @@ export class FileTransferService {
 
   private async handleDataChunk(data: ArrayBuffer): Promise<void> {
     if (!this.isReceivingFile) {
-      this.logger.error(
-        'Received data chunk when not expecting a file transfer. Ignoring.'
-      );
+      this.logger.error('Received data chunk when not expecting a file transfer. Ignoring.');
       return;
     }
 
@@ -137,10 +135,7 @@ export class FileTransferService {
     if (this.receivedSize >= fileSize) {
       this.logger.info('File received successfully');
 
-      const totalLength = this.receivedDataBuffer.reduce(
-        (acc, curr) => acc + curr.length,
-        0
-      );
+      const totalLength = this.receivedDataBuffer.reduce((acc, curr) => acc + curr.length, 0);
       const combinedArray = new Uint32Array(totalLength);
       let offset = 0;
       for (const chunk of this.receivedDataBuffer) {
@@ -150,8 +145,7 @@ export class FileTransferService {
 
       const receivedBlob = new Blob([combinedArray]);
       const downloadUrl = URL.createObjectURL(receivedBlob);
-      const fileName =
-        this.incomingFile$.value?.fileName || 'downloaded_file';
+      const fileName = this.incomingFile$.value?.fileName || 'downloaded_file';
 
       const anchor = document.createElement('a');
       anchor.href = downloadUrl;

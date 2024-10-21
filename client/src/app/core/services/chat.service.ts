@@ -4,7 +4,7 @@ import { LoggerService } from './logger.service';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { WebRTCService } from './webrtc.service';
 import { UserService } from './user.service';
-import {DATA_CHANNEL_MESSAGE_TYPES} from "../../utils/constants";
+import { DATA_CHANNEL_MESSAGE_TYPES } from '../../utils/constants';
 
 @Injectable({
   providedIn: 'root',
