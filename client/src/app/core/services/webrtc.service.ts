@@ -10,7 +10,7 @@ import {
   SIGNAL_MESSAGE_TYPES,
   DATA_CHANNEL_MESSAGE_TYPES,
   FILE_TRANSFER_MESSAGE_TYPES,
-  ICE_SERVERS,
+  ICE_SERVERS, MAX_RECONNECT_ATTEMPTS, RECONNECT_DELAY,
 } from '../../utils/constants';
 
 interface SignalMessage {
@@ -51,6 +51,8 @@ export class WebRTCService {
   private dataChannels = new Map<string, RTCDataChannel>();
   private candidateQueues = new Map<string, RTCIceCandidateInit[]>();
   private messageQueues = new Map<string, (DataChannelMessage | ArrayBuffer)[]>();
+
+  private reconnectAttempts = 0;
 
   constructor(
     private logger: LoggerService,
@@ -94,6 +96,24 @@ export class WebRTCService {
       });
   }
 
+  private reconnect(targetUser: string) {
+    this.logger.info('Reconnecting WebRTC...');
+
+    const peerConnection = this.peerConnections.get(targetUser);
+    if (!peerConnection) {
+      this.logger.warn(`PeerConnection does not exist for user: ${targetUser}`);
+      return;
+    }
+
+    if (peerConnection) {
+      peerConnection.close();
+      this.peerConnections.delete(targetUser);
+    }
+
+    this.initiateConnection(targetUser);
+    this.reconnectAttempts = 0;
+  }
+
   private createPeerConnection(targetUser: string): RTCPeerConnection {
     const configuration = {
       iceServers: ICE_SERVERS,
@@ -120,9 +140,17 @@ export class WebRTCService {
     };
 
     peerConnection.onconnectionstatechange = () => {
-      this.logger.log(
-        `Connection state with ${targetUser} changed: ${peerConnection.connectionState}`
-      );
+      if (peerConnection.connectionState === 'failed' ||
+        peerConnection.connectionState === 'disconnected') {
+        this.handleDisconnection(targetUser);
+      }
+    };
+
+    peerConnection.oniceconnectionstatechange = () => {
+      if (peerConnection.iceConnectionState === 'disconnected' ||
+        peerConnection.iceConnectionState === 'failed') {
+        this.handleDisconnection(targetUser);
+      }
     };
 
     this.peerConnections.set(targetUser, peerConnection);
@@ -174,6 +202,24 @@ export class WebRTCService {
     channel.onbufferedamountlow = () => {
       this.bufferedAmountLow$.next();
     };
+  }
+
+  private handleDisconnection(targetUser: string) {
+    if (this.reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      this.reconnectAttempts++;
+      this.logger.warn(`Attempt ${this.reconnectAttempts}: Reconnecting in ${RECONNECT_DELAY / 1000} seconds...`);
+
+      setTimeout(() => {
+        if (!this.peerConnections.has(targetUser)) {
+          this.reconnect(targetUser);
+        }
+      }, RECONNECT_DELAY);
+
+    } else {
+      this.logger.error('Max reconnection attempts reached. Could not reconnect.');
+      alert('Could not reconnect to the user. Please try again later.');
+      this.closePeerConnection(targetUser);
+    }
   }
 
   private handleDataChannelMessage(data: any, targetUser: string): void {
@@ -383,6 +429,17 @@ export class WebRTCService {
       });
       queue.length = 0;
     }
+  }
+
+  private closePeerConnection(targetUser: string) {
+    const peerConnection = this.peerConnections.get(targetUser);
+    if (peerConnection) {
+      peerConnection.close();
+      this.peerConnections.delete(targetUser);
+    }
+    this.dataChannels.delete(targetUser);
+    this.candidateQueues.delete(targetUser);
+    this.messageQueues.delete(targetUser);
   }
 
   public closeAllConnections(): void {
