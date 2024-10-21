@@ -50,13 +50,26 @@
 
       <!-- Incoming File Prompt -->
       <div *ngIf="incomingFile" class="incoming-file-prompt">
-        <p>
-          You have an incoming file:
-          <strong>{{ incomingFile.fileName }}</strong>
-          ({{ incomingFile.fileSize | number }} bytes)
-        </p>
-        <button mat-button color="primary" (click)="acceptIncomingFile()">Accept</button>
-        <button mat-button color="warn" (click)="declineIncomingFile()">Decline</button>
+        <mat-card class="incoming-file-card">
+          <mat-card-header>
+            <mat-icon color="primary">file_download</mat-icon>
+            <mat-card-title>Incoming File</mat-card-title>
+            <mat-card-subtitle>{{ incomingFile.fileName }}</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            <p>File Size: {{ incomingFile.fileSize | number }} bytes</p>
+          </mat-card-content>
+
+          <mat-card-actions align="end">
+            <button mat-raised-button color="primary" (click)="acceptIncomingFile()">
+              <mat-icon>check_circle</mat-icon> Accept
+            </button>
+            <button mat-raised-button color="warn" (click)="declineIncomingFile()">
+              <mat-icon>cancel</mat-icon> Decline
+            </button>
+          </mat-card-actions>
+        </mat-card>
       </div>
     </div>
   </div>

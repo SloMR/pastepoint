@@ -175,3 +175,33 @@
   background-color: var(--active-button-bg-color);
   color: var(--active-button-text-color);
 }
+
+
+.incoming-file-prompt {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.incoming-file-card {
+  width: 400px;
+  text-align: center;
+  padding: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+mat-card-header {
+  display: flex;
+  align-items: center;
+}
+
+mat-icon {
+  margin-right: 8px;
+}
+
+mat-card-actions {
+  display: flex;
+  justify-content: space-between;
+}

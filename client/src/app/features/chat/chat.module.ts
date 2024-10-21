@@ -10,6 +10,13 @@ import {MatFormFieldModule} from '@angular/material/form-field';
 import {MatInputModule} from '@angular/material/input';
 import {MatIconModule} from '@angular/material/icon';
 import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
+import {
+  MatCard,
+  MatCardActions,
+  MatCardContent, MatCardHeader,
+  MatCardSubtitle,
+  MatCardTitle
+} from "@angular/material/card";
 
 @NgModule({
   declarations: [ChatComponent],
@@ -23,7 +30,13 @@ import {FontAwesomeModule} from '@fortawesome/angular-fontawesome';
     MatFormFieldModule,
     MatInputModule,
     MatIconModule,
-    FontAwesomeModule
+    FontAwesomeModule,
+    MatCardContent,
+    MatCardSubtitle,
+    MatCardTitle,
+    MatCardActions,
+    MatCardHeader,
+    MatCard
   ],
   exports: [ChatComponent]
 })

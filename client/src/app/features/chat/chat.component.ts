@@ -185,6 +185,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   public acceptIncomingFile(): void {
     this.fileTransferService.startSavingFile();
+    this.incomingFile = null;
   }
 
   public declineIncomingFile(): void {
