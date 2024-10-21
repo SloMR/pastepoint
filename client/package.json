@@ -10,7 +10,7 @@
     "test": "ng test",
     "serve:ssr:client": "node dist/client/server/server.mjs",
     "lint": "ng lint",
-    "lint:fix": "ng lint. --fix",
+    "lint:fix": "ng lint --fix",
     "format": "prettier --write ."
   },
   "private": true,
