@@ -10,7 +10,6 @@ module.exports = tslint.config(
       ...tslint.configs.recommended,
       ...tslint.configs.stylistic,
       ...angular.configs.tsRecommended,
-      'plugin:prettier/recommended',
     ],
     processor: angular.processInlineTemplates,
     rules: {
@@ -30,7 +29,6 @@ module.exports = tslint.config(
           style: 'kebab-case',
         },
       ],
-      'prettier/prettier': 'error',
       '@typescript-eslint/no-explicit-any': 'off',
     },
   },
