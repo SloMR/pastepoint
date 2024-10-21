@@ -5,9 +5,33 @@ import { environment } from '../../environments/environment';
   providedIn: 'root'
 })
 export class LoggerService {
-  public log(msg: string): void {
+  public info(msg: string): void {
     if (environment.production === false) {
-      console.log(new Date().toLocaleTimeString() + " [WebSocket]: " + JSON.stringify(msg));
+      console.info(new Date().toLocaleTimeString() + " [WebSocket]: " + JSON.stringify(msg));
+    }
+  }
+
+  public error(msg: string): void {
+    if (environment.production === false) {
+      console.error(new Date().toLocaleTimeString() + " [WebSocket]: " + JSON.stringify(msg));
+    }
+  }
+
+  public warn(msg: string): void {
+    if (environment.production === false) {
+      console.warn(new Date().toLocaleTimeString() + " [WebSocket]: " + JSON.stringify(msg));
+    }
+  }
+
+  public debug(msg: string): void {
+    if (environment.production === false) {
+      console.debug(new Date().toLocaleTimeString() + " [WebSocket]: " + JSON.stringify(msg));
+    }
+  }
+
+  public trace(msg: string): void {
+    if (environment.production === false) {
+      console.trace(new Date().toLocaleTimeString() + " [WebSocket]: " + JSON.stringify(msg));
     }
   }
 }

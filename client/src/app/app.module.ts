@@ -8,6 +8,7 @@ import {AppComponent} from './app.component';
 import {ThemeService} from "./core/services/theme.service";
 import {provideAnimationsAsync} from '@angular/platform-browser/animations/async';
 import {ChatModule} from './features/chat/chat.module';
+import {provideHttpClient, withFetch} from "@angular/common/http";
 
 const routes: Routes = [
   {path: 'chat', loadChildren: () => import('./features/chat/chat.module').then(m => m.ChatModule)},
@@ -32,6 +33,7 @@ export function initializeTheme(themeService: ThemeService): () => void {
   bootstrap: [AppComponent],
   providers: [
     provideAnimationsAsync(),
+    provideHttpClient(withFetch()),
     {
       provide: APP_INITIALIZER,
       useFactory: initializeTheme,

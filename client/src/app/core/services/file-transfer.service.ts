@@ -40,7 +40,7 @@ export class FileTransferService {
     });
 
     this.webrtcService.fileOffers$.subscribe((offer) => {
-      this.logger.log(`Received file offer from ${offer.fromUser}`);
+      this.logger.info(`Received file offer from ${offer.fromUser}`);
       this.incomingFile$.next({
         fileName: offer.fileName,
         fileSize: offer.fileSize,
@@ -50,10 +50,10 @@ export class FileTransferService {
 
     this.webrtcService.fileResponses$.subscribe((response) => {
       if (response.accepted) {
-        this.logger.log(`File accepted by ${response.fromUser}`);
+        this.logger.info(`File accepted by ${response.fromUser}`);
         this.startSendingFile(response.fromUser);
       } else {
-        this.logger.log(`File declined by ${response.fromUser}`);
+        this.logger.warn(`File declined by ${response.fromUser}`);
         alert('The receiver declined the file transfer.');
       }
     });
@@ -73,10 +73,10 @@ export class FileTransferService {
 
   public sendFileOffer(targetUser: string): void {
     if (!this.fileToSend) {
-      console.error('No file to send.');
+      this.logger.error('No file to send.');
       return;
     }
-    this.logger.log(`Sending file offer to ${targetUser}`);
+    this.logger.info(`Sending file offer to ${targetUser}`);
     const message = {
       type: FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER,
       payload: {
@@ -89,7 +89,7 @@ export class FileTransferService {
 
   public startSavingFile(): void {
     if (!this.incomingFile$.value) {
-      console.error('No incoming file to accept.');
+      this.logger.error('No incoming file to accept.');
       return;
     }
 
@@ -102,7 +102,7 @@ export class FileTransferService {
       payload: {},
     };
 
-    this.logger.log(`Sending file acceptance to ${fromUser}`);
+    this.logger.info(`Sending file acceptance to ${fromUser}`);
 
     this.webrtcService.sendData(message, fromUser);
     this.receivedSize = 0;
@@ -111,7 +111,7 @@ export class FileTransferService {
 
   private async handleDataChunk(data: ArrayBuffer): Promise<void> {
     if (!this.isReceivingFile) {
-      this.logger.log(
+      this.logger.error(
         'Received data chunk when not expecting a file transfer. Ignoring.'
       );
       return;
@@ -122,7 +122,7 @@ export class FileTransferService {
     const fileSize = this.incomingFileSize;
 
     if (!fileSize) {
-      console.error('Invalid file size.');
+      this.logger.error('Invalid file size.');
       return;
     }
 
@@ -130,18 +130,18 @@ export class FileTransferService {
     if (isFinite(progress)) {
       this.downloadProgress$.next(parseFloat(progress.toFixed(2)));
     } else {
-      console.error('Progress is non-finite');
+      this.logger.error('Progress is non-finite');
       return;
     }
 
     if (this.receivedSize >= fileSize) {
-      this.logger.log('File received successfully');
+      this.logger.info('File received successfully');
 
       const totalLength = this.receivedDataBuffer.reduce(
         (acc, curr) => acc + curr.length,
         0
       );
-      const combinedArray = new Uint8Array(totalLength);
+      const combinedArray = new Uint32Array(totalLength);
       let offset = 0;
       for (const chunk of this.receivedDataBuffer) {
         combinedArray.set(chunk, offset);
@@ -172,10 +172,10 @@ export class FileTransferService {
 
   private startSendingFile(targetUser: string): void {
     if (!this.fileToSend) {
-      console.error('No file to send.');
+      this.logger.error('No file to send.');
       return;
     }
-    this.logger.log(`Starting to send file to ${targetUser}`);
+    this.logger.info(`Starting to send file to ${targetUser}`);
     this.currentOffset = 0;
     this.sendNextChunk(targetUser);
   }
@@ -185,7 +185,7 @@ export class FileTransferService {
     const { fileToSend } = this;
     const dataChannel = this.webrtcService.getDataChannel(targetUser);
     if (!dataChannel) {
-      console.error(`Data channel is not available for ${targetUser}`);
+      this.logger.error(`Data channel is not available for ${targetUser}`);
       return;
     }
 
@@ -214,13 +214,13 @@ export class FileTransferService {
         if (isFinite(progress)) {
           this.uploadProgress$.next(parseFloat(progress.toFixed(2)));
         } else {
-          console.error('Upload progress is non-finite');
+          this.logger.error('Upload progress is non-finite');
         }
 
         if (this.currentOffset < fileToSend.size) {
           this.sendNextChunk(targetUser);
         } else {
-          this.logger.log('File sent successfully');
+          this.logger.info('File sent successfully');
           this.uploadProgress$.next(100);
           this.resetProgressAfterDelay();
           this.fileToSend = null;
@@ -230,7 +230,7 @@ export class FileTransferService {
     };
 
     fileReader.onerror = (error) => {
-      console.error('Error reading file chunk:', error);
+      this.logger.error(`Error reading file chunk: ${error}`);
     };
 
     fileReader.readAsArrayBuffer(blob);
