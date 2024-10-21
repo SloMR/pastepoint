@@ -4,6 +4,9 @@ export const MAX_BUFFERED_AMOUNT = 256 * 1024; // 256 KB
 export const BUFFERED_AMOUNT_LOW_THRESHOLD = 128 * 1024; // 128 KB
 
 // WebRTC constants
+export const MAX_RECONNECT_ATTEMPTS = 5;
+export const RECONNECT_DELAY = 2000;
+
 export const OFFER_OPTIONS = {
   offerToReceiveAudio: false,
   offerToReceiveVideo: false,

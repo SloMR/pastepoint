@@ -11,6 +11,8 @@ import {
   DATA_CHANNEL_MESSAGE_TYPES,
   FILE_TRANSFER_MESSAGE_TYPES,
   ICE_SERVERS,
+  MAX_RECONNECT_ATTEMPTS,
+  RECONNECT_DELAY,
 } from '../../utils/constants';
 
 interface SignalMessage {
@@ -52,6 +54,8 @@ export class WebRTCService {
   private candidateQueues = new Map<string, RTCIceCandidateInit[]>();
   private messageQueues = new Map<string, (DataChannelMessage | ArrayBuffer)[]>();
 
+  private reconnectAttempts = 0;
+
   constructor(
     private logger: LoggerService,
     private wsService: WebSocketConnectionService,
@@ -66,11 +70,11 @@ export class WebRTCService {
 
   public initiateConnection(targetUser: string): void {
     if (this.peerConnections.has(targetUser)) {
-      this.logger.log(`PeerConnection with ${targetUser} already exists.`);
+      this.logger.warn(`PeerConnection with ${targetUser} already exists.`);
       return;
     }
 
-    this.logger.log(`Initiating connection with ${targetUser}`);
+    this.logger.info(`Initiating connection with ${targetUser}`);
 
     const peerConnection = this.createPeerConnection(targetUser);
     const dataChannel = peerConnection.createDataChannel('data', DATA_CHANNEL_OPTIONS);
@@ -90,8 +94,26 @@ export class WebRTCService {
         this.wsService.sendSignalMessage(message);
       })
       .catch((error) => {
-        console.error('Error during offer creation:', error);
+        this.logger.error(`Error during offer creation: ${error}`);
       });
+  }
+
+  private reconnect(targetUser: string) {
+    this.logger.info('Reconnecting WebRTC...');
+
+    const peerConnection = this.peerConnections.get(targetUser);
+    if (!peerConnection) {
+      this.logger.warn(`PeerConnection does not exist for user: ${targetUser}`);
+      return;
+    }
+
+    if (peerConnection) {
+      peerConnection.close();
+      this.peerConnections.delete(targetUser);
+    }
+
+    this.initiateConnection(targetUser);
+    this.reconnectAttempts = 0;
   }
 
   private createPeerConnection(targetUser: string): RTCPeerConnection {
@@ -120,9 +142,21 @@ export class WebRTCService {
     };
 
     peerConnection.onconnectionstatechange = () => {
-      this.logger.log(
-        `Connection state with ${targetUser} changed: ${peerConnection.connectionState}`
-      );
+      if (
+        peerConnection.connectionState === 'failed' ||
+        peerConnection.connectionState === 'disconnected'
+      ) {
+        this.handleDisconnection(targetUser);
+      }
+    };
+
+    peerConnection.oniceconnectionstatechange = () => {
+      if (
+        peerConnection.iceConnectionState === 'disconnected' ||
+        peerConnection.iceConnectionState === 'failed'
+      ) {
+        this.handleDisconnection(targetUser);
+      }
     };
 
     this.peerConnections.set(targetUser, peerConnection);
@@ -134,7 +168,7 @@ export class WebRTCService {
   private setupDataChannel(channel: RTCDataChannel, targetUser: string): void {
     channel.binaryType = 'arraybuffer';
     channel.onopen = () => {
-      this.logger.log(`Data channel with ${targetUser} is open`);
+      this.logger.info(`Data channel with ${targetUser} is open`);
       this.dataChannelOpen$.next(true);
 
       const queuedMessages = this.messageQueues.get(targetUser);
@@ -155,11 +189,11 @@ export class WebRTCService {
     };
 
     channel.onerror = (error) => {
-      console.error(`Data Channel Error with ${targetUser}:`, error);
+      this.logger.error(`Data Channel Error with ${targetUser}: ${error}`);
     };
 
     channel.onclose = () => {
-      this.logger.log(`Data channel with ${targetUser} is closed`);
+      this.logger.info(`Data channel with ${targetUser} is closed`);
       this.dataChannelOpen$.next(false);
 
       this.dataChannels.delete(targetUser);
@@ -176,6 +210,25 @@ export class WebRTCService {
     };
   }
 
+  private handleDisconnection(targetUser: string) {
+    if (this.reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+      this.reconnectAttempts++;
+      this.logger.warn(
+        `Attempt ${this.reconnectAttempts}: Reconnecting in ${RECONNECT_DELAY / 1000} seconds...`
+      );
+
+      setTimeout(() => {
+        if (!this.peerConnections.has(targetUser)) {
+          this.reconnect(targetUser);
+        }
+      }, RECONNECT_DELAY);
+    } else {
+      this.logger.error('Max reconnection attempts reached. Could not reconnect.');
+      alert('Could not reconnect to the user. Please try again later.');
+      this.closePeerConnection(targetUser);
+    }
+  }
+
   private handleDataChannelMessage(data: any, targetUser: string): void {
     if (typeof data === 'string') {
       const message: DataChannelMessage = JSON.parse(data);
@@ -184,7 +237,7 @@ export class WebRTCService {
           this.chatMessages$.next(message.payload);
           break;
         case FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER:
-          this.logger.log(`Received file offer from ${targetUser}`);
+          this.logger.info(`Received file offer from ${targetUser}`);
           this.fileOffers$.next({
             fileName: message.payload.fileName,
             fileSize: message.payload.fileSize,
@@ -192,20 +245,20 @@ export class WebRTCService {
           });
           break;
         case FILE_TRANSFER_MESSAGE_TYPES.FILE_ACCEPT:
-          this.logger.log(`Received file acceptance from ${targetUser}`);
+          this.logger.info(`Received file acceptance from ${targetUser}`);
           this.fileResponses$.next({ accepted: true, fromUser: targetUser });
           break;
         case FILE_TRANSFER_MESSAGE_TYPES.FILE_DECLINE:
-          this.logger.log(`Received file decline from ${targetUser}`);
+          this.logger.info(`Received file decline from ${targetUser}`);
           this.fileResponses$.next({ accepted: false, fromUser: targetUser });
           break;
         default:
-          console.warn('Unknown message type:', message.type);
+          this.logger.warn(`Unknown message type: ${message.type}`);
       }
     } else if (data instanceof ArrayBuffer) {
       this.incomingData$.next(data);
     } else {
-      console.warn('Unknown data type received:', data);
+      this.logger.warn(`Unknown data type received: ${data}`);
     }
   }
 
@@ -215,16 +268,14 @@ export class WebRTCService {
     if (channel && channel.readyState === 'open') {
       channel.send(JSON.stringify(message));
     } else if (channel && channel.readyState === 'connecting') {
-      console.warn(
-        `Data channel with ${targetUser} is connecting. Message will be queued.`
-      );
+      this.logger.warn(`Data channel with ${targetUser} is connecting. Message will be queued.`);
 
       if (!this.messageQueues.has(targetUser)) {
         this.messageQueues.set(targetUser, []);
       }
       this.messageQueues.get(targetUser)!.push(message);
     } else {
-      console.error(`Data channel with ${targetUser} is not open`);
+      this.logger.error(`Data channel with ${targetUser} is not open`);
 
       if (channel) {
         this.dataChannels.delete(targetUser);
@@ -249,13 +300,13 @@ export class WebRTCService {
     if (channel && channel.readyState === 'open') {
       channel.send(data);
     } else if (channel && channel.readyState === 'connecting') {
-      console.warn(`Data channel with ${targetUser} is connecting. Data will be queued.`);
+      this.logger.warn(`Data channel with ${targetUser} is connecting. Data will be queued.`);
       if (!this.messageQueues.has(targetUser)) {
         this.messageQueues.set(targetUser, []);
       }
       this.messageQueues.get(targetUser)!.push(data);
     } else {
-      console.error(`Data channel with ${targetUser} is not open`);
+      this.logger.error(`Data channel with ${targetUser} is not open`);
 
       if (channel) {
         this.dataChannels.delete(targetUser);
@@ -299,7 +350,7 @@ export class WebRTCService {
         this.handleCandidate(message);
         break;
       default:
-        console.error('Unknown signal message type:', message.type);
+        this.logger.error(`Unknown signal message type: ${message.type}`);
     }
   }
 
@@ -326,7 +377,7 @@ export class WebRTCService {
         this.processCandidateQueue(targetUser);
       })
       .catch((error) => {
-        console.error('Error handling offer:', error);
+        this.logger.error(`Error handling offer: ${error}`);
       });
   }
 
@@ -335,7 +386,7 @@ export class WebRTCService {
     const peerConnection = this.peerConnections.get(targetUser);
 
     if (!peerConnection) {
-      console.error('PeerConnection does not exist for user:', targetUser);
+      this.logger.error(`PeerConnection does not exist for user: ${targetUser}`);
       return;
     }
 
@@ -345,7 +396,7 @@ export class WebRTCService {
         this.processCandidateQueue(targetUser);
       })
       .catch((error) => {
-        console.error('Error setting remote description:', error);
+        this.logger.error(`Error setting remote description: ${error}`);
       });
   }
 
@@ -355,11 +406,9 @@ export class WebRTCService {
     const peerConnection = this.peerConnections.get(targetUser);
 
     if (peerConnection?.remoteDescription?.type) {
-      peerConnection
-        .addIceCandidate(candidate)
-        .catch((error) => {
-          console.error('Error adding received ICE candidate', error);
-        });
+      peerConnection.addIceCandidate(candidate).catch((error) => {
+        this.logger.error(`Error adding received ICE candidate: ${error}`);
+      });
     } else {
       const queue = this.candidateQueues.get(targetUser);
       if (queue) {
@@ -375,14 +424,23 @@ export class WebRTCService {
     if (queue && peerConnection) {
       queue.forEach((candidateInit) => {
         const candidate = new RTCIceCandidate(candidateInit);
-        peerConnection
-          .addIceCandidate(candidate)
-          .catch((error) => {
-            console.error('Error adding queued ICE candidate', error);
-          });
+        peerConnection.addIceCandidate(candidate).catch((error) => {
+          this.logger.error(`Error adding queued ICE candidate ${error}`);
+        });
       });
       queue.length = 0;
     }
+  }
+
+  private closePeerConnection(targetUser: string) {
+    const peerConnection = this.peerConnections.get(targetUser);
+    if (peerConnection) {
+      peerConnection.close();
+      this.peerConnections.delete(targetUser);
+    }
+    this.dataChannels.delete(targetUser);
+    this.candidateQueues.delete(targetUser);
+    this.messageQueues.delete(targetUser);
   }
 
   public closeAllConnections(): void {

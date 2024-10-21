@@ -58,7 +58,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.subscriptions.push(
       this.userService.user$.subscribe((username) => {
         if (username) {
-          this.logger.log(`Username is set to: ${username}`);
+          this.logger.info(`Username is set to: ${username}`);
           this.initializeChat();
         }
       })
@@ -141,7 +141,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.chatService.getUsername();
       })
       .catch((error) => {
-        console.error('WebSocket connection failed:', error);
+        this.logger.error(`WebSocket connection failed: ${error}`);
       });
   }
 
@@ -172,19 +172,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           this.webrtcService.initiateConnection(member);
         }
 
-        this.webrtcService.dataChannelOpen$
-          .pipe(take(1))
-          .subscribe((isOpen) => {
-            if (isOpen) {
-              this.fileTransferService.sendFileOffer(member);
-            }
-          });
+        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen) => {
+          if (isOpen) {
+            this.fileTransferService.sendFileOffer(member);
+          }
+        });
       });
     }
   }
 
   public acceptIncomingFile(): void {
     this.fileTransferService.startSavingFile();
+    this.incomingFile = null;
   }
 
   public declineIncomingFile(): void {
@@ -233,7 +232,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private initiateConnectionsWithMembers(): void {
-    this.logger.log('Initiating connections with other members');
+    this.logger.info('Initiating connections with other members');
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
     otherMembers.forEach((member) => {
       if (this.userService.user < member) {

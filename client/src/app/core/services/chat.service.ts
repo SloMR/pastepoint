@@ -4,7 +4,7 @@ import { LoggerService } from './logger.service';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { WebRTCService } from './webrtc.service';
 import { UserService } from './user.service';
-import {DATA_CHANNEL_MESSAGE_TYPES} from "../../utils/constants";
+import { DATA_CHANNEL_MESSAGE_TYPES } from '../../utils/constants';
 
 @Injectable({
   providedIn: 'root',
@@ -58,7 +58,7 @@ export class ChatService {
       const matchName = message.match(/\[SystemName\]\s*(.*?)$/);
       if (matchName && matchName[1]) {
         const userName = matchName[1].trim();
-        this.logger.log(`Username updated from: ${this.user}, to: ${userName}`);
+        this.logger.info(`Username updated from: ${this.user}, to: ${userName}`);
         this.user = userName;
       }
     }
