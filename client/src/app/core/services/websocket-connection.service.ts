@@ -29,7 +29,7 @@ export class WebSocketConnectionService {
       this.socket = new WebSocket(this.wsUri);
 
       this.socket.onopen = () => {
-        this.logger.log('WebSocket connected');
+        this.logger.info('WebSocket connected');
         resolve();
       };
 
@@ -38,9 +38,7 @@ export class WebSocketConnectionService {
           const message = ev.data.trim();
 
           if (message.startsWith('[SignalMessage]')) {
-            const signalMessage = JSON.parse(
-              message.replace('[SignalMessage]', '').trim()
-            );
+            const signalMessage = JSON.parse(message.replace('[SignalMessage]', '').trim());
             this.signalMessages$.next(signalMessage);
           } else if (this.isSystemMessage(message)) {
             this.systemMessages$.next(message);
@@ -51,31 +49,27 @@ export class WebSocketConnectionService {
       };
 
       this.socket.onclose = (event) => {
-        this.logger.log(
-          `WebSocket disconnected: code ${event.code}, reason ${event.reason}`
-        );
+        this.logger.error(`WebSocket disconnected: code ${event.code}, reason ${event.reason}`);
         setTimeout(() => this.reconnect(), 1000);
       };
 
       this.socket.onerror = (error) => {
-        this.logger.log('WebSocket error: ' + error);
+        this.logger.error('WebSocket error: ' + error);
         reject(error);
       };
     });
   }
 
   private reconnect() {
-    this.logger.log('Attempting to reconnect WebSocket...');
-    this.connect().catch((err) =>
-      console.error('WebSocket reconnection failed: ', err)
-    );
+    this.logger.warn('Attempting to reconnect WebSocket...');
+    this.connect().catch((err) => this.logger.error(`WebSocket reconnection failed: ${err}`));
   }
 
   public send(message: string): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(message);
     } else {
-      this.logger.log('WebSocket is not open. Message not sent.');
+      this.logger.error('WebSocket is not open. Message not sent.');
     }
   }
 

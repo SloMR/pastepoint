@@ -21,7 +21,7 @@ export class RoomService {
   }
 
   public listRooms(): void {
-    this.logger.log('Listing rooms');
+    this.logger.info('Listing rooms');
     this.wsService.send('[UserCommand] /list');
   }
 
@@ -48,7 +48,7 @@ export class RoomService {
     } else if (message.includes('[SystemJoin]')) {
       const matchJoin = message.match(/^(.*?)\s*\[SystemJoin\]\s*(.*?)$/);
       if (matchJoin) {
-        this.logger.log(`User joined room ${matchJoin[2]}`);
+        this.logger.info(`User joined room ${matchJoin[2]}`);
         this.currentRoom = matchJoin[2];
       }
     }

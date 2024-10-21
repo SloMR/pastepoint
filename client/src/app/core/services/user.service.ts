@@ -8,8 +8,6 @@ export class UserService {
   private userSubject = new BehaviorSubject<string>('');
   public user$ = this.userSubject.asObservable();
 
-  constructor() {}
-
   public get user(): string {
     return this.userSubject.value;
   }
