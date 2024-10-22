@@ -147,7 +147,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
 
         match msg {
             ws::Message::Text(text) => {
-                log::debug!("Received message: {}", text);
 
                 let msg = text.trim();
                 log::debug!("Received message: '{}'", msg);
