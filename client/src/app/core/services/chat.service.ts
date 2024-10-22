@@ -43,8 +43,10 @@ export class ChatService {
         payload: `${this.user}: ${content.trim()}`,
       };
       this.webrtcService.sendData(message, targetUser);
-      this.messages.push(`${this.user}: ${content.trim()}`);
-      this.messages$.next(this.messages);
+      if (!this.messages.includes(`${this.user}: ${content.trim()}`)) {
+        this.messages.push(`${this.user}: ${content.trim()}`);
+        this.messages$.next(this.messages);
+      }
     }
   }
 

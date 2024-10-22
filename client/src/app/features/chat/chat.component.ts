@@ -148,18 +148,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   sendMessage(): void {
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
     otherMembers.forEach((member) => {
+      this.logger.info(`Sending message to ${member}`);
       if (this.message.trim()) {
         this.chatService.sendMessage(this.message, member);
-        this.message = '';
       }
     });
+    this.message = '';
   }
 
   sendAttachments(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const fileToSend = input.files[0];
-      input.value = '';
 
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
       if (otherMembers.length === 0) {
@@ -178,6 +178,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           }
         });
       });
+      input.value = '';
     }
   }
 
@@ -234,10 +235,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private initiateConnectionsWithMembers(): void {
     this.logger.info('Initiating connections with other members');
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
-    otherMembers.forEach((member) => {
-      if (this.userService.user < member) {
-        this.webrtcService.initiateConnection(member);
-      }
+    otherMembers.forEach((member, index) => {
+      setTimeout(() => {
+        if (this.userService.user < member) {
+          this.webrtcService.initiateConnection(member);
+        }
+      }, index * 1000);
     });
   }
 }
