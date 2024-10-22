@@ -147,7 +147,6 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
 
         match msg {
             ws::Message::Text(text) => {
-
                 let msg = text.trim();
                 log::debug!("Received message: '{}'", msg);
                 if msg.starts_with("[SignalMessage]") {
