@@ -23,11 +23,13 @@ export class FileTransferService {
   private fileToSend: File | null = null;
   private targetUser = '';
   private receivedSize = 0;
-  private receivedDataBuffer: Uint8Array[] = [];
+  private receivedDataBuffer: Uint32Array[] = [];
   private isPaused = false;
   private incomingFileSize = 0;
   private isReceivingFile = false;
   private currentOffset = 0;
+
+  private fileTransferStatus = new Map<string, 'pending' | 'accepted' | 'declined'>();
 
   constructor(
     private logger: LoggerService,
@@ -51,9 +53,11 @@ export class FileTransferService {
     this.webrtcService.fileResponses$.subscribe((response) => {
       if (response.accepted) {
         this.logger.info(`File accepted by ${response.fromUser}`);
+        this.fileTransferStatus.set(response.fromUser, 'accepted');
         this.startSendingFile(response.fromUser);
       } else {
         this.logger.warn(`File declined by ${response.fromUser}`);
+        this.fileTransferStatus.set(response.fromUser, 'declined');
         alert('The receiver declined the file transfer.');
       }
     });
@@ -61,7 +65,11 @@ export class FileTransferService {
     this.webrtcService.bufferedAmountLow$.subscribe(() => {
       if (this.isPaused) {
         this.isPaused = false;
-        this.sendNextChunk(this.targetUser);
+        this.logger.info('Buffered amount low, resuming file transfer.');
+        this.sendNextChunk(this.targetUser).then(() => {
+          this.logger.info('File transfer completed.');
+          this.checkAllUsersResponded();
+        });
       }
     });
   }
@@ -84,6 +92,7 @@ export class FileTransferService {
         fileSize: this.fileToSend.size,
       },
     };
+    this.fileTransferStatus.set(targetUser, 'pending');
     this.webrtcService.sendData(message, targetUser);
   }
 
@@ -115,7 +124,7 @@ export class FileTransferService {
       return;
     }
 
-    this.receivedDataBuffer.push(new Uint8Array(data));
+    this.receivedDataBuffer.push(new Uint32Array(data));
     this.receivedSize += data.byteLength;
     const fileSize = this.incomingFileSize;
 
@@ -164,70 +173,111 @@ export class FileTransferService {
     }
   }
 
-  private startSendingFile(targetUser: string): void {
+  private async startSendingFile(targetUser: string): Promise<void> {
     if (!this.fileToSend) {
       this.logger.error('No file to send.');
       return;
     }
+
     this.logger.info(`Starting to send file to ${targetUser}`);
+
+    const dataChannel = this.webrtcService.getDataChannel(targetUser);
+    if (!dataChannel || dataChannel.readyState !== 'open') {
+      this.logger.error(`Data channel is not available or open for ${targetUser}`);
+      return;
+    }
+
     this.currentOffset = 0;
-    this.sendNextChunk(targetUser);
+    try {
+      await this.sendNextChunk(targetUser);
+      this.logger.info('File transfer completed.');
+      this.checkAllUsersResponded();
+    } catch (error) {
+      this.logger.error(`File transfer failed: ${error}`);
+    }
   }
 
   private async sendNextChunk(targetUser: string): Promise<void> {
-    if (this.isPaused || !this.fileToSend) return;
-    const { fileToSend } = this;
+    return new Promise<void>((resolve, reject) => {
+      if (this.isPaused || !this.fileToSend) {
+        this.logger.warn(
+          `Upload is paused: ${this.isPaused} or no file to send: ${this.fileToSend}`
+        );
+        resolve();
+        return;
+      }
+
+      const { fileToSend } = this;
+      const dataChannel = this.webrtcService.getDataChannel(targetUser);
+      if (!dataChannel) {
+        this.logger.error(`Data channel is not available for ${targetUser}`);
+        reject(new Error(`Data channel is not available for ${targetUser}`));
+        return;
+      }
+
+      if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+        this.logger.warn('Data channel buffer is full. Pausing upload.');
+        this.isPaused = true;
+        resolve();
+        return;
+      }
+
+      const start = this.currentOffset;
+      const end = Math.min(start + CHUNK_SIZE, fileToSend.size);
+      const blob = fileToSend.slice(start, end);
+
+      const fileReader = new FileReader();
+      fileReader.onload = (e) => {
+        if (e.target?.result) {
+          const arrayBuffer = e.target.result as ArrayBuffer;
+
+          // Handle async logic outside of the Promise executor
+          this.processFileChunk(arrayBuffer, targetUser, end).then(resolve).catch(reject); // Handle potential errors
+        }
+      };
+
+      fileReader.onerror = (error) => {
+        this.logger.error(`Error reading file chunk: ${error}`);
+        reject(error);
+      };
+
+      fileReader.readAsArrayBuffer(blob);
+    });
+  }
+
+  private async processFileChunk(
+    arrayBuffer: ArrayBuffer,
+    targetUser: string,
+    end: number
+  ): Promise<void> {
     const dataChannel = this.webrtcService.getDataChannel(targetUser);
-    if (!dataChannel) {
+
+    if (!dataChannel || this.fileToSend === null) {
       this.logger.error(`Data channel is not available for ${targetUser}`);
       return;
     }
 
-    if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
-      this.isPaused = true;
-      return;
+    while (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
-    const start = this.currentOffset;
-    const end = Math.min(start + CHUNK_SIZE, fileToSend.size);
-    const blob = fileToSend.slice(start, end);
+    this.webrtcService.sendRawData(arrayBuffer, targetUser);
+    this.currentOffset = end;
 
-    const fileReader = new FileReader();
-    fileReader.onload = async (e) => {
-      if (e.target?.result) {
-        const arrayBuffer = e.target.result as ArrayBuffer;
-        while (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
-          await new Promise((resolve) => setTimeout(resolve, 100));
-        }
+    const progress = (this.currentOffset / this.fileToSend.size) * 100;
+    if (isFinite(progress)) {
+      this.uploadProgress$.next(parseFloat(progress.toFixed(2)));
+    } else {
+      this.logger.error('Upload progress is non-finite');
+    }
 
-        this.webrtcService.sendRawData(arrayBuffer, targetUser);
-        this.currentOffset = end;
-
-        const progress = (this.currentOffset / fileToSend.size) * 100;
-
-        if (isFinite(progress)) {
-          this.uploadProgress$.next(parseFloat(progress.toFixed(2)));
-        } else {
-          this.logger.error('Upload progress is non-finite');
-        }
-
-        if (this.currentOffset < fileToSend.size) {
-          this.sendNextChunk(targetUser);
-        } else {
-          this.logger.info('File sent successfully');
-          this.uploadProgress$.next(100);
-          this.resetProgressAfterDelay();
-          this.fileToSend = null;
-          this.currentOffset = 0;
-        }
-      }
-    };
-
-    fileReader.onerror = (error) => {
-      this.logger.error(`Error reading file chunk: ${error}`);
-    };
-
-    fileReader.readAsArrayBuffer(blob);
+    if (this.currentOffset < this.fileToSend.size) {
+      await this.sendNextChunk(targetUser);
+    } else {
+      this.logger.info(`File sent successfully to ${targetUser}`);
+      this.uploadProgress$.next(100);
+      this.resetProgressAfterDelay();
+    }
   }
 
   private resetProgressAfterDelay(): void {
@@ -235,5 +285,17 @@ export class FileTransferService {
       this.uploadProgress$.next(0);
       this.downloadProgress$.next(0);
     }, 2000);
+  }
+
+  private checkAllUsersResponded(): void {
+    const allResponded = Array.from(this.fileTransferStatus.values()).every(
+      (status) => status !== 'pending'
+    );
+
+    if (allResponded) {
+      this.logger.info('All users have responded.');
+      this.fileToSend = null;
+      this.fileTransferStatus.clear();
+    }
   }
 }
