@@ -129,6 +129,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.connect();
+      this.cdr.detectChanges();
       this.messageInput.nativeElement.focus();
     }
   }
