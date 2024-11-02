@@ -76,7 +76,7 @@ async fn test_join_leave_room() {
         type Result = ();
 
         fn handle(&mut self, _msg: ChatMessage, _ctx: &mut Context<Self>) {
-            // Do nothing
+            // Do nothing just for testing purposes
         }
     }
 
