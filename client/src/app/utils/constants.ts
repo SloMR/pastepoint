@@ -39,6 +39,7 @@ export const FILE_TRANSFER_MESSAGE_TYPES = {
   FILE_ACCEPT: 'file-accept',
   FILE_DECLINE: 'file-decline',
   FILE_OFFER: 'file-offer',
+  FILE_CANCEL: 'file-cancel',
 };
 
 // WebRTC data channel message types
