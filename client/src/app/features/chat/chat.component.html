@@ -32,15 +32,16 @@
         <!-- Room List -->
         <h5 class="sidebar-title">Rooms</h5>
         <mat-nav-list>
-          <a
-            mat-list-item
+          <button
+            mat-raised-button
+            style="margin: 12px"
             *ngFor="let room of rooms"
             (click)="joinRoom(room)"
             [class.active]="room === currentRoom"
           >
             <mat-icon mat-list-icon style="margin-right: 5px">chat</mat-icon>
             <span mat-line>{{ room }}</span>
-          </a>
+          </button>
         </mat-nav-list>
 
         <!-- Create Room -->
