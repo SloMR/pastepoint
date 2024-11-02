@@ -1,117 +1,63 @@
 /* Global Styles and Variables */
+/* Reset Styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
 
 html,
 body {
   height: 100%;
-  margin: 0;
   font-family: 'Roboto', 'Helvetica Neue', sans-serif;
-  background-color: #575757; /* Softer light gray for the background */
-  color: #333; /* Default text color */
-  display: flex;
-  justify-content: center;
-  align-items: center;
 }
 
-#app-root {
-  width: 95%;
-  max-width: 1600px; /* Increased max-width for larger screens */
-  background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-  height: 90vh;
-  box-sizing: border-box;
-  overflow: hidden;
-  padding: 20px;
+body {
+  background-color: var(--background-color);
+  color: var(--text-color);
 }
 
-/* Reset styles */
-* {
-  box-sizing: border-box;
+/* Scrollbar Styles */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  color: #333;
-  margin: 0;
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track-color);
 }
 
-p,
-ul,
-ol,
-li,
-input,
-button {
-  margin: 0;
-  padding: 0;
-  font-family: inherit;
-  color: #e0e0e0;
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb-color);
+  border-radius: 4px;
 }
 
-button {
-  cursor: pointer;
-  border: none;
-  outline: none;
-  background-color: transparent;
-}
-
-a {
-  text-decoration: none;
-  color: inherit;
-}
-
-/* Global variables for theme */
+/* Theme Variables */
 :root {
-  --background-color: #e0e0e0;
-  --text-color: #333;
-  --container-bg-color: #e8e8e8;
-  --header-bg-color: #222943;
-  --header-text-color: #e8e8e8;
-  --sidebar-bg-color: #e8e8e8;
-  --border-color: #bdbdbd;
-  --button-bg-color: #d6d6d6;
-  --button-hover-bg-color: #c4c4c4;
-  --active-button-bg-color: #607d8b;
-  --active-button-text-color: #e8e8e8;
-  --messages-bg-color: #e8e8e8;
-  --message-bg-color: #e0e0e0;
-  --footer-bg-color: #afaeae;
-  --input-bg-color: #d5d4d4;
-  --input-border-color: #cccccc;
-  --button-text-color: #424242;
+  --background-color: #f5f5f5;
+  --text-color: #000000;
+  --chat-header-bg-color: #e4e4e4;
+  --sidebar-bg-color: #e4e4e4;
+  --sidebar-divider-bg-color: #717171;
+  --messages-bg-color: #e9e9e9;
+  --footer-bg-color: #e4e4e4;
+  --scrollbar-track-color: #e0e0e0;
+  --scrollbar-thumb-color: #bdbdbd;
+  --my-message-bg-color: #cfe9ba;
+  --my-message-text-color: #000000;
+  --other-message-bg-color: #afafaf;
 }
 
-/* Dark Mode */
 .dark-mode {
   --background-color: #121212;
-  --text-color: #e0e0e0;
-  --container-bg-color: #1e1e1e;
-  --header-bg-color: #333333;
-  --header-text-color: #e0e0e0;
-  --sidebar-bg-color: #2a2a2a;
-  --border-color: #444444;
-  --button-bg-color: #3b3b3b;
-  --button-hover-bg-color: #555555;
-  --active-button-bg-color: #1a73e8;
-  --active-button-text-color: #e0e0e0;
+  --text-color: #b8b8b8;
+  --chat-header-bg-color: #333333;
+  --sidebar-bg-color: #1f1f1f;
+  --sidebar-divider-bg-color: #d5d5d5;
   --messages-bg-color: #2a2a2a;
-  --message-bg-color: #3b3b3b;
-  --footer-bg-color: #2a2a2a;
-  --input-bg-color: #3b3b3b;
-  --input-border-color: #555555;
-  --button-text-color: #e0e0e0;
-}
-
-/* Global responsive styles */
-@media (max-width: 768px) {
-  #app-root {
-    flex-direction: column;
-    width: 95%;
-    padding: 10px;
-  }
+  --footer-bg-color: #1f1f1f;
+  --scrollbar-track-color: #2a2a2a;
+  --scrollbar-thumb-color: #616161;
+  --my-message-bg-color: #4caf50;
+  --my-message-text-color: #ffffff;
+  --other-message-bg-color: #2a2a2a;
 }
