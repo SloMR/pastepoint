@@ -6,6 +6,8 @@ import {
   OnInit,
   PLATFORM_ID,
   AfterViewInit,
+  ViewChild,
+  ElementRef,
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { isPlatformBrowser } from '@angular/common';
@@ -19,6 +21,8 @@ import { LoggerService } from '../../core/services/logger.service';
 import { WebSocketConnectionService } from '../../core/services/websocket-connection.service';
 import { UserService } from '../../core/services/user.service';
 import { take } from 'rxjs/operators';
+import { NgForm } from '@angular/forms';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
   selector: 'app-chat',
@@ -28,8 +32,6 @@ import { take } from 'rxjs/operators';
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   message = '';
   newRoomName = '';
-  uploadProgress = 0;
-  downloadProgress = 0;
 
   messages: string[] = [];
   rooms: string[] = [];
@@ -38,10 +40,17 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   currentRoom = 'main';
   isDarkMode = false;
 
-  incomingFile: { fileName: string; fileSize: number } | null = null;
+  activeUploads: any[] = [];
+  activeDownloads: any[] = [];
+  incomingFiles: any[] = [];
+
   private subscriptions: Subscription[] = [];
 
+  @ViewChild('messageContainer') private messageContainer!: ElementRef;
+  @ViewChild('messageInput') messageInput!: ElementRef;
+
   constructor(
+    public userService: UserService,
     private chatService: ChatService,
     private roomService: RoomService,
     private fileTransferService: FileTransferService,
@@ -50,7 +59,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
-    private userService: UserService,
+    private snackBar: MatSnackBar,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
@@ -76,6 +85,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.chatService.messages$.subscribe((messages) => {
         this.messages = messages;
         this.cdr.detectChanges();
+        this.scrollToBottom();
       })
     );
 
@@ -95,22 +105,22 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     );
 
     this.subscriptions.push(
-      this.fileTransferService.uploadProgress$.subscribe((progress) => {
-        this.uploadProgress = progress;
+      this.fileTransferService.activeUploads$.subscribe((uploads) => {
+        this.activeUploads = uploads;
         this.cdr.detectChanges();
       })
     );
 
     this.subscriptions.push(
-      this.fileTransferService.downloadProgress$.subscribe((progress) => {
-        this.downloadProgress = progress;
+      this.fileTransferService.activeDownloads$.subscribe((downloads) => {
+        this.activeDownloads = downloads;
         this.cdr.detectChanges();
       })
     );
 
     this.subscriptions.push(
-      this.fileTransferService.incomingFile$.subscribe((fileInfo) => {
-        this.incomingFile = fileInfo;
+      this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles) => {
+        this.incomingFiles = incomingFiles;
         this.cdr.detectChanges();
       })
     );
@@ -119,6 +129,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   ngAfterViewInit(): void {
     if (isPlatformBrowser(this.platformId)) {
       this.connect();
+      this.messageInput.nativeElement.focus();
     }
   }
 
@@ -129,8 +140,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private applyTheme(isDarkMode: boolean): void {
-    document.body.classList.toggle('dark-mode', isDarkMode);
-    document.body.classList.toggle('light-mode', !isDarkMode);
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
   }
 
   connect(): void {
@@ -145,60 +159,58 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       });
   }
 
-  sendMessage(): void {
-    const otherMembers = this.members.filter((m) => m !== this.userService.user);
-    otherMembers.forEach((member) => {
-      this.logger.info(`Sending message to ${member}`);
-      if (this.message.trim()) {
+  sendMessage(messageForm: NgForm): void {
+    if (this.message.trim()) {
+      const otherMembers = this.members.filter((m) => m !== this.userService.user);
+      otherMembers.forEach((member) => {
+        this.logger.info(`Sending message to ${member}`);
         this.chatService.sendMessage(this.message, member);
-      }
-    });
-    this.message = '';
+      });
+
+      this.message = '';
+      messageForm.resetForm();
+      this.scrollToBottom();
+    } else {
+      this.messageInput.nativeElement.focus();
+    }
   }
 
   sendAttachments(event: Event): void {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
-      const fileToSend = input.files[0];
+      const filesToSend = Array.from(input.files);
 
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
       if (otherMembers.length === 0) {
-        alert('No other users available to send the file.');
+        this.snackBar.open('No other users available to send the file.', 'Close', {
+          duration: 5000,
+        });
         return;
       }
-      otherMembers.forEach((member) => {
-        this.fileTransferService.prepareFileForSending(fileToSend, member);
-        if (!this.webrtcService.isConnected(member)) {
-          this.webrtcService.initiateConnection(member);
-        }
-
-        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen) => {
-          if (isOpen) {
-            this.fileTransferService.sendFileOffer(member);
+      filesToSend.forEach((fileToSend) => {
+        otherMembers.forEach((member) => {
+          this.fileTransferService.prepareFileForSending(fileToSend, member);
+          if (!this.webrtcService.isConnected(member)) {
+            this.webrtcService.initiateConnection(member);
           }
+
+          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen) => {
+            if (isOpen) {
+              this.fileTransferService.sendFileOffer(member);
+            }
+          });
         });
       });
       input.value = '';
     }
   }
 
-  public acceptIncomingFile(): void {
-    this.fileTransferService.startSavingFile();
-    this.incomingFile = null;
+  public acceptIncomingFile(fileDownload: any): void {
+    this.fileTransferService.startSavingFile(fileDownload.fromUser);
   }
 
-  public declineIncomingFile(): void {
-    this.incomingFile = null;
-    this.fileTransferService.incomingFile$.next(null);
-
-    const fromUser = this.fileTransferService.incomingFile$.value?.fromUser;
-    if (fromUser) {
-      const message = {
-        type: 'file-decline',
-        payload: {},
-      };
-      this.webrtcService.sendData(message, fromUser);
-    }
+  public declineIncomingFile(fileDownload: any): void {
+    this.fileTransferService.declineFileOffer(fileDownload.fromUser);
   }
 
   listRooms(): void {
@@ -242,5 +254,26 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       }, index * 1000);
     });
+  }
+
+  public pauseUpload(transfer: any): void {
+    this.fileTransferService.pauseTransfer(transfer.targetUser);
+  }
+
+  public resumeUpload(transfer: any): void {
+    this.fileTransferService.resumeTransfer(transfer.targetUser);
+  }
+
+  public cancelUpload(transfer: any): void {
+    this.fileTransferService.cancelTransfer(transfer.targetUser);
+  }
+
+  private scrollToBottom(): void {
+    try {
+      this.messageContainer.nativeElement.scrollTop =
+        this.messageContainer.nativeElement.scrollHeight;
+    } catch (err) {
+      this.logger.error(`Could not scroll to bottom: ${err}`);
+    }
   }
 }
