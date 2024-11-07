@@ -1,4 +1,8 @@
 /* Global Styles and Variables */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 /* Reset Styles */
 * {
   margin: 0;

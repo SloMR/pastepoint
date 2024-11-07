@@ -23,6 +23,7 @@ import { UserService } from '../../core/services/user.service';
 import { take } from 'rxjs/operators';
 import { NgForm } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { FlowbiteService } from '../../core/services/flowbite.service';
 
 @Component({
   selector: 'app-chat',
@@ -60,10 +61,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
     private snackBar: MatSnackBar,
+    private flowbiteService: FlowbiteService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   ngOnInit(): void {
+    this.flowbiteService.loadFlowbite((flowbite) => {
+      console.log('Flowbite loaded', flowbite);
+    });
+
     this.subscriptions.push(
       this.userService.user$.subscribe((username) => {
         if (username) {
