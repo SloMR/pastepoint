@@ -95,14 +95,14 @@ span.mat-line,
 .chat-messages .my-message,
 .chat-messages .other-message {
   margin-bottom: 10px;
-  max-width: 80%;
+  max-width: 50%;
 }
 
 .my-message {
   align-self: flex-end;
   background-color: var(--my-message-bg-color);
   color: var(--my-message-text-color);
-  border-radius: 12px 12px 0 12px;
+  border-radius: 12px 12px 12px 0;
   padding: 8px 12px;
 }
 
@@ -110,7 +110,7 @@ span.mat-line,
   align-self: flex-start;
   background-color: var(--other-message-bg-color);
   color: var(--text-color);
-  border-radius: 12px 12px 12px 0;
+  border-radius: 12px 12px 0 12px;
   padding: 8px 12px;
 }
 
@@ -134,6 +134,7 @@ span.mat-line,
 
 .message-input textarea {
   resize: none;
+  color: var(--text-color);
 }
 
 .chat-footer-buttons {
