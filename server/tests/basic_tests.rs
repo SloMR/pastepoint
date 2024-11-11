@@ -19,7 +19,9 @@ async fn test_index() {
 #[actix_rt::test]
 async fn test_ws_upgrade() {
     let session_manager = web::Data::new(SessionManager::default());
-    let config = web::Data::new(ServerConfig { auto_join: false });
+    let config = web::Data::new(
+        ServerConfig::load(Some(false)).expect("Failed to load server configuration"),
+    );
 
     let app = test::init_service(
         App::new()

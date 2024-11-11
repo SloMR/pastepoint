@@ -1,0 +1,5 @@
+[server]
+bind_address = "0.0.0.0:9000"
+key_file_path = "/etc/ssl/certs/key.pem"
+cert_file_path = "/etc/ssl/certs/cert.pem"
+auto_join = true

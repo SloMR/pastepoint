@@ -7,7 +7,7 @@ use std::collections::{hash_map::Entry::Vacant, HashMap};
 
 impl WsChatServer {
     pub fn take_room(&mut self, session_id: &str, room_name: &str) -> Option<Room> {
-        log::debug!("Getting room: {}", room_name);
+        log::debug!("[Websocket] Getting room: {}", room_name);
         let session_id = self.rooms.get_mut(session_id)?;
         let room = session_id.get_mut(room_name)?;
         let room = std::mem::take(room);
@@ -27,7 +27,7 @@ impl WsChatServer {
         if let Some(room) = self.rooms.get_mut(session_id) {
             if let Some(existing_room) = room.get_mut(room_name) {
                 if let Vacant(e) = existing_room.entry(id) {
-                    log::debug!("Adding client to room: {}", room_name);
+                    log::debug!("[Websocket] Adding client to room: {}", room_name);
                     e.insert(ClientMetadata {
                         recipient: client,
                         name,
@@ -35,7 +35,7 @@ impl WsChatServer {
                     return id;
                 } else {
                     log::debug!(
-                        "Client {} already in room: {}, skipping addition",
+                        "[Websocket] Client {} already in room: {}, skipping addition",
                         id,
                         room_name
                     );
@@ -69,7 +69,11 @@ impl WsChatServer {
         msg: &str,
         _src: usize,
     ) -> Option<()> {
-        log::debug!("Sending join message to room {}: {}", room_name, msg);
+        log::debug!(
+            "[Websocket] Sending join message to room {}: {}",
+            room_name,
+            msg
+        );
 
         if let Some(room) = self.rooms.get_mut(session_id)?.get_mut(room_name) {
             let client_ids: Vec<usize> = room.keys().cloned().collect();
@@ -82,13 +86,13 @@ impl WsChatServer {
                         .is_ok()
                     {
                         log::debug!(
-                            "Join Message sent to client {}, staying in room: {}",
+                            "[Websocket] Join Message sent to client {}, staying in room: {}",
                             id,
                             room_name
                         );
                     } else {
                         log::warn!(
-                            "Failed to send join message to client {}, removing from room: {}",
+                            "[Websocket] Failed to send join message to client {}, removing from room: {}",
                             id,
                             room_name
                         );
@@ -99,7 +103,11 @@ impl WsChatServer {
 
             Some(())
         } else {
-            log::error!("Room {} not found in session {}", room_name, session_id);
+            log::error!(
+                "[Websocket] Room {} not found in session {}",
+                room_name,
+                session_id
+            );
             None
         }
     }
@@ -125,7 +133,7 @@ impl WsChatServer {
                     .map(|client_metadata| client_metadata.name.clone())
                     .collect();
                 log::debug!(
-                    "Broadcasting members of room {}: {:?}",
+                    "[Websocket] Broadcasting members of room {}: {:?}",
                     room_name,
                     member_list
                 );
@@ -166,12 +174,12 @@ impl WsChatServer {
 
 impl SystemService for WsChatServer {
     fn service_started(&mut self, _ctx: &mut Context<Self>) {
-        log::info!("WsChatServer started");
+        log::info!("[Websocket] WsChatServer started");
     }
 }
 
 impl Supervised for WsChatServer {
     fn restarting(&mut self, _ctx: &mut Context<Self>) {
-        log::info!("WsChatServer restarting");
+        log::info!("[Websocket] WsChatServer restarting");
     }
 }

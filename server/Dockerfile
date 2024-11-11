@@ -4,17 +4,18 @@ FROM rust:latest AS builder
 WORKDIR /usr/src/app
 
 # Copy the Cargo.toml and Cargo.lock files
-COPY server/Cargo.toml ./Cargo.lock ./
+COPY server/Cargo.toml server/Cargo.lock ./
 COPY ../rust-toolchain rust-toolchain
 
 # Create an empty main.rs to allow cargo to build dependencies
 RUN mkdir -p src && echo "fn main() {}" > src/main.rs
 
 # Build dependencies
-RUN cargo build --release
+RUN cargo build
 
 # Now copy the source files and overwrite the dummy main.rs
 COPY server/src ./src
+COPY server/config ./config
 
 # Final build
 RUN cargo build --release
@@ -22,8 +23,13 @@ RUN cargo build --release
 # Stage 2: Prepare the runtime environment
 FROM ubuntu:24.10
 
+WORKDIR /usr/local/bin
+
 # Copy the built binary from the builder stage
-COPY --from=builder /usr/src/app/target/release/server /usr/local/bin/server
+COPY --from=builder /usr/src/app/target/release/server .
+
+# Copy the config files into the final image
+COPY --from=builder /usr/src/app/config ./config
 
 # Set the command to run the binary
-CMD ["/usr/local/bin/server"]
+CMD ["./server"]
