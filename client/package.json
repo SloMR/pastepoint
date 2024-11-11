@@ -29,6 +29,8 @@
     "@angular/ssr": "^18.1.2",
     "@eslint/js": "^9.13.0",
     "@fortawesome/angular-fontawesome": "^0.15.0",
+    "@ngx-translate/core": "^16.0.3",
+    "@ngx-translate/http-loader": "^16.0.0",
     "eslint": "^9.13.0",
     "express": "^4.18.2",
     "flowbite": "^2.5.2",

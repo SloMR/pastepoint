@@ -18,6 +18,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatLine } from '@angular/material/core';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { TranslatePipe } from '@ngx-translate/core';
 
 @NgModule({
   declarations: [ChatComponent],
@@ -40,6 +41,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
     MatMenuModule,
     MatLine,
     MatSnackBarModule,
+    TranslatePipe,
   ],
   exports: [ChatComponent],
 })

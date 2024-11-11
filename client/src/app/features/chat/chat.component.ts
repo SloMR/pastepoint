@@ -24,6 +24,7 @@ import { take } from 'rxjs/operators';
 import { NgForm } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlowbiteService } from '../../core/services/flowbite.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-chat',
@@ -62,12 +63,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private logger: LoggerService,
     private snackBar: MatSnackBar,
     private flowbiteService: FlowbiteService,
+    private translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: object
-  ) {}
+  ) {
+    this.translate.setDefaultLang('en');
+
+    const browserLang = this.translate.getBrowserLang() || 'en';
+    const languageToUse = browserLang.match(/en|ar/) ? browserLang : 'en';
+    this.translate.use(languageToUse);
+  }
 
   ngOnInit(): void {
-    this.flowbiteService.loadFlowbite((flowbite) => {
-      console.log('Flowbite loaded', flowbite);
+    this.flowbiteService.loadFlowbite(() => {
+      this.logger.debug(`Flowbite loaded`);
     });
 
     this.subscriptions.push(
@@ -83,6 +91,17 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const themePreference = localStorage.getItem('themePreference');
       this.isDarkMode = themePreference === 'dark';
       this.applyTheme(this.isDarkMode);
+    }
+  }
+
+  switchLanguage(language: string) {
+    this.translate.use(language);
+  }
+
+  onEnterKey(event: KeyboardEvent, messageForm: NgForm): void {
+    if (!event.shiftKey) {
+      event.preventDefault();
+      this.sendMessage(messageForm);
     }
   }
 
@@ -147,10 +166,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private applyTheme(isDarkMode: boolean): void {
-    if (isDarkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
+    if (isPlatformBrowser(this.platformId)) {
+      if (isDarkMode) {
+        document.body.classList.add('dark-mode');
+      } else {
+        document.body.classList.remove('dark-mode');
+      }
     }
   }
 
@@ -167,7 +188,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   sendMessage(messageForm: NgForm): void {
-    if (this.message.trim()) {
+    if (this.message && this.message.trim()) {
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
       otherMembers.forEach((member) => {
         this.logger.info(`Sending message to ${member}`);
@@ -178,7 +199,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       messageForm.resetForm();
       this.scrollToBottom();
     } else {
-      this.messageInput.nativeElement.focus();
+      if (isPlatformBrowser(this.platformId)) {
+        this.messageInput.nativeElement.focus();
+      }
     }
   }
 
@@ -276,11 +299,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private scrollToBottom(): void {
-    try {
-      this.messageContainer.nativeElement.scrollTop =
-        this.messageContainer.nativeElement.scrollHeight;
-    } catch (err) {
-      this.logger.error(`Could not scroll to bottom: ${err}`);
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        this.messageContainer.nativeElement.scrollTop =
+          this.messageContainer.nativeElement.scrollHeight;
+      } catch (err) {
+        this.logger.error(`Could not scroll to bottom: ${err}`);
+      }
     }
   }
 }

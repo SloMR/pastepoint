@@ -2,17 +2,21 @@
   <!-- Header -->
   <mat-toolbar color="primary" class="chat-header">
     <div class="header-left">
-      <span class="app-title">PastePoint Chat</span>
+      <span class="app-title">{{ 'APP_TITLE' | translate }}</span>
     </div>
     <div class="header-right">
+      <!-- Theme Toggle Button -->
       <button
         mat-icon-button
         (click)="toggleTheme()"
         class="theme-toggle"
-        matTooltip="Toggle Theme"
+        [matTooltip]="'TOGGLE_THEME' | translate"
       >
         <mat-icon>{{ isDarkMode ? 'brightness_7' : 'brightness_4' }}</mat-icon>
       </button>
+      <!-- Language Switcher Buttons -->
+      <button mat-button (click)="switchLanguage('en')">EN</button>
+      <button mat-button (click)="switchLanguage('ar')">AR</button>
     </div>
   </mat-toolbar>
 
@@ -22,7 +26,7 @@
     <mat-sidenav-container class="sidenav-container">
       <mat-sidenav mode="side" opened class="sidenav">
         <!-- User Info -->
-        <h5 class="sidebar-title">User Info</h5>
+        <h5 class="sidebar-title">{{ 'USER_INFO' | translate }}</h5>
         <div class="user-info">
           <mat-icon>account_circle</mat-icon>
           <span>{{ userService.user }}</span>
@@ -30,7 +34,7 @@
         <mat-divider></mat-divider>
 
         <!-- Room List -->
-        <h5 class="sidebar-title">Rooms</h5>
+        <h5 class="sidebar-title">{{ 'ROOMS' | translate }}</h5>
         <mat-nav-list>
           <button
             mat-raised-button
@@ -47,16 +51,16 @@
         <!-- Create Room -->
         <div class="room-form">
           <mat-form-field appearance="outline" class="full-width">
-            <mat-label>New Room</mat-label>
+            <mat-label>{{ 'NEW_ROOM' | translate }}</mat-label>
             <input matInput [(ngModel)]="newRoomName" name="newRoomName" />
           </mat-form-field>
           <button mat-raised-button color="primary" (click)="createRoom()" class="join-room-button">
-            Join/Create
+            {{ 'JOIN_CREATE' | translate }}
           </button>
         </div>
 
         <!-- Members List -->
-        <h5 class="sidebar-title">Members</h5>
+        <h5 class="sidebar-title">{{ 'MEMBERS' | translate }}</h5>
         <mat-list-item *ngFor="let member of members">
           <mat-icon mat-list-icon style="margin-right: 5px">person</mat-icon>
           <span mat-line>{{ member }}</span>
@@ -64,14 +68,14 @@
 
         <!-- Active Uploads -->
         <div *ngIf="activeUploads.length > 0" class="transfers-container">
-          <h5 class="sidebar-title">Active Uploads</h5>
+          <h5 class="sidebar-title">{{ 'ACTIVE_UPLOADS' | translate }}</h5>
           <mat-list>
             <mat-list-item *ngFor="let transfer of activeUploads">
               <div class="transfer-item">
                 <!-- Transfer Details -->
                 <div class="transfer-details">
                   <p>
-                    {{ transfer.file.name | slice: 0 : 5 }} to
+                    {{ transfer.file.name | slice: 0 : 5 }} {{ 'TO' | translate }}
                     {{ transfer.targetUser }}
                   </p>
                   <mat-progress-bar
@@ -85,7 +89,7 @@
                     mat-icon-button
                     *ngIf="transfer.progress > 0"
                     (click)="transfer.isPaused ? resumeUpload(transfer) : pauseUpload(transfer)"
-                    matTooltip="Pause/Resume"
+                    [matTooltip]="'PAUSE_RESUME' | translate"
                   >
                     <mat-icon>
                       {{ transfer.isPaused ? 'play_arrow' : 'pause' }}
@@ -95,7 +99,7 @@
                     mat-icon-button
                     color="warn"
                     (click)="cancelUpload(transfer)"
-                    matTooltip="Cancel"
+                    [matTooltip]="'CANCEL' | translate"
                   >
                     <mat-icon>cancel</mat-icon>
                   </button>
@@ -107,13 +111,13 @@
 
         <!-- Active Downloads -->
         <div *ngIf="activeDownloads.length > 0" class="transfers-container">
-          <h5 class="sidebar-title">Active Downloads</h5>
+          <h5 class="sidebar-title">{{ 'ACTIVE_DOWNLOADS' | translate }}</h5>
           <mat-list>
             <mat-list-item *ngFor="let download of activeDownloads">
               <div class="transfer-item">
                 <div class="transfer-details">
                   <p>
-                    {{ download.fileName | slice: 0 : 5 }} from
+                    {{ download.fileName | slice: 0 : 5 }} {{ 'FROM' | translate }}
                     {{ download.fromUser }}
                   </p>
                   <mat-progress-bar
@@ -128,7 +132,7 @@
       </mat-sidenav>
 
       <!-- Chat Content -->
-      <mat-sidenav-content>
+      <mat-sidenav-content class="sidenav-content">
         <div class="chat-content">
           <!-- Chat Messages -->
           <div class="chat-messages" #messageContainer>
@@ -140,13 +144,13 @@
 
             <!-- Incoming File Offers -->
             <div *ngIf="incomingFiles.length > 0" class="incoming-files-container">
-              <h3>Incoming Files</h3>
+              <h3>{{ 'INCOMING_FILES' | translate }}</h3>
               <div *ngFor="let incomingFile of incomingFiles" class="incoming-file-item">
                 <mat-card class="incoming-file-card">
                   <mat-card-header>
                     <mat-icon color="primary">file_download</mat-icon>
                     <mat-card-title>
-                      {{ incomingFile.fromUser }} wants to send you a file
+                      {{ incomingFile.fromUser }} {{ 'WANTS_TO_SEND_FILE' | translate }}
                     </mat-card-title>
                     <mat-card-subtitle>
                       {{ incomingFile.fileName }}
@@ -155,9 +159,9 @@
 
                   <mat-card-content>
                     <p>
-                      File Size:
+                      {{ 'FILE_SIZE' | translate }}:
                       {{ incomingFile.fileSize / (1024 * 1024) | number: '1.2-2' }}
-                      MB
+                      {{ 'MB' | translate }}
                     </p>
                   </mat-card-content>
 
@@ -167,14 +171,14 @@
                       color="primary"
                       (click)="acceptIncomingFile(incomingFile)"
                     >
-                      <mat-icon>check_circle</mat-icon> Accept
+                      <mat-icon>check_circle</mat-icon> {{ 'ACCEPT' | translate }}
                     </button>
                     <button
                       mat-raised-button
                       color="warn"
                       (click)="declineIncomingFile(incomingFile)"
                     >
-                      <mat-icon>cancel</mat-icon> Decline
+                      <mat-icon>cancel</mat-icon> {{ 'DECLINE' | translate }}
                     </button>
                   </mat-card-actions>
                 </mat-card>
@@ -191,18 +195,17 @@
               class="message-form"
             >
               <mat-form-field appearance="outline" class="message-input">
-                <mat-label>Type your message</mat-label>
+                <mat-label>{{ 'TYPE_YOUR_MESSAGE' | translate }}</mat-label>
                 <textarea
                   matInput
                   #messageInput
                   [(ngModel)]="message"
                   name="message"
                   autocomplete="off"
-                  required
                   rows="1"
                   cdkTextareaAutosize
                   #autosize="cdkTextareaAutosize"
-                  [ngModelOptions]="{ updateOn: 'blur' }"
+                  (keydown.enter)="onEnterKey($any($event), messageForm)"
                 ></textarea>
               </mat-form-field>
 
@@ -214,7 +217,7 @@
                   color="primary"
                   type="button"
                   (click)="fileInput.click()"
-                  matTooltip="Attach File"
+                  [matTooltip]="'ATTACH_FILE' | translate"
                 >
                   <mat-icon>attach_file</mat-icon>
                 </button>
@@ -227,7 +230,12 @@
                 />
 
                 <!-- Send Message Button -->
-                <button mat-icon-button color="primary" type="submit" matTooltip="Send Message">
+                <button
+                  mat-icon-button
+                  color="primary"
+                  type="submit"
+                  [matTooltip]="'SEND_MESSAGE' | translate"
+                >
                   <mat-icon>send</mat-icon>
                 </button>
               </div>
