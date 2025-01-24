@@ -1,49 +1,40 @@
+import 'zone.js/node';
+
 import { APP_BASE_HREF } from '@angular/common';
-import { CommonEngine } from '@angular/ssr';
-// @ts-ignore
-import express from 'express';
-import { fileURLToPath } from 'node:url';
-import { dirname, join, resolve } from 'node:path';
+import express, { Request, Response, NextFunction } from 'express';
+import { fileURLToPath } from 'url';
+import { dirname, join, resolve } from 'path';
+import { readFileSync } from 'fs';
+import { renderModule } from '@angular/platform-server';
 import AppServerModule from './src/main.server';
 
-// The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
   const server = express();
-  // @ts-ignore
+
   const serverDistFolder = dirname(fileURLToPath(import.meta.url));
   const browserDistFolder = resolve(serverDistFolder, '../browser');
-  const indexHtml = join(serverDistFolder, 'index.server.html');
-
-  const commonEngine = new CommonEngine();
+  const indexHtmlPath = join(serverDistFolder, 'index.server.html');
+  
+  const indexHtmlContent = readFileSync(indexHtmlPath, 'utf-8');
 
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
 
-  // Example Express Rest API endpoints
-  // server.get('/api/**', (req, res) => { });
-  // Serve static files from /browser
-  server.get(
-    '**',
-    express.static(browserDistFolder, {
-      maxAge: '1y',
-      index: 'index.html',
-    })
-  );
+  server.get('*.*', express.static(browserDistFolder, { maxAge: '1y', index: false }));
 
-  // All regular routes use the Angular engine
-  server.get('**', (req, res, next) => {
-    const { protocol, originalUrl, baseUrl, headers } = req;
-
-    commonEngine
-      .render({
-        bootstrap: AppServerModule,
-        documentFilePath: indexHtml,
-        url: `${protocol}://${headers.host}${originalUrl}`,
-        publicPath: browserDistFolder,
-        providers: [{ provide: APP_BASE_HREF, useValue: baseUrl }],
-      })
-      .then((html) => res.send(html))
-      .catch((err) => next(err));
+  server.get('*', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const html = await renderModule(AppServerModule, {
+        document: indexHtmlContent,
+        url: req.originalUrl,
+        extraProviders: [
+          { provide: APP_BASE_HREF, useValue: req.baseUrl },
+        ],
+      });
+      res.send(html);
+    } catch (err) {
+      next(err);
+    }
   });
 
   return server;
@@ -51,8 +42,6 @@ export function app(): express.Express {
 
 function run(): void {
   const port = process.env['PORT'] || 4000;
-
-  // Start up the Node server
   const server = app();
   server.listen(port, () => {
     console.log(`Node Express server listening on http://localhost:${port}`);

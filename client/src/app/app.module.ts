@@ -1,4 +1,4 @@
-import { APP_INITIALIZER, NgModule } from '@angular/core';
+import { NgModule, inject, provideAppInitializer } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { FormsModule } from '@angular/forms';
 import { RouterModule, Routes } from '@angular/router';
@@ -44,12 +44,10 @@ export function initializeTheme(themeService: ThemeService): () => void {
   providers: [
     provideAnimationsAsync(),
     provideHttpClient(withFetch()),
-    {
-      provide: APP_INITIALIZER,
-      useFactory: initializeTheme,
-      deps: [ThemeService],
-      multi: true,
-    },
+    provideAppInitializer(() => {
+        const initializerFn = (initializeTheme)(inject(ThemeService));
+        return initializerFn();
+      }),
   ],
 })
 export class AppModule {}

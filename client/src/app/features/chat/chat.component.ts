@@ -27,9 +27,10 @@ import { FlowbiteService } from '../../core/services/flowbite.service';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-  selector: 'app-chat',
-  templateUrl: './chat.component.html',
-  styleUrls: ['./chat.component.css'],
+    selector: 'app-chat',
+    templateUrl: './chat.component.html',
+    styleUrls: ['./chat.component.css'],
+    standalone: false
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   message = '';
