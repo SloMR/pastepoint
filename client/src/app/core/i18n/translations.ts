@@ -4,7 +4,7 @@ export type LanguageCode = 'en' | 'ar';
 
 export const translations: Record<LanguageCode, TranslationData> = {
   en: {
-    APP_TITLE: 'PastePoint Chat',
+    APP_TITLE: 'PastePoint',
     TOGGLE_THEME: 'Toggle Theme',
     USER_INFO: 'User Info',
     ROOMS: 'Rooms',
@@ -28,7 +28,7 @@ export const translations: Record<LanguageCode, TranslationData> = {
     SEND_MESSAGE: 'Send Message',
   },
   ar: {
-    APP_TITLE: 'دردشة PastePoint',
+    APP_TITLE: 'PastePoint',
     TOGGLE_THEME: 'تبديل السمة',
     USER_INFO: 'معلومات المستخدم',
     ROOMS: 'الغرف',

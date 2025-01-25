@@ -45,9 +45,9 @@ export function initializeTheme(themeService: ThemeService): () => void {
     provideAnimationsAsync(),
     provideHttpClient(withFetch()),
     provideAppInitializer(() => {
-        const initializerFn = (initializeTheme)(inject(ThemeService));
-        return initializerFn();
-      }),
+      const initializerFn = initializeTheme(inject(ThemeService));
+      return initializerFn();
+    }),
   ],
 })
 export class AppModule {}

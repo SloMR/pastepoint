@@ -1,40 +1,32 @@
-import 'zone.js/node';
-
 import { APP_BASE_HREF } from '@angular/common';
-import express, { Request, Response, NextFunction } from 'express';
-import { fileURLToPath } from 'url';
-import { dirname, join, resolve } from 'path';
-import { readFileSync } from 'fs';
-import { renderModule } from '@angular/platform-server';
-import AppServerModule from './src/main.server';
+import express from 'express';
+import { fileURLToPath } from 'node:url';
+import { dirname, join, resolve } from 'node:path';
+import bootstrap from './src/main.server';
 
 export function app(): express.Express {
   const server = express();
-
   const serverDistFolder = dirname(fileURLToPath(import.meta.url));
   const browserDistFolder = resolve(serverDistFolder, '../browser');
-  const indexHtmlPath = join(serverDistFolder, 'index.server.html');
-  
-  const indexHtmlContent = readFileSync(indexHtmlPath, 'utf-8');
+  const indexHtml = join(browserDistFolder, 'index.html');
 
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
 
-  server.get('*.*', express.static(browserDistFolder, { maxAge: '1y', index: false }));
+  // Serve static files
+  server.get(
+    '*.*',
+    express.static(browserDistFolder, {
+      maxAge: '1y',
+    })
+  );
 
-  server.get('*', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const html = await renderModule(AppServerModule, {
-        document: indexHtmlContent,
-        url: req.originalUrl,
-        extraProviders: [
-          { provide: APP_BASE_HREF, useValue: req.baseUrl },
-        ],
-      });
-      res.send(html);
-    } catch (err) {
-      next(err);
-    }
+  // Handle Angular routes
+  server.get('*', (req, res) => {
+    res.render(indexHtml, {
+      req,
+      providers: [{ provide: APP_BASE_HREF, useValue: req.baseUrl }],
+    });
   });
 
   return server;
