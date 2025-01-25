@@ -42,6 +42,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   currentRoom = 'main';
   isDarkMode = false;
+  isMenuOpen = false;
 
   activeUploads: any[] = [];
   activeDownloads: any[] = [];
@@ -256,6 +257,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (room !== this.currentRoom) {
       this.roomService.joinRoom(room);
       this.currentRoom = room;
+      this.isMenuOpen = false;
     }
   }
 
@@ -308,5 +310,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.logger.error(`Could not scroll to bottom: ${err}`);
       }
     }
+  }
+
+  protected isRTL(): boolean {
+    return this.translate.currentLang === 'ar';
   }
 }
