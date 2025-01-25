@@ -237,42 +237,44 @@ export class WebRTCService {
   }
 
   private handleDataChannelMessage(data: any, targetUser: string): void {
-    if (typeof data === 'string') {
-      const message: DataChannelMessage = JSON.parse(data);
-      switch (message.type) {
-        case DATA_CHANNEL_MESSAGE_TYPES.CHAT:
-          this.chatMessages$.next(message.payload);
-          break;
-        case FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER:
-          this.logger.info(`Received file offer from ${targetUser}`);
-          this.fileOffers$.next({
-            fileName: message.payload.fileName,
-            fileSize: message.payload.fileSize,
-            fromUser: targetUser,
-          });
-          break;
-        case FILE_TRANSFER_MESSAGE_TYPES.FILE_ACCEPT:
-          this.logger.info(`Received file acceptance from ${targetUser}`);
-          this.fileResponses$.next({ accepted: true, fromUser: targetUser });
-          break;
-        case FILE_TRANSFER_MESSAGE_TYPES.FILE_DECLINE:
-          this.logger.info(`Received file decline from ${targetUser}`);
-          this.fileResponses$.next({ accepted: false, fromUser: targetUser });
-          break;
-        case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL:
-          this.logger.info(`Received file cancellation from ${targetUser}`);
-          this.fileTransferCancelled$.next({ fromUser: targetUser });
-          break;
-        default:
-          this.logger.warn(`Unknown message type: ${message.type}`);
+    this.zone.run(() => {
+      if (typeof data === 'string') {
+        const message: DataChannelMessage = JSON.parse(data);
+        switch (message.type) {
+          case DATA_CHANNEL_MESSAGE_TYPES.CHAT:
+            this.chatMessages$.next(message.payload);
+            break;
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER:
+            this.logger.info(`Received file offer from ${targetUser}`);
+            this.fileOffers$.next({
+              fileName: message.payload.fileName,
+              fileSize: message.payload.fileSize,
+              fromUser: targetUser,
+            });
+            break;
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_ACCEPT:
+            this.logger.info(`Received file acceptance from ${targetUser}`);
+            this.fileResponses$.next({ accepted: true, fromUser: targetUser });
+            break;
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_DECLINE:
+            this.logger.info(`Received file decline from ${targetUser}`);
+            this.fileResponses$.next({ accepted: false, fromUser: targetUser });
+            break;
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL:
+            this.logger.info(`Received file cancellation from ${targetUser}`);
+            this.fileTransferCancelled$.next({ fromUser: targetUser });
+            break;
+          default:
+            this.logger.warn(`Unknown message type: ${message.type}`);
+        }
+      } else if (data instanceof ArrayBuffer) {
+        this.zone.run(() => {
+          this.incomingData$.next({ data, fromUser: targetUser });
+        });
+      } else {
+        this.logger.warn(`Unknown data type received from ${targetUser}: ${data}`);
       }
-    } else if (data instanceof ArrayBuffer) {
-      this.zone.run(() => {
-        this.incomingData$.next({ data, fromUser: targetUser });
-      });
-    } else {
-      this.logger.warn(`Unknown data type received from ${targetUser}: ${data}`);
-    }
+    });
   }
 
   public sendData(message: DataChannelMessage, targetUser: string): void {
