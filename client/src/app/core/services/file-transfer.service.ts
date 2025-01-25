@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import Swal from 'sweetalert2';
 import { BehaviorSubject } from 'rxjs';
 import { LoggerService } from './logger.service';
 import { WebRTCService } from './webrtc.service';
@@ -41,8 +41,7 @@ export class FileTransferService {
 
   constructor(
     private logger: LoggerService,
-    private webrtcService: WebRTCService,
-    private snackBar: MatSnackBar
+    private webrtcService: WebRTCService
   ) {
     this.webrtcService.incomingData$.subscribe(async ({ data, fromUser }) => {
       if (data instanceof ArrayBuffer) {
@@ -65,10 +64,6 @@ export class FileTransferService {
         this.logger.warn(`File declined by ${response.fromUser}`);
 
         this.fileTransferStatus.set(response.fromUser, 'declined');
-        this.snackBar.open('The receiver declined the file transfer.', 'Close', {
-          duration: 5000,
-        });
-
         this.checkAllUsersResponded();
       }
     });
@@ -99,6 +94,7 @@ export class FileTransferService {
     const fileTransfer = this.fileTransfers.get(targetUser);
     if (!fileTransfer) {
       this.logger.error('No file to send.');
+      this.showError('No file to send.', 'Error');
       return;
     }
     this.logger.info(`Sending file offer to ${targetUser}`);
@@ -159,6 +155,7 @@ export class FileTransferService {
       payload: {},
     };
     this.webrtcService.sendData(message, fromUser);
+    this.showInfo('You declined the file transfer.', 'Declined');
   }
 
   private async handleDataChunk(data: ArrayBuffer, fromUser: string): Promise<void> {
@@ -338,9 +335,7 @@ export class FileTransferService {
     this.updateIncomingFileOffers();
     this.updateActiveDownloads();
 
-    this.snackBar.open(`File transfer from ${fromUser} was cancelled by the sender.`, 'Close', {
-      duration: 5000,
-    });
+    this.showInfo(`File transfer from ${fromUser} was cancelled by the sender.`, 'Cancelled');
   }
 
   private updateActiveUploads(): void {
@@ -388,9 +383,35 @@ export class FileTransferService {
 
     if (allResponded) {
       this.logger.info('All users have responded and file transfers completed.');
+      this.showSuccess('All users responded. File transfers done.', 'Success');
       this.fileTransfers.clear();
       this.fileTransferStatus.clear();
       this.updateActiveUploads();
     }
+  }
+
+  // TODO: Move to new service.
+  private showInfo(message: string, title: string): void {
+    Swal.fire({
+      icon: 'info',
+      title: title,
+      text: message,
+    });
+  }
+
+  private showError(message: string, title: string): void {
+    Swal.fire({
+      icon: 'error',
+      title: title,
+      text: message,
+    });
+  }
+
+  private showSuccess(message: string, title: string): void {
+    Swal.fire({
+      icon: 'success',
+      title: title,
+      text: message,
+    });
   }
 }

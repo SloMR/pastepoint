@@ -38,7 +38,7 @@ impl Handler<LeaveRoom> for WsChatServer {
                 self.broadcast_room_members(&msg.0, &msg.1);
 
                 log::debug!(
-                    "User {} in {} left room {}. Rooms: {:?}",
+                    "[Websocket] User {} in {} left room {}. Rooms: {:?}",
                     msg.2,
                     msg.0,
                     msg.1,
@@ -57,14 +57,12 @@ impl Handler<ListRooms> for WsChatServer {
 
     fn handle(&mut self, msg: ListRooms, _ctx: &mut Self::Context) -> Self::Result {
         let ListRooms(session_id) = msg;
-        MessageResult(
-            self.rooms
-                .get(&session_id)
-                .unwrap()
-                .keys()
-                .cloned()
-                .collect(),
-        )
+        let rooms_list = self
+            .rooms
+            .get(&session_id)
+            .map(|rooms_map| rooms_map.keys().cloned().collect())
+            .unwrap_or_default();
+        MessageResult(rooms_list)
     }
 }
 

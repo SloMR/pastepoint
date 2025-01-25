@@ -17,8 +17,12 @@ impl Actor for WsChatSession {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         self.id = rand::random::<usize>();
-        log::debug!("Session started for {} with ID {}", self.name, self.id);
-        log::debug!("Auto-join is set to: {}", self.auto_join);
+        log::debug!(
+            "[Websocket] Session started for {} with ID {}",
+            self.name,
+            self.id
+        );
+        log::debug!("[Websocket] Auto-join is set to: {}", self.auto_join);
 
         if self.auto_join {
             self.join_room("main", ctx);
@@ -27,7 +31,7 @@ impl Actor for WsChatSession {
 
     fn stopped(&mut self, _ctx: &mut Self::Context) {
         log::debug!(
-            "WsChatSession closed for {}({}) in room {}",
+            "[Websocket] WsChatSession closed for {}({}) in room {}",
             self.name.clone(),
             self.id,
             self.room
@@ -36,7 +40,10 @@ impl Actor for WsChatSession {
         if let Ok(uuid) = Uuid::parse_str(&self.session_id) {
             self.session_manager.remove_client(&uuid);
         } else {
-            log::error!("Invalid UUID format for session_id: {}", self.session_id);
+            log::error!(
+                "[Websocket] Invalid UUID format for session_id: {}",
+                self.session_id
+            );
         }
     }
 }

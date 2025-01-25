@@ -1,0 +1,5 @@
+[server]
+bind_address = "0.0.0.0:9000"
+key_file_path = "../certs/key.pem"
+cert_file_path = "../certs/cert.pem"
+auto_join = true

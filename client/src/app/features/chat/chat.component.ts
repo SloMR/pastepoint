@@ -23,11 +23,14 @@ import { UserService } from '../../core/services/user.service';
 import { take } from 'rxjs/operators';
 import { NgForm } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { FlowbiteService } from '../../core/services/flowbite.service';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'app-chat',
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css'],
+  standalone: false,
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   message = '';
@@ -39,6 +42,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   currentRoom = 'main';
   isDarkMode = false;
+  isMenuOpen = false;
 
   activeUploads: any[] = [];
   activeDownloads: any[] = [];
@@ -47,7 +51,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private subscriptions: Subscription[] = [];
 
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
-  @ViewChild('messageInput') messageInput!: ElementRef;
+  @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
 
   constructor(
     public userService: UserService,
@@ -60,12 +64,24 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private cdr: ChangeDetectorRef,
     private logger: LoggerService,
     private snackBar: MatSnackBar,
+    private flowbiteService: FlowbiteService,
+    public translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: object
-  ) {}
+  ) {
+    this.translate.setDefaultLang('en');
+
+    const browserLang = this.translate.getBrowserLang() || 'en';
+    const languageToUse = browserLang.match(/en|ar/) ? browserLang : 'en';
+    this.translate.use(languageToUse);
+  }
 
   ngOnInit(): void {
+    this.flowbiteService.loadFlowbite(() => {
+      this.logger.debug(`Flowbite loaded`);
+    });
+
     this.subscriptions.push(
-      this.userService.user$.subscribe((username) => {
+      this.userService.user$.subscribe((username: any) => {
         if (username) {
           this.logger.info(`Username is set to: ${username}`);
           this.initializeChat();
@@ -80,24 +96,35 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
+  switchLanguage(language: string) {
+    this.translate.use(language);
+  }
+
+  onEnterKey(event: KeyboardEvent, messageForm: NgForm): void {
+    if (!event.shiftKey) {
+      event.preventDefault();
+      this.sendMessage(messageForm);
+    }
+  }
+
   private initializeChat() {
     this.subscriptions.push(
-      this.chatService.messages$.subscribe((messages) => {
-        this.messages = messages;
+      this.chatService.messages$.subscribe((messages: any) => {
+        this.messages = [...messages];
         this.cdr.detectChanges();
         this.scrollToBottom();
       })
     );
 
     this.subscriptions.push(
-      this.roomService.rooms$.subscribe((rooms) => {
+      this.roomService.rooms$.subscribe((rooms: string[]) => {
         this.rooms = rooms;
         this.cdr.detectChanges();
       })
     );
 
     this.subscriptions.push(
-      this.roomService.members$.subscribe((members) => {
+      this.roomService.members$.subscribe((members: string[]) => {
         this.members = members;
         this.cdr.detectChanges();
         this.initiateConnectionsWithMembers();
@@ -105,21 +132,21 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     );
 
     this.subscriptions.push(
-      this.fileTransferService.activeUploads$.subscribe((uploads) => {
+      this.fileTransferService.activeUploads$.subscribe((uploads: any[]) => {
         this.activeUploads = uploads;
         this.cdr.detectChanges();
       })
     );
 
     this.subscriptions.push(
-      this.fileTransferService.activeDownloads$.subscribe((downloads) => {
+      this.fileTransferService.activeDownloads$.subscribe((downloads: any[]) => {
         this.activeDownloads = downloads;
         this.cdr.detectChanges();
       })
     );
 
     this.subscriptions.push(
-      this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles) => {
+      this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles: any[]) => {
         this.incomingFiles = incomingFiles;
         this.cdr.detectChanges();
       })
@@ -130,7 +157,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (isPlatformBrowser(this.platformId)) {
       this.connect();
       this.cdr.detectChanges();
-      this.messageInput.nativeElement.focus();
+      if (this.messageInput?.nativeElement) {
+        this.messageInput.nativeElement.focus();
+      }
     }
   }
 
@@ -138,13 +167,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isDarkMode = !this.isDarkMode;
     this.themeService.setThemePreference(this.isDarkMode);
     this.applyTheme(this.isDarkMode);
+    this.cdr.detectChanges();
   }
 
   private applyTheme(isDarkMode: boolean): void {
-    if (isDarkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
+    if (typeof document !== 'undefined') {
+      const htmlElement = document.documentElement;
+      if (isDarkMode) {
+        htmlElement.classList.add('dark');
+        htmlElement.setAttribute('data-theme', 'dark');
+      } else {
+        htmlElement.classList.remove('dark');
+        htmlElement.setAttribute('data-theme', 'light');
+      }
     }
   }
 
@@ -161,18 +196,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   sendMessage(messageForm: NgForm): void {
-    if (this.message.trim()) {
+    if (this.message && this.message.trim()) {
+      const tempMessage = `${this.userService.user}: ${this.message}`;
+      this.messages = [...this.messages, tempMessage];
+
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
       otherMembers.forEach((member) => {
-        this.logger.info(`Sending message to ${member}`);
         this.chatService.sendMessage(this.message, member);
       });
 
       this.message = '';
       messageForm.resetForm();
       this.scrollToBottom();
-    } else {
-      this.messageInput.nativeElement.focus();
     }
   }
 
@@ -195,7 +230,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
             this.webrtcService.initiateConnection(member);
           }
 
-          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen) => {
+          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: any) => {
             if (isOpen) {
               this.fileTransferService.sendFileOffer(member);
             }
@@ -222,6 +257,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (room !== this.currentRoom) {
       this.roomService.joinRoom(room);
       this.currentRoom = room;
+      this.isMenuOpen = false;
     }
   }
 
@@ -248,12 +284,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private initiateConnectionsWithMembers(): void {
     this.logger.info('Initiating connections with other members');
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
-    otherMembers.forEach((member, index) => {
-      setTimeout(() => {
-        if (this.userService.user < member) {
-          this.webrtcService.initiateConnection(member);
-        }
-      }, index * 1000);
+    otherMembers.forEach((member) => {
+      this.webrtcService.initiateConnection(member);
     });
   }
 
@@ -270,11 +302,17 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private scrollToBottom(): void {
-    try {
-      this.messageContainer.nativeElement.scrollTop =
-        this.messageContainer.nativeElement.scrollHeight;
-    } catch (err) {
-      this.logger.error(`Could not scroll to bottom: ${err}`);
+    if (isPlatformBrowser(this.platformId)) {
+      try {
+        this.messageContainer.nativeElement.scrollTop =
+          this.messageContainer.nativeElement.scrollHeight;
+      } catch (err) {
+        this.logger.error(`Could not scroll to bottom: ${err}`);
+      }
     }
+  }
+
+  protected isRTL(): boolean {
+    return this.translate.currentLang === 'ar';
   }
 }

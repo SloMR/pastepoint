@@ -58,7 +58,7 @@ impl WsChatSession {
             .into_actor(self)
             .then(|res, _, ctx| {
                 if let Ok(rooms) = res {
-                    log::debug!("[SystemRooms] Rooms Availabe: {:?}", rooms);
+                    log::debug!("[Websocket] [SystemRooms] Rooms Availabe: {:?}", rooms);
 
                     let room_list = rooms.join(", ");
                     ctx.text(format!("[SystemRooms] {}", room_list));
@@ -72,30 +72,30 @@ impl WsChatSession {
 
     fn user_command(&mut self, command_str: &str, ctx: &mut ws::WebsocketContext<WsChatSession>) {
         let command_str = command_str.trim();
-        log::debug!("Processing command: '{}'", command_str);
+        log::debug!("[Websocket] Processing command: '{}'", command_str);
 
         let mut parts = command_str.splitn(2, ' ');
         let cmd = parts.next().unwrap_or("");
         let args = parts.next();
         match cmd {
             "/list" => {
-                log::debug!("Received list command");
+                log::debug!("[Websocket] Received list command");
                 self.list_rooms(ctx);
             }
             "/join" => {
                 if let Some(room_name) = args {
-                    log::debug!("Received join command for room '{}'", room_name);
+                    log::debug!("[Websocket] Received join command for room '{}'", room_name);
                     self.join_room(room_name, ctx);
                 } else {
                     ctx.text("[SystemError] Room name is required");
                 }
             }
             "/name" => {
-                log::debug!("Received name command");
+                log::debug!("[Websocket] Received name command");
                 ctx.text(format!("[SystemName] {}", self.name));
             }
             _ => {
-                log::error!("Unknown command: '{}'", cmd);
+                log::error!("[Websocket] Unknown command: '{}'", cmd);
                 ctx.text(format!(
                     "[SystemError] Error Unknown command: {}",
                     ServerError::NotFound
@@ -127,7 +127,7 @@ impl WsChatSession {
     fn handle_user_disconnect(&self) {
         let leave_msg = LeaveRoom(self.session_id.clone(), self.room.clone(), self.id);
         self.issue_system_async(leave_msg);
-        log::debug!("User {} disconnected", self.name);
+        log::debug!("[Websocket] User {} disconnected", self.name);
     }
 }
 
@@ -148,18 +148,21 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
         match msg {
             ws::Message::Text(text) => {
                 let msg = text.trim();
-                log::debug!("Received message: '{}'", msg);
+                log::debug!("[Websocket] Received message: '{}'", msg);
                 if msg.starts_with("[SignalMessage]") {
                     self.handle_signal_message(msg, ctx);
                 } else if msg.starts_with("[UserCommand]") {
                     let command_str = msg.trim_start_matches("[UserCommand]").trim();
-                    log::debug!("Command string after trimming: '{}'", command_str);
+                    log::debug!(
+                        "[Websocket] Command string after trimming: '{}'",
+                        command_str
+                    );
                     self.user_command(command_str, ctx);
                 } else if msg.starts_with("[UserDisconnected]") {
-                    log::debug!("Received disconnect command");
+                    log::debug!("[Websocket] Received disconnect command");
                     self.handle_user_disconnect();
                 } else {
-                    log::error!("Unknown command: {}", msg);
+                    log::error!("[Websocket] Unknown command: {}", msg);
                     ctx.text(format!(
                         "[SystemError] Error Unknown command: {}",
                         ServerError::NotFound
@@ -167,7 +170,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 }
             }
             ws::Message::Close(reason) => {
-                log::debug!("Closing connection: {:?}", reason);
+                log::debug!("[Websocket] Closing connection: {:?}", reason);
                 self.handle_user_disconnect();
                 ctx.close(reason);
                 ctx.stop();
