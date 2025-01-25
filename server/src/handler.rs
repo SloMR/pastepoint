@@ -61,7 +61,7 @@ impl Handler<ListRooms> for WsChatServer {
             .rooms
             .get(&session_id)
             .map(|rooms_map| rooms_map.keys().cloned().collect())
-            .unwrap_or_else(Vec::new);
+            .unwrap_or_default();
         MessageResult(rooms_list)
     }
 }
