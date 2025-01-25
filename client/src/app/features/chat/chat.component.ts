@@ -27,10 +27,10 @@ import { FlowbiteService } from '../../core/services/flowbite.service';
 import { TranslateService } from '@ngx-translate/core';
 
 @Component({
-    selector: 'app-chat',
-    templateUrl: './chat.component.html',
-    styleUrls: ['./chat.component.css'],
-    standalone: false
+  selector: 'app-chat',
+  templateUrl: './chat.component.html',
+  styleUrls: ['./chat.component.css'],
+  standalone: false,
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   message = '';
@@ -50,7 +50,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private subscriptions: Subscription[] = [];
 
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
-  @ViewChild('messageInput') messageInput!: ElementRef;
+  @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
 
   constructor(
     public userService: UserService,
@@ -64,7 +64,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private logger: LoggerService,
     private snackBar: MatSnackBar,
     private flowbiteService: FlowbiteService,
-    private translate: TranslateService,
+    public translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
     this.translate.setDefaultLang('en');
@@ -80,7 +80,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     });
 
     this.subscriptions.push(
-      this.userService.user$.subscribe((username) => {
+      this.userService.user$.subscribe((username: any) => {
         if (username) {
           this.logger.info(`Username is set to: ${username}`);
           this.initializeChat();
@@ -108,22 +108,22 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private initializeChat() {
     this.subscriptions.push(
-      this.chatService.messages$.subscribe((messages) => {
-        this.messages = messages;
+      this.chatService.messages$.subscribe((messages: any) => {
+        this.messages = [...messages];
         this.cdr.detectChanges();
         this.scrollToBottom();
       })
     );
 
     this.subscriptions.push(
-      this.roomService.rooms$.subscribe((rooms) => {
+      this.roomService.rooms$.subscribe((rooms: string[]) => {
         this.rooms = rooms;
         this.cdr.detectChanges();
       })
     );
 
     this.subscriptions.push(
-      this.roomService.members$.subscribe((members) => {
+      this.roomService.members$.subscribe((members: string[]) => {
         this.members = members;
         this.cdr.detectChanges();
         this.initiateConnectionsWithMembers();
@@ -131,21 +131,21 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     );
 
     this.subscriptions.push(
-      this.fileTransferService.activeUploads$.subscribe((uploads) => {
+      this.fileTransferService.activeUploads$.subscribe((uploads: any[]) => {
         this.activeUploads = uploads;
         this.cdr.detectChanges();
       })
     );
 
     this.subscriptions.push(
-      this.fileTransferService.activeDownloads$.subscribe((downloads) => {
+      this.fileTransferService.activeDownloads$.subscribe((downloads: any[]) => {
         this.activeDownloads = downloads;
         this.cdr.detectChanges();
       })
     );
 
     this.subscriptions.push(
-      this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles) => {
+      this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles: any[]) => {
         this.incomingFiles = incomingFiles;
         this.cdr.detectChanges();
       })
@@ -156,7 +156,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (isPlatformBrowser(this.platformId)) {
       this.connect();
       this.cdr.detectChanges();
-      this.messageInput.nativeElement.focus();
+      if (this.messageInput?.nativeElement) {
+        this.messageInput.nativeElement.focus();
+      }
     }
   }
 
@@ -164,14 +166,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.isDarkMode = !this.isDarkMode;
     this.themeService.setThemePreference(this.isDarkMode);
     this.applyTheme(this.isDarkMode);
+    this.cdr.detectChanges();
   }
 
   private applyTheme(isDarkMode: boolean): void {
-    if (isPlatformBrowser(this.platformId)) {
+    if (typeof document !== 'undefined') {
+      const htmlElement = document.documentElement;
       if (isDarkMode) {
-        document.body.classList.add('dark-mode');
+        htmlElement.classList.add('dark');
+        htmlElement.setAttribute('data-theme', 'dark');
       } else {
-        document.body.classList.remove('dark-mode');
+        htmlElement.classList.remove('dark');
+        htmlElement.setAttribute('data-theme', 'light');
       }
     }
   }
@@ -190,19 +196,17 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   sendMessage(messageForm: NgForm): void {
     if (this.message && this.message.trim()) {
+      const tempMessage = `${this.userService.user}: ${this.message}`;
+      this.messages = [...this.messages, tempMessage];
+
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
       otherMembers.forEach((member) => {
-        this.logger.info(`Sending message to ${member}`);
         this.chatService.sendMessage(this.message, member);
       });
 
       this.message = '';
       messageForm.resetForm();
       this.scrollToBottom();
-    } else {
-      if (isPlatformBrowser(this.platformId)) {
-        this.messageInput.nativeElement.focus();
-      }
     }
   }
 
@@ -225,7 +229,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
             this.webrtcService.initiateConnection(member);
           }
 
-          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen) => {
+          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: any) => {
             if (isOpen) {
               this.fileTransferService.sendFileOffer(member);
             }
@@ -278,12 +282,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private initiateConnectionsWithMembers(): void {
     this.logger.info('Initiating connections with other members');
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
-    otherMembers.forEach((member, index) => {
-      setTimeout(() => {
-        if (this.userService.user < member) {
-          this.webrtcService.initiateConnection(member);
-        }
-      }, index * 1000);
+    otherMembers.forEach((member) => {
+      this.webrtcService.initiateConnection(member);
     });
   }
 
