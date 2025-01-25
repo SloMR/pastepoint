@@ -28,18 +28,23 @@ jobs:
           path: |
             ~/.cargo/registry
             ~/.cargo/git
-          key: ${{ runner.os }}-cargo-deps-${{ hashFiles('**/server/Cargo.lock') }}
+            server/target  # Cache build artifacts for the server project
+          key: ${{ runner.os }}-cargo-deps-${{ hashFiles('server/Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-deps-
 
       - name: Check code formatting
+        working-directory: server
         run: cargo fmt -- --check
 
       - name: Run Clippy
+        working-directory: server
         run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Run tests
+        working-directory: server
         run: cargo test --all --verbose
 
       - name: Build the Rust project
+        working-directory: server
         run: cargo build --release --verbose
