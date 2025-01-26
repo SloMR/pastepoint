@@ -13,6 +13,7 @@ import {
   ICE_SERVERS,
   MAX_RECONNECT_ATTEMPTS,
   RECONNECT_DELAY,
+  ChatMessage,
 } from '../../utils/constants';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
@@ -40,7 +41,7 @@ interface DataChannelMessage {
 export class WebRTCService {
   public dataChannelOpen$ = new BehaviorSubject<boolean>(false);
 
-  public chatMessages$ = new Subject<string>();
+  public chatMessages$ = new Subject<ChatMessage>();
   public fileOffers$ = new Subject<{
     fileName: string;
     fileSize: number;
@@ -241,9 +242,12 @@ export class WebRTCService {
       if (typeof data === 'string') {
         const message: DataChannelMessage = JSON.parse(data);
         switch (message.type) {
-          case DATA_CHANNEL_MESSAGE_TYPES.CHAT:
-            this.chatMessages$.next(message.payload);
+          case DATA_CHANNEL_MESSAGE_TYPES.CHAT: {
+            let chatMsg = message.payload as ChatMessage;
+            chatMsg.timestamp = new Date(chatMsg.timestamp);
+            this.chatMessages$.next(chatMsg);
             break;
+          }
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER:
             this.logger.info(`Received file offer from ${targetUser}`);
             this.fileOffers$.next({

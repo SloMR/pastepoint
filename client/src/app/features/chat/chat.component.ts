@@ -25,6 +25,7 @@ import { NgForm } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlowbiteService } from '../../core/services/flowbite.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ChatMessage } from '../../utils/constants';
 
 @Component({
   selector: 'app-chat',
@@ -36,7 +37,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   message = '';
   newRoomName = '';
 
-  messages: string[] = [];
+  messages: ChatMessage[] = [];
   rooms: string[] = [];
   members: string[] = [];
 
@@ -112,7 +113,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private initializeChat() {
     this.subscriptions.push(
-      this.chatService.messages$.subscribe((messages: any) => {
+      this.chatService.messages$.subscribe((messages: ChatMessage[]) => {
         this.messages = [...messages];
         this.cdr.detectChanges();
         this.scrollToBottom();
@@ -200,7 +201,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   sendMessage(messageForm: NgForm): void {
     if (this.message && this.message.trim()) {
-      const tempMessage = `${this.userService.user}: ${this.message}`;
+      const tempMessage: ChatMessage = {
+        from: this.userService.user,
+        text: this.message,
+        timestamp: new Date(),
+      };
       this.messages = [...this.messages, tempMessage];
 
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
@@ -271,8 +276,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  isMyMessage(msg: string): boolean {
-    return msg.startsWith(this.userService.user);
+  isMyMessage(msg: ChatMessage): boolean {
+    return msg.from === this.userService.user;
   }
 
   isMyUser(member: string): boolean {

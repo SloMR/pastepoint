@@ -47,3 +47,10 @@ export const DATA_CHANNEL_MESSAGE_TYPES = {
   CHAT: 'chat',
   FILE: 'file',
 };
+
+// Chat message interface
+export interface ChatMessage {
+  from: string;
+  text: string;
+  timestamp: Date;
+}
