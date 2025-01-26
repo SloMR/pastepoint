@@ -1,13 +1,13 @@
 import { TestBed } from '@angular/core/testing';
 
-import { WebrtcService } from './webrtc.service';
+import { WebRTCService } from './webrtc.service';
 
 describe('WebrtcService', () => {
-  let service: WebrtcService;
+  let service: WebRTCService;
 
   beforeEach(() => {
     TestBed.configureTestingModule({});
-    service = TestBed.inject(WebrtcService);
+    service = TestBed.inject(WebRTCService);
   });
 
   it('should be created', () => {
