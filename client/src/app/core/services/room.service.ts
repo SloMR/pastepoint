@@ -34,19 +34,19 @@ export class RoomService {
 
   private handleSystemMessage(message: string): void {
     if (message.includes('[SystemRooms]')) {
-      const matchRooms = message.match(/\[SystemRooms\]\s*(.*?)$/);
+      const matchRooms = message.match(/\[SystemRooms]\s*(.*?)$/);
       if (matchRooms) {
         const rooms = matchRooms[1].split(',').map((room: string) => room.trim());
         this.rooms$.next(rooms);
       }
     } else if (message.includes('[SystemMembers]')) {
-      const matchMembers = message.match(/\[SystemMembers\]\s*(.*?)$/);
+      const matchMembers = message.match(/\[SystemMembers]\s*(.*?)$/);
       if (matchMembers) {
         const members = matchMembers[1].split(',').map((member: string) => member.trim());
         this.members$.next(members);
       }
     } else if (message.includes('[SystemJoin]')) {
-      const matchJoin = message.match(/^(.*?)\s*\[SystemJoin\]\s*(.*?)$/);
+      const matchJoin = message.match(/^(.*?)\s*\[SystemJoin]\s*(.*?)$/);
       if (matchJoin) {
         this.logger.info(`User joined room ${matchJoin[2]}`);
         this.currentRoom = matchJoin[2];

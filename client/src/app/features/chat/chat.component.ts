@@ -43,12 +43,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   currentRoom = 'main';
   isDarkMode = false;
   isMenuOpen = false;
+  isEmojiPickerVisible = false;
 
   activeUploads: any[] = [];
   activeDownloads: any[] = [];
   incomingFiles: any[] = [];
 
   private subscriptions: Subscription[] = [];
+  private emojiPickerTimeout: any;
+  public isHoveringOverPicker: boolean = false;
 
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
@@ -279,6 +282,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.webrtcService.closeAllConnections();
+    clearTimeout(this.emojiPickerTimeout);
   }
 
   private initiateConnectionsWithMembers(): void {
@@ -314,5 +318,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   protected isRTL(): boolean {
     return this.translate.currentLang === 'ar';
+  }
+
+  protected handleEmojiIconMouseLeave(): void {
+    setTimeout(() => {
+      if (!this.isHoveringOverPicker) {
+        this.isEmojiPickerVisible = false;
+      }
+    }, 150);
+  }
+
+  protected addEmoji(event: any): void {
+    const chosenEmoji = event?.emoji?.native || '';
+    if (!chosenEmoji) return;
+    this.message += chosenEmoji;
   }
 }
