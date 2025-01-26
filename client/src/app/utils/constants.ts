@@ -39,7 +39,8 @@ export const FILE_TRANSFER_MESSAGE_TYPES = {
   FILE_ACCEPT: 'file-accept',
   FILE_DECLINE: 'file-decline',
   FILE_OFFER: 'file-offer',
-  FILE_CANCEL: 'file-cancel',
+  FILE_CANCEL_UPLOAD: 'file-cancel-upload',
+  FILE_CANCEL_DOWNLOAD: 'file-cancel-download',
 };
 
 // WebRTC data channel message types
@@ -47,3 +48,10 @@ export const DATA_CHANNEL_MESSAGE_TYPES = {
   CHAT: 'chat',
   FILE: 'file',
 };
+
+// Chat message interface
+export interface ChatMessage {
+  from: string;
+  text: string;
+  timestamp: Date;
+}

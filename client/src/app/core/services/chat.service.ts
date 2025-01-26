@@ -4,14 +4,14 @@ import { LoggerService } from './logger.service';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { WebRTCService } from './webrtc.service';
 import { UserService } from './user.service';
-import { DATA_CHANNEL_MESSAGE_TYPES } from '../../utils/constants';
+import { ChatMessage, DATA_CHANNEL_MESSAGE_TYPES } from '../../utils/constants';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ChatService {
-  public messages$ = new BehaviorSubject<string[]>([]);
-  private messages: string[] = [];
+  public messages$ = new BehaviorSubject<ChatMessage[]>([]);
+  private messages: ChatMessage[] = [];
 
   constructor(
     private logger: LoggerService,
@@ -38,26 +38,36 @@ export class ChatService {
 
   public sendMessage(content: string, targetUser: string): void {
     if (content.trim()) {
-      const message = {
-        type: DATA_CHANNEL_MESSAGE_TYPES.CHAT,
-        payload: `${this.user}: ${content.trim()}`,
+      const chatMsg: ChatMessage = {
+        from: this.user,
+        text: content.trim(),
+        timestamp: new Date(),
       };
-      this.webrtcService.sendData(message, targetUser);
-      if (!this.messages.includes(`${this.user}: ${content.trim()}`)) {
-        this.messages.push(`${this.user}: ${content.trim()}`);
+
+      const dataChannelMsg = {
+        type: DATA_CHANNEL_MESSAGE_TYPES.CHAT,
+        payload: chatMsg,
+      };
+      this.webrtcService.sendData(dataChannelMsg, targetUser);
+
+      const alreadyExists = this.messages.find(
+        (m) => m.from === chatMsg.from && m.text === chatMsg.text
+      );
+      if (!alreadyExists) {
+        this.messages.push(chatMsg);
         this.messages$.next(this.messages);
       }
     }
   }
 
-  private handleUserMessage(message: string): void {
-    this.messages.push(message);
+  private handleUserMessage(incoming: ChatMessage): void {
+    this.messages.push(incoming);
     this.messages$.next(this.messages);
   }
 
   private handleSystemMessage(message: string): void {
     if (message.includes('[SystemName]')) {
-      const matchName = message.match(/\[SystemName\]\s*(.*?)$/);
+      const matchName = message.match(/\[SystemName]\s*(.*?)$/);
       if (matchName && matchName[1]) {
         const userName = matchName[1].trim();
         this.logger.info(`Username updated from: ${this.user}, to: ${userName}`);

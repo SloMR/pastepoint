@@ -25,6 +25,7 @@ import { NgForm } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlowbiteService } from '../../core/services/flowbite.service';
 import { TranslateService } from '@ngx-translate/core';
+import { ChatMessage } from '../../utils/constants';
 
 @Component({
   selector: 'app-chat',
@@ -36,19 +37,22 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   message = '';
   newRoomName = '';
 
-  messages: string[] = [];
+  messages: ChatMessage[] = [];
   rooms: string[] = [];
   members: string[] = [];
 
   currentRoom = 'main';
   isDarkMode = false;
   isMenuOpen = false;
+  isEmojiPickerVisible = false;
 
   activeUploads: any[] = [];
   activeDownloads: any[] = [];
   incomingFiles: any[] = [];
 
   private subscriptions: Subscription[] = [];
+  private emojiPickerTimeout: any;
+  public isHoveringOverPicker: boolean = false;
 
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
@@ -109,7 +113,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private initializeChat() {
     this.subscriptions.push(
-      this.chatService.messages$.subscribe((messages: any) => {
+      this.chatService.messages$.subscribe((messages: ChatMessage[]) => {
         this.messages = [...messages];
         this.cdr.detectChanges();
         this.scrollToBottom();
@@ -197,7 +201,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   sendMessage(messageForm: NgForm): void {
     if (this.message && this.message.trim()) {
-      const tempMessage = `${this.userService.user}: ${this.message}`;
+      const tempMessage: ChatMessage = {
+        from: this.userService.user,
+        text: this.message,
+        timestamp: new Date(),
+      };
       this.messages = [...this.messages, tempMessage];
 
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
@@ -268,8 +276,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  isMyMessage(msg: string): boolean {
-    return msg.startsWith(this.userService.user);
+  isMyMessage(msg: ChatMessage): boolean {
+    return msg.from === this.userService.user;
   }
 
   isMyUser(member: string): boolean {
@@ -279,6 +287,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.webrtcService.closeAllConnections();
+    clearTimeout(this.emojiPickerTimeout);
   }
 
   private initiateConnectionsWithMembers(): void {
@@ -297,8 +306,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.fileTransferService.resumeTransfer(transfer.targetUser);
   }
 
-  public cancelUpload(transfer: any): void {
-    this.fileTransferService.cancelTransfer(transfer.targetUser);
+  public cancelUpload(upload: any): void {
+    this.fileTransferService.cancelUpload(upload.targetUser);
+  }
+
+  public cancelDownload(download: any): void {
+    this.fileTransferService.cancelDownload(download.fromUser);
   }
 
   private scrollToBottom(): void {
@@ -314,5 +327,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   protected isRTL(): boolean {
     return this.translate.currentLang === 'ar';
+  }
+
+  protected handleEmojiIconMouseLeave(): void {
+    setTimeout(() => {
+      if (!this.isHoveringOverPicker) {
+        this.isEmojiPickerVisible = false;
+      }
+    }, 150);
+  }
+
+  protected addEmoji(event: any): void {
+    const chosenEmoji = event?.emoji?.native || '';
+    if (!chosenEmoji) return;
+    this.message += chosenEmoji;
   }
 }
