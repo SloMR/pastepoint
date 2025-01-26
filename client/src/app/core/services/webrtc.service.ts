@@ -49,7 +49,8 @@ export class WebRTCService {
   }>();
   public fileResponses$ = new Subject<{ accepted: boolean; fromUser: string }>();
   public incomingData$ = new Subject<{ data: ArrayBuffer; fromUser: string }>();
-  public fileTransferCancelled$ = new Subject<{ fromUser: string }>();
+  public fileUploadCancelled$ = new Subject<{ fromUser: string }>();
+  public fileDownloadCancelled$ = new Subject<{ fromUser: string }>();
   public bufferedAmountLow$ = new Subject<string>();
 
   private peerConnections = new Map<string, RTCPeerConnection>();
@@ -264,9 +265,13 @@ export class WebRTCService {
             this.logger.info(`Received file decline from ${targetUser}`);
             this.fileResponses$.next({ accepted: false, fromUser: targetUser });
             break;
-          case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL:
-            this.logger.info(`Received file cancellation from ${targetUser}`);
-            this.fileTransferCancelled$.next({ fromUser: targetUser });
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_UPLOAD:
+            this.logger.info(`Received uploading file cancellation from ${targetUser}`);
+            this.fileUploadCancelled$.next({ fromUser: targetUser });
+            break;
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_DOWNLOAD:
+            this.logger.info(`Received downloading file cancellation from ${targetUser}`);
+            this.fileDownloadCancelled$.next({ fromUser: targetUser });
             break;
           default:
             this.logger.warn(`Unknown message type: ${message.type}`);

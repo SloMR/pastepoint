@@ -72,8 +72,12 @@ export class FileTransferService {
       this.resumePausedTransfer(targetUser);
     });
 
-    this.webrtcService.fileTransferCancelled$.subscribe(({ fromUser }) => {
-      this.handleFileTransferCancellation(fromUser);
+    this.webrtcService.fileUploadCancelled$.subscribe(({ fromUser }) => {
+      this.handleFileUploadCancellation(fromUser);
+    });
+
+    this.webrtcService.fileDownloadCancelled$.subscribe(({ fromUser }) => {
+      this.handleFileDownloadCancellation(fromUser);
     });
   }
 
@@ -162,7 +166,7 @@ export class FileTransferService {
     const fileDownload = this.incomingFileTransfers.get(fromUser);
 
     if (!fileDownload || !fileDownload.isAccepted) {
-      this.logger.error('Received data chunk without initiating a file transfer.');
+      this.logger.warn('Discarding leftover data chunk - transfer not active.');
       return;
     }
 
@@ -312,15 +316,15 @@ export class FileTransferService {
     }
   }
 
-  public cancelTransfer(targetUser: string): void {
-    const transfer = this.fileTransfers.get(targetUser);
-    if (transfer) {
+  public cancelUpload(targetUser: string): void {
+    const upload = this.fileTransfers.get(targetUser);
+    if (upload) {
       this.fileTransfers.delete(targetUser);
       this.fileTransferStatus.delete(targetUser);
       this.updateActiveUploads();
 
       const message = {
-        type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL,
+        type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_UPLOAD,
         payload: {},
       };
 
@@ -328,14 +332,41 @@ export class FileTransferService {
     }
   }
 
-  private handleFileTransferCancellation(fromUser: string): void {
-    this.logger.info(`File transfer from ${fromUser} was cancelled.`);
+  public cancelDownload(fromUser: string): void {
+    const download = this.incomingFileTransfers.get(fromUser);
+    if (download) {
+      this.incomingFileTransfers.delete(fromUser);
+      this.fileTransferStatus.delete(fromUser);
+      this.updateActiveDownloads();
+
+      const message = {
+        type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_DOWNLOAD,
+        payload: {},
+      };
+
+      this.webrtcService.sendData(message, fromUser);
+      this.logger.info(`Cancel download download fromUser: ${fromUser}`);
+    }
+  }
+
+  private handleFileUploadCancellation(fromUser: string): void {
+    this.logger.info(`File upload from ${fromUser} was cancelled.`);
 
     this.incomingFileTransfers.delete(fromUser);
     this.updateIncomingFileOffers();
     this.updateActiveDownloads();
 
-    this.showInfo(`File transfer from ${fromUser} was cancelled by the sender.`, 'Cancelled');
+    this.showInfo(`File upload from ${fromUser} was cancelled by the sender.`, 'Cancelled');
+  }
+
+  private handleFileDownloadCancellation(fromUser: string): void {
+    this.logger.info(`File download from ${fromUser} was cancelled.`);
+
+    this.fileTransfers.delete(fromUser);
+    this.updateIncomingFileOffers();
+    this.updateActiveUploads();
+
+    this.showInfo(`File download from ${fromUser} was cancelled by the sender.`, 'Cancelled');
   }
 
   private updateActiveUploads(): void {
