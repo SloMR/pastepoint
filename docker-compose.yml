@@ -1,3 +1,6 @@
+volumes:
+  ssl-certs:
+
 services:
   certs-generator:
     image: alpine
@@ -21,6 +24,7 @@ services:
     depends_on:
       certs-generator:
         condition: service_completed_successfully
+    restart: always
 
   client:
     build:
@@ -33,6 +37,4 @@ services:
         condition: service_started
     volumes:
       - ssl-certs:/etc/ssl/certs
-
-volumes:
-  ssl-certs:
+    restart: always
