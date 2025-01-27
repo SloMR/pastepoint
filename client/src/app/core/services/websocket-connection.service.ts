@@ -7,6 +7,8 @@ import { LoggerService } from './logger.service';
   providedIn: 'root',
 })
 export class WebSocketConnectionService {
+  private _logger: ReturnType<LoggerService['create']> | undefined;
+
   private socket: WebSocket | undefined;
   private webSocketProto = 'wss';
   private host = environment.apiUrl;
@@ -16,14 +18,21 @@ export class WebSocketConnectionService {
   public systemMessages$ = new BehaviorSubject<string>('');
   public signalMessages$ = new BehaviorSubject<any>(null);
 
-  constructor(private logger: LoggerService) {}
+  private get logger() {
+    if (!this._logger) {
+      this._logger = this.loggerService.create('WebSocketConnectionService');
+    }
+    return this._logger;
+  }
+
+  constructor(private loggerService: LoggerService) {}
 
   public connect(): Promise<void> {
     return new Promise<void>((resolve, reject) => {
       this.socket = new WebSocket(this.wsUri);
 
       this.socket.onopen = () => {
-        this.logger.info('WebSocket connected');
+        this.logger.info('connect', 'WebSocket connected');
         resolve();
       };
 
@@ -43,27 +52,32 @@ export class WebSocketConnectionService {
       };
 
       this.socket.onclose = (event) => {
-        this.logger.error(`WebSocket disconnected: code ${event.code}, reason ${event.reason}`);
+        this.logger.error(
+          'connect',
+          `WebSocket disconnected: code ${event.code}, reason ${event.reason}`
+        );
         setTimeout(() => this.reconnect(), 1000);
       };
 
       this.socket.onerror = (error) => {
-        this.logger.error('WebSocket error: ' + error);
+        this.logger.error('connect', 'WebSocket error: ' + error);
         reject(error);
       };
     });
   }
 
   private reconnect() {
-    this.logger.warn('Attempting to reconnect WebSocket...');
-    this.connect().catch((err) => this.logger.error(`WebSocket reconnection failed: ${err}`));
+    this.logger.warn('reconnect', 'Attempting to reconnect WebSocket...');
+    this.connect().catch((err) =>
+      this.logger.error('reconnect', `WebSocket reconnection failed: ${err}`)
+    );
   }
 
   public send(message: string): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(message);
     } else {
-      this.logger.error('WebSocket is not open. Message not sent.');
+      this.logger.error('send', 'WebSocket is not open. Message not sent.');
     }
   }
 

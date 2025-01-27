@@ -81,3 +81,6 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
 }
+
+// Logger service constants
+export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'TRACE';

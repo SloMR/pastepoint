@@ -36,8 +36,9 @@ interface DataChannelMessage {
   providedIn: 'root',
 })
 export class WebRTCService {
-  public dataChannelOpen$ = new BehaviorSubject<boolean>(false);
+  private _logger: ReturnType<LoggerService['create']> | undefined;
 
+  public dataChannelOpen$ = new BehaviorSubject<boolean>(false);
   public chatMessages$ = new Subject<ChatMessage>();
   public fileOffers$ = new Subject<{
     fileName: string;
@@ -58,8 +59,15 @@ export class WebRTCService {
   private connectionLocks = new Set<string>();
   private lastSequences = new Map<string, number>();
 
+  private get logger() {
+    if (!this._logger) {
+      this._logger = this.loggerService.create('WebRTCService');
+    }
+    return this._logger;
+  }
+
   constructor(
-    private logger: LoggerService,
+    private loggerService: LoggerService,
     private wsService: WebSocketConnectionService,
     private userService: UserService,
     private zone: NgZone
@@ -71,13 +79,13 @@ export class WebRTCService {
 
   public initiateConnection(targetUser: string): void {
     if (this.peerConnections.has(targetUser) || this.connectionLocks.has(targetUser)) {
-      this.logger.warn(`PeerConnection with ${targetUser} already exists.`);
+      this.logger.warn('initiateConnection', `PeerConnection with ${targetUser} already exists.`);
       return;
     }
 
     this.connectionLocks.add(targetUser);
 
-    this.logger.info(`Initiating connection with ${targetUser}`);
+    this.logger.info('initiateConnection', `Initiating connection with ${targetUser}`);
     const peerConnection = this.createPeerConnection(targetUser);
 
     try {
@@ -86,7 +94,7 @@ export class WebRTCService {
       this.dataChannels.set(targetUser, dataChannel);
 
       const offerTimeout = setTimeout(() => {
-        this.logger.error(`Offer timeout with ${targetUser}`);
+        this.logger.error('initiateConnection', `Offer timeout with ${targetUser}`);
         this.reconnect(targetUser);
       }, 15000);
 
@@ -103,18 +111,18 @@ export class WebRTCService {
           });
         })
         .catch((error) => {
-          this.logger.error(`Offer creation failed: ${error}`);
+          this.logger.error('initiateConnection', `Offer creation failed: ${error}`);
           this.reconnect(targetUser);
         })
         .finally(() => this.connectionLocks.delete(targetUser));
     } catch (error) {
-      this.logger.error(`Connection initiation failed: ${error}`);
+      this.logger.error('initiateConnection', `Connection initiation failed: ${error}`);
       this.connectionLocks.delete(targetUser);
     }
   }
 
   private reconnect(targetUser: string) {
-    this.logger.info(`Reconnecting WebRTC with ${targetUser}...`);
+    this.logger.info('reconnect', `Reconnecting WebRTC with ${targetUser}...`);
 
     const peerConnection = this.peerConnections.get(targetUser);
     if (peerConnection) {
@@ -179,7 +187,7 @@ export class WebRTCService {
     channel.binaryType = 'arraybuffer';
 
     channel.onopen = () => {
-      this.logger.info(`Data channel with ${targetUser} is open`);
+      this.logger.info('setupDataChannel', `Data channel with ${targetUser} is open`);
       this.dataChannelOpen$.next(true);
 
       const queuedMessages = this.messageQueues.get(targetUser);
@@ -206,14 +214,17 @@ export class WebRTCService {
           rtcErrorEvent.error?.message ||
           rtcErrorEvent.error?.toString() ||
           'Unknown RTCErrorEvent';
-        this.logger.error(`Data Channel Error with ${targetUser}: ${errorMsg}`);
+        this.logger.error('setupDataChannel', `Data Channel Error with ${targetUser}: ${errorMsg}`);
       } else {
-        this.logger.error(`Data Channel Error with ${targetUser}: ${JSON.stringify(ev)}`);
+        this.logger.error(
+          'setupDataChannel',
+          `Data Channel Error with ${targetUser}: ${JSON.stringify(ev)}`
+        );
       }
     };
 
     channel.onclose = () => {
-      this.logger.info(`Data channel with ${targetUser} is closed`);
+      this.logger.info('setupDataChannel', `Data channel with ${targetUser} is closed`);
       this.dataChannelOpen$.next(false);
 
       this.dataChannels.delete(targetUser);
@@ -235,6 +246,7 @@ export class WebRTCService {
     if (attempts < MAX_RECONNECT_ATTEMPTS) {
       this.reconnectAttempts.set(targetUser, attempts + 1);
       this.logger.warn(
+        'handleDisconnection',
         `Attempt ${attempts + 1}: Reconnecting to ${targetUser} in ${
           RECONNECT_DELAY / 1000
         } seconds...`
@@ -247,6 +259,7 @@ export class WebRTCService {
       }, RECONNECT_DELAY);
     } else {
       this.logger.error(
+        'handleDisconnection',
         `Max reconnection attempts reached for ${targetUser}. Could not reconnect.`
       );
       Swal.fire({
@@ -270,7 +283,7 @@ export class WebRTCService {
             break;
           }
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER:
-            this.logger.info(`Received file offer from ${targetUser}`);
+            this.logger.info('handleDataChannelMessage', `Received file offer from ${targetUser}`);
             this.fileOffers$.next({
               fileName: message.payload.fileName,
               fileSize: message.payload.fileSize,
@@ -278,30 +291,45 @@ export class WebRTCService {
             });
             break;
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_ACCEPT:
-            this.logger.info(`Received file acceptance from ${targetUser}`);
+            this.logger.info(
+              'handleDataChannelMessage',
+              `Received file acceptance from ${targetUser}`
+            );
             this.fileResponses$.next({ accepted: true, fromUser: targetUser });
             break;
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_DECLINE:
-            this.logger.info(`Received file decline from ${targetUser}`);
+            this.logger.info(
+              'handleDataChannelMessage',
+              `Received file decline from ${targetUser}`
+            );
             this.fileResponses$.next({ accepted: false, fromUser: targetUser });
             break;
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_UPLOAD:
-            this.logger.info(`Received uploading file cancellation from ${targetUser}`);
+            this.logger.info(
+              'handleDataChannelMessage',
+              `Received uploading file cancellation from ${targetUser}`
+            );
             this.fileUploadCancelled$.next({ fromUser: targetUser });
             break;
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_DOWNLOAD:
-            this.logger.info(`Received downloading file cancellation from ${targetUser}`);
+            this.logger.info(
+              'handleDataChannelMessage',
+              `Received downloading file cancellation from ${targetUser}`
+            );
             this.fileDownloadCancelled$.next({ fromUser: targetUser });
             break;
           default:
-            this.logger.warn(`Unknown message type: ${message.type}`);
+            this.logger.warn('handleDataChannelMessage', `Unknown message type: ${message.type}`);
         }
       } else if (data instanceof ArrayBuffer) {
         this.zone.run(() => {
           this.incomingData$.next({ data, fromUser: targetUser });
         });
       } else {
-        this.logger.warn(`Unknown data type received from ${targetUser}: ${data}`);
+        this.logger.warn(
+          'handleDataChannelMessage',
+          `Unknown data type received from ${targetUser}: ${data}`
+        );
       }
     });
   }
@@ -312,14 +340,17 @@ export class WebRTCService {
     if (channel && channel.readyState === 'open') {
       channel.send(JSON.stringify(message));
     } else if (channel && channel.readyState === 'connecting') {
-      this.logger.warn(`Data channel with ${targetUser} is connecting. Message will be queued.`);
+      this.logger.warn(
+        'sendData',
+        `Data channel with ${targetUser} is connecting. Message will be queued.`
+      );
 
       if (!this.messageQueues.has(targetUser)) {
         this.messageQueues.set(targetUser, []);
       }
       this.messageQueues.get(targetUser)!.push(message);
     } else {
-      this.logger.error(`Data channel with ${targetUser} is not open`);
+      this.logger.error('sendData', `Data channel with ${targetUser} is not open`);
 
       if (channel) {
         this.dataChannels.delete(targetUser);
@@ -344,13 +375,16 @@ export class WebRTCService {
     if (channel && channel.readyState === 'open') {
       channel.send(data);
     } else if (channel && channel.readyState === 'connecting') {
-      this.logger.warn(`Data channel with ${targetUser} is connecting. Data will be queued.`);
+      this.logger.warn(
+        'sendRawData',
+        `Data channel with ${targetUser} is connecting. Data will be queued.`
+      );
       if (!this.messageQueues.has(targetUser)) {
         this.messageQueues.set(targetUser, []);
       }
       this.messageQueues.get(targetUser)!.push(data);
     } else {
-      this.logger.error(`Data channel with ${targetUser} is not open`);
+      this.logger.error('sendRawData', `Data channel with ${targetUser} is not open`);
 
       if (channel) {
         this.dataChannels.delete(targetUser);
@@ -394,7 +428,7 @@ export class WebRTCService {
         this.handleCandidate(message);
         break;
       default:
-        this.logger.error(`Unknown signal message type: ${message.type}`);
+        this.logger.error('handleSignalMessage', `Unknown signal message type: ${message.type}`);
     }
   }
 
@@ -421,7 +455,7 @@ export class WebRTCService {
         this.processCandidateQueue(targetUser);
       })
       .catch((error) => {
-        this.logger.error(`Error handling offer: ${error}`);
+        this.logger.error('handleOffer', `Error handling offer: ${error}`);
       });
   }
 
@@ -430,17 +464,20 @@ export class WebRTCService {
     const peerConnection = this.peerConnections.get(targetUser);
 
     if (!peerConnection) {
-      this.logger.error(`PeerConnection missing for ${targetUser}`);
+      this.logger.error('handleAnswer', `PeerConnection missing for ${targetUser}`);
       return this.reconnect(targetUser);
     }
 
     if (peerConnection.signalingState !== RTC_SIGNALING_STATES.HAVE_LOCAL_OFFER) {
-      this.logger.warn(`Invalid state for answer: ${peerConnection.signalingState}`);
+      this.logger.warn(
+        'handleAnswer',
+        `Invalid state for answer: ${peerConnection.signalingState}`
+      );
       return this.handleStateMismatch(targetUser);
     }
 
     if (this.isDuplicateMessage(targetUser, message.sequence)) {
-      this.logger.warn(`Duplicate answer from ${targetUser}`);
+      this.logger.warn('handleAnswer', `Duplicate answer from ${targetUser}`);
       return;
     }
 
@@ -448,7 +485,7 @@ export class WebRTCService {
     peerConnection
       .setRemoteDescription(newDescription)
       .then(() => {
-        this.logger.debug(`Remote answer set for ${targetUser}`);
+        this.logger.debug('handleAnswer', `Remote answer set for ${targetUser}`);
         this.processCandidateQueue(targetUser);
 
         if (peerConnection.signalingState !== RTC_SIGNALING_STATES.STABLE) {
@@ -456,7 +493,7 @@ export class WebRTCService {
         }
       })
       .catch((error) => {
-        this.logger.error(`Answer handling failed: ${error}`);
+        this.logger.error('handleAnswer', `Answer handling failed: ${error}`);
         if (error.toString().includes('InvalidStateError')) {
           this.reconnect(targetUser);
         }
@@ -464,7 +501,10 @@ export class WebRTCService {
   }
 
   private handleStateMismatch(targetUser: string): void {
-    this.logger.warn(`Resetting connection due to state mismatch with ${targetUser}`);
+    this.logger.warn(
+      'handleStateMismatch',
+      `Resetting connection due to state mismatch with ${targetUser}`
+    );
     this.closePeerConnection(targetUser);
     setTimeout(() => this.initiateConnection(targetUser), 500);
   }
@@ -499,7 +539,7 @@ export class WebRTCService {
 
     if (peerConnection?.remoteDescription?.type) {
       peerConnection.addIceCandidate(candidate).catch((error) => {
-        this.logger.error(`Error adding received ICE candidate: ${error}`);
+        this.logger.error('handleCandidate', `Error adding received ICE candidate: ${error}`);
       });
     } else {
       const queue = this.candidateQueues.get(targetUser);
@@ -517,7 +557,7 @@ export class WebRTCService {
       queue.forEach((candidateInit) => {
         const candidate = new RTCIceCandidate(candidateInit);
         peerConnection.addIceCandidate(candidate).catch((error) => {
-          this.logger.error(`Error adding queued ICE candidate ${error}`);
+          this.logger.error('processCandidateQueue', `Error adding queued ICE candidate ${error}`);
         });
       });
       queue.length = 0;

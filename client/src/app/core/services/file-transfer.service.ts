@@ -31,6 +31,8 @@ interface FileDownload {
   providedIn: 'root',
 })
 export class FileTransferService {
+  private _logger: ReturnType<LoggerService['create']> | undefined;
+
   public activeUploads$ = new BehaviorSubject<FileUpload[]>([]);
   public activeDownloads$ = new BehaviorSubject<FileDownload[]>([]);
   public incomingFileOffers$ = new BehaviorSubject<FileDownload[]>([]);
@@ -39,8 +41,15 @@ export class FileTransferService {
   private incomingFileTransfers = new Map<string, FileDownload>();
   private fileTransferStatus = new Map<string, 'pending' | 'accepted' | 'declined' | 'completed'>();
 
+  private get logger() {
+    if (!this._logger) {
+      this._logger = this.loggerService.create('FileTransferService');
+    }
+    return this._logger;
+  }
+
   constructor(
-    private logger: LoggerService,
+    private loggerService: LoggerService,
     private webrtcService: WebRTCService
   ) {
     this.webrtcService.incomingData$.subscribe(async ({ data, fromUser }) => {
@@ -50,18 +59,18 @@ export class FileTransferService {
     });
 
     this.webrtcService.fileOffers$.subscribe((offer) => {
-      this.logger.info(`Received file offer from ${offer.fromUser}`);
+      this.logger.info('constructor', `Received file offer from ${offer.fromUser}`);
       this.receiveFileOffer(offer);
     });
 
     this.webrtcService.fileResponses$.subscribe((response) => {
       if (response.accepted) {
-        this.logger.info(`File accepted by ${response.fromUser}`);
+        this.logger.info('constructor', `File accepted by ${response.fromUser}`);
 
         this.fileTransferStatus.set(response.fromUser, 'accepted');
         this.startSendingFile(response.fromUser).then(() => {});
       } else {
-        this.logger.warn(`File declined by ${response.fromUser}`);
+        this.logger.warn('constructor', `File declined by ${response.fromUser}`);
 
         this.fileTransferStatus.set(response.fromUser, 'declined');
         this.checkAllUsersResponded();
@@ -97,11 +106,11 @@ export class FileTransferService {
   public sendFileOffer(targetUser: string): void {
     const fileTransfer = this.fileTransfers.get(targetUser);
     if (!fileTransfer) {
-      this.logger.error('No file to send.');
+      this.logger.error('sendFileOffer', 'No file to send.');
       this.showError('No file to send.', 'Error');
       return;
     }
-    this.logger.info(`Sending file offer to ${targetUser}`);
+    this.logger.info('sendFileOffer', `Sending file offer to ${targetUser}`);
 
     const message = {
       type: FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER,
@@ -133,7 +142,7 @@ export class FileTransferService {
   public startSavingFile(fromUser: string): void {
     const fileDownload = this.incomingFileTransfers.get(fromUser);
     if (!fileDownload) {
-      this.logger.error('No incoming file to accept from ' + fromUser);
+      this.logger.error('startSavingFile', 'No incoming file to accept from ' + fromUser);
       return;
     }
 
@@ -145,7 +154,7 @@ export class FileTransferService {
       payload: {},
     };
 
-    this.logger.info(`Sending file acceptance to ${fromUser}`);
+    this.logger.info('startSavingFile', `Sending file acceptance to ${fromUser}`);
     this.webrtcService.sendData(message, fromUser);
     this.updateActiveDownloads();
   }
@@ -166,7 +175,7 @@ export class FileTransferService {
     const fileDownload = this.incomingFileTransfers.get(fromUser);
 
     if (!fileDownload || !fileDownload.isAccepted) {
-      this.logger.warn('Discarding leftover data chunk - transfer not active.');
+      this.logger.warn('handleDataChunk', 'Discarding leftover data chunk - transfer not active.');
       return;
     }
 
@@ -179,7 +188,7 @@ export class FileTransferService {
     this.updateActiveDownloads();
 
     if (fileDownload.receivedSize >= fileDownload.fileSize) {
-      this.logger.info('File received successfully');
+      this.logger.info('handleDataChunk', 'File received successfully');
 
       const totalLength = fileDownload.dataBuffer.reduce((acc, curr) => acc + curr.length, 0);
       const combinedArray = new Uint8Array(totalLength);
@@ -208,44 +217,54 @@ export class FileTransferService {
   private async startSendingFile(targetUser: string): Promise<void> {
     const fileTransfer = this.fileTransfers.get(targetUser);
     if (!fileTransfer) {
-      this.logger.error('No file to send to ' + targetUser);
+      this.logger.error('startSendingFile', 'No file to send to ' + targetUser);
       return;
     }
-    this.logger.info(`Starting to send file to ${targetUser}`);
+    this.logger.info('startSendingFile', `Starting to send file to ${targetUser}`);
 
     const dataChannel = this.webrtcService.getDataChannel(targetUser);
     if (!dataChannel || dataChannel.readyState !== 'open') {
-      this.logger.error(`Data channel is not available or open for ${targetUser}`);
+      this.logger.error(
+        'startSendingFile',
+        `Data channel is not available or open for ${targetUser}`
+      );
       return;
     }
 
     try {
       await this.sendNextChunk(fileTransfer);
     } catch (error) {
-      this.logger.error(`File transfer failed: ${error}`);
+      this.logger.error('startSendingFile', `File transfer failed: ${error}`);
     }
   }
 
   private async sendNextChunk(fileTransfer: FileUpload): Promise<void> {
     while (fileTransfer.currentOffset < fileTransfer.file.size) {
       if (!this.fileTransfers.has(fileTransfer.targetUser)) {
-        this.logger.warn(`File transfer for ${fileTransfer.targetUser} does not exist`);
+        this.logger.warn(
+          'sendNextChunk',
+          `File transfer for ${fileTransfer.targetUser} does not exist`
+        );
         break;
       }
 
       if (fileTransfer.isPaused) {
-        this.logger.warn(`Upload is paused for ${fileTransfer.targetUser}`);
+        this.logger.warn('sendNextChunk', `Upload is paused for ${fileTransfer.targetUser}`);
         break;
       }
 
       const dataChannel = this.webrtcService.getDataChannel(fileTransfer.targetUser);
       if (!dataChannel) {
-        this.logger.error(`Data channel is not available for ${fileTransfer.targetUser}`);
+        this.logger.error(
+          'sendNextChunk',
+          `Data channel is not available for ${fileTransfer.targetUser}`
+        );
         break;
       }
 
       if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
         this.logger.warn(
+          'sendNextChunk',
           `Data channel buffer is full for ${fileTransfer.targetUser}. Pausing upload.`
         );
         fileTransfer.isPaused = true;
@@ -261,7 +280,7 @@ export class FileTransferService {
       await this.processFileChunk(arrayBuffer, fileTransfer, end);
 
       if (fileTransfer.currentOffset >= fileTransfer.file.size) {
-        this.logger.info(`File sent successfully to ${fileTransfer.targetUser}`);
+        this.logger.info('sendNextChunk', `File sent successfully to ${fileTransfer.targetUser}`);
 
         fileTransfer.progress = 100;
         this.fileTransferStatus.set(fileTransfer.targetUser, 'completed');
@@ -282,7 +301,10 @@ export class FileTransferService {
     const dataChannel = this.webrtcService.getDataChannel(fileTransfer.targetUser);
 
     if (!dataChannel) {
-      this.logger.error(`Data channel is not available for ${fileTransfer.targetUser}`);
+      this.logger.error(
+        'processFileChunk',
+        `Data channel is not available for ${fileTransfer.targetUser}`
+      );
       return;
     }
 
@@ -345,12 +367,12 @@ export class FileTransferService {
       };
 
       this.webrtcService.sendData(message, fromUser);
-      this.logger.info(`Cancel download download fromUser: ${fromUser}`);
+      this.logger.info('cancelDownload', `Cancel download download fromUser: ${fromUser}`);
     }
   }
 
   private handleFileUploadCancellation(fromUser: string): void {
-    this.logger.info(`File upload from ${fromUser} was cancelled.`);
+    this.logger.info('handleFileUploadCancellation', `File upload from ${fromUser} was cancelled.`);
 
     this.incomingFileTransfers.delete(fromUser);
     this.updateIncomingFileOffers();
@@ -360,7 +382,10 @@ export class FileTransferService {
   }
 
   private handleFileDownloadCancellation(fromUser: string): void {
-    this.logger.info(`File download from ${fromUser} was cancelled.`);
+    this.logger.info(
+      'handleFileDownloadCancellation',
+      `File download from ${fromUser} was cancelled.`
+    );
 
     this.fileTransfers.delete(fromUser);
     this.updateIncomingFileOffers();
@@ -397,11 +422,17 @@ export class FileTransferService {
       const dataChannel = this.webrtcService.getDataChannel(fileTransfer.targetUser);
 
       if (dataChannel && dataChannel.bufferedAmount <= MAX_BUFFERED_AMOUNT) {
-        this.logger.info(`Buffered amount low for ${fileTransfer.targetUser}, resuming transfer.`);
+        this.logger.info(
+          'resumePausedTransfer',
+          `Buffered amount low for ${fileTransfer.targetUser}, resuming transfer.`
+        );
 
         fileTransfer.isPaused = false;
         this.sendNextChunk(fileTransfer).catch((error) => {
-          this.logger.error(`Error resuming file transfer to ${fileTransfer.targetUser}: ${error}`);
+          this.logger.error(
+            'resumePausedTransfer',
+            `Error resuming file transfer to ${fileTransfer.targetUser}: ${error}`
+          );
         });
       }
     }
@@ -413,7 +444,10 @@ export class FileTransferService {
     );
 
     if (allResponded) {
-      this.logger.info('All users have responded and file transfers completed.');
+      this.logger.info(
+        'checkAllUsersResponded',
+        'All users have responded and file transfers completed.'
+      );
       this.showSuccess('All users responded. File transfers done.', 'Success');
       this.fileTransfers.clear();
       this.fileTransferStatus.clear();
