@@ -10,11 +10,20 @@ import { ChatMessage, DATA_CHANNEL_MESSAGE_TYPES } from '../../utils/constants';
   providedIn: 'root',
 })
 export class ChatService {
+  private _logger: ReturnType<LoggerService['create']> | undefined;
+
   public messages$ = new BehaviorSubject<ChatMessage[]>([]);
   private messages: ChatMessage[] = [];
 
+  private get logger() {
+    if (!this._logger) {
+      this._logger = this.loggerService.create('ChatService');
+    }
+    return this._logger;
+  }
+
   constructor(
-    private logger: LoggerService,
+    private loggerService: LoggerService,
     private wsService: WebSocketConnectionService,
     private webrtcService: WebRTCService,
     private userService: UserService
@@ -70,7 +79,10 @@ export class ChatService {
       const matchName = message.match(/\[SystemName]\s*(.*?)$/);
       if (matchName && matchName[1]) {
         const userName = matchName[1].trim();
-        this.logger.info(`Username updated from: ${this.user}, to: ${userName}`);
+        this.logger.info(
+          'handleSystemMessage',
+          `Username updated from: ${this.user}, to: ${userName}`
+        );
         this.user = userName;
       }
     }

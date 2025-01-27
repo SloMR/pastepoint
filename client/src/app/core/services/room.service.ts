@@ -7,12 +7,14 @@ import { WebSocketConnectionService } from './websocket-connection.service';
   providedIn: 'root',
 })
 export class RoomService {
+  private _logger: ReturnType<LoggerService['create']> | undefined;
+
   public rooms$ = new BehaviorSubject<string[]>([]);
   public members$ = new BehaviorSubject<string[]>([]);
   public currentRoom = 'main';
 
   constructor(
-    private logger: LoggerService,
+    private loggerService: LoggerService,
     private wsService: WebSocketConnectionService
   ) {
     this.wsService.systemMessages$.subscribe((message) => {
@@ -20,8 +22,15 @@ export class RoomService {
     });
   }
 
+  private get logger() {
+    if (!this._logger) {
+      this._logger = this.loggerService.create('RoomService');
+    }
+    return this._logger;
+  }
+
   public listRooms(): void {
-    this.logger.info('Listing rooms');
+    this.logger.info('listRooms', 'Listing rooms');
     this.wsService.send('[UserCommand] /list');
   }
 
@@ -48,7 +57,7 @@ export class RoomService {
     } else if (message.includes('[SystemJoin]')) {
       const matchJoin = message.match(/^(.*?)\s*\[SystemJoin]\s*(.*?)$/);
       if (matchJoin) {
-        this.logger.info(`User joined room ${matchJoin[2]}`);
+        this.logger.info('handleSystemMessage', `User joined room ${matchJoin[2]}`);
         this.currentRoom = matchJoin[2];
       }
     }

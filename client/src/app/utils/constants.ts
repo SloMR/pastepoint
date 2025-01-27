@@ -12,10 +12,30 @@ export const OFFER_OPTIONS = {
   offerToReceiveVideo: false,
 };
 
+export const RTC_SIGNALING_STATES = {
+  CLOSED: 'closed',
+  HAVE_LOCAL_OFFER: 'have-local-offer',
+  HAVE_LOCAL_PRANSWER: 'have-local-pranswer',
+  HAVE_REMOTE_OFFER: 'have-remote-offer',
+  HAVE_REMOTE_PRANSWER: 'have-remote-pranswer',
+  STABLE: 'stable',
+} as const;
+
+export type RTCSignalingState = (typeof RTC_SIGNALING_STATES)[keyof typeof RTC_SIGNALING_STATES];
+
 export const ICE_SERVERS = [
-  {
-    urls: 'stun:stun.l.google.com:19302',
-  },
+  // Google STUN servers
+  { urls: 'stun:stun.l.google.com:19302' },
+  { urls: 'stun:stun1.l.google.com:19302' },
+  { urls: 'stun:stun2.l.google.com:19302' },
+  { urls: 'stun:stun3.l.google.com:19302' },
+  { urls: 'stun:stun4.l.google.com:19302' },
+
+  // Third-party/public STUN servers
+  { urls: 'stun:stun.voipbuster.com' },
+  { urls: 'stun:stun.services.mozilla.com' },
+  { urls: 'stun:stun.stunprotocol.org:3478' },
+  { urls: 'stun:stun.iptel.org' },
 ];
 
 // WebRTC data channel constants
@@ -32,6 +52,12 @@ export const SIGNAL_MESSAGE_TYPES = {
   FILE_OFFER: 'file-offer',
   FILE_RESPONSE: 'file-response',
 };
+
+export enum SignalMessageType {
+  OFFER = 'offer',
+  ANSWER = 'answer',
+  CANDIDATE = 'candidate',
+}
 
 // WebRTC file transfer message types
 export const FILE_TRANSFER_MESSAGE_TYPES = {
@@ -55,3 +81,6 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
 }
+
+// Logger service constants
+export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'TRACE';

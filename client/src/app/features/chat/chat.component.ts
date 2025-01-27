@@ -34,6 +34,8 @@ import { ChatMessage } from '../../utils/constants';
   standalone: false,
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
+  private _logger: ReturnType<LoggerService['create']> | undefined;
+
   message = '';
   newRoomName = '';
 
@@ -57,7 +59,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('messageContainer') private messageContainer!: ElementRef;
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
 
+  private get logger() {
+    if (!this._logger) {
+      this._logger = this.loggerService.create('ChatService');
+    }
+    return this._logger;
+  }
+
   constructor(
+    private loggerService: LoggerService,
     public userService: UserService,
     private chatService: ChatService,
     private roomService: RoomService,
@@ -66,7 +76,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private wsConnectionService: WebSocketConnectionService,
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
-    private logger: LoggerService,
     private snackBar: MatSnackBar,
     private flowbiteService: FlowbiteService,
     public translate: TranslateService,
@@ -81,13 +90,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   ngOnInit(): void {
     this.flowbiteService.loadFlowbite(() => {
-      this.logger.debug(`Flowbite loaded`);
+      this.logger.debug('ngOnInit', `Flowbite loaded`);
     });
 
     this.subscriptions.push(
       this.userService.user$.subscribe((username: any) => {
         if (username) {
-          this.logger.info(`Username is set to: ${username}`);
+          this.logger.info('ngOnInit', `Username is set to: ${username}`);
           this.initializeChat();
         }
       })
@@ -195,7 +204,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.chatService.getUsername();
       })
       .catch((error) => {
-        this.logger.error(`WebSocket connection failed: ${error}`);
+        this.logger.error('connect', `WebSocket connection failed: ${error}`);
       });
   }
 
@@ -283,7 +292,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private initiateConnectionsWithMembers(): void {
-    this.logger.info('Initiating connections with other members');
+    this.logger.info('initiateConnectionsWithMembers', 'Initiating connections with other members');
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
     otherMembers.forEach((member) => {
       this.webrtcService.initiateConnection(member);
@@ -312,7 +321,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.messageContainer.nativeElement.scrollTop =
           this.messageContainer.nativeElement.scrollHeight;
       } catch (err) {
-        this.logger.error(`Could not scroll to bottom: ${err}`);
+        this.logger.error('scrollToBottom', `Could not scroll to bottom: ${err}`);
       }
     }
   }
@@ -334,7 +343,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   protected addEmoji(event: any): void {
-    this.logger.info(`Emoji event received: ${event}`);
+    this.logger.info('addEmoji', `Emoji event received: ${event}`);
     if (!event || !event.emoji || !event.emoji.native) {
       console.warn('Invalid emoji event structure:', event);
       return;

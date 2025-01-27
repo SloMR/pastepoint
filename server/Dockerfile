@@ -31,5 +31,9 @@ COPY --from=builder /usr/src/app/target/release/server .
 # Copy the config files into the final image
 COPY --from=builder /usr/src/app/config ./config
 
+# Create a non-root user
+RUN useradd -m appuser
+USER appuser
+
 # Set the command to run the binary
 CMD ["./server"]
