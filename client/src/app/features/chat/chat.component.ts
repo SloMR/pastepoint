@@ -317,8 +317,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   }
 
-  protected isRTL(): boolean {
-    return this.translate.currentLang === 'ar';
+  get isRTL(): boolean {
+    if (isPlatformBrowser(this.platformId)) {
+      return document.dir === 'rtl' || this.translate.currentLang === 'ar';
+    } else {
+      return false;
+    }
   }
 
   protected handleEmojiIconMouseLeave(): void {
@@ -330,8 +334,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   protected addEmoji(event: any): void {
-    const chosenEmoji = event?.emoji?.native || '';
-    if (!chosenEmoji) return;
+    this.logger.info(`Emoji event received: ${event}`);
+    if (!event || !event.emoji || !event.emoji.native) {
+      console.warn('Invalid emoji event structure:', event);
+      return;
+    }
+
+    const chosenEmoji = event.emoji.native;
     this.message += chosenEmoji;
   }
 }
