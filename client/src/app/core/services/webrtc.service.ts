@@ -14,20 +14,17 @@ import {
   MAX_RECONNECT_ATTEMPTS,
   RECONNECT_DELAY,
   ChatMessage,
+  RTC_SIGNALING_STATES,
+  SignalMessageType,
 } from '../../utils/constants';
-import { MatSnackBar } from '@angular/material/snack-bar';
+import Swal from 'sweetalert2';
 
 interface SignalMessage {
   type: SignalMessageType;
   data: any;
   from: string;
   to: string;
-}
-
-enum SignalMessageType {
-  OFFER = 'offer',
-  ANSWER = 'answer',
-  CANDIDATE = 'candidate',
+  sequence?: number;
 }
 
 interface DataChannelMessage {
@@ -57,51 +54,63 @@ export class WebRTCService {
   private dataChannels = new Map<string, RTCDataChannel>();
   private candidateQueues = new Map<string, RTCIceCandidateInit[]>();
   private messageQueues = new Map<string, (DataChannelMessage | ArrayBuffer)[]>();
-
   private reconnectAttempts = new Map<string, number>();
+  private connectionLocks = new Set<string>();
+  private lastSequences = new Map<string, number>();
 
   constructor(
     private logger: LoggerService,
     private wsService: WebSocketConnectionService,
     private userService: UserService,
-    private zone: NgZone,
-    private snackBar: MatSnackBar
+    private zone: NgZone
   ) {
     this.wsService.signalMessages$.subscribe((message) => {
-      if (message) {
-        this.handleSignalMessage(message);
-      }
+      if (message) this.handleSignalMessage(message);
     });
   }
 
   public initiateConnection(targetUser: string): void {
-    if (this.peerConnections.has(targetUser)) {
+    if (this.peerConnections.has(targetUser) || this.connectionLocks.has(targetUser)) {
       this.logger.warn(`PeerConnection with ${targetUser} already exists.`);
       return;
     }
 
+    this.connectionLocks.add(targetUser);
+
     this.logger.info(`Initiating connection with ${targetUser}`);
-
     const peerConnection = this.createPeerConnection(targetUser);
-    const dataChannel = peerConnection.createDataChannel('data', DATA_CHANNEL_OPTIONS);
-    this.setupDataChannel(dataChannel, targetUser);
-    this.dataChannels.set(targetUser, dataChannel);
 
-    peerConnection
-      .createOffer(OFFER_OPTIONS)
-      .then((offer) => peerConnection.setLocalDescription(offer))
-      .then(() => {
-        const message: SignalMessage = {
-          type: SignalMessageType.OFFER,
-          data: peerConnection.localDescription,
-          from: this.userService.user,
-          to: targetUser,
-        };
-        this.wsService.sendSignalMessage(message);
-      })
-      .catch((error) => {
-        this.logger.error(`Error during offer creation: ${error}`);
-      });
+    try {
+      const dataChannel = peerConnection.createDataChannel('data', DATA_CHANNEL_OPTIONS);
+      this.setupDataChannel(dataChannel, targetUser);
+      this.dataChannels.set(targetUser, dataChannel);
+
+      const offerTimeout = setTimeout(() => {
+        this.logger.error(`Offer timeout with ${targetUser}`);
+        this.reconnect(targetUser);
+      }, 15000);
+
+      peerConnection
+        .createOffer(OFFER_OPTIONS)
+        .then((offer) => peerConnection.setLocalDescription(offer))
+        .then(() => {
+          clearTimeout(offerTimeout);
+          this.sendSignalMessage({
+            type: SignalMessageType.OFFER,
+            data: peerConnection.localDescription,
+            to: targetUser,
+            sequence: this.getNextSequence(targetUser),
+          });
+        })
+        .catch((error) => {
+          this.logger.error(`Offer creation failed: ${error}`);
+          this.reconnect(targetUser);
+        })
+        .finally(() => this.connectionLocks.delete(targetUser));
+    } catch (error) {
+      this.logger.error(`Connection initiation failed: ${error}`);
+      this.connectionLocks.delete(targetUser);
+    }
   }
 
   private reconnect(targetUser: string) {
@@ -190,8 +199,17 @@ export class WebRTCService {
       this.handleDataChannelMessage(event.data, targetUser);
     };
 
-    channel.onerror = (error) => {
-      this.logger.error(`Data Channel Error with ${targetUser}: ${error}`);
+    channel.onerror = (ev: Event) => {
+      if ('error' in ev) {
+        const rtcErrorEvent = ev as RTCErrorEvent;
+        const errorMsg =
+          rtcErrorEvent.error?.message ||
+          rtcErrorEvent.error?.toString() ||
+          'Unknown RTCErrorEvent';
+        this.logger.error(`Data Channel Error with ${targetUser}: ${errorMsg}`);
+      } else {
+        this.logger.error(`Data Channel Error with ${targetUser}: ${JSON.stringify(ev)}`);
+      }
     };
 
     channel.onclose = () => {
@@ -231,9 +249,11 @@ export class WebRTCService {
       this.logger.error(
         `Max reconnection attempts reached for ${targetUser}. Could not reconnect.`
       );
-      this.snackBar.open('Could not reconnect to the user. Please try again later.', 'Close', {
-        duration: 5000,
-      });
+      Swal.fire({
+        icon: 'warning',
+        title: 'Connection Lost',
+        text: 'Could not reconnect to the user. Please try again later.',
+      }).then(() => {});
       this.closePeerConnection(targetUser);
     }
   }
@@ -410,18 +430,66 @@ export class WebRTCService {
     const peerConnection = this.peerConnections.get(targetUser);
 
     if (!peerConnection) {
-      this.logger.error(`PeerConnection does not exist for user: ${targetUser}`);
+      this.logger.error(`PeerConnection missing for ${targetUser}`);
+      return this.reconnect(targetUser);
+    }
+
+    if (peerConnection.signalingState !== RTC_SIGNALING_STATES.HAVE_LOCAL_OFFER) {
+      this.logger.warn(`Invalid state for answer: ${peerConnection.signalingState}`);
+      return this.handleStateMismatch(targetUser);
+    }
+
+    if (this.isDuplicateMessage(targetUser, message.sequence)) {
+      this.logger.warn(`Duplicate answer from ${targetUser}`);
       return;
     }
 
+    const newDescription = new RTCSessionDescription(message.data);
     peerConnection
-      .setRemoteDescription(new RTCSessionDescription(message.data))
+      .setRemoteDescription(newDescription)
       .then(() => {
+        this.logger.debug(`Remote answer set for ${targetUser}`);
         this.processCandidateQueue(targetUser);
+
+        if (peerConnection.signalingState !== RTC_SIGNALING_STATES.STABLE) {
+          throw new Error(`Unexpected post-answer state: ${peerConnection.signalingState}`);
+        }
       })
       .catch((error) => {
-        this.logger.error(`Error setting remote description: ${error}`);
+        this.logger.error(`Answer handling failed: ${error}`);
+        if (error.toString().includes('InvalidStateError')) {
+          this.reconnect(targetUser);
+        }
       });
+  }
+
+  private handleStateMismatch(targetUser: string): void {
+    this.logger.warn(`Resetting connection due to state mismatch with ${targetUser}`);
+    this.closePeerConnection(targetUser);
+    setTimeout(() => this.initiateConnection(targetUser), 500);
+  }
+
+  private isDuplicateMessage(targetUser: string, sequence?: number): boolean {
+    if (!sequence) return false;
+    const lastSeq = this.lastSequences.get(targetUser) || 0;
+    if (sequence <= lastSeq) return true;
+    this.lastSequences.set(targetUser, sequence);
+    return false;
+  }
+
+  private getNextSequence(targetUser: string): number {
+    const current = this.lastSequences.get(targetUser) || 0;
+    const next = current + 1;
+    this.lastSequences.set(targetUser, next);
+    return next;
+  }
+
+  private sendSignalMessage(message: Omit<SignalMessage, 'from'>): void {
+    this.wsService.sendSignalMessage({
+      ...message,
+      from: this.userService.user,
+      sequence: this.getNextSequence(message.to),
+    });
   }
 
   private handleCandidate(message: SignalMessage): void {
