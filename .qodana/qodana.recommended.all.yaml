@@ -1,0 +1,65 @@
+baseProfile: "Project Default"
+name: "qodana.recommended.all"
+
+groups:
+  - groupId: JSRelatedInspections
+    inspections:
+      - JsCoverageInspection
+
+  - groupId: JSInspections
+    groups:
+      - "category:JavaScript and TypeScript"
+      - "category:Angular"
+      - "JSRelatedInspections"
+
+  - groupId: ExcludedInspections # list of inspections disabled by specific reason
+    inspections:
+      - Annotator # substituted by JavaAnnotator in sanity
+      - KotlinAnnotator # works in "sanity" inspections
+      - JavaAnnotator # works in "sanity" inspections
+      - SyntaxError # should work on sanity level
+      - RedundantSuppression # not a problem actually
+      - Since15 #Detects wrong language level. Should work on sanity.
+      - JavadocBlankLines # Questionable. Spam on mockito, RxJava and other projects.
+      - JSUnresolvedLibraryURL #Not usefull for CI/CD
+      - ReassignedToPlainText # Doesn't make sense on CI/CD
+      - DifferentKotlinGradleVersion # All problem cases covered in "sanity" inspections
+
+  - groupId: IncludedCategories # Qodana can run any inspection, but these categories are monitored by Qodana team
+    groups:
+      - "category:CDI (Contexts and Dependency Injection)"
+      - "category:Bean Validation"
+      - "category:RegExp"
+      - "category:General"
+      - "category:TOML"
+      - "category:TOML"
+      - "category:Rust"
+      - "category:CSS"
+      - "category:YAML"
+      - "category:HTML"
+      - "JSInspections"
+      - "category:Security"
+
+  - groupId: CoverageInspections # list of Qodana-only inspections, responsible for coverage computation
+    inspections:
+      - JsCoverageInspection
+
+  - groupId: MetricsInspections # list of inspections responsible for calculating code quality metrics
+    inspections:
+      - JvmLinesOfCodeInspection
+      - CyclomaticComplexityInspection
+
+  - groupId: DependencyAnalysis # list of Qodana-only inspections, responsible for license audit
+    inspections:
+      - CheckDependencyLicenses
+
+inspections:
+  - group: Excluded
+    enabled: false
+  - group: ALL
+    ignore:
+      - "**/dist/**"
+      - ".qodana/**"
+      - "**/node_modules/**"
+      - "**.test.ts"
+      - "server/target/**"

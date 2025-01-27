@@ -1,0 +1,4 @@
+version: 1.0
+profile:
+  path: .qodana/qodana.recommended.all.yaml
+

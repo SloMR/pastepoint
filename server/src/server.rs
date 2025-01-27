@@ -26,21 +26,21 @@ impl WsChatServer {
 
         if let Some(room) = self.rooms.get_mut(session_id) {
             if let Some(existing_room) = room.get_mut(room_name) {
-                if let Vacant(e) = existing_room.entry(id) {
+                return if let Vacant(e) = existing_room.entry(id) {
                     log::debug!("[Websocket] Adding client to room: {}", room_name);
                     e.insert(ClientMetadata {
                         recipient: client,
                         name,
                     });
-                    return id;
+                    id
                 } else {
                     log::debug!(
                         "[Websocket] Client {} already in room: {}, skipping addition",
                         id,
                         room_name
                     );
-                    return id;
-                }
+                    id
+                };
             }
         }
 

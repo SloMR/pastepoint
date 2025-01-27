@@ -3,11 +3,6 @@ import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { LoggerService } from './logger.service';
 
-export interface WebSocketMessage {
-  type: string;
-  payload: any;
-}
-
 @Injectable({
   providedIn: 'root',
 })
