@@ -9,10 +9,11 @@
       <div class="flex h-16 items-center justify-between">
         <div class="flex items-center">
           <img
-            src="pastepoint.svg"
+            ngSrc="pastepoint.svg"
             alt="PastePoint Logo"
             class="h-10 w-auto"
             [class]="isRTL() ? 'ml-4' : 'mr-4'"
+            fill
           />
           <h1 class="text-lg font-bold text-secondary-900 dark:text-white">
             {{ 'APP_TITLE' | translate }}
@@ -634,7 +635,7 @@
               (keydown.enter)="onEnterKey($any($event), messageForm)"
             ></textarea>
             <div
-              class="absolute left-2 top-2 text-secondary-500 hover:text-secondary-700 dark:hover:text-secondary-300 transition-opacity duration-300 hover:opacity-80"
+              class="absolute top-2 left-2 transition-opacity duration-300 text-secondary-500 hover:text-secondary-700 hover:opacity-80 dark:hover:text-secondary-300"
               (mouseenter)="isEmojiPickerVisible = true"
               (mouseleave)="handleEmojiIconMouseLeave()"
             >
@@ -649,7 +650,7 @@
               </svg>
             </div>
             <div
-              class="absolute z-10 -top-[420px] left-0 w-72 rounded-lg border shadow-sm transition-opacity duration-300 border-primary-300 bg-white dark:border-secondary-600 dark:bg-secondary-800"
+              class="absolute left-0 z-10 w-72 rounded-lg border bg-white shadow-sm transition-opacity duration-300 -top-[420px] border-primary-300 dark:border-secondary-600 dark:bg-secondary-800"
               [ngStyle]="{
                 opacity: isEmojiPickerVisible ? '1' : '0',
                 pointerEvents: isEmojiPickerVisible ? 'auto' : 'none',
@@ -668,7 +669,7 @@
             <button
               type="button"
               (click)="fileInput.click()"
-              class="absolute top-2 right-2 p-1 text-secondary-500 hover:text-secondary-700 dark:hover:text-secondary-300 hover:opacity-80 transition-opacity duration-300"
+              class="absolute top-2 right-2 p-1 transition-opacity duration-300 text-secondary-500 hover:text-secondary-700 hover:opacity-80 dark:hover:text-secondary-300"
             >
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 2 24 24">
                 <path

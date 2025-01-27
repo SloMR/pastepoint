@@ -178,7 +178,7 @@ export class WebRTCService {
         queuedMessages.forEach((msg) => {
           if (typeof msg === 'object' && !(msg instanceof ArrayBuffer)) {
             channel.send(JSON.stringify(msg));
-          } else if (msg instanceof ArrayBuffer) {
+          } else {
             channel.send(msg);
           }
         });

@@ -257,10 +257,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.fileTransferService.declineFileOffer(fileDownload.fromUser);
   }
 
-  listRooms(): void {
-    this.roomService.listRooms();
-  }
-
   joinRoom(room: string): void {
     if (room !== this.currentRoom) {
       this.roomService.joinRoom(room);
@@ -278,10 +274,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   isMyMessage(msg: ChatMessage): boolean {
     return msg.from === this.userService.user;
-  }
-
-  isMyUser(member: string): boolean {
-    return member.trim() === this.userService.user.trim();
   }
 
   ngOnDestroy(): void {

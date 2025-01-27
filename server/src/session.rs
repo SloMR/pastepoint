@@ -58,7 +58,7 @@ impl WsChatSession {
             .into_actor(self)
             .then(|res, _, ctx| {
                 if let Ok(rooms) = res {
-                    log::debug!("[Websocket] [SystemRooms] Rooms Availabe: {:?}", rooms);
+                    log::debug!("[Websocket] [SystemRooms] Rooms Available: {:?}", rooms);
 
                     let room_list = rooms.join(", ");
                     ctx.text(format!("[SystemRooms] {}", room_list));

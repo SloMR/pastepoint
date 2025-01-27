@@ -1,5 +1,5 @@
 import { NgModule } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ChatComponent } from './chat.component';
 import { ChatRoutingModule } from './chat-routing.module';
@@ -16,6 +16,7 @@ import { PickerModule } from '@ctrl/ngx-emoji-mart';
     FontAwesomeModule,
     TranslatePipe,
     PickerModule,
+    NgOptimizedImage,
   ],
   exports: [ChatComponent],
 })

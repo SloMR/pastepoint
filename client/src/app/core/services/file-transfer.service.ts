@@ -59,7 +59,7 @@ export class FileTransferService {
         this.logger.info(`File accepted by ${response.fromUser}`);
 
         this.fileTransferStatus.set(response.fromUser, 'accepted');
-        this.startSendingFile(response.fromUser);
+        this.startSendingFile(response.fromUser).then(() => {});
       } else {
         this.logger.warn(`File declined by ${response.fromUser}`);
 
@@ -311,7 +311,7 @@ export class FileTransferService {
     const transfer = this.fileTransfers.get(targetUser);
     if (transfer && transfer.isPaused) {
       transfer.isPaused = false;
-      this.sendNextChunk(transfer);
+      this.sendNextChunk(transfer).then(() => {});
       this.updateActiveUploads();
     }
   }
@@ -427,7 +427,7 @@ export class FileTransferService {
       icon: 'info',
       title: title,
       text: message,
-    });
+    }).then(() => {});
   }
 
   private showError(message: string, title: string): void {
@@ -435,7 +435,7 @@ export class FileTransferService {
       icon: 'error',
       title: title,
       text: message,
-    });
+    }).then(() => {});
   }
 
   private showSuccess(message: string, title: string): void {
@@ -443,6 +443,6 @@ export class FileTransferService {
       icon: 'success',
       title: title,
       text: message,
-    });
+    }).then(() => {});
   }
 }
