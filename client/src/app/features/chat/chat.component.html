@@ -633,12 +633,12 @@
               [(ngModel)]="message"
               name="message"
               rows="1"
-              class="w-full resize-none rounded-lg pr-10 pl-9 text-sm shadow-sm border-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:text-white"
+              class="w-full resize-none rounded-lg pr-10 pl-3 text-sm shadow-sm border-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:text-white sm:pl-9"
               placeholder="{{ 'TYPE_YOUR_MESSAGE' | translate }}"
               (keydown.enter)="onEnterKey($any($event), messageForm)"
             ></textarea>
             <div
-              class="absolute top-2 left-2 transition-opacity duration-300 text-secondary-500 hover:text-secondary-700 hover:opacity-80 dark:hover:text-secondary-300"
+              class="absolute top-2 left-2 hidden transition-opacity duration-300 text-secondary-500 hover:text-secondary-700 hover:opacity-80 sm:block dark:hover:text-secondary-300"
               (mouseenter)="isEmojiPickerVisible = true"
               (mouseleave)="handleEmojiIconMouseLeave()"
             >
@@ -653,7 +653,7 @@
               </svg>
             </div>
             <div
-              class="absolute left-0 z-10 w-72 rounded-lg border bg-white shadow-sm transition-opacity duration-300 -top-[420px] border-primary-300 dark:border-secondary-600 dark:bg-secondary-800"
+              class="absolute left-0 z-10 hidden w-72 rounded-lg border bg-white shadow-sm transition-opacity duration-300 -top-[420px] border-primary-300 dark:border-secondary-600 dark:bg-secondary-800 sm:block"
               [ngStyle]="{
                 opacity: isEmojiPickerVisible ? '1' : '0',
                 pointerEvents: isEmojiPickerVisible ? 'auto' : 'none',
