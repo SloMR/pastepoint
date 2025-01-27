@@ -1,3 +1,4 @@
+import { AppServerModule } from './app/app.module.server';
 import { enableProdMode } from '@angular/core';
 import { environment } from './app/environments/environment';
 
@@ -6,3 +7,4 @@ if (environment.production) {
 }
 
 export { AppServerModule } from './app/app.module.server';
+export default AppServerModule;
