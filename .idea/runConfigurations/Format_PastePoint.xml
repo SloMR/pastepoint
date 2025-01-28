@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Format PastePoint" type="CompoundRunConfigurationType">
+    <toRun name="fmt" type="CargoCommandRunConfiguration" />
+    <toRun name="format" type="js.build_tools.npm" />
+    <method v="2" />
+  </configuration>
+</component>

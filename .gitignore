@@ -1,6 +1,5 @@
 .DS_Store
 .vscode/*
-.idea/*
 .env
 target/*
 node_modules/*

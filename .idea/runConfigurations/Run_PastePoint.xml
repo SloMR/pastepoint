@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Run PastePoint" type="CompoundRunConfigurationType">
+    <toRun name="run" type="CargoCommandRunConfiguration" />
+    <toRun name="Start Local" type="js.build_tools.npm" />
+    <method v="2" />
+  </configuration>
+</component>
