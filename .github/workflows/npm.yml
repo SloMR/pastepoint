@@ -2,46 +2,51 @@ name: Angular CI/CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
   pull_request:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   build:
+    name: Build and Test Angular Client
     runs-on: ubuntu-latest
+
     steps:
-      - name: Check out the code
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22.6.0'
+          cache: 'npm'
+          cache-dependency-path: client/package-lock.json
 
       - name: Install dependencies
+        working-directory: client
         run: npm ci
-        working-directory: client
 
-      - name: Run lint with fix
-        run: npm run lint:fix
+      - name: Lint and Format
         working-directory: client
-
-      - name: Format code with Prettier
-        run: npm run format
-        working-directory: client
-
-      - name: Commit lint/format changes (if any)
-        if: success() && github.ref == 'refs/heads/main'
         run: |
-          git config --global user.name "GitHub Actions"
-          git config --global user.email "actions@github.com"
-          git add .
-          git commit -m "CI: Lint and format fixes applied [skip ci]" || echo "No changes to commit"
-          git push
-        working-directory: client
+          npm run lint
+          npm run format
 
-      - name: Build the Angular app
-        run: npm run build --configuration=production
+      - name: Run Tests
         working-directory: client
+        run: npm test -- --watch=false --browsers=ChromeHeadless
+
+#      - name: Security Audit
+#        working-directory: client
+#        run: npm audit
+
+      - name: Production Build
+        working-directory: client
+        run: npm run build --configuration=production
+
+#      - name: Upload Artifact
+#        uses: actions/upload-artifact@v3
+#        if: success() && github.ref == 'refs/heads/main'
+#        with:
+#          name: angular-dist
+#          path: client/dist
