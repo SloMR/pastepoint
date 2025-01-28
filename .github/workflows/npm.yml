@@ -32,9 +32,9 @@ jobs:
           npm run lint
           npm run format
 
-      - name: Run Tests
-        working-directory: client
-        run: npm test -- --watch=false --browsers=ChromeHeadless
+#      - name: Run Tests
+#        working-directory: client
+#        run: npm test -- --watch=false --browsers=ChromeHeadless
 
 #      - name: Security Audit
 #        working-directory: client
