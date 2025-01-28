@@ -10,18 +10,16 @@ export class ThemeService {
   constructor(@Inject(PLATFORM_ID) private platformId: object) {}
 
   initializeTheme(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      const themePreference = this.getThemePreference();
-      this.applyTheme(themePreference);
-    }
+    if (!isPlatformBrowser(this.platformId)) return;
+    const themePreference = this.getThemePreference();
+    this.applyTheme(themePreference);
   }
 
   setThemePreference(isDarkMode: boolean): void {
-    if (isPlatformBrowser(this.platformId)) {
-      const themePreference = isDarkMode ? 'dark' : 'light';
-      localStorage.setItem(this.THEME_KEY, themePreference);
-      this.applyTheme(themePreference);
-    }
+    if (!isPlatformBrowser(this.platformId)) return;
+    const themePreference = isDarkMode ? 'dark' : 'light';
+    localStorage.setItem(this.THEME_KEY, themePreference);
+    this.applyTheme(themePreference);
   }
 
   private getThemePreference(): string | null {

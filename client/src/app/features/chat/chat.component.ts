@@ -8,9 +8,20 @@ import {
   AfterViewInit,
   ViewChild,
   ElementRef,
+  CUSTOM_ELEMENTS_SCHEMA,
 } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { isPlatformBrowser } from '@angular/common';
+import {
+  DatePipe,
+  DecimalPipe,
+  isPlatformBrowser,
+  NgForOf,
+  NgIf,
+  NgOptimizedImage,
+  NgStyle,
+  SlicePipe,
+  UpperCasePipe,
+} from '@angular/common';
 
 import { ThemeService } from '../../core/services/theme.service';
 import { ChatService } from '../../core/services/chat.service';
@@ -21,17 +32,31 @@ import { LoggerService } from '../../core/services/logger.service';
 import { WebSocketConnectionService } from '../../core/services/websocket-connection.service';
 import { UserService } from '../../core/services/user.service';
 import { take } from 'rxjs/operators';
-import { NgForm } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlowbiteService } from '../../core/services/flowbite.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ChatMessage } from '../../utils/constants';
+import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 
 @Component({
   selector: 'app-chat',
+  imports: [
+    NgIf,
+    NgForOf,
+    FormsModule,
+    UpperCasePipe,
+    DatePipe,
+    SlicePipe,
+    DecimalPipe,
+    PickerComponent,
+    TranslateModule,
+    NgStyle,
+    NgOptimizedImage,
+  ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css'],
-  standalone: false,
+  schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private _logger: ReturnType<LoggerService['create']> | undefined;
@@ -89,6 +114,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     this.flowbiteService.loadFlowbite(() => {
       this.logger.debug('ngOnInit', `Flowbite loaded`);
     });
@@ -102,11 +129,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       })
     );
 
-    if (isPlatformBrowser(this.platformId)) {
-      const themePreference = localStorage.getItem('themePreference');
-      this.isDarkMode = themePreference === 'dark';
-      this.applyTheme(this.isDarkMode);
-    }
+    const themePreference = localStorage.getItem('themePreference');
+    this.isDarkMode = themePreference === 'dark';
+    this.applyTheme(this.isDarkMode);
   }
 
   switchLanguage(language: string) {
@@ -167,12 +192,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      this.connect();
-      this.cdr.detectChanges();
-      if (this.messageInput?.nativeElement) {
-        this.messageInput.nativeElement.focus();
-      }
+    if (!isPlatformBrowser(this.platformId)) return;
+    this.connect();
+    this.cdr.detectChanges();
+    if (this.messageInput?.nativeElement) {
+      this.messageInput.nativeElement.focus();
     }
   }
 
@@ -316,22 +340,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   }
 
   private scrollToBottom(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      try {
-        this.messageContainer.nativeElement.scrollTop =
-          this.messageContainer.nativeElement.scrollHeight;
-      } catch (err) {
-        this.logger.error('scrollToBottom', `Could not scroll to bottom: ${err}`);
-      }
+    if (!isPlatformBrowser(this.platformId)) return;
+    try {
+      this.messageContainer.nativeElement.scrollTop =
+        this.messageContainer.nativeElement.scrollHeight;
+    } catch (err) {
+      this.logger.error('scrollToBottom', `Could not scroll to bottom: ${err}`);
     }
   }
 
   get isRTL(): boolean {
-    if (isPlatformBrowser(this.platformId)) {
-      return document.dir === 'rtl' || this.translate.currentLang === 'ar';
-    } else {
-      return false;
-    }
+    if (!isPlatformBrowser(this.platformId)) return false;
+    return document.dir === 'rtl' || this.translate.currentLang === 'ar';
   }
 
   protected handleEmojiIconMouseLeave(): void {

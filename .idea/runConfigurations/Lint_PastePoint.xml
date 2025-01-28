@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Lint PastePoint" type="CompoundRunConfigurationType">
+    <toRun name="clippy" type="CargoCommandRunConfiguration" />
+    <toRun name="lint:fix" type="js.build_tools.npm" />
+    <method v="2" />
+  </configuration>
+</component>
