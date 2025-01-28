@@ -323,14 +323,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     });
   }
 
-  public pauseUpload(transfer: any): void {
-    this.fileTransferService.pauseTransfer(transfer.targetUser);
-  }
-
-  public resumeUpload(transfer: any): void {
-    this.fileTransferService.resumeTransfer(transfer.targetUser);
-  }
-
   public cancelUpload(upload: any): void {
     this.fileTransferService.cancelUpload(upload.targetUser);
   }

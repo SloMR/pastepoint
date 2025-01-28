@@ -321,23 +321,6 @@ export class FileTransferService {
     this.updateActiveUploads();
   }
 
-  public pauseTransfer(targetUser: string): void {
-    const transfer = this.fileTransfers.get(targetUser);
-    if (transfer) {
-      transfer.isPaused = true;
-      this.updateActiveUploads();
-    }
-  }
-
-  public resumeTransfer(targetUser: string): void {
-    const transfer = this.fileTransfers.get(targetUser);
-    if (transfer && transfer.isPaused) {
-      transfer.isPaused = false;
-      this.sendNextChunk(transfer).then(() => {});
-      this.updateActiveUploads();
-    }
-  }
-
   public cancelUpload(targetUser: string): void {
     const upload = this.fileTransfers.get(targetUser);
     if (upload) {
