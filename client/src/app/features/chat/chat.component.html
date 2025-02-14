@@ -1,26 +1,41 @@
+<!--
+  ========== MAIN CONTAINER ==========
+  This wraps the entire application, handling RTL/LTR and overall layout.
+-->
 <div
   [attr.dir]="isRTL ? 'rtl' : 'ltr'"
   class="flex h-screen flex-col bg-primary-100 dark:bg-secondary-800"
 >
+  <!--
+    ========== HEADER SECTION ==========
+    Contains the top navigation bar, logo, theme toggler, and language switcher.
+  -->
   <header
     class="border-b shadow-sm border-primary-200 bg-primary-100 dark:border-secondary-700 dark:bg-secondary-800"
   >
     <div class="mx-auto max-w-7xl pr-4 pl-16 sm:px-6 lg:px-8">
       <div class="flex h-16 items-center justify-between">
+        <!--
+          LOGO & TITLE
+        -->
         <div class="flex items-center">
-          <img
-            ngSrc="pastepoint.svg"
-            alt="PastePoint Logo"
-            class="h-10 w-auto"
-            height="40"
-            width="40"
-            [class]="isRTL ? 'ml-4' : 'mr-4'"
-          />
+          <a routerLink="/chat" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'">
+            <img
+              ngSrc="pastepoint.svg"
+              alt="PastePoint Logo"
+              class="h-10 w-auto cursor-pointer"
+              height="40"
+              width="40"
+            />
+          </a>
           <h1 class="text-lg font-bold text-secondary-900 dark:text-white">
             {{ 'APP_TITLE' | translate }}
           </h1>
         </div>
 
+        <!--
+          THEME TOGGLER & LANGUAGE SWITCHER
+        -->
         <div class="flex items-center gap-4">
           <button
             (click)="toggleTheme()"
@@ -63,7 +78,15 @@
     </div>
   </header>
 
+  <!--
+    ========== MAIN WRAPPER ==========
+    This sets up the main content area, including sidebars (responsive) and the chat/message area.
+  -->
   <div class="mx-auto flex w-full max-w-7xl flex-1 overflow-hidden">
+    <!--
+      ========== MOBILE MENU BUTTON (BURGER ICON) ==========
+      Visible on small screens to open/close the sidebar.
+    -->
     <div class="fixed top-4 left-4 z-50 md:hidden">
       <button
         (click)="isMenuOpen = !isMenuOpen"
@@ -80,18 +103,27 @@
       </button>
     </div>
 
+    <!--
+      ========== OVERLAY FOR MOBILE SIDEBAR ==========
+      Dark background overlay when menu is open on mobile; clicking closes the sidebar.
+    -->
     <div
       *ngIf="isMenuOpen"
       class="fixed inset-0 z-40 bg-black/50 md:hidden"
       (click)="isMenuOpen = false"
     ></div>
 
+    <!--
+      ========== MOBILE SIDEBAR ==========
+      Renders as a sliding panel from the left on small screens.
+    -->
     <aside
       [class]="isMenuOpen ? 'translate-x-0' : '-translate-x-full'"
       class="fixed top-0 left-0 z-50 h-full w-64 transform transition-transform duration-300 ease-in-out border-primary-300 bg-primary-100 dark:border-secondary-700 dark:bg-secondary-800 md:hidden"
       [class.border-r]="!isRTL"
       [class.border-l]="isRTL"
     >
+      <!-- CLOSE BUTTON (MOBILE) -->
       <div class="flex justify-end p-4">
         <button
           (click)="isMenuOpen = false"
@@ -108,7 +140,11 @@
         </button>
       </div>
 
+      <!-- SIDEBAR CONTENT (SCROLLABLE) -->
       <div class="flex flex-col h-[calc(100%-4rem)] overflow-y-auto">
+        <!--
+          USER INFO SECTION
+        -->
         <div class="border-b p-4 border-primary-300 dark:border-secondary-700">
           <div class="flex items-center gap-3">
             <div class="shrink-0">
@@ -133,7 +169,11 @@
           </div>
         </div>
 
+        <!--
+          ROOMS SECTION (LIST OF ROOMS, CREATE ROOM, PRIVATE SESSION, MEMBERS, TRANSFERS)
+        -->
         <div class="flex-1 p-4 space-y-4">
+          <!-- ROOMS LIST -->
           <div>
             <h3
               class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
@@ -164,6 +204,7 @@
             </nav>
           </div>
 
+          <!-- CREATE / JOIN ROOM -->
           <div class="space-y-2">
             <input
               [(ngModel)]="newRoomName"
@@ -180,6 +221,98 @@
             </button>
           </div>
 
+          <!-- PRIVATE SESSION SECTION -->
+          <div
+            class="rounded-md border bg-white p-4 shadow-sm space-y-3 border-primary-200 dark:bg-secondary-800 dark:border-secondary-700"
+          >
+            <h3
+              class="flex items-center gap-2 text-base font-semibold text-secondary-900 dark:text-white"
+            >
+              <svg
+                class="h-5 w-5 text-primary-600 dark:text-primary-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 11c1.306 0 2-.835 2-2V7c0-1.165.895-2 2-2
+           s2 .835 2 2v2c0 1.165.895 2 2 2s2-.835 2-2V7
+           c0-2.761-2.239-5-5-5S12 4.239 12 7v2c0 1.165.895 2 2 2z
+           M6 14v4c0 1.165.895 2 2 2h8c1.106 0 2-.895 2-2v-4H6z"
+                />
+              </svg>
+              {{ 'PRIVATE_SESSION' | translate }}
+            </h3>
+
+            <p class="text-sm text-secondary-600 dark:text-secondary-300">
+              {{ 'PRIVATE_SESSION_DESC' | translate }}
+            </p>
+
+            <div class="space-y-2">
+              <div class="flex flex-col gap-2">
+                <button
+                  (click)="createPrivateSession()"
+                  class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  {{ 'NEW_PRIVATE_SESSION' | translate }}
+                </button>
+
+                <div class="relative">
+                  <input
+                    [(ngModel)]="newSessionCode"
+                    name="newSessionCode"
+                    type="text"
+                    class="w-full rounded-md pl-10 text-sm shadow-sm border-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:text-white"
+                    placeholder="{{ 'SESSION_CODE' | translate }}"
+                  />
+                  <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg
+                      class="h-4 w-4 text-secondary-400 dark:text-secondary-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M16 11V7a4 4 0 10-8 0v4a4 4 0 108 0z
+                 M5 19h14a2 2 0 002-2v-2H3v2a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <button
+                  (click)="joinPrivateSession()"
+                  class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 12h14M5 12l4-4m-4 4 4 4"
+                    />
+                  </svg>
+                  {{ 'JOIN_PRIVATE_SESSION' | translate }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MEMBERS SECTION -->
           <div>
             <h3
               class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
@@ -210,6 +343,9 @@
           </div>
         </div>
 
+        <!--
+          TRANSFERS SECTION (ACTIVE UPLOADS / DOWNLOADS)
+        -->
         <div class="border-t p-4 border-primary-300 space-y-4 dark:border-secondary-700">
           <div *ngIf="activeUploads.length > 0 || activeDownloads.length > 0">
             <h3
@@ -218,6 +354,7 @@
               {{ 'TRANSFERS' | translate }}
             </h3>
             <div class="space-y-3">
+              <!-- ACTIVE UPLOADS -->
               <div *ngFor="let transfer of activeUploads" class="text-sm">
                 <div class="mb-1 flex items-center justify-between">
                   <span class="truncate text-secondary-700 dark:text-secondary-300">
@@ -248,6 +385,7 @@
                 </div>
               </div>
 
+              <!-- ACTIVE DOWNLOADS -->
               <div *ngFor="let download of activeDownloads" class="text-sm">
                 <div class="mb-1 flex items-center justify-between">
                   <span class="truncate text-secondary-700 dark:text-secondary-300">
@@ -283,12 +421,17 @@
       </div>
     </aside>
 
+    <!--
+      ========== DESKTOP SIDEBAR ==========
+      Visible on medium+ screens, always shown (not collapsible by default).
+    -->
     <aside class="hidden md:flex md:flex-shrink-0">
       <div
         class="flex w-64 flex-col border-primary-300 bg-primary-100 dark:border-secondary-700 dark:bg-secondary-800"
         [class.border-r]="!isRTL"
         [class.border-l]="isRTL"
       >
+        <!-- USER INFO SECTION (DESKTOP) -->
         <div class="border-b p-4 border-primary-300 dark:border-secondary-700">
           <div class="flex items-center gap-3">
             <div class="shrink-0">
@@ -313,7 +456,9 @@
           </div>
         </div>
 
+        <!-- MAIN SIDEBAR CONTENT (DESKTOP) -->
         <div class="flex-1 overflow-y-auto p-4 space-y-4">
+          <!-- ROOMS LIST (DESKTOP) -->
           <div>
             <h3
               class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
@@ -344,6 +489,7 @@
             </nav>
           </div>
 
+          <!-- CREATE / JOIN ROOM (DESKTOP) -->
           <div class="space-y-2">
             <input
               [(ngModel)]="newRoomName"
@@ -360,6 +506,98 @@
             </button>
           </div>
 
+          <!-- PRIVATE SESSION SECTION (DESKTOP) -->
+          <div
+            class="rounded-md border bg-white p-4 shadow-sm space-y-3 border-primary-200 dark:bg-secondary-800 dark:border-secondary-700"
+          >
+            <h3
+              class="flex items-center gap-2 text-base font-semibold text-secondary-900 dark:text-white"
+            >
+              <svg
+                class="h-5 w-5 text-primary-600 dark:text-primary-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 11c1.306 0 2-.835 2-2V7c0-1.165.895-2 2-2
+           s2 .835 2 2v2c0 1.165.895 2 2 2s2-.835 2-2V7
+           c0-2.761-2.239-5-5-5S12 4.239 12 7v2c0 1.165.895 2 2 2z
+           M6 14v4c0 1.165.895 2 2 2h8c1.106 0 2-.895 2-2v-4H6z"
+                />
+              </svg>
+              {{ 'PRIVATE_SESSION' | translate }}
+            </h3>
+
+            <p class="text-sm text-secondary-600 dark:text-secondary-300">
+              {{ 'PRIVATE_SESSION_DESC' | translate }}
+            </p>
+
+            <div class="space-y-2">
+              <div class="flex flex-col gap-2">
+                <button
+                  (click)="createPrivateSession()"
+                  class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M12 4v16m8-8H4"
+                    />
+                  </svg>
+                  {{ 'NEW_PRIVATE_SESSION' | translate }}
+                </button>
+
+                <div class="relative">
+                  <input
+                    [(ngModel)]="newSessionCode"
+                    name="newSessionCode"
+                    type="text"
+                    class="w-full rounded-md pl-10 text-sm shadow-sm border-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:text-white"
+                    placeholder="{{ 'SESSION_CODE' | translate }}"
+                  />
+                  <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <svg
+                      class="h-4 w-4 text-secondary-400 dark:text-secondary-300"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M16 11V7a4 4 0 10-8 0v4a4 4 0 108 0z
+                 M5 19h14a2 2 0 002-2v-2H3v2a2 2 0 002 2z"
+                      />
+                    </svg>
+                  </div>
+                </div>
+
+                <button
+                  (click)="joinPrivateSession()"
+                  class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 12h14M5 12l4-4m-4 4 4 4"
+                    />
+                  </svg>
+                  {{ 'JOIN_PRIVATE_SESSION' | translate }}
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- MEMBERS SECTION (DESKTOP) -->
           <div>
             <h3
               class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
@@ -390,6 +628,9 @@
           </div>
         </div>
 
+        <!--
+          TRANSFERS SECTION (DESKTOP)
+        -->
         <div class="border-t p-4 border-primary-300 space-y-4 dark:border-secondary-700">
           <div *ngIf="activeUploads.length > 0 || activeDownloads.length > 0">
             <h3
@@ -398,6 +639,7 @@
               {{ 'TRANSFERS' | translate }}
             </h3>
             <div class="space-y-3">
+              <!-- ACTIVE UPLOADS (DESKTOP) -->
               <div *ngFor="let transfer of activeUploads" class="text-sm">
                 <div class="mb-1 flex items-center justify-between">
                   <span class="truncate text-secondary-700 dark:text-secondary-300">
@@ -428,6 +670,7 @@
                 </div>
               </div>
 
+              <!-- ACTIVE DOWNLOADS (DESKTOP) -->
               <div *ngFor="let download of activeDownloads" class="text-sm">
                 <div class="mb-1 flex items-center justify-between">
                   <span class="truncate text-secondary-700 dark:text-secondary-300">
@@ -463,13 +706,19 @@
       </div>
     </aside>
 
+    <!--
+      ========== MAIN CHAT AREA ==========
+      This includes the message container where messages appear and the input form.
+    -->
     <main class="flex flex-1 flex-col overflow-hidden bg-primary-100 dark:bg-secondary-800">
+      <!-- MESSAGES CONTAINER -->
       <div #messageContainer class="flex-1 overflow-y-auto p-4 space-y-4">
         <div
           *ngFor="let msg of messages"
           class="mb-3 flex items-end"
           [class.justify-end]="isMyMessage(msg)"
         >
+          <!-- USER AVATAR ICON -->
           <div
             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm shadow-secondary-600 bg-secondary-300 dark:shadow-secondary-400 dark:bg-secondary-600"
             [class.me-2]="!isMyMessage(msg)"
@@ -491,6 +740,7 @@
             </svg>
           </div>
 
+          <!-- MESSAGE BUBBLE -->
           <div
             class="p-3 text-sm shadow-sm min-w-[30%] max-w-[50%] shadow-secondary-600"
             [class]="
@@ -510,6 +760,9 @@
           </div>
         </div>
 
+        <!--
+          INCOMING FILES SECTION (PROMPTS TO ACCEPT/DECLINE FILES)
+        -->
         <div *ngIf="incomingFiles.length > 0" class="space-y-2">
           <div
             *ngFor="let incomingFile of incomingFiles"
@@ -560,12 +813,17 @@
         </div>
       </div>
 
+      <!--
+        ========== MESSAGE INPUT FORM ==========
+        For composing and sending new messages (includes file attachments, emoji picker).
+      -->
       <div class="border-t p-4 border-primary-300 dark:border-secondary-700">
         <form
           #messageForm="ngForm"
           (submit)="sendMessage(messageForm); $event.preventDefault()"
           class="flex items-center gap-2"
         >
+          <!-- TEXTAREA & ATTACHMENT -->
           <div class="relative flex flex-1 items-center">
             <textarea
               [(ngModel)]="message"
@@ -575,6 +833,8 @@
               placeholder="{{ 'TYPE_YOUR_MESSAGE' | translate }}"
               (keydown.enter)="onEnterKey($any($event), messageForm)"
             ></textarea>
+
+            <!-- EMOJI ICON (Desktop Hover) -->
             <div
               class="absolute top-2 left-2 hidden transition-opacity duration-300 text-secondary-500 hover:text-secondary-700 hover:opacity-80 sm:block dark:hover:text-secondary-300"
               (mouseenter)="isEmojiPickerVisible = true"
@@ -590,6 +850,8 @@
                 />
               </svg>
             </div>
+
+            <!-- EMOJI PICKER POPUP -->
             <div
               class="absolute left-0 z-10 hidden w-72 rounded-lg border bg-white shadow-sm transition-opacity duration-300 -top-[420px] border-primary-300 dark:border-secondary-600 dark:bg-secondary-800 sm:block"
               [ngStyle]="{
@@ -607,6 +869,8 @@
                 title="Choose your emoji"
               ></emoji-mart>
             </div>
+
+            <!-- ATTACH FILE BUTTON -->
             <button
               type="button"
               (click)="fileInput.click()"
@@ -631,6 +895,8 @@
               class="hidden"
             />
           </div>
+
+          <!-- SEND MESSAGE BUTTON -->
           <button
             type="submit"
             class="rounded-xl px-4 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
