@@ -1,7 +1,7 @@
 use actix::prelude::*;
 use actix_web::{http::StatusCode, test, web, App};
 use bytes::Bytes;
-use server_lib::{
+use server::{
     chat_ws, index, private_chat_ws, ChatMessage, LeaveRoom, ServerConfig, SessionStore,
     WsChatServer,
 };

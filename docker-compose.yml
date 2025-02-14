@@ -1,13 +1,18 @@
-volumes:
-  ssl-certs:
-
 services:
-  certs-generator:
+  cert-checker:
     image: alpine
-    entrypoint: /bin/sh -c "apk add --no-cache openssl && /usr/local/bin/generate-certs.sh"
+    entrypoint: |
+      sh -c '
+      if [ ! -f ./certs/cert.pem ] || [ ! -f ./certs/key.pem ]; then
+        echo "ERROR: Missing SSL certificates!"
+        echo "Please create certs directory with cert.pem and key.pem files"
+        echo "Use generate-certs.sh script to generate self-signed certificates"
+        echo "Exiting..."
+        exit 1
+      fi
+      '
     volumes:
-      - ssl-certs:/etc/ssl/certs
-      - ./scripts/generate-certs.sh:/usr/local/bin/generate-certs.sh:ro
+      - ./certs:/certs
     restart: "no"
 
   server:
@@ -20,9 +25,9 @@ services:
       RUST_LOG: "info"
       RUN_ENV: "production"
     volumes:
-      - ssl-certs:/etc/ssl/certs
+        - ./certs:/etc/ssl/certs
     depends_on:
-      certs-generator:
+      cert-checker:
         condition: service_completed_successfully
     restart: always
 
@@ -36,5 +41,5 @@ services:
       server:
         condition: service_started
     volumes:
-      - ssl-certs:/etc/ssl/certs
+        - ./certs:/etc/ssl/certs
     restart: always

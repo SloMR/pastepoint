@@ -1,6 +1,6 @@
 use actix_test::{start, TestServer};
 use actix_web::{web, App};
-use server_lib::{chat_ws, ServerConfig, SessionStore};
+use server::{chat_ws, ServerConfig, SessionStore};
 
 pub fn init_test_server(auto_join: bool) -> TestServer {
     let config = ServerConfig::load(Some(auto_join)).expect("Failed to load server configuration");

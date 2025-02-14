@@ -3,10 +3,6 @@ name = "server"
 version = "0.3.2"
 edition = "2021"
 
-[lib]
-name = "server_lib"
-path = "src/lib.rs"
-
 [[bin]]
 name = "server_bin"
 path = "src/main.rs"

@@ -1,6 +1,6 @@
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
-use server_lib::{chat_ws, create_session, index, private_chat_ws, ServerConfig, SessionStore};
+use server::{chat_ws, create_session, index, private_chat_ws, ServerConfig, SessionStore};
 use std::io::Result;
 
 #[actix_web::main]

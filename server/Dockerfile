@@ -26,7 +26,7 @@ FROM ubuntu:24.10
 WORKDIR /usr/local/bin
 
 # Copy the built binary from the builder stage
-COPY --from=builder /usr/src/app/target/release/server .
+COPY --from=builder /usr/src/app/target/release/server_bin .
 
 # Copy the config files into the final image
 COPY --from=builder /usr/src/app/config ./config
@@ -36,4 +36,4 @@ RUN useradd -m appuser
 USER appuser
 
 # Set the command to run the binary
-CMD ["./server"]
+CMD ["./server_bin"]
