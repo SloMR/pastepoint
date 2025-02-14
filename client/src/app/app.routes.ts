@@ -10,4 +10,10 @@ export const routes: Routes = [
     redirectTo: '/chat',
     pathMatch: 'full',
   },
+  {
+    path: '404',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
+  },
+  { path: '**', redirectTo: '404' },
 ];

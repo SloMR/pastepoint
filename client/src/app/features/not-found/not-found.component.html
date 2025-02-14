@@ -1,0 +1,124 @@
+<!--
+  ========== MAIN CONTAINER ==========
+  This wraps the entire 404 page, with the same design style as your chat component.
+-->
+<div
+  [attr.dir]="isRTL ? 'rtl' : 'ltr'"
+  class="flex h-screen flex-col bg-primary-100 dark:bg-secondary-800"
+>
+  <!--
+    ========== HEADER SECTION ==========
+    Same style as your Chat header,
+    including theme toggler & language switch.
+  -->
+  <header
+    class="border-b shadow-sm border-primary-200 bg-primary-100 dark:border-secondary-700 dark:bg-secondary-800"
+  >
+    <div class="mx-auto max-w-7xl pr-4 pl-16 sm:px-6 lg:px-8">
+      <div class="flex h-16 items-center justify-between">
+        <!--
+          LOGO & TITLE
+        -->
+        <div class="flex items-center">
+          <a routerLink="/chat" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'">
+            <img
+              ngSrc="pastepoint.svg"
+              alt="PastePoint Logo"
+              class="h-10 w-auto cursor-pointer"
+              height="40"
+              width="40"
+            />
+          </a>
+          <!-- Use your existing translation key for the app title -->
+          <h1 class="text-lg font-bold text-secondary-900 dark:text-white">
+            {{ 'APP_TITLE' | translate }}
+          </h1>
+        </div>
+
+        <!--
+          THEME TOGGLER & LANGUAGE SWITCHER
+        -->
+        <div class="flex items-center gap-4">
+          <button
+            (click)="toggleTheme()"
+            class="rounded-lg p-2 text-secondary-600 hover:bg-secondary-100 dark:text-secondary-300 dark:hover:bg-secondary-700"
+          >
+            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                *ngIf="!isDarkMode"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 5V3m0 18v-2M7.05 7.05 5.636 5.636m12.728 12.728L16.95 16.95M5 12H3m18 0h-2M7.05 16.95l-1.414 1.414M18.364 5.636 16.95 7.05M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"
+              />
+              <path
+                *ngIf="isDarkMode"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M20.354 15.354A9 9 0 0 1 8.646 3.646
+                   9.003 9.003 0 0 0 12 21
+                   a9.003 9.003 0 0 0 8.354-5.646z"
+              />
+            </svg>
+          </button>
+
+          <div class="flex gap-2">
+            <button
+              *ngFor="let lang of ['en', 'ar']"
+              (click)="switchLanguage(lang)"
+              class="rounded-md px-3 py-1 text-sm font-medium"
+              [class]="
+                lang === translate.currentLang
+                  ? 'bg-primary-600 text-white'
+                  : 'text-secondary-600 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700'
+              "
+            >
+              {{ lang | uppercase }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!--
+    ========== MAIN CONTENT AREA ==========
+    Where we display the 404 message
+  -->
+  <main class="flex flex-1 items-center justify-center bg-primary-100 dark:bg-secondary-800">
+    <div class="max-w-md p-4 text-center">
+      <!-- Heading with Icon -->
+      <h2
+        class="mb-4 text-3xl font-bold text-secondary-900 dark:text-white flex items-center justify-center gap-2"
+      >
+        <!-- Exclamation circle -->
+        <svg
+          class="h-8 w-8 text-danger-600 dark:text-danger-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 9v2m0 4h.01M5.07 19H18.93
+               a2 2 0 0 0 1.74-2.984l-6.93-12a2 2 0 0 0-3.48 0l-6.93 12
+               A2 2 0 0 0 5.07 19z"
+          />
+        </svg>
+        {{ 'PAGE_NOT_FOUND' | translate }}
+      </h2>
+      <p class="mb-6 text-secondary-700 dark:text-secondary-300">
+        {{ 'INVALID_LINK_MESSAGE' | translate }}
+      </p>
+      <a
+        routerLink="/chat"
+        class="inline-block rounded-md px-4 py-2 text-white bg-primary-600 hover:bg-primary-700"
+      >
+        {{ 'GO_BACK_HOME' | translate }}
+      </a>
+    </div>
+  </main>
+</div>
