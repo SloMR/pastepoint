@@ -1,3 +1,4 @@
+use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use server::{chat_ws, create_session, index, private_chat_ws, ServerConfig, SessionStore};
@@ -8,6 +9,16 @@ async fn main() -> Result<()> {
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
 
     let config = ServerConfig::load(None).expect("Failed to load server configuration");
+
+    let governor_conf = GovernorConfigBuilder::default()
+        .requests_per_second(config.rate_limit_per_second)
+        .burst_size(config.rate_limit_burst_size)
+        .use_headers()
+        .finish()
+        .expect("Invalid rate limit configuration");
+
+    log::debug!("Rate limiting configured: {:?}", governor_conf);
+
     log::info!(
         "[Websocket] Starting HTTPS server at https://{}",
         config.bind_address
@@ -31,13 +42,14 @@ async fn main() -> Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .wrap(Governor::new(&governor_conf))
+            .wrap(Logger::default())
             .app_data(session_manager.clone())
             .app_data(server_config.clone())
             .service(index)
             .service(create_session)
             .service(chat_ws)
             .service(private_chat_ws)
-            .wrap(Logger::default())
     })
     .bind_openssl(&config.bind_address, builder)?
     .run()

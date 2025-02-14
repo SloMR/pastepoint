@@ -8,6 +8,8 @@ pub struct ServerConfig {
     pub key_file_path: String,
     pub cert_file_path: String,
     pub auto_join: bool,
+    pub rate_limit_per_second: u64,
+    pub rate_limit_burst_size: u32,
 }
 
 impl ServerConfig {
