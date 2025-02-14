@@ -1,7 +1,10 @@
 use actix::prelude::*;
 use actix_web::{http::StatusCode, test, web, App};
 use bytes::Bytes;
-use server::{chat_ws, index, ChatMessage, LeaveRoom, ServerConfig, SessionManager, WsChatServer};
+use server::{
+    chat_ws, index, private_chat_ws, ChatMessage, LeaveRoom, ServerConfig, SessionStore,
+    WsChatServer,
+};
 
 #[actix_rt::test]
 async fn test_index() {
@@ -18,7 +21,7 @@ async fn test_index() {
 
 #[actix_rt::test]
 async fn test_ws_upgrade() {
-    let session_manager = web::Data::new(SessionManager::default());
+    let session_manager = web::Data::new(SessionStore::default());
     let config = web::Data::new(
         ServerConfig::load(Some(false)).expect("Failed to load server configuration"),
     );
@@ -46,16 +49,89 @@ async fn test_ws_upgrade() {
 }
 
 #[actix_rt::test]
+async fn test_private_ws_upgrade() {
+    let session_manager = web::Data::new(SessionStore::default());
+    let config = web::Data::new(
+        ServerConfig::load(Some(false)).expect("Failed to load server configuration"),
+    );
+
+    let code = "TESTCODE123";
+    session_manager
+        .get_or_create_session_uuid(code, false)
+        .expect("Failed to create session UUID in non-strict mode first");
+
+    session_manager
+        .get_or_create_session_uuid(code, true)
+        .expect("Failed to retrieve session UUID in strict mode");
+
+    let app = test::init_service(
+        App::new()
+            .app_data(session_manager.clone())
+            .app_data(config.clone())
+            .service(private_chat_ws),
+    )
+    .await;
+
+    let req = test::TestRequest::get()
+        .uri("/ws/TESTCODE123")
+        .insert_header(("Upgrade", "websocket"))
+        .insert_header(("Connection", "Upgrade"))
+        .insert_header(("Sec-WebSocket-Version", "13"))
+        .insert_header(("Sec-WebSocket-Key", "test_key"))
+        .peer_addr("127.0.0.1:12345".parse().unwrap())
+        .to_request();
+
+    let resp = test::call_service(&app, req).await;
+
+    assert_eq!(resp.status(), StatusCode::SWITCHING_PROTOCOLS);
+}
+
+#[actix_rt::test]
+async fn test_private_ws_unknown_code() {
+    let session_manager = web::Data::new(SessionStore::default());
+    let config = web::Data::new(
+        ServerConfig::load(Some(false)).expect("Failed to load server configuration"),
+    );
+
+    let app = test::init_service(
+        App::new()
+            .app_data(session_manager.clone())
+            .app_data(config.clone())
+            .service(private_chat_ws),
+    )
+    .await;
+
+    let req = test::TestRequest::get()
+        .uri("/ws/unknown_code")
+        .insert_header(("Upgrade", "websocket"))
+        .insert_header(("Connection", "Upgrade"))
+        .insert_header(("Sec-WebSocket-Version", "13"))
+        .insert_header(("Sec-WebSocket-Key", "test_key"))
+        .peer_addr("127.0.0.1:12345".parse().unwrap())
+        .to_request();
+
+    let resp = test::call_service(&app, req).await;
+
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+}
+
+#[actix_rt::test]
 async fn test_session_manager() {
-    let manager = SessionManager::default();
+    let manager = SessionStore::default();
     let ip = "127.0.0.1";
-    let uuid1 = manager.get_or_create_uuid(ip);
-    let uuid2 = manager.get_or_create_uuid(ip);
+    let uuid1 = manager
+        .get_or_create_session_uuid(ip, false)
+        .expect("Failed to create UUID");
+    let uuid2 = manager
+        .get_or_create_session_uuid(ip, true)
+        .expect("Failed to create UUID");
 
     assert_eq!(uuid1, uuid2);
 
     let ip2 = "127.0.0.2";
-    let uuid3 = manager.get_or_create_uuid(ip2);
+    let uuid3 = manager
+        .get_or_create_session_uuid(ip2, false)
+        .expect("Failed to create UUID");
 
     assert_ne!(uuid1, uuid3);
 }

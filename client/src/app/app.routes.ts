@@ -6,8 +6,18 @@ export const routes: Routes = [
     loadComponent: () => import('./features/chat/chat.component').then((m) => m.ChatComponent),
   },
   {
+    path: 'chat/:code',
+    loadComponent: () => import('./features/chat/chat.component').then((m) => m.ChatComponent),
+  },
+  {
     path: '',
     redirectTo: '/chat',
     pathMatch: 'full',
   },
+  {
+    path: '404',
+    loadComponent: () =>
+      import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
+  },
+  { path: '**', redirectTo: '404' },
 ];

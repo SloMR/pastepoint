@@ -1,7 +1,7 @@
 use crate::{
     error::ServerError,
     message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer, WsChatSession},
-    SessionManager,
+    SessionStore,
 };
 use actix::prelude::*;
 use actix_broker::BrokerIssue;
@@ -10,13 +10,14 @@ use names::Generator;
 use serde_json::Value;
 
 impl WsChatSession {
-    pub fn new(session_id: &str, auto_join: bool, session_manager: SessionManager) -> Self {
+    pub fn new(session_id: &str, auto_join: bool, session_manager: SessionStore) -> Self {
         let mut generator = Generator::default();
+        let id = rand::random::<usize>();
         let name = generator.next().unwrap_or_else(|| "Anonymous".to_string());
         WsChatSession {
             session_id: session_id.to_owned(),
-            id: 0,
-            room: "main".to_owned(),
+            id,
+            room: "".to_owned(),
             name,
             auto_join,
             session_manager,
@@ -24,6 +25,15 @@ impl WsChatSession {
     }
 
     pub fn join_room(&mut self, room_name: &str, ctx: &mut ws::WebsocketContext<Self>) {
+        if self.room == room_name {
+            log::debug!(
+                "[Websocket] User '{}' is already in room '{}'. Skipping join.",
+                self.name,
+                room_name
+            );
+            return;
+        }
+
         let room_name = room_name.to_owned();
         let name = self.name.clone();
         let leave_msg = LeaveRoom(self.session_id.clone(), self.room.clone(), self.id);
@@ -42,11 +52,16 @@ impl WsChatSession {
             .into_actor(self)
             .then(|id, act, _ctx| {
                 if let Ok(id) = id {
+                    log::debug!(
+                        "[Websocket] {} successfully joined room '{}'",
+                        act.session_id,
+                        &room_name
+                    );
+
                     act.id = id;
                     act.room = room_name;
                     act.name = name
                 }
-
                 fut::ready(())
             })
             .wait(ctx);

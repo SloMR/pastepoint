@@ -1,10 +1,10 @@
 use actix_test::{start, TestServer};
 use actix_web::{web, App};
-use server::{chat_ws, ServerConfig, SessionManager};
+use server::{chat_ws, ServerConfig, SessionStore};
 
 pub fn init_test_server(auto_join: bool) -> TestServer {
     let config = ServerConfig::load(Some(auto_join)).expect("Failed to load server configuration");
-    let session_manager = web::Data::new(SessionManager::default());
+    let session_manager = web::Data::new(SessionStore::default());
     let config_data = web::Data::new(config);
 
     start(move || {

@@ -12,6 +12,7 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { InMemoryTranslateLoader } from './core/i18n/translate-loader';
 import { ThemeService } from './core/services/theme.service';
+import { provideHttpClient } from '@angular/common/http';
 
 // Theme initialization function
 export function initializeTheme(themeService: ThemeService): () => void {
@@ -20,6 +21,7 @@ export function initializeTheme(themeService: ThemeService): () => void {
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideHttpClient(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideClientHydration(withEventReplay()),

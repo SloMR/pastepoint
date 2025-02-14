@@ -413,7 +413,11 @@ export class WebRTCService {
   }
 
   private handleSignalMessage(message: SignalMessage): void {
-    if (message.to !== this.userService.user) {
+    if (message.to !== this.userService.user || message.from === message.to) {
+      this.logger.warn(
+        'handleSignalMessage',
+        'Skipping self-to-self signal: ' + JSON.stringify(message)
+      );
       return;
     }
 

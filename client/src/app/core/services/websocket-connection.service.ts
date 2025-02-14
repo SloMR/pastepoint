@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { LoggerService } from './logger.service';
+import { Router } from '@angular/router';
 
 @Injectable({
   providedIn: 'root',
@@ -12,7 +13,6 @@ export class WebSocketConnectionService {
   private socket: WebSocket | undefined;
   private webSocketProto = 'wss';
   private host = environment.apiUrl;
-  private wsUri = `${this.webSocketProto}://${this.host}/ws`;
 
   public messages$ = new BehaviorSubject<string>('');
   public systemMessages$ = new BehaviorSubject<string>('');
@@ -25,11 +25,21 @@ export class WebSocketConnectionService {
     return this._logger;
   }
 
-  constructor(private loggerService: LoggerService) {}
+  constructor(
+    private loggerService: LoggerService,
+    private router: Router
+  ) {}
 
-  public connect(): Promise<void> {
+  public connect(code?: string): Promise<void> {
+    if (!code) {
+      const urlSegments = window.location.pathname.split('/');
+      code = urlSegments.length > 2 ? urlSegments[2] : undefined;
+    }
+
+    const wsUri = `${this.webSocketProto}://${this.host}/ws${code ? `/${code}` : ''}`;
     return new Promise<void>((resolve, reject) => {
-      this.socket = new WebSocket(this.wsUri);
+      this.logger.info('connect', `Connecting to WebSocket at ${wsUri}`);
+      this.socket = new WebSocket(wsUri);
 
       this.socket.onopen = () => {
         this.logger.info('connect', 'WebSocket connected');
@@ -52,11 +62,17 @@ export class WebSocketConnectionService {
       };
 
       this.socket.onclose = (event) => {
-        this.logger.error(
-          'connect',
-          `WebSocket disconnected: code ${event.code}, reason ${event.reason}`
-        );
-        setTimeout(() => this.reconnect(), 1000);
+        if (event.code === 1006) {
+          this.router.navigate(['/404']).then(() => {
+            this.logger.warn(
+              'connect',
+              `WebSocket closed with code ${event.code}. Navigating to 404.`
+            );
+          });
+        } else {
+          // handle normal closure or attempt reconnect
+          this.logger.warn('connect', `WebSocket closed with code ${event.code}`);
+        }
       };
 
       this.socket.onerror = (error) => {

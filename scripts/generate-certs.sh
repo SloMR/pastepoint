@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-CERT_DIR="/etc/ssl/certs"
+CERT_DIR="../certs"
 mkdir -p $CERT_DIR
 
 # Generate proper CA-signed cert (example for Let's Encrypt)
@@ -9,8 +9,8 @@ mkdir -p $CERT_DIR
 openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
     -keyout $CERT_DIR/key.pem \
     -out $CERT_DIR/cert.pem \
-    -subj "/C=US/ST=State/L=City/O=Company/CN=pastepoint.com" \
-    -addext "subjectAltName=DNS:pastepoint.com,DNS:www.pastepoint.com"
+    -subj "/C=US/ST=State/L=City/O=Company/CN=localhost" \
+    -addext "subjectAltName=DNS:localhost,DNS:localhost"
 
 # Set secure permissions
 chown root:root $CERT_DIR/key.pem
