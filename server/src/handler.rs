@@ -30,7 +30,20 @@ impl Handler<LeaveRoom> for WsChatServer {
                 room.remove(&msg.2);
 
                 if room.is_empty() && msg.1 != "main" {
-                    self.rooms.remove(&msg.1);
+                    rooms.remove(&msg.1);
+                    log::debug!(
+                        "[Websocket] Room '{}' removed from session {}",
+                        msg.1,
+                        msg.0
+                    );
+                }
+
+                if rooms.is_empty() {
+                    log::debug!(
+                        "[Websocket] Session {} has no rooms left. Removing session.",
+                        msg.0
+                    );
+                    self.rooms.remove(&msg.0);
                 }
 
                 self.remove_empty_rooms(&msg.0);
@@ -78,8 +91,16 @@ impl Handler<RelaySignalMessage> for WsChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: RelaySignalMessage, _ctx: &mut Self::Context) {
-        #[allow(unused_variables)]
         let RelaySignalMessage { from, to, message } = msg;
+
+        if from == to {
+            log::warn!(
+                "[Websocket] Skipping self-to-self signal from '{}' to '{}'",
+                from,
+                to
+            );
+            return;
+        }
 
         for rooms in self.rooms.values() {
             for room in rooms.values() {
