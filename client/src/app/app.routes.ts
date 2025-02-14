@@ -6,6 +6,10 @@ export const routes: Routes = [
     loadComponent: () => import('./features/chat/chat.component').then((m) => m.ChatComponent),
   },
   {
+    path: 'chat/:code',
+    loadComponent: () => import('./features/chat/chat.component').then((m) => m.ChatComponent),
+  },
+  {
     path: '',
     redirectTo: '/chat',
     pathMatch: 'full',
