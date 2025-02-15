@@ -7,14 +7,16 @@ client/node_modules
 
 # Ignore build directories
 server/target
-/target
+client/dist
+scripts
 
 # Ignore environment files
 .env
 .env.local
 
 # Ignore Docker-related files
-Dockerfile
+server/Dockerfile
+client/Dockerfile
 docker-compose.yml
 
 # Ignore Git-related files
@@ -24,3 +26,7 @@ docker-compose.yml
 # Ignore IDE-specific files
 .vscode
 .idea
+.github
+.editorconfig
+.clippy.toml
+.rustfmt.toml
