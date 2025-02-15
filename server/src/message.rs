@@ -13,12 +13,12 @@ pub struct WsChatServer {
 
 #[derive(Default, Clone)]
 pub struct WsChatSession {
-    pub session_id: String,            // session id
-    pub id: usize,                     // client id
-    pub room: String,                  // room name
-    pub name: String,                  // client name
-    pub auto_join: bool,               // flag to control auto-join
-    pub session_manager: SessionStore, // reference to SessionStore
+    pub session_id: String,          // session id
+    pub id: usize,                   // client id
+    pub room: String,                // room name
+    pub name: String,                // client name
+    pub auto_join: bool,             // flag to control auto-join
+    pub session_store: SessionStore, // reference to SessionStore
 }
 
 pub struct ClientMetadata {

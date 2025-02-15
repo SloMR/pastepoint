@@ -91,4 +91,9 @@ export class ChatService {
   public getUsername(): void {
     this.wsService.send('[UserCommand] /name');
   }
+
+  public clearMessages(): void {
+    this.messages = [];
+    this.messages$.next(this.messages);
+  }
 }

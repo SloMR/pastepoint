@@ -10,7 +10,7 @@ use names::Generator;
 use serde_json::Value;
 
 impl WsChatSession {
-    pub fn new(session_id: &str, auto_join: bool, session_manager: SessionStore) -> Self {
+    pub fn new(session_id: &str, auto_join: bool, session_store: SessionStore) -> Self {
         let mut generator = Generator::default();
         let id = rand::random::<usize>();
         let name = generator.next().unwrap_or_else(|| "Anonymous".to_string());
@@ -20,7 +20,7 @@ impl WsChatSession {
             room: "".to_owned(),
             name,
             auto_join,
-            session_manager,
+            session_store,
         }
     }
 

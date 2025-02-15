@@ -1,6 +1,7 @@
-use crate::{ServerConfig, SessionStore};
+use crate::{session_store::SessionData, ServerConfig, SessionStore};
 use actix_web::{get, web, Error, HttpRequest, HttpResponse, Responder};
 use serde_json::json;
+use uuid::Uuid;
 
 // -----------------------------------------------------
 // Simple "Hello" index route
@@ -16,7 +17,18 @@ pub async fn index() -> impl Responder {
 #[get("/create-session")]
 pub async fn create_session(store: web::Data<SessionStore>) -> impl Responder {
     let code = SessionStore::generate_random_code(10);
-    store.get_or_create_session_uuid(&code, false);
+    // Insert the new session without calling get_or_create_session_uuid.
+    let new_uuid = Uuid::new_v4();
+    {
+        let mut map = store.key_to_session.lock().unwrap();
+        map.insert(
+            code.clone(),
+            SessionData {
+                uuid: new_uuid,
+                is_private: true,
+            },
+        );
+    }
     HttpResponse::Ok().json(json!({ "code": code }))
 }
 
@@ -34,8 +46,7 @@ pub async fn chat_ws(
         let ip_str = peer.ip().to_string();
         log::debug!("[Websocket] Peer IP: {}", ip_str);
 
-        // Now just call the new helper
-        store.start_websocket(config.get_ref(), &req, stream, &ip_str, false)
+        store.start_websocket(config.get_ref(), &req, stream, &ip_str, false, false)
     } else {
         log::error!("[Websocket] No Public IP address found!");
         Ok(HttpResponse::BadRequest().body("No Public IP Address found"))
@@ -55,13 +66,10 @@ pub async fn private_chat_ws(
 ) -> Result<HttpResponse, Error> {
     let code = path.into_inner();
     log::debug!("[Websocket] Received session code: {}", code);
-
-    // Optional: If the code is empty or invalid in some way
     if code.trim().is_empty() {
         log::warn!("[Websocket] Empty code => returning 400");
         return Ok(HttpResponse::BadRequest().body("Session code cannot be empty"));
     }
 
-    // The same helper, but with strict_mode = true
-    store.start_websocket(config.get_ref(), &req, stream, &code, true)
+    store.start_websocket(config.get_ref(), &req, stream, &code, true, true)
 }

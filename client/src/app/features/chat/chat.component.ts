@@ -185,6 +185,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const sessionCode = params.get('code') ?? undefined;
       if (sessionCode) {
         this.connect(sessionCode);
+      } else {
+        this.chatService.clearMessages();
+        this.messages = [];
       }
     });
 
@@ -537,7 +540,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.webrtcService.closeAllConnections();
+    this.wsConnectionService.disconnect();
+    this.chatService.clearMessages();
     clearTimeout(this.emojiPickerTimeout);
+    this.messages = [];
   }
 
   /**
