@@ -82,11 +82,12 @@ export class WebSocketConnectionService {
     });
   }
 
-  private reconnect() {
-    this.logger.warn('reconnect', 'Attempting to reconnect WebSocket...');
-    this.connect().catch((err) =>
-      this.logger.error('reconnect', `WebSocket reconnection failed: ${err}`)
-    );
+  public disconnect(): void {
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.logger.info('disconnect', 'Closing WebSocket connection.');
+      this.socket.close();
+      this.socket = undefined;
+    }
   }
 
   public send(message: string): void {
