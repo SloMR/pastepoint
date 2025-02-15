@@ -57,11 +57,11 @@ async fn test_private_ws_upgrade() {
 
     let code = "TESTCODE123";
     session_manager
-        .get_or_create_session_uuid(code, false)
+        .get_or_create_session_uuid(code, false, true)
         .expect("Failed to create session UUID in non-strict mode first");
 
     session_manager
-        .get_or_create_session_uuid(code, true)
+        .get_or_create_session_uuid(code, true, true)
         .expect("Failed to retrieve session UUID in strict mode");
 
     let app = test::init_service(
@@ -120,17 +120,17 @@ async fn test_session_manager() {
     let manager = SessionStore::default();
     let ip = "127.0.0.1";
     let uuid1 = manager
-        .get_or_create_session_uuid(ip, false)
+        .get_or_create_session_uuid(ip, false, false)
         .expect("Failed to create UUID");
     let uuid2 = manager
-        .get_or_create_session_uuid(ip, true)
+        .get_or_create_session_uuid(ip, true, false)
         .expect("Failed to create UUID");
 
     assert_eq!(uuid1, uuid2);
 
     let ip2 = "127.0.0.2";
     let uuid3 = manager
-        .get_or_create_session_uuid(ip2, false)
+        .get_or_create_session_uuid(ip2, false, false)
         .expect("Failed to create UUID");
 
     assert_ne!(uuid1, uuid3);
