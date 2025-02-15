@@ -84,6 +84,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   message = '';
   newRoomName = '';
+  SessionCode = '';
   newSessionCode = '';
 
   messages: ChatMessage[] = [];
@@ -182,8 +183,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Check if route has a session code in URL
     this.route.paramMap.subscribe((params) => {
-      const sessionCode = params.get('code') ?? undefined;
+      const sessionCode = params.get('code') ?? localStorage.getItem('SessionCode');
+
       if (sessionCode) {
+        this.SessionCode = sessionCode;
         this.connect(sessionCode);
       } else {
         this.chatService.clearMessages();
@@ -407,7 +410,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
       if (otherMembers.length === 0) {
         this.snackBar.open('No other users available to send the file.', 'Close', {
-          duration: 5000,
+          duration: 3000,
         });
         return;
       }
@@ -457,6 +460,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   joinRoom(room: string): void {
     if (room !== this.currentRoom) {
+      if (this.SessionCode) {
+        localStorage.removeItem('SessionCode');
+        this.SessionCode = '';
+      }
       this.roomService.joinRoom(room);
       this.currentRoom = room;
       this.isMenuOpen = false;
@@ -517,7 +524,33 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   private openChatSession(code: string): void {
+    if (this.SessionCode) {
+      localStorage.removeItem('SessionCode');
+      this.SessionCode = '';
+    }
+    localStorage.setItem('SessionCode', code);
     window.open(`/chat/${code}`, '_self');
+  }
+
+  /**
+   * ==========================================================
+   * COPY SESSION CODE
+   * Copies the current session code to the user's clipboard.
+   * ==========================================================
+   */
+  copySessionCode(): void {
+    if (!this.SessionCode) {
+      this.snackBar.open('No session code to copy', 'Close', { duration: 3000 });
+      return;
+    }
+
+    navigator.clipboard.writeText(this.SessionCode).then(
+      () => this.snackBar.open('Session code copied!', 'Close', { duration: 3000 }),
+      (err) => {
+        console.error('Failed to copy session code:', err);
+        this.snackBar.open('Failed to copy session code', 'Close', { duration: 3000 });
+      }
+    );
   }
 
   /**
@@ -544,6 +577,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.chatService.clearMessages();
     clearTimeout(this.emojiPickerTimeout);
     this.messages = [];
+
+    if (this.SessionCode) {
+      localStorage.removeItem('SessionCode');
+      this.SessionCode = '';
+    }
   }
 
   /**

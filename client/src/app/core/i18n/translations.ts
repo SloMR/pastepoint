@@ -35,6 +35,8 @@ export const translations: Record<LanguageCode, TranslationData> = {
     PAGE_NOT_FOUND: 'Page Not Found',
     INVALID_LINK_MESSAGE:
       'Oops! You might have typed an incorrect link or the session code is invalid.',
+    PRIVATE_SESSION_HELP:
+      'This is your private session code. Copy it and share it with your friends so they can join.',
   },
   ar: {
     APP_TITLE: 'PastePoint',
@@ -67,5 +69,7 @@ export const translations: Record<LanguageCode, TranslationData> = {
     GO_BACK_HOME: 'العودة للصفحة الرئيسية',
     PAGE_NOT_FOUND: 'الصفحة غير موجودة',
     INVALID_LINK_MESSAGE: 'عذرًا! قد تكون أخطأت في كتابة الرابط أو أن رمز الجلسة غير صحيح.',
+    PRIVATE_SESSION_HELP:
+      'هذه هي رموز جلستك الخاصة. قم بنسخها ومشاركتها مع أصدقائك حتى يتمكنوا من الانضمام.',
   },
 };
