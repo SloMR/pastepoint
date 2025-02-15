@@ -900,6 +900,7 @@
       <div
         #messageContainer
         class="flex-1 overflow-y-auto border-r p-4 space-y-4 border-primary-300 bg-primary-200 dark:border-secondary-700 dark:bg-secondary-700"
+        [ngClass]="{ 'dark-scrollbar': isDarkMode, 'light-scrollbar': !isDarkMode }"
       >
         <div
           *ngFor="let msg of messages"
