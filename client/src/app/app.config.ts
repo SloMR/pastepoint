@@ -13,6 +13,7 @@ import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { InMemoryTranslateLoader } from './core/i18n/translate-loader';
 import { ThemeService } from './core/services/theme.service';
 import { provideHttpClient } from '@angular/common/http';
+import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 
 // Theme initialization function
 export function initializeTheme(themeService: ThemeService): () => void {
@@ -22,6 +23,7 @@ export function initializeTheme(themeService: ThemeService): () => void {
 export const appConfig: ApplicationConfig = {
   providers: [
     provideHttpClient(),
+    provideAnimationsAsync(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideClientHydration(withEventReplay()),

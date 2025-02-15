@@ -48,7 +48,7 @@ pub async fn chat_ws(
 
         store.start_websocket(config.get_ref(), &req, stream, &ip_str, false, false)
     } else {
-        log::error!("[Websocket] No Public IP address found!");
+        log::debug!("[Websocket] No Public IP address found!");
         Ok(HttpResponse::BadRequest().body("No Public IP Address found"))
     }
 }
@@ -67,7 +67,7 @@ pub async fn private_chat_ws(
     let code = path.into_inner();
     log::debug!("[Websocket] Received session code: {}", code);
     if code.trim().is_empty() {
-        log::warn!("[Websocket] Empty code => returning 400");
+        log::debug!("[Websocket] Empty code => returning 400");
         return Ok(HttpResponse::BadRequest().body("Session code cannot be empty"));
     }
 

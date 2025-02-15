@@ -91,7 +91,7 @@ impl WsChatServer {
                             room_name
                         );
                     } else {
-                        log::warn!(
+                        log::debug!(
                             "[Websocket] Failed to send join message to client {}, removing from room: {}",
                             id,
                             room_name
@@ -103,7 +103,7 @@ impl WsChatServer {
 
             Some(())
         } else {
-            log::error!(
+            log::debug!(
                 "[Websocket] Room {} not found in session {}",
                 room_name,
                 session_id
@@ -174,12 +174,12 @@ impl WsChatServer {
 
 impl SystemService for WsChatServer {
     fn service_started(&mut self, _ctx: &mut Context<Self>) {
-        log::info!("[Websocket] WsChatServer started");
+        log::debug!("[Websocket] WsChatServer started");
     }
 }
 
 impl Supervised for WsChatServer {
     fn restarting(&mut self, _ctx: &mut Context<Self>) {
-        log::info!("[Websocket] WsChatServer restarting");
+        log::debug!("[Websocket] WsChatServer restarting");
     }
 }

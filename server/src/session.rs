@@ -110,7 +110,7 @@ impl WsChatSession {
                 ctx.text(format!("[SystemName] {}", self.name));
             }
             _ => {
-                log::error!("[Websocket] Unknown command: '{}'", cmd);
+                log::debug!("[Websocket] Unknown command: '{}'", cmd);
                 ctx.text(format!(
                     "[SystemError] Error Unknown command: {}",
                     ServerError::NotFound
@@ -177,7 +177,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                     log::debug!("[Websocket] Received disconnect command");
                     self.handle_user_disconnect();
                 } else {
-                    log::error!("[Websocket] Unknown command: {}", msg);
+                    log::debug!("[Websocket] Unknown command: {}", msg);
                     ctx.text(format!(
                         "[SystemError] Error Unknown command: {}",
                         ServerError::NotFound

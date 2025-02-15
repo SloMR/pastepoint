@@ -94,7 +94,7 @@ impl Handler<RelaySignalMessage> for WsChatServer {
         let RelaySignalMessage { from, to, message } = msg;
 
         if from == to {
-            log::warn!(
+            log::debug!(
                 "[Websocket] Skipping self-to-self signal from '{}' to '{}'",
                 from,
                 to

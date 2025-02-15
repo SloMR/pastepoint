@@ -140,18 +140,23 @@ impl SessionStore {
                     uuid
                 );
                 let mut map = self.key_to_session.lock().expect("lock poisoned");
-                let expired_keys: Vec<String> = map
+                // Remove all keys mapping to this UUID.
+                let keys: Vec<(String, bool)> = map
                     .iter()
-                    .filter(|(_, data)| data.uuid == *uuid && data.is_private)
-                    .map(|(k, _)| k.clone())
+                    .filter(|(_, data)| data.uuid == *uuid)
+                    .map(|(k, data)| (k.clone(), data.is_private))
                     .collect();
-                for key in expired_keys {
+                for (key, is_private) in keys {
                     map.remove(&key);
-                    self.expired_private_codes
-                        .lock()
-                        .unwrap()
-                        .insert(key.clone());
-                    log::debug!("[Websocket] Private session code {} marked as expired", key);
+                    if is_private {
+                        self.expired_private_codes
+                            .lock()
+                            .unwrap()
+                            .insert(key.clone());
+                        log::debug!("[Websocket] Private session code {} marked as expired", key);
+                    } else {
+                        log::debug!("[Websocket] Public session code {} removed", key);
+                    }
                 }
             }
         } else {
