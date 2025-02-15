@@ -41,7 +41,7 @@ impl Actor for WsChatSession {
             log::debug!("[Websocket] Removing client {} from session", uuid);
             self.session_store.remove_client(&uuid);
         } else {
-            log::error!(
+            log::debug!(
                 "[Websocket] Invalid UUID format for session_id: {}",
                 self.session_id
             );
