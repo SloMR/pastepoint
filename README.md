@@ -85,7 +85,7 @@ pastepoint/
 - `public/`: Static assets.
 - `src/app/core/i18n/`: Internationalization files.
 - `src/app/core/services/`: Services for WebSocket communication.
-- `src/app/core/environments/`: Environment configurations.
+- `src/environments/`: Environment configurations.
 
 #### Deployment:
 - `docker-compose.yml`: Manages containers for the backend, frontend, and SSL certificate generator.
@@ -158,7 +158,7 @@ pastepoint/
 - **Backend**:
     - `server/config/*.toml`: Update configurations for development and production environments.
 - **Frontend**:
-    - `client/src/app/core/environments/*`: Update environment variables for development and production.
+    - `client/src/environments/*`: Update environment variables for development and production.
 
 ---
 
