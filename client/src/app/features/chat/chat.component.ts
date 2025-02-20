@@ -97,6 +97,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   isDarkMode = false;
   isMenuOpen = false;
   isEmojiPickerVisible = false;
+  isDragging = false;
 
   activeUploads: any[] = [];
   activeDownloads: any[] = [];
@@ -690,5 +691,84 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const chosenEmoji = event.emoji.native;
     this.message = (this.message || '') + chosenEmoji;
+  }
+
+  /**
+   * ==========================================================
+   * HANDLE DRAG ENTER
+   * Manages the drag enter state
+   * ==========================================================
+   */
+  protected handleDragEnter(): void {
+    if (!this.isDragging) {
+      this.isDragging = true;
+    }
+  }
+
+  /**
+   * ==========================================================
+   * HANDLE DRAG LEAVE
+   * Manages the drag leave state
+   * ==========================================================
+   */
+  protected handleDragLeave(event: DragEvent): void {
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+    const x = event.clientX;
+    const y = event.clientY;
+
+    if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
+      this.isDragging = false;
+    }
+  }
+
+  /**
+   * ==========================================================
+   * HANDLE DRAG OVER
+   * Provides visual feedback during drag
+   * ==========================================================
+   */
+  protected handleDragOver(event: DragEvent): void {
+    event.preventDefault();
+    if (event.dataTransfer) {
+      event.dataTransfer.dropEffect = 'copy';
+    }
+  }
+
+  /**
+   * ==========================================================
+   * HANDLE DROP
+   * Processes files dropped into the chat area
+   * ==========================================================
+   */
+  protected handleDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.isDragging = false;
+    if (!event.dataTransfer?.files) return;
+
+    const files = Array.from(event.dataTransfer.files);
+    if (files.length === 0) return;
+
+    const otherMembers = this.members.filter((m) => m !== this.userService.user);
+    if (otherMembers.length === 0) {
+      this.snackBar.open(this.translate.instant('NO_USERS_FOR_UPLOAD'), 'Close', {
+        duration: 3000,
+      });
+      return;
+    }
+
+    files.forEach((file) => {
+      otherMembers.forEach((member) => {
+        this.fileTransferService.prepareFileForSending(file, member);
+        if (!this.webrtcService.isConnected(member)) {
+          this.webrtcService.initiateConnection(member);
+        }
+
+        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: boolean) => {
+          if (isOpen) {
+            this.fileTransferService.sendFileOffer(member);
+          }
+        });
+      });
+    });
   }
 }

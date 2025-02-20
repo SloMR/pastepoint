@@ -36,6 +36,7 @@
     "flowbite": "^3.0.0",
     "rxjs": "^7.8.1",
     "sweetalert2": "^11.15.10",
+    "uuid": "^11.1.0",
     "zone.js": "^0.15.0"
   },
   "devDependencies": {
