@@ -1,3 +1,4 @@
+use actix_cors::Cors;
 use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
@@ -41,9 +42,16 @@ async fn main() -> Result<()> {
     let server_config = Data::new(config.clone());
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("https://127.0.0.1") // Change this to your domain name or IP address
+            .allowed_methods(vec!["GET", "OPTIONS"])
+            .supports_credentials()
+            .max_age(3600);
+
         App::new()
             .wrap(Governor::new(&governor_conf))
             .wrap(Logger::default())
+            .wrap(cors)
             .app_data(session_manager.clone())
             .app_data(server_config.clone())
             .service(index)

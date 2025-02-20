@@ -9,7 +9,7 @@ fi
 # Assign the first argument to the new URL variable
 NEW_URL=$1
 NGINX_CONFIG="../nginx/nginx.conf"
-ANGULAR_CONFIG="../client/src/app/environments/environment.ts"
+ANGULAR_CONFIG="../client/src/environments/environment.ts"
 
 cp $NGINX_CONFIG "${NGINX_CONFIG}.bak"
 cp $ANGULAR_CONFIG "${ANGULAR_CONFIG}.bak"
