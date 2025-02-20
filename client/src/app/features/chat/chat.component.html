@@ -895,7 +895,13 @@
       ========== MAIN CHAT AREA ==========
       This includes the message container where messages appear and the input form.
     -->
-    <main class="flex flex-1 flex-col overflow-hidden bg-primary-100 dark:bg-secondary-800">
+    <main
+      class="flex flex-1 flex-col overflow-hidden bg-primary-100 dark:bg-secondary-800"
+      (dragover)="handleDragOver($event)"
+      (dragleave)="handleDragLeave($event)"
+      (dragenter)="handleDragEnter()"
+      (drop)="handleDrop($event)"
+    >
       <!-- MESSAGES CONTAINER -->
       <div
         #messageContainer
@@ -1010,22 +1016,47 @@
         <form
           #messageForm="ngForm"
           (submit)="sendMessage(messageForm); $event.preventDefault()"
-          class="flex items-center gap-2"
+          class="flex items-center gap-3"
         >
-          <!-- TEXTAREA & ATTACHMENT -->
-          <div class="relative flex flex-1 items-center">
+          <!-- MAIN INPUT SECTION-->
+          <div class="relative flex flex-1 items-center transition-all duration-150 ease-in-out">
+            <!-- DRAG AND DROP OVERLAY -->
+            <div
+              *ngIf="isDragging"
+              class="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed bg-black/50 text-white backdrop-blur-sm border-primary-300 dark:border-secondary-400"
+            >
+              <div class="flex flex-row items-center gap-2">
+                <svg
+                  class="h-4 w-4 text-blue-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                  />
+                </svg>
+                <span class="text-xs font-medium">{{ 'DROP_FILES_HERE' | translate }}</span>
+              </div>
+            </div>
+
+            <!-- TEXTAREA FOR MESSAGE INPUT -->
             <textarea
               [(ngModel)]="message"
               name="message"
               rows="1"
-              class="w-full resize-none rounded-lg pr-10 pl-3 text-sm shadow-sm border-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:text-white sm:pl-9"
-              placeholder="{{ 'TYPE_YOUR_MESSAGE' | translate }}"
+              class="h-full w-full resize-none rounded-lg border px-10 py-3 text-sm border-secondary-300 placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-secondary-600 dark:bg-secondary-750 dark:placeholder-secondary-400 dark:text-white"
+              [placeholder]="(isDragging ? 'DROP_FILES_HERE' : 'TYPE_YOUR_MESSAGE') | translate"
               (keydown.enter)="onEnterKey($any($event), messageForm)"
             ></textarea>
 
-            <!-- EMOJI ICON (Desktop Hover) -->
-            <div
-              class="absolute top-2 left-2 hidden transition-opacity duration-300 text-secondary-500 hover:text-secondary-700 hover:opacity-80 sm:block dark:hover:text-secondary-300"
+            <!-- EMOJI PICKER BUTTON-->
+            <button
+              type="button"
+              class="absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-500 transition-colors duration-300 hover:textsecondary-700 dark:hover:text-secondary-300"
               (mouseenter)="isEmojiPickerVisible = true"
               (mouseleave)="handleEmojiIconMouseLeave()"
             >
@@ -1034,15 +1065,14 @@
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   stroke-width="2"
-                  d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01
-             M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
                 />
               </svg>
-            </div>
+            </button>
 
             <!-- EMOJI PICKER POPUP -->
             <div
-              class="absolute left-0 z-10 hidden w-72 rounded-lg border bg-white shadow-sm transition-opacity duration-300 -top-[420px] border-primary-300 dark:border-secondary-600 dark:bg-secondary-800 sm:block"
+              class="absolute bottom-full left-0 z-10 w-72 rounded-lg border shadow-lg transition-opacity duration-300 border-primary-300 bg-primary-100 dark:border-secondary-600 dark:bg-secondary-800"
               [ngStyle]="{
                 opacity: isEmojiPickerVisible ? '1' : '0',
                 pointerEvents: isEmojiPickerVisible ? 'auto' : 'none',
@@ -1063,16 +1093,14 @@
             <button
               type="button"
               (click)="fileInput.click()"
-              class="absolute top-2 right-2 p-1 transition-opacity duration-300 text-secondary-500 hover:text-secondary-700 hover:opacity-80 dark:hover:text-secondary-300"
+              class="absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-500 transition-colors duration-300 hover:text-secondary-700 dark:hover:text-secondary-300"
             >
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 2 24 24">
+              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   stroke-width="2"
-                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828
-             l6.414-6.586a4 4 0 00-5.656-5.656
-             l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
                 />
               </svg>
             </button>
@@ -1088,7 +1116,7 @@
           <!-- SEND MESSAGE BUTTON -->
           <button
             type="submit"
-            class="rounded-xl px-4 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
+            class="rounded-xl px-4 py-2 text-white transition-colors duration-300 bg-primary-600 hover:bg-primary-700"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -1123,11 +1151,12 @@
           class="inline-flex items-center text-primary-600 hover:underline dark:text-primary-400"
         >
           <svg
-            class="mr-1 h-5 w-5"
+            class="h-5 w-5"
             role="img"
             viewBox="0 0 24 24"
             fill="currentColor"
             xmlns="http://www.w3.org/2000/svg"
+            [class]="isRTL ? 'ml-1' : 'mr-1'"
           >
             <path
               d="M12 .296c-6.63 0-12 5.373-12 12 0 5.303
@@ -1159,11 +1188,12 @@
           class="inline-flex items-center text-primary-600 hover:underline dark:text-primary-400"
         >
           <svg
-            class="mr-1 h-5 w-5"
+            class="h-5 w-5"
             role="img"
             viewBox="0 0 24 24"
             fill="currentColor"
             xmlns="http://www.w3.org/2000/svg"
+            [class]="isRTL ? 'ml-1' : 'mr-1'"
           >
             <path
               d="M20.452 20.452h-3.555v-5.568c0-1.328-.027

@@ -37,6 +37,8 @@ export const translations: Record<LanguageCode, TranslationData> = {
       'Oops! You might have typed an incorrect link or the session code is invalid.',
     PRIVATE_SESSION_HELP:
       'This is your private session code. Copy it and share it with your friends so they can join.',
+    DROP_FILES_HERE: 'Drop files here',
+    NO_USERS_FOR_UPLOAD: 'No other users available to send the file.',
   },
   ar: {
     APP_TITLE: 'PastePoint',
@@ -71,5 +73,7 @@ export const translations: Record<LanguageCode, TranslationData> = {
     INVALID_LINK_MESSAGE: 'عذرًا! قد تكون أخطأت في كتابة الرابط أو أن رمز الجلسة غير صحيح.',
     PRIVATE_SESSION_HELP:
       'هذه هي رموز جلستك الخاصة. قم بنسخها ومشاركتها مع أصدقائك حتى يتمكنوا من الانضمام.',
+    DROP_FILES_HERE: 'أفلت الملفات هنا',
+    NO_USERS_FOR_UPLOAD: 'لا يوجد مستخدمين آخرين متاحين لإرسال الملف.',
   },
 };
