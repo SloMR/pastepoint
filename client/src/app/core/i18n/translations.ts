@@ -39,6 +39,7 @@ export const translations: Record<LanguageCode, TranslationData> = {
       'This is your private session code. Copy it and share it with your friends so they can join.',
     DROP_FILES_HERE: 'Drop files here',
     NO_USERS_FOR_UPLOAD: 'No other users available to send the file.',
+    COPYRIGHT_NOTICE: '© 2025 PastePoint. All rights reserved.',
   },
   ar: {
     APP_TITLE: 'PastePoint',
@@ -75,5 +76,6 @@ export const translations: Record<LanguageCode, TranslationData> = {
       'هذه هي رموز جلستك الخاصة. قم بنسخها ومشاركتها مع أصدقائك حتى يتمكنوا من الانضمام.',
     DROP_FILES_HERE: 'أفلت الملفات هنا',
     NO_USERS_FOR_UPLOAD: 'لا يوجد مستخدمين آخرين متاحين لإرسال الملف.',
+    COPYRIGHT_NOTICE: '© 2025 PastePoint. جميع الحقوق محفوظة.',
   },
 };
