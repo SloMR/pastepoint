@@ -476,7 +476,9 @@
           === MOBILE-ONLY FOOTER ===
           Hidden on medium+ (md:hidden => it won't show on desktop).
         -->
-        <footer class="mt-auto justify-items-center border-t p-4 border-primary-300 dark:border-secondary-700">
+        <footer
+          class="mt-auto justify-items-center border-t p-4 border-primary-300 dark:border-secondary-700"
+        >
           <p class="text-xs text-secondary-600 dark:text-secondary-300">
             {{ 'COPYRIGHT_NOTICE' | translate }}
           </p>
@@ -819,7 +821,9 @@
         <!--
           TRANSFERS SECTION (DESKTOP)
         -->
-        <div class="border-t p-4 no-geopattern border-primary-300 space-y-4 dark:border-secondary-700">
+        <div
+          class="border-t p-4 no-geopattern border-primary-300 space-y-4 dark:border-secondary-700"
+        >
           <div *ngIf="activeUploads.length > 0 || activeDownloads.length > 0">
             <h3
               class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
@@ -968,7 +972,9 @@
           >
             <div class="flex items-center justify-between">
               <div>
-                <h4 class="mb-1 text-sm font-medium no-geopattern text-secondary-900 dark:text-white">
+                <h4
+                  class="mb-1 text-sm font-medium no-geopattern text-secondary-900 dark:text-white"
+                >
                   {{ incomingFile.fromUser }} {{ 'WANTS_TO_SEND_FILE' | translate }}
                 </h4>
                 <p class="text-xs no-geopattern text-secondary-600 dark:text-secondary-300">
@@ -1015,14 +1021,18 @@
         ========== MESSAGE INPUT FORM ==========
         For composing and sending new messages (includes file attachments, emoji picker).
       -->
-      <div class="p-4 border-primary-300 bg-primary-150 dark:border-secondary-700 dark:bg-secondary-750">
+      <div
+        class="p-4 border-primary-300 bg-primary-150 dark:border-secondary-700 dark:bg-secondary-750"
+      >
         <form
           #messageForm="ngForm"
           (submit)="sendMessage(messageForm); $event.preventDefault()"
           class="flex items-center gap-3"
         >
           <!-- MAIN INPUT SECTION-->
-          <div class="relative flex flex-1 items-center transition-all duration-150 ease-in-out no-geopattern">
+          <div
+            class="relative flex flex-1 items-center transition-all duration-150 ease-in-out no-geopattern"
+          >
             <!-- DRAG AND DROP OVERLAY -->
             <div
               *ngIf="isDragging"
