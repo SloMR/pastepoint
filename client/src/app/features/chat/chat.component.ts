@@ -37,7 +37,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlowbiteService } from '../../core/services/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ChatMessage } from '../../utils/constants';
+import { ChatMessage, FileDownload, FileUpload } from '../../utils/constants';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session.service';
@@ -99,9 +99,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   isEmojiPickerVisible = false;
   isDragging = false;
 
-  activeUploads: any[] = [];
-  activeDownloads: any[] = [];
-  incomingFiles: any[] = [];
+  activeUploads: FileUpload[] = [];
+  activeDownloads: FileDownload[] = [];
+  incomingFiles: FileDownload[] = [];
 
   /**
    * ==========================================================
@@ -274,7 +274,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Listen for active file uploads
     this.subscriptions.push(
-      this.fileTransferService.activeUploads$.subscribe((uploads: any[]) => {
+      this.fileTransferService.activeUploads$.subscribe((uploads: FileUpload[]) => {
         this.activeUploads = uploads;
         this.cdr.detectChanges();
       })
@@ -282,7 +282,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Listen for active file downloads
     this.subscriptions.push(
-      this.fileTransferService.activeDownloads$.subscribe((downloads: any[]) => {
+      this.fileTransferService.activeDownloads$.subscribe((downloads: FileDownload[]) => {
         this.activeDownloads = downloads;
         this.cdr.detectChanges();
       })
@@ -290,7 +290,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Listen for incoming file offers
     this.subscriptions.push(
-      this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles: any[]) => {
+      this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles: FileDownload[]) => {
         this.incomingFiles = incomingFiles;
         this.cdr.detectChanges();
       })
@@ -441,7 +441,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * User confirms file download from another user.
    * ==========================================================
    */
-  public acceptIncomingFile(fileDownload: any): void {
+  public acceptIncomingFile(fileDownload: FileDownload): void {
     this.fileTransferService.startSavingFile(fileDownload.fromUser);
   }
 
@@ -451,8 +451,28 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * User declines file transfer request from another user.
    * ==========================================================
    */
-  public declineIncomingFile(fileDownload: any): void {
+  public declineIncomingFile(fileDownload: FileDownload): void {
     this.fileTransferService.declineFileOffer(fileDownload.fromUser);
+  }
+
+  /**
+   * ==========================================================
+   * CANCEL UPLOAD
+   * Invoked by the user to cancel an ongoing file upload.
+   * ==========================================================
+   */
+  public cancelUpload(upload: FileUpload): void {
+    this.fileTransferService.cancelUpload(upload.targetUser);
+  }
+
+  /**
+   * ==========================================================
+   * CANCEL DOWNLOAD
+   * Invoked by the user to cancel an ongoing file download.
+   * ==========================================================
+   */
+  public cancelDownload(download: FileDownload): void {
+    this.fileTransferService.cancelDownload(download.fromUser);
   }
 
   /**
@@ -613,26 +633,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     otherMembers.forEach((member) => {
       this.webrtcService.initiateConnection(member);
     });
-  }
-
-  /**
-   * ==========================================================
-   * CANCEL UPLOAD
-   * Invoked by the user to cancel an ongoing file upload.
-   * ==========================================================
-   */
-  public cancelUpload(upload: any): void {
-    this.fileTransferService.cancelUpload(upload.targetUser);
-  }
-
-  /**
-   * ==========================================================
-   * CANCEL DOWNLOAD
-   * Invoked by the user to cancel an ongoing file download.
-   * ==========================================================
-   */
-  public cancelDownload(download: any): void {
-    this.fileTransferService.cancelDownload(download.fromUser);
   }
 
   /**

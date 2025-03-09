@@ -6,26 +6,11 @@ import { WebRTCService } from './webrtc.service';
 import {
   CHUNK_SIZE,
   FILE_TRANSFER_MESSAGE_TYPES,
+  FileDownload,
+  FileStatus,
+  FileUpload,
   MAX_BUFFERED_AMOUNT,
 } from '../../utils/constants';
-
-interface FileUpload {
-  file: File;
-  currentOffset: number;
-  isPaused: boolean;
-  targetUser: string;
-  progress: number;
-}
-
-interface FileDownload {
-  fileName: string;
-  fileSize: number;
-  fromUser: string;
-  receivedSize: number;
-  dataBuffer: Uint8Array[];
-  progress: number;
-  isAccepted: boolean;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -39,7 +24,7 @@ export class FileTransferService {
 
   private fileTransfers = new Map<string, FileUpload>();
   private incomingFileTransfers = new Map<string, FileDownload>();
-  private fileTransferStatus = new Map<string, 'pending' | 'accepted' | 'declined' | 'completed'>();
+  private fileTransferStatus = new Map<string, FileStatus>();
 
   private get logger() {
     if (!this._logger) {
