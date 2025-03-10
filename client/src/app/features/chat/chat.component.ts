@@ -34,13 +34,14 @@ import { WebSocketConnectionService } from '../../core/services/websocket-connec
 import { UserService } from '../../core/services/user.service';
 import { take } from 'rxjs/operators';
 import { FormsModule, NgForm } from '@angular/forms';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlowbiteService } from '../../core/services/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ChatMessage } from '../../utils/constants';
+import { ChatMessage, FileDownload, FileUpload } from '../../utils/constants';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session.service';
+import { ToastrService } from 'ngx-toastr';
+import packageJson from '../../../../package.json';
 
 /**
  * ==========================================================
@@ -99,10 +100,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   isEmojiPickerVisible = false;
   isDragging = false;
 
-  activeUploads: any[] = [];
-  activeDownloads: any[] = [];
-  incomingFiles: any[] = [];
+  activeUploads: FileUpload[] = [];
+  activeDownloads: FileDownload[] = [];
+  incomingFiles: FileDownload[] = [];
 
+  appVersion: string = packageJson.version;
   /**
    * ==========================================================
    * PRIVATE SUBSCRIPTIONS
@@ -152,7 +154,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private wsConnectionService: WebSocketConnectionService,
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
-    private snackBar: MatSnackBar,
+    private toaster: ToastrService,
     private flowbiteService: FlowbiteService,
     public translate: TranslateService,
     private sessionService: SessionService,
@@ -203,6 +205,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         if (username) {
           this.logger.info('ngOnInit', `Username is set to: ${username}`);
           this.initializeChat();
+        } else {
+          this.logger.warn('ngOnInit', 'Username is not set');
         }
       })
     );
@@ -274,7 +278,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Listen for active file uploads
     this.subscriptions.push(
-      this.fileTransferService.activeUploads$.subscribe((uploads: any[]) => {
+      this.fileTransferService.activeUploads$.subscribe((uploads: FileUpload[]) => {
         this.activeUploads = uploads;
         this.cdr.detectChanges();
       })
@@ -282,7 +286,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Listen for active file downloads
     this.subscriptions.push(
-      this.fileTransferService.activeDownloads$.subscribe((downloads: any[]) => {
+      this.fileTransferService.activeDownloads$.subscribe((downloads: FileDownload[]) => {
         this.activeDownloads = downloads;
         this.cdr.detectChanges();
       })
@@ -290,7 +294,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Listen for incoming file offers
     this.subscriptions.push(
-      this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles: any[]) => {
+      this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles: FileDownload[]) => {
         this.incomingFiles = incomingFiles;
         this.cdr.detectChanges();
       })
@@ -310,6 +314,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const sessionCode = params.get('code');
       if (!sessionCode) {
         this.connect();
+      } else {
+        this.toaster.error(
+          this.translate.instant('SESSION_NOT_FOUND'),
+          this.translate.instant('ERROR')
+        );
       }
     });
 
@@ -395,6 +404,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.message = '';
       messageForm.resetForm({ message: '' });
       this.scrollToBottom();
+    } else {
+      this.toaster.warning(this.translate.instant('MESSAGE_REQUIRED'));
     }
   }
 
@@ -412,9 +423,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
       if (otherMembers.length === 0) {
-        this.snackBar.open('No other users available to send the file.', 'Close', {
-          duration: 3000,
-        });
+        this.toaster.warning(this.translate.instant('NO_USERS_FOR_UPLOAD'));
         return;
       }
       filesToSend.forEach((fileToSend) => {
@@ -426,12 +435,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
           this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: any) => {
             if (isOpen) {
-              this.fileTransferService.sendFileOffer(member);
+              this.fileTransferService.sendAllFileOffers(member);
+            } else {
+              this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
             }
           });
         });
       });
       input.value = '';
+    } else {
+      this.toaster.warning(this.translate.instant('NO_FILES_SELECTED'));
     }
   }
 
@@ -441,8 +454,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * User confirms file download from another user.
    * ==========================================================
    */
-  public acceptIncomingFile(fileDownload: any): void {
-    this.fileTransferService.startSavingFile(fileDownload.fromUser);
+  public acceptIncomingFile(fileDownload: FileDownload): void {
+    this.fileTransferService.startSavingFile(fileDownload.fromUser, fileDownload.fileId);
   }
 
   /**
@@ -451,8 +464,28 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * User declines file transfer request from another user.
    * ==========================================================
    */
-  public declineIncomingFile(fileDownload: any): void {
-    this.fileTransferService.declineFileOffer(fileDownload.fromUser);
+  public declineIncomingFile(fileDownload: FileDownload): void {
+    this.fileTransferService.declineFileOffer(fileDownload.fromUser, fileDownload.fileId);
+  }
+
+  /**
+   * ==========================================================
+   * CANCEL UPLOAD
+   * Invoked by the user to cancel an ongoing file upload.
+   * ==========================================================
+   */
+  public cancelUpload(upload: FileUpload): void {
+    this.fileTransferService.cancelUpload(upload.targetUser, upload.fileId);
+  }
+
+  /**
+   * ==========================================================
+   * CANCEL DOWNLOAD
+   * Invoked by the user to cancel an ongoing file download.
+   * ==========================================================
+   */
+  public cancelDownload(download: FileDownload): void {
+    this.fileTransferService.cancelDownload(download.fromUser, download.fileId);
   }
 
   /**
@@ -470,6 +503,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.roomService.joinRoom(room);
       this.currentRoom = room;
       this.isMenuOpen = false;
+    } else {
+      this.toaster.warning(this.translate.instant('ALREADY_IN_ROOM'));
     }
   }
 
@@ -483,6 +518,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.newRoomName.trim() && this.newRoomName !== this.currentRoom) {
       this.joinRoom(this.newRoomName.trim());
       this.newRoomName = '';
+    } else {
+      this.toaster.warning(this.translate.instant('ENTER_VALID_ROOM'));
     }
   }
 
@@ -500,7 +537,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       },
       error: (err) => {
         console.error('Failed to create new session code:', err);
-        this.snackBar.open('Could not create session', 'Close', { duration: 3000 });
+        this.toaster.error(
+          this.translate.instant('SESSION_CREATION_FAILED'),
+          this.translate.instant('ERROR')
+        );
       },
     });
   }
@@ -543,15 +583,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   copySessionCode(): void {
     if (!this.SessionCode) {
-      this.snackBar.open('No session code to copy', 'Close', { duration: 3000 });
+      this.toaster.warning(this.translate.instant('NO_SESSION_TO_COPY'));
       return;
     }
 
     navigator.clipboard.writeText(this.SessionCode).then(
-      () => this.snackBar.open('Session code copied!', 'Close', { duration: 3000 }),
+      () => this.toaster.success(this.translate.instant('COPY_SESSION_SUCCESS')),
       (err) => {
         console.error('Failed to copy session code:', err);
-        this.snackBar.open('Failed to copy session code', 'Close', { duration: 3000 });
+        this.toaster.error(
+          this.translate.instant('COPY_SESSION_FAILED'),
+          this.translate.instant('ERROR')
+        );
       }
     );
   }
@@ -613,26 +656,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     otherMembers.forEach((member) => {
       this.webrtcService.initiateConnection(member);
     });
-  }
-
-  /**
-   * ==========================================================
-   * CANCEL UPLOAD
-   * Invoked by the user to cancel an ongoing file upload.
-   * ==========================================================
-   */
-  public cancelUpload(upload: any): void {
-    this.fileTransferService.cancelUpload(upload.targetUser);
-  }
-
-  /**
-   * ==========================================================
-   * CANCEL DOWNLOAD
-   * Invoked by the user to cancel an ongoing file download.
-   * ==========================================================
-   */
-  public cancelDownload(download: any): void {
-    this.fileTransferService.cancelDownload(download.fromUser);
   }
 
   /**
@@ -750,9 +773,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
     if (otherMembers.length === 0) {
-      this.snackBar.open(this.translate.instant('NO_USERS_FOR_UPLOAD'), 'Close', {
-        duration: 3000,
-      });
+      this.toaster.info(this.translate.instant('NO_USERS_FOR_UPLOAD'));
       return;
     }
 
@@ -765,7 +786,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
         this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: boolean) => {
           if (isOpen) {
-            this.fileTransferService.sendFileOffer(member);
+            this.fileTransferService.sendAllFileOffers(member);
+          } else {
+            this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
           }
         });
       });

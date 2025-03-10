@@ -17,7 +17,8 @@ import {
   RTC_SIGNALING_STATES,
   SignalMessageType,
 } from '../../utils/constants';
-import Swal from 'sweetalert2';
+import { ToastrService } from 'ngx-toastr';
+import { TranslateService } from '@ngx-translate/core';
 
 interface SignalMessage {
   type: SignalMessageType;
@@ -40,16 +41,26 @@ export class WebRTCService {
 
   public dataChannelOpen$ = new BehaviorSubject<boolean>(false);
   public chatMessages$ = new Subject<ChatMessage>();
+
   public fileOffers$ = new Subject<{
     fileName: string;
     fileSize: number;
     fromUser: string;
+    fileId: string;
   }>();
-  public fileResponses$ = new Subject<{ accepted: boolean; fromUser: string }>();
-  public incomingData$ = new Subject<{ data: ArrayBuffer; fromUser: string }>();
-  public fileUploadCancelled$ = new Subject<{ fromUser: string }>();
-  public fileDownloadCancelled$ = new Subject<{ fromUser: string }>();
+  public fileResponses$ = new Subject<{ accepted: boolean; fromUser: string; fileId: string }>();
+  public fileUploadCancelled$ = new Subject<{ fromUser: string; fileId: string }>();
+  public fileDownloadCancelled$ = new Subject<{ fromUser: string; fileId: string }>();
   public bufferedAmountLow$ = new Subject<string>();
+  public incomingFileChunk$ = new Subject<{
+    fromUser: string;
+    fileId: string;
+    chunk: ArrayBuffer;
+  }>();
+  private pendingChunks = new Map<
+    string, // fromUser
+    { fileId: string; chunkSize: number }
+  >();
 
   private peerConnections = new Map<string, RTCPeerConnection>();
   private dataChannels = new Map<string, RTCDataChannel>();
@@ -70,10 +81,17 @@ export class WebRTCService {
     private loggerService: LoggerService,
     private wsService: WebSocketConnectionService,
     private userService: UserService,
-    private zone: NgZone
+    private zone: NgZone,
+    private toaster: ToastrService,
+    public translate: TranslateService
   ) {
     this.wsService.signalMessages$.subscribe((message) => {
-      if (message) this.handleSignalMessage(message);
+      if (message) {
+        this.logger.debug('WebRTCService', `Received signal message: ${JSON.stringify(message)}`);
+        this.handleSignalMessage(message);
+      } else {
+        this.logger.warn('WebRTCService', 'Received empty signal message');
+      }
     });
   }
 
@@ -165,6 +183,11 @@ export class WebRTCService {
         peerConnection.connectionState === 'disconnected'
       ) {
         this.handleDisconnection(targetUser);
+      } else {
+        this.logger.info(
+          'createPeerConnection',
+          `Connection state with ${targetUser}: ${peerConnection.connectionState}`
+        );
       }
     };
 
@@ -174,6 +197,11 @@ export class WebRTCService {
         peerConnection.iceConnectionState === 'failed'
       ) {
         this.handleDisconnection(targetUser);
+      } else {
+        this.logger.info(
+          'createPeerConnection',
+          `ICE connection state with ${targetUser}: ${peerConnection.iceConnectionState}`
+        );
       }
     };
 
@@ -200,6 +228,8 @@ export class WebRTCService {
           }
         });
         this.messageQueues.set(targetUser, []);
+      } else {
+        this.logger.info('setupDataChannel', `No queued messages for ${targetUser}`);
       }
     };
 
@@ -262,11 +292,10 @@ export class WebRTCService {
         'handleDisconnection',
         `Max reconnection attempts reached for ${targetUser}. Could not reconnect.`
       );
-      Swal.fire({
-        icon: 'warning',
-        title: 'Connection Lost',
-        text: 'Could not reconnect to the user. Please try again later.',
-      }).then(() => {});
+      this.toaster.warning(
+        this.translate.instant('CONNECTION_LOST'),
+        this.translate.instant('CONNECTION_LOST_DESC')
+      );
       this.closePeerConnection(targetUser);
     }
   }
@@ -285,6 +314,7 @@ export class WebRTCService {
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER:
             this.logger.info('handleDataChannelMessage', `Received file offer from ${targetUser}`);
             this.fileOffers$.next({
+              fileId: message.payload.fileId,
               fileName: message.payload.fileName,
               fileSize: message.payload.fileSize,
               fromUser: targetUser,
@@ -295,40 +325,86 @@ export class WebRTCService {
               'handleDataChannelMessage',
               `Received file acceptance from ${targetUser}`
             );
-            this.fileResponses$.next({ accepted: true, fromUser: targetUser });
+            this.fileResponses$.next({
+              accepted: true,
+              fromUser: targetUser,
+              fileId: message.payload.fileId,
+            });
             break;
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_DECLINE:
             this.logger.info(
               'handleDataChannelMessage',
               `Received file decline from ${targetUser}`
             );
-            this.fileResponses$.next({ accepted: false, fromUser: targetUser });
+            this.fileResponses$.next({
+              accepted: false,
+              fromUser: targetUser,
+              fileId: message.payload.fileId,
+            });
             break;
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_UPLOAD:
             this.logger.info(
               'handleDataChannelMessage',
               `Received uploading file cancellation from ${targetUser}`
             );
-            this.fileUploadCancelled$.next({ fromUser: targetUser });
+            this.fileUploadCancelled$.next({
+              fromUser: targetUser,
+              fileId: message.payload.fileId,
+            });
             break;
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_DOWNLOAD:
             this.logger.info(
               'handleDataChannelMessage',
               `Received downloading file cancellation from ${targetUser}`
             );
-            this.fileDownloadCancelled$.next({ fromUser: targetUser });
+            this.fileDownloadCancelled$.next({
+              fromUser: targetUser,
+              fileId: message.payload.fileId,
+            });
             break;
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_CHUNK: {
+            const { fileId, chunkSize } = message.payload;
+            this.logger.info(
+              'handleDataChannelMessage',
+              `Received chunk metadata from ${targetUser} (fileId=${fileId}, chunkSize=${chunkSize})`
+            );
+
+            this.pendingChunks.set(targetUser, { fileId, chunkSize });
+            break;
+          }
           default:
             this.logger.warn('handleDataChannelMessage', `Unknown message type: ${message.type}`);
         }
       } else if (data instanceof ArrayBuffer) {
-        this.zone.run(() => {
-          this.incomingData$.next({ data, fromUser: targetUser });
-        });
+        const chunkMeta = this.pendingChunks.get(targetUser);
+
+        if (chunkMeta) {
+          const { fileId, chunkSize } = chunkMeta;
+
+          if (data.byteLength !== chunkSize) {
+            this.logger.warn(
+              'handleDataChannelMessage',
+              `Got chunk of size ${data.byteLength}, expected ${chunkSize} (fileId=${fileId})`
+            );
+          }
+
+          this.incomingFileChunk$.next({
+            fromUser: targetUser,
+            fileId: fileId,
+            chunk: data,
+          });
+
+          this.pendingChunks.delete(targetUser);
+        } else {
+          this.logger.warn(
+            'handleDataChannelMessage',
+            `Raw ArrayBuffer from ${targetUser} but no fileId in pendingChunks.`
+          );
+        }
       } else {
         this.logger.warn(
           'handleDataChannelMessage',
-          `Unknown data type received from ${targetUser}: ${data}`
+          `Unknown data type from ${targetUser}: ${typeof data}`
         );
       }
     });
@@ -478,6 +554,8 @@ export class WebRTCService {
         `Invalid state for answer: ${peerConnection.signalingState}`
       );
       return this.handleStateMismatch(targetUser);
+    } else {
+      this.logger.debug('handleAnswer', `Valid state for answer: ${peerConnection.signalingState}`);
     }
 
     if (this.isDuplicateMessage(targetUser, message.sequence)) {
@@ -494,12 +572,16 @@ export class WebRTCService {
 
         if (peerConnection.signalingState !== RTC_SIGNALING_STATES.STABLE) {
           throw new Error(`Unexpected post-answer state: ${peerConnection.signalingState}`);
+        } else {
+          this.logger.debug('handleAnswer', `Connection established with ${targetUser}`);
         }
       })
       .catch((error) => {
         this.logger.error('handleAnswer', `Answer handling failed: ${error}`);
         if (error.toString().includes('InvalidStateError')) {
           this.reconnect(targetUser);
+        } else {
+          this.logger.error('handleAnswer', `Answer handling failed: ${error}`);
         }
       });
   }
@@ -549,6 +631,9 @@ export class WebRTCService {
       const queue = this.candidateQueues.get(targetUser);
       if (queue) {
         queue.push(message.data);
+      } else {
+        this.logger.warn('handleCandidate', `No candidate queue for ${targetUser}`);
+        this.candidateQueues.set(targetUser, [message.data]);
       }
     }
   }
@@ -565,6 +650,8 @@ export class WebRTCService {
         });
       });
       queue.length = 0;
+    } else {
+      this.logger.warn('processCandidateQueue', `No candidate queue for ${targetUser}`);
     }
   }
 

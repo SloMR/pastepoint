@@ -401,72 +401,77 @@
           TRANSFERS SECTION (ACTIVE UPLOADS / DOWNLOADS)
         -->
         <div class="border-t p-4 border-primary-300 space-y-4 dark:border-secondary-700">
-          <div *ngIf="activeUploads.length > 0 || activeDownloads.length > 0">
+          <div
+            class="max-h-52 overflow-y-auto"
+            [ngClass]="{ 'dark-scrollbar': isDarkMode, 'light-scrollbar': !isDarkMode }"
+          >
             <h3
               class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
             >
               {{ 'TRANSFERS' | translate }}
             </h3>
-            <div class="space-y-3">
-              <!-- ACTIVE UPLOADS -->
-              <div *ngFor="let transfer of activeUploads" class="text-sm">
-                <div class="mb-1 flex items-center justify-between">
-                  <span class="truncate text-secondary-700 dark:text-secondary-300">
-                    {{ transfer.file.name | slice: 0 : 15 }}
-                  </span>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs text-secondary-500">{{ transfer.progress }}%</span>
-                    <button
-                      (click)="cancelUpload(transfer)"
-                      class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
-                    >
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+            <div *ngIf="activeUploads.length > 0 || activeDownloads.length > 0">
+              <div class="space-y-3">
+                <!-- ACTIVE UPLOADS -->
+                <div *ngFor="let transfer of activeUploads" class="text-sm">
+                  <div class="mb-1 flex items-center justify-between">
+                    <span class="truncate text-secondary-700 dark:text-secondary-300">
+                      {{ transfer.file.name | slice: 0 : 15 }}
+                    </span>
+                    <div class="flex items-center gap-1">
+                      <span class="text-xs text-secondary-500">{{ transfer.progress }}%</span>
+                      <button
+                        (click)="cancelUpload(transfer)"
+                        class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
+                      >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
+                    <div
+                      class="rounded-full bg-primary-600 h-1.5"
+                      [style.width]="transfer.progress + '%'"
+                    ></div>
                   </div>
                 </div>
-                <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
-                  <div
-                    class="rounded-full bg-primary-600 h-1.5"
-                    [style.width]="transfer.progress + '%'"
-                  ></div>
-                </div>
-              </div>
 
-              <!-- ACTIVE DOWNLOADS -->
-              <div *ngFor="let download of activeDownloads" class="text-sm">
-                <div class="mb-1 flex items-center justify-between">
-                  <span class="truncate text-secondary-700 dark:text-secondary-300">
-                    {{ download.fileName | slice: 0 : 15 }}
-                  </span>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs text-secondary-500"> {{ download.progress }}% </span>
-                    <button
-                      (click)="cancelDownload(download)"
-                      class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
-                    >
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+                <!-- ACTIVE DOWNLOADS -->
+                <div *ngFor="let download of activeDownloads" class="text-sm">
+                  <div class="mb-1 flex items-center justify-between">
+                    <span class="truncate text-secondary-700 dark:text-secondary-300">
+                      {{ download.fileName | slice: 0 : 15 }}
+                    </span>
+                    <div class="flex items-center gap-1">
+                      <span class="text-xs text-secondary-500"> {{ download.progress }}% </span>
+                      <button
+                        (click)="cancelDownload(download)"
+                        class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
+                      >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
-                  <div
-                    class="rounded-full bg-success-600 h-1.5"
-                    [style.width]="download.progress + '%'"
-                  ></div>
+                  <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
+                    <div
+                      class="rounded-full bg-success-600 h-1.5"
+                      [style.width]="download.progress + '%'"
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -482,7 +487,6 @@
           <p class="text-xs text-secondary-600 dark:text-secondary-300">
             {{ 'COPYRIGHT_NOTICE' | translate }}
           </p>
-
           <div class="mt-2 flex items-center gap-3">
             <!-- GitHub Icon & Link -->
             <a
@@ -554,6 +558,11 @@
               <p class="text-xs">LinkedIn</p>
             </a>
           </div>
+          <!-- Version Display -->
+          <p class="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
+            {{ 'VERSION' | translate }}
+            <span class="font-medium text-primary-600 dark:text-primary-400">{{ appVersion }}</span>
+          </p>
         </footer>
       </div>
     </aside>
@@ -594,7 +603,10 @@
         </div>
 
         <!-- MAIN SIDEBAR CONTENT (DESKTOP) -->
-        <div class="flex-1 overflow-y-auto p-4 no-geopattern space-y-4">
+        <div
+          class="flex-1 overflow-y-auto p-4 no-geopattern space-y-4"
+          [ngClass]="{ 'dark-scrollbar': isDarkMode, 'light-scrollbar': !isDarkMode }"
+        >
           <!-- ROOMS LIST (DESKTOP) -->
           <div>
             <h3
@@ -824,72 +836,77 @@
         <div
           class="border-t p-4 no-geopattern border-primary-300 space-y-4 dark:border-secondary-700"
         >
-          <div *ngIf="activeUploads.length > 0 || activeDownloads.length > 0">
+          <div
+            class="max-h-52 overflow-y-auto"
+            [ngClass]="{ 'dark-scrollbar': isDarkMode, 'light-scrollbar': !isDarkMode }"
+          >
             <h3
               class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
             >
               {{ 'TRANSFERS' | translate }}
             </h3>
-            <div class="space-y-3">
-              <!-- ACTIVE UPLOADS (DESKTOP) -->
-              <div *ngFor="let transfer of activeUploads" class="text-sm">
-                <div class="mb-1 flex items-center justify-between">
-                  <span class="truncate text-secondary-700 dark:text-secondary-300">
-                    {{ transfer.file.name | slice: 0 : 15 }}
-                  </span>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs text-secondary-500">{{ transfer.progress }}%</span>
-                    <button
-                      (click)="cancelUpload(transfer)"
-                      class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
-                    >
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+            <div *ngIf="activeUploads.length > 0 || activeDownloads.length > 0">
+              <div class="space-y-3">
+                <!-- ACTIVE UPLOADS (DESKTOP) -->
+                <div *ngFor="let transfer of activeUploads" class="text-sm">
+                  <div class="mb-1 flex items-center justify-between">
+                    <span class="truncate text-secondary-700 dark:text-secondary-300">
+                      {{ transfer.file.name | slice: 0 : 15 }}
+                    </span>
+                    <div class="flex items-center gap-1">
+                      <span class="text-xs text-secondary-500">{{ transfer.progress }}%</span>
+                      <button
+                        (click)="cancelUpload(transfer)"
+                        class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
+                      >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                  <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
+                    <div
+                      class="rounded-full bg-primary-600 h-1.5"
+                      [style.width]="transfer.progress + '%'"
+                    ></div>
                   </div>
                 </div>
-                <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
-                  <div
-                    class="rounded-full bg-primary-600 h-1.5"
-                    [style.width]="transfer.progress + '%'"
-                  ></div>
-                </div>
-              </div>
 
-              <!-- ACTIVE DOWNLOADS (DESKTOP) -->
-              <div *ngFor="let download of activeDownloads" class="text-sm">
-                <div class="mb-1 flex items-center justify-between">
-                  <span class="truncate text-secondary-700 dark:text-secondary-300">
-                    {{ download.fileName | slice: 0 : 15 }}
-                  </span>
-                  <div class="flex items-center gap-1">
-                    <span class="text-xs text-secondary-500"> {{ download.progress }}% </span>
-                    <button
-                      (click)="cancelDownload(download)"
-                      class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
-                    >
-                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
-                          stroke-width="2"
-                          d="M6 18L18 6M6 6l12 12"
-                        />
-                      </svg>
-                    </button>
+                <!-- ACTIVE DOWNLOADS (DESKTOP) -->
+                <div *ngFor="let download of activeDownloads" class="text-sm">
+                  <div class="mb-1 flex items-center justify-between">
+                    <span class="truncate text-secondary-700 dark:text-secondary-300">
+                      {{ download.fileName | slice: 0 : 15 }}
+                    </span>
+                    <div class="flex items-center gap-1">
+                      <span class="text-xs text-secondary-500"> {{ download.progress }}% </span>
+                      <button
+                        (click)="cancelDownload(download)"
+                        class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
+                      >
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            stroke-width="2"
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
-                  <div
-                    class="rounded-full bg-success-600 h-1.5"
-                    [style.width]="download.progress + '%'"
-                  ></div>
+                  <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
+                    <div
+                      class="rounded-full bg-success-600 h-1.5"
+                      [style.width]="download.progress + '%'"
+                    ></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1226,6 +1243,11 @@
           LinkedIn
         </a>
       </div>
+      <!-- Version Display -->
+      <p class="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
+        {{ 'VERSION' | translate }}
+        <span class="font-medium text-primary-600 dark:text-primary-400">{{ appVersion }}</span>
+      </p>
     </div>
   </footer>
 </div>

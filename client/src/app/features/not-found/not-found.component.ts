@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { ThemeService } from '../../core/services/theme.service';
+import packageJson from '../../../../package.json';
 
 @Component({
   imports: [CommonModule, RouterLink, NgOptimizedImage, TranslateModule],
@@ -12,6 +13,7 @@ import { ThemeService } from '../../core/services/theme.service';
 })
 export class NotFoundComponent implements OnInit {
   isDarkMode = false;
+  appVersion: string = packageJson.version;
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,

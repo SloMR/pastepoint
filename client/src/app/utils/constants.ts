@@ -84,3 +84,26 @@ export interface ChatMessage {
 
 // Logger service constants
 export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'TRACE';
+
+// File transfer interfaces
+export type FileStatus = 'pending' | 'accepted' | 'declined' | 'completed';
+
+export interface FileUpload {
+  fileId: string;
+  file: File;
+  currentOffset: number;
+  isPaused: boolean;
+  targetUser: string;
+  progress: number;
+}
+
+export interface FileDownload {
+  fileId: string;
+  fileName: string;
+  fileSize: number;
+  fromUser: string;
+  receivedSize: number;
+  dataBuffer: Uint8Array[];
+  progress: number;
+  isAccepted: boolean;
+}

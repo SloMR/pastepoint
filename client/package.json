@@ -1,6 +1,6 @@
 {
   "name": "client",
-  "version": "0.5.3",
+  "version": "0.6.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -34,8 +34,8 @@
     "@ngx-translate/http-loader": "^16.0.1",
     "express": "^4.21.2",
     "flowbite": "^3.0.0",
+    "ngx-toastr": "^19.0.0",
     "rxjs": "^7.8.1",
-    "sweetalert2": "^11.15.10",
     "uuid": "^11.1.0",
     "zone.js": "^0.15.0"
   },
@@ -58,6 +58,7 @@
     "prettier": "3.4.2",
     "stylelint": "^16.14.1",
     "stylelint-config-standard": "^37.0.0",
+    "stylelint-config-tailwindcss": "^1.0.0",
     "tailwindcss": "^3.4.14",
     "typescript": "~5.5.4"
   }

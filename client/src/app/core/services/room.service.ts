@@ -38,6 +38,8 @@ export class RoomService {
     if (room !== this.currentRoom) {
       this.wsService.send(`[UserCommand] /join ${room}`);
       this.currentRoom = room;
+    } else {
+      this.logger.warn('joinRoom', `Already in room: ${room}`);
     }
   }
 
@@ -47,19 +49,28 @@ export class RoomService {
       if (matchRooms) {
         const rooms = matchRooms[1].split(',').map((room: string) => room.trim());
         this.rooms$.next(rooms);
+      } else {
+        this.logger.warn('handleSystemMessage', `No rooms found in message: ${message}`);
       }
     } else if (message.includes('[SystemMembers]')) {
       const matchMembers = message.match(/\[SystemMembers]\s*(.*?)$/);
       if (matchMembers) {
         const members = matchMembers[1].split(',').map((member: string) => member.trim());
         this.members$.next(members);
+      } else {
+        this.logger.warn('handleSystemMessage', `No members found in message: ${message}`);
       }
     } else if (message.includes('[SystemJoin]')) {
       const matchJoin = message.match(/^(.*?)\s*\[SystemJoin]\s*(.*?)$/);
       if (matchJoin) {
         this.logger.info('handleSystemMessage', `User joined room ${matchJoin[2]}`);
         this.currentRoom = matchJoin[2];
+      } else {
+        this.logger.warn('handleSystemMessage', `No room to join found in message: ${message}`);
       }
+    } else {
+      this.logger.error('handleSystemMessage', `Unhandled system message: ${message}`);
+      return;
     }
   }
 }
