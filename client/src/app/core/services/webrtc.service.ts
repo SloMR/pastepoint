@@ -18,6 +18,7 @@ import {
   SignalMessageType,
 } from '../../utils/constants';
 import { ToastrService } from 'ngx-toastr';
+import { TranslateService } from '@ngx-translate/core';
 
 interface SignalMessage {
   type: SignalMessageType;
@@ -81,7 +82,8 @@ export class WebRTCService {
     private wsService: WebSocketConnectionService,
     private userService: UserService,
     private zone: NgZone,
-    private toaster: ToastrService
+    private toaster: ToastrService,
+    public translate: TranslateService
   ) {
     this.wsService.signalMessages$.subscribe((message) => {
       if (message) {
@@ -291,8 +293,8 @@ export class WebRTCService {
         `Max reconnection attempts reached for ${targetUser}. Could not reconnect.`
       );
       this.toaster.warning(
-        'Connection Lost',
-        'Could not reconnect to the user. Please try again later.'
+        this.translate.instant('CONNECTION_LOST'),
+        this.translate.instant('CONNECTION_LOST_DESC')
       );
       this.closePeerConnection(targetUser);
     }

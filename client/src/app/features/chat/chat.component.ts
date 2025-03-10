@@ -313,7 +313,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       if (!sessionCode) {
         this.connect();
       } else {
-        this.toaster.error('Session code not found', 'Error');
+        this.toaster.error(
+          this.translate.instant('SESSION_NOT_FOUND'),
+          this.translate.instant('ERROR')
+        );
       }
     });
 
@@ -400,7 +403,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       messageForm.resetForm({ message: '' });
       this.scrollToBottom();
     } else {
-      this.toaster.warning('Please enter a message before sending.');
+      this.toaster.warning(this.translate.instant('MESSAGE_REQUIRED'));
     }
   }
 
@@ -418,7 +421,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
       if (otherMembers.length === 0) {
-        this.toaster.warning('No other users available to send the file.');
+        this.toaster.warning(this.translate.instant('NO_USERS_FOR_UPLOAD'));
         return;
       }
       filesToSend.forEach((fileToSend) => {
@@ -432,14 +435,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
             if (isOpen) {
               this.fileTransferService.sendAllFileOffers(member);
             } else {
-              this.toaster.warning(this.translate.instant('DATA_CHANNEL_NOT_OPEN'));
+              this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
             }
           });
         });
       });
       input.value = '';
     } else {
-      this.toaster.warning('No files selected for upload.');
+      this.toaster.warning(this.translate.instant('NO_FILES_SELECTED'));
     }
   }
 
@@ -499,7 +502,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.currentRoom = room;
       this.isMenuOpen = false;
     } else {
-      this.toaster.warning('You are already in this room.');
+      this.toaster.warning(this.translate.instant('ALREADY_IN_ROOM'));
     }
   }
 
@@ -514,7 +517,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.joinRoom(this.newRoomName.trim());
       this.newRoomName = '';
     } else {
-      this.toaster.warning('Please enter a valid room name.');
+      this.toaster.warning(this.translate.instant('ENTER_VALID_ROOM'));
     }
   }
 
@@ -532,7 +535,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       },
       error: (err) => {
         console.error('Failed to create new session code:', err);
-        this.toaster.error('Could not create session', 'Error');
+        this.toaster.error(
+          this.translate.instant('SESSION_CREATION_FAILED'),
+          this.translate.instant('ERROR')
+        );
       },
     });
   }
@@ -575,15 +581,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   copySessionCode(): void {
     if (!this.SessionCode) {
-      this.toaster.warning('No session code to copy');
+      this.toaster.warning(this.translate.instant('NO_SESSION_TO_COPY'));
       return;
     }
 
     navigator.clipboard.writeText(this.SessionCode).then(
-      () => this.toaster.success('Session code copied!'),
+      () => this.toaster.success(this.translate.instant('COPY_SESSION_SUCCESS')),
       (err) => {
         console.error('Failed to copy session code:', err);
-        this.toaster.error('Failed to copy session code', 'Error');
+        this.toaster.error(
+          this.translate.instant('COPY_SESSION_FAILED'),
+          this.translate.instant('ERROR')
+        );
       }
     );
   }
@@ -777,7 +786,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           if (isOpen) {
             this.fileTransferService.sendAllFileOffers(member);
           } else {
-            this.toaster.warning(this.translate.instant('DATA_CHANNEL_NOT_OPEN'));
+            this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
           }
         });
       });

@@ -12,6 +12,7 @@ import {
 } from '../../utils/constants';
 import { ToastrService } from 'ngx-toastr';
 import { v4 as uuidv4 } from 'uuid';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root',
@@ -37,7 +38,8 @@ export class FileTransferService {
   constructor(
     private loggerService: LoggerService,
     private webrtcService: WebRTCService,
-    private toaster: ToastrService
+    private toaster: ToastrService,
+    public translate: TranslateService
   ) {
     this.webrtcService.incomingFileChunk$.subscribe(({ fromUser, fileId, chunk }) => {
       this.handleDataChunk(fileId, chunk, fromUser).then(() => {});
@@ -127,7 +129,7 @@ export class FileTransferService {
     const fileTransfer = userMap.get(fileId);
     if (!fileTransfer) {
       this.logger.error('sendFileOffer', `No file with id=${fileId} to send to ${targetUser}`);
-      this.showError('No file to send.', 'Error');
+      this.toaster.error(this.translate.instant('NO_FILE_TO_SEND'), 'Error');
       return;
     }
 
@@ -241,7 +243,10 @@ export class FileTransferService {
       },
     };
     this.webrtcService.sendData(message, fromUser);
-    this.showInfo('You declined the file transfer.', 'Declined');
+    this.toaster.info(
+      this.translate.instant('FILE_TRANSFER_DECLINED'),
+      this.translate.instant('DECLINED')
+    );
   }
 
   private async handleDataChunk(fileId: string, chunk: ArrayBuffer, fromUser: string) {
@@ -316,7 +321,7 @@ export class FileTransferService {
     const fileTransfer = userMap.get(fileId);
     if (!fileTransfer) {
       this.logger.error('startSendingFile', `No fileId=${fileId} for ${targetUser}`);
-      this.showError('No file to send.', 'Error');
+      this.toaster.error(this.translate.instant('NO_FILE_TO_SEND'), 'Error');
       return;
     }
     this.logger.info('startSendingFile', `Starting to send fileId=${fileId} to ${targetUser}`);
@@ -484,7 +489,10 @@ export class FileTransferService {
     this.updateIncomingFileOffers();
     this.updateActiveDownloads();
 
-    this.showInfo(`File upload from ${fromUser} was cancelled by the sender.`, 'Cancelled');
+    this.toaster.info(
+      this.translate.instant('FILE_UPLOAD_CANCELLED'),
+      this.translate.instant('CANCELLED')
+    );
   }
 
   private handleFileDownloadCancellation(fromUser: string, fileId: string): void {
@@ -504,7 +512,10 @@ export class FileTransferService {
     this.updateIncomingFileOffers();
     this.updateActiveUploads();
 
-    this.showInfo(`File download from ${fromUser} was cancelled by the sender.`, 'Cancelled');
+    this.toaster.info(
+      this.translate.instant('FILE_DOWNLOAD_CANCELLED'),
+      this.translate.instant('CANCELLED')
+    );
   }
 
   private updateActiveUploads(): void {
@@ -575,24 +586,13 @@ export class FileTransferService {
 
     if (allResponded && allStatuses.length > 0) {
       this.logger.info('checkAllUsersResponded', 'All files have been completed/declined.');
-      this.showSuccess('All files responded.', 'Success');
+      this.toaster.success(
+        this.translate.instant('ALL_FILES_RESPONDED'),
+        this.translate.instant('SUCCESS')
+      );
       this.fileTransfers.clear();
       this.fileTransferStatus.clear();
       this.updateActiveUploads();
     }
-  }
-
-  // ~~~~~~~~~~~~~~~~~~ UTILITY UI ALERTS ~~~~~~~~~~~~~~~~~~~~~~~~~~
-  // TODO: Move to new service.
-  private showInfo(message: string, title: string): void {
-    this.toaster.info(title, message);
-  }
-
-  private showError(message: string, title: string): void {
-    this.toaster.error(message, title);
-  }
-
-  private showSuccess(message: string, title: string): void {
-    this.toaster.success(title, message);
   }
 }
