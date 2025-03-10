@@ -405,12 +405,12 @@
             class="max-h-52 overflow-y-auto"
             [ngClass]="{ 'dark-scrollbar': isDarkMode, 'light-scrollbar': !isDarkMode }"
           >
+            <h3
+              class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
+            >
+              {{ 'TRANSFERS' | translate }}
+            </h3>
             <div *ngIf="activeUploads.length > 0 || activeDownloads.length > 0">
-              <h3
-                class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
-              >
-                {{ 'TRANSFERS' | translate }}
-              </h3>
               <div class="space-y-3">
                 <!-- ACTIVE UPLOADS -->
                 <div *ngFor="let transfer of activeUploads" class="text-sm">
@@ -487,7 +487,6 @@
           <p class="text-xs text-secondary-600 dark:text-secondary-300">
             {{ 'COPYRIGHT_NOTICE' | translate }}
           </p>
-
           <div class="mt-2 flex items-center gap-3">
             <!-- GitHub Icon & Link -->
             <a
@@ -559,6 +558,11 @@
               <p class="text-xs">LinkedIn</p>
             </a>
           </div>
+          <!-- Version Display -->
+          <p class="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
+            {{ 'VERSION' | translate }}
+            <span class="font-medium text-primary-600 dark:text-primary-400">{{ appVersion }}</span>
+          </p>
         </footer>
       </div>
     </aside>
@@ -836,12 +840,12 @@
             class="max-h-52 overflow-y-auto"
             [ngClass]="{ 'dark-scrollbar': isDarkMode, 'light-scrollbar': !isDarkMode }"
           >
+            <h3
+              class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
+            >
+              {{ 'TRANSFERS' | translate }}
+            </h3>
             <div *ngIf="activeUploads.length > 0 || activeDownloads.length > 0">
-              <h3
-                class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
-              >
-                {{ 'TRANSFERS' | translate }}
-              </h3>
               <div class="space-y-3">
                 <!-- ACTIVE UPLOADS (DESKTOP) -->
                 <div *ngFor="let transfer of activeUploads" class="text-sm">
@@ -1239,6 +1243,11 @@
           LinkedIn
         </a>
       </div>
+      <!-- Version Display -->
+      <p class="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
+        {{ 'VERSION' | translate }}
+        <span class="font-medium text-primary-600 dark:text-primary-400">{{ appVersion }}</span>
+      </p>
     </div>
   </footer>
 </div>

@@ -41,6 +41,7 @@ import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session.service';
 import { ToastrService } from 'ngx-toastr';
+import packageJson from '../../../../package.json';
 
 /**
  * ==========================================================
@@ -103,6 +104,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   activeDownloads: FileDownload[] = [];
   incomingFiles: FileDownload[] = [];
 
+  appVersion: string = packageJson.version;
   /**
    * ==========================================================
    * PRIVATE SUBSCRIPTIONS
