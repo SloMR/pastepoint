@@ -424,7 +424,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
           this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: any) => {
             if (isOpen) {
-              this.fileTransferService.sendFileOffer(member);
+              this.fileTransferService.sendAllFileOffers(member);
             }
           });
         });
@@ -440,7 +440,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   public acceptIncomingFile(fileDownload: FileDownload): void {
-    this.fileTransferService.startSavingFile(fileDownload.fromUser);
+    this.fileTransferService.startSavingFile(fileDownload.fromUser, fileDownload.fileId);
   }
 
   /**
@@ -450,7 +450,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   public declineIncomingFile(fileDownload: FileDownload): void {
-    this.fileTransferService.declineFileOffer(fileDownload.fromUser);
+    this.fileTransferService.declineFileOffer(fileDownload.fromUser, fileDownload.fileId);
   }
 
   /**
@@ -460,7 +460,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   public cancelUpload(upload: FileUpload): void {
-    this.fileTransferService.cancelUpload(upload.targetUser);
+    this.fileTransferService.cancelUpload(upload.targetUser, upload.fileId);
   }
 
   /**
@@ -470,7 +470,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   public cancelDownload(download: FileDownload): void {
-    this.fileTransferService.cancelDownload(download.fromUser);
+    this.fileTransferService.cancelDownload(download.fromUser, download.fileId);
   }
 
   /**
@@ -761,7 +761,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
         this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: boolean) => {
           if (isOpen) {
-            this.fileTransferService.sendFileOffer(member);
+            this.fileTransferService.sendAllFileOffers(member);
           }
         });
       });
