@@ -203,6 +203,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         if (username) {
           this.logger.info('ngOnInit', `Username is set to: ${username}`);
           this.initializeChat();
+        } else {
+          this.logger.warn('ngOnInit', 'Username is not set');
         }
       })
     );
@@ -310,6 +312,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const sessionCode = params.get('code');
       if (!sessionCode) {
         this.connect();
+      } else {
+        this.toaster.error('Session code not found', 'Error');
       }
     });
 
@@ -395,6 +399,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.message = '';
       messageForm.resetForm({ message: '' });
       this.scrollToBottom();
+    } else {
+      this.toaster.warning('Please enter a message before sending.');
     }
   }
 
@@ -425,11 +431,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: any) => {
             if (isOpen) {
               this.fileTransferService.sendAllFileOffers(member);
+            } else {
+              this.toaster.warning(this.translate.instant('DATA_CHANNEL_NOT_OPEN'));
             }
           });
         });
       });
       input.value = '';
+    } else {
+      this.toaster.warning('No files selected for upload.');
     }
   }
 
@@ -488,6 +498,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.roomService.joinRoom(room);
       this.currentRoom = room;
       this.isMenuOpen = false;
+    } else {
+      this.toaster.warning('You are already in this room.');
     }
   }
 
@@ -501,6 +513,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.newRoomName.trim() && this.newRoomName !== this.currentRoom) {
       this.joinRoom(this.newRoomName.trim());
       this.newRoomName = '';
+    } else {
+      this.toaster.warning('Please enter a valid room name.');
     }
   }
 
@@ -762,6 +776,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: boolean) => {
           if (isOpen) {
             this.fileTransferService.sendAllFileOffers(member);
+          } else {
+            this.toaster.warning(this.translate.instant('DATA_CHANNEL_NOT_OPEN'));
           }
         });
       });

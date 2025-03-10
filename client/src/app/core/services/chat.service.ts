@@ -65,7 +65,11 @@ export class ChatService {
       if (!alreadyExists) {
         this.messages.push(chatMsg);
         this.messages$.next(this.messages);
+      } else {
+        this.logger.warn('sendMessage', `Message already exists: ${chatMsg.text}`);
       }
+    } else {
+      this.logger.warn('sendMessage', 'Empty message content');
     }
   }
 
@@ -84,6 +88,8 @@ export class ChatService {
           `Username updated from: ${this.user}, to: ${userName}`
         );
         this.user = userName;
+      } else {
+        this.logger.warn('handleSystemMessage', `No username found in message: ${message}`);
       }
     }
   }

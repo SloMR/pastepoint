@@ -155,6 +155,11 @@ export class FileTransferService {
       const status = this.fileTransferStatus.get(key);
       if (!status || status === 'pending') {
         this.sendFileOffer(fileTransfer.fileId, targetUser);
+      } else {
+        this.logger.info(
+          'sendAllFileOffers',
+          `FileId=${fileTransfer.fileId} already sent or completed. Skipping.`
+        );
       }
     });
   }
@@ -293,6 +298,11 @@ export class FileTransferService {
         this.incomingFileTransfers.delete(fromUser);
       }
       this.updateActiveDownloads();
+    } else {
+      this.logger.info(
+        'handleDataChunk',
+        `FileId=${fileId} chunk received. Progress: ${fileDownload.progress.toFixed(2)}%`
+      );
     }
   }
 
@@ -379,6 +389,11 @@ export class FileTransferService {
         this.updateActiveUploads();
         this.checkAllUsersResponded();
         break;
+      } else {
+        this.logger.info(
+          'sendNextChunk',
+          `FileId=${fileTransfer.fileId} sent chunk ${fileTransfer.currentOffset} to ${fileTransfer.targetUser}`
+        );
       }
     }
   }

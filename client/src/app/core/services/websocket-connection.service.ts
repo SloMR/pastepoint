@@ -58,6 +58,8 @@ export class WebSocketConnectionService {
           } else {
             this.messages$.next(message);
           }
+        } else {
+          this.logger.warn('connect', 'Received non-string message from WebSocket');
         }
       };
 
@@ -87,6 +89,8 @@ export class WebSocketConnectionService {
       this.logger.info('disconnect', 'Closing WebSocket connection.');
       this.socket.close();
       this.socket = undefined;
+    } else {
+      this.logger.warn('disconnect', 'WebSocket is already closed or not initialized.');
     }
   }
 
@@ -102,6 +106,8 @@ export class WebSocketConnectionService {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       const signalMessage = `[SignalMessage] ${JSON.stringify(message)}`;
       this.socket.send(signalMessage);
+    } else {
+      this.logger.error('sendSignalMessage', 'WebSocket is not open. Message not sent.');
     }
   }
 

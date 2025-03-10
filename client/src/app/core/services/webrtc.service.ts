@@ -84,7 +84,12 @@ export class WebRTCService {
     private toaster: ToastrService
   ) {
     this.wsService.signalMessages$.subscribe((message) => {
-      if (message) this.handleSignalMessage(message);
+      if (message) {
+        this.logger.debug('WebRTCService', `Received signal message: ${JSON.stringify(message)}`);
+        this.handleSignalMessage(message);
+      } else {
+        this.logger.warn('WebRTCService', 'Received empty signal message');
+      }
     });
   }
 
@@ -176,6 +181,11 @@ export class WebRTCService {
         peerConnection.connectionState === 'disconnected'
       ) {
         this.handleDisconnection(targetUser);
+      } else {
+        this.logger.info(
+          'createPeerConnection',
+          `Connection state with ${targetUser}: ${peerConnection.connectionState}`
+        );
       }
     };
 
@@ -185,6 +195,11 @@ export class WebRTCService {
         peerConnection.iceConnectionState === 'failed'
       ) {
         this.handleDisconnection(targetUser);
+      } else {
+        this.logger.info(
+          'createPeerConnection',
+          `ICE connection state with ${targetUser}: ${peerConnection.iceConnectionState}`
+        );
       }
     };
 
@@ -211,6 +226,8 @@ export class WebRTCService {
           }
         });
         this.messageQueues.set(targetUser, []);
+      } else {
+        this.logger.info('setupDataChannel', `No queued messages for ${targetUser}`);
       }
     };
 
@@ -535,6 +552,8 @@ export class WebRTCService {
         `Invalid state for answer: ${peerConnection.signalingState}`
       );
       return this.handleStateMismatch(targetUser);
+    } else {
+      this.logger.debug('handleAnswer', `Valid state for answer: ${peerConnection.signalingState}`);
     }
 
     if (this.isDuplicateMessage(targetUser, message.sequence)) {
@@ -551,12 +570,16 @@ export class WebRTCService {
 
         if (peerConnection.signalingState !== RTC_SIGNALING_STATES.STABLE) {
           throw new Error(`Unexpected post-answer state: ${peerConnection.signalingState}`);
+        } else {
+          this.logger.debug('handleAnswer', `Connection established with ${targetUser}`);
         }
       })
       .catch((error) => {
         this.logger.error('handleAnswer', `Answer handling failed: ${error}`);
         if (error.toString().includes('InvalidStateError')) {
           this.reconnect(targetUser);
+        } else {
+          this.logger.error('handleAnswer', `Answer handling failed: ${error}`);
         }
       });
   }
@@ -606,6 +629,9 @@ export class WebRTCService {
       const queue = this.candidateQueues.get(targetUser);
       if (queue) {
         queue.push(message.data);
+      } else {
+        this.logger.warn('handleCandidate', `No candidate queue for ${targetUser}`);
+        this.candidateQueues.set(targetUser, [message.data]);
       }
     }
   }
@@ -622,6 +648,8 @@ export class WebRTCService {
         });
       });
       queue.length = 0;
+    } else {
+      this.logger.warn('processCandidateQueue', `No candidate queue for ${targetUser}`);
     }
   }
 
