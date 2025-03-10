@@ -45,12 +45,21 @@ export class WebRTCService {
     fileName: string;
     fileSize: number;
     fromUser: string;
+    fileId: string;
   }>();
-  public fileResponses$ = new Subject<{ accepted: boolean; fromUser: string }>();
-  public incomingData$ = new Subject<{ data: ArrayBuffer; fromUser: string }>();
-  public fileUploadCancelled$ = new Subject<{ fromUser: string }>();
-  public fileDownloadCancelled$ = new Subject<{ fromUser: string }>();
+  public fileResponses$ = new Subject<{ accepted: boolean; fromUser: string; fileId: string }>();
+  public fileUploadCancelled$ = new Subject<{ fromUser: string; fileId: string }>();
+  public fileDownloadCancelled$ = new Subject<{ fromUser: string; fileId: string }>();
   public bufferedAmountLow$ = new Subject<string>();
+  public incomingFileChunk$ = new Subject<{
+    fromUser: string;
+    fileId: string;
+    chunk: ArrayBuffer;
+  }>();
+  private pendingChunks = new Map<
+    string, // fromUser
+    { fileId: string; chunkSize: number }
+  >();
 
   private peerConnections = new Map<string, RTCPeerConnection>();
   private dataChannels = new Map<string, RTCDataChannel>();
@@ -286,6 +295,7 @@ export class WebRTCService {
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER:
             this.logger.info('handleDataChannelMessage', `Received file offer from ${targetUser}`);
             this.fileOffers$.next({
+              fileId: message.payload.fileId,
               fileName: message.payload.fileName,
               fileSize: message.payload.fileSize,
               fromUser: targetUser,
@@ -296,40 +306,86 @@ export class WebRTCService {
               'handleDataChannelMessage',
               `Received file acceptance from ${targetUser}`
             );
-            this.fileResponses$.next({ accepted: true, fromUser: targetUser });
+            this.fileResponses$.next({
+              accepted: true,
+              fromUser: targetUser,
+              fileId: message.payload.fileId,
+            });
             break;
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_DECLINE:
             this.logger.info(
               'handleDataChannelMessage',
               `Received file decline from ${targetUser}`
             );
-            this.fileResponses$.next({ accepted: false, fromUser: targetUser });
+            this.fileResponses$.next({
+              accepted: false,
+              fromUser: targetUser,
+              fileId: message.payload.fileId,
+            });
             break;
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_UPLOAD:
             this.logger.info(
               'handleDataChannelMessage',
               `Received uploading file cancellation from ${targetUser}`
             );
-            this.fileUploadCancelled$.next({ fromUser: targetUser });
+            this.fileUploadCancelled$.next({
+              fromUser: targetUser,
+              fileId: message.payload.fileId,
+            });
             break;
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_DOWNLOAD:
             this.logger.info(
               'handleDataChannelMessage',
               `Received downloading file cancellation from ${targetUser}`
             );
-            this.fileDownloadCancelled$.next({ fromUser: targetUser });
+            this.fileDownloadCancelled$.next({
+              fromUser: targetUser,
+              fileId: message.payload.fileId,
+            });
             break;
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_CHUNK: {
+            const { fileId, chunkSize } = message.payload;
+            this.logger.info(
+              'handleDataChannelMessage',
+              `Received chunk metadata from ${targetUser} (fileId=${fileId}, chunkSize=${chunkSize})`
+            );
+
+            this.pendingChunks.set(targetUser, { fileId, chunkSize });
+            break;
+          }
           default:
             this.logger.warn('handleDataChannelMessage', `Unknown message type: ${message.type}`);
         }
       } else if (data instanceof ArrayBuffer) {
-        this.zone.run(() => {
-          this.incomingData$.next({ data, fromUser: targetUser });
-        });
+        const chunkMeta = this.pendingChunks.get(targetUser);
+
+        if (chunkMeta) {
+          const { fileId, chunkSize } = chunkMeta;
+
+          if (data.byteLength !== chunkSize) {
+            this.logger.warn(
+              'handleDataChannelMessage',
+              `Got chunk of size ${data.byteLength}, expected ${chunkSize} (fileId=${fileId})`
+            );
+          }
+
+          this.incomingFileChunk$.next({
+            fromUser: targetUser,
+            fileId: fileId,
+            chunk: data,
+          });
+
+          this.pendingChunks.delete(targetUser);
+        } else {
+          this.logger.warn(
+            'handleDataChannelMessage',
+            `Raw ArrayBuffer from ${targetUser} but no fileId in pendingChunks.`
+          );
+        }
       } else {
         this.logger.warn(
           'handleDataChannelMessage',
-          `Unknown data type received from ${targetUser}: ${data}`
+          `Unknown data type from ${targetUser}: ${typeof data}`
         );
       }
     });

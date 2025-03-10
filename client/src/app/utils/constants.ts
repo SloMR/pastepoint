@@ -89,6 +89,7 @@ export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'TRACE';
 export type FileStatus = 'pending' | 'accepted' | 'declined' | 'completed';
 
 export interface FileUpload {
+  fileId: string;
   file: File;
   currentOffset: number;
   isPaused: boolean;
@@ -97,6 +98,7 @@ export interface FileUpload {
 }
 
 export interface FileDownload {
+  fileId: string;
   fileName: string;
   fileSize: number;
   fromUser: string;
