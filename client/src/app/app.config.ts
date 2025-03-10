@@ -14,6 +14,8 @@ import { InMemoryTranslateLoader } from './core/i18n/translate-loader';
 import { ThemeService } from './core/services/theme.service';
 import { provideHttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
+import { provideAnimations } from '@angular/platform-browser/animations';
+import { provideToastr } from 'ngx-toastr';
 
 // Theme initialization function
 export function initializeTheme(themeService: ThemeService): () => void {
@@ -27,6 +29,17 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideClientHydration(withEventReplay()),
+    provideAnimations(),
+    // Initialize Toaster with default options
+    provideToastr({
+      closeButton: true,
+      timeOut: 2000,
+      positionClass: 'toast-bottom-center',
+      preventDuplicates: true,
+      tapToDismiss: true,
+      progressBar: true,
+      newestOnTop: true,
+    }),
     // Initialize translation module with in-memory loader
     importProvidersFrom(
       TranslateModule.forRoot({

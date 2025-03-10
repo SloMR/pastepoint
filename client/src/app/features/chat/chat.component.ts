@@ -34,13 +34,13 @@ import { WebSocketConnectionService } from '../../core/services/websocket-connec
 import { UserService } from '../../core/services/user.service';
 import { take } from 'rxjs/operators';
 import { FormsModule, NgForm } from '@angular/forms';
-import { MatSnackBar } from '@angular/material/snack-bar';
 import { FlowbiteService } from '../../core/services/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ChatMessage, FileDownload, FileUpload } from '../../utils/constants';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session.service';
+import { ToastrService } from 'ngx-toastr';
 
 /**
  * ==========================================================
@@ -152,7 +152,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private wsConnectionService: WebSocketConnectionService,
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
-    private snackBar: MatSnackBar,
+    private toaster: ToastrService,
     private flowbiteService: FlowbiteService,
     public translate: TranslateService,
     private sessionService: SessionService,
@@ -412,9 +412,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
       if (otherMembers.length === 0) {
-        this.snackBar.open('No other users available to send the file.', 'Close', {
-          duration: 3000,
-        });
+        this.toaster.warning('No other users available to send the file.');
         return;
       }
       filesToSend.forEach((fileToSend) => {
@@ -520,7 +518,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       },
       error: (err) => {
         console.error('Failed to create new session code:', err);
-        this.snackBar.open('Could not create session', 'Close', { duration: 3000 });
+        this.toaster.error('Could not create session', 'Error');
       },
     });
   }
@@ -563,15 +561,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   copySessionCode(): void {
     if (!this.SessionCode) {
-      this.snackBar.open('No session code to copy', 'Close', { duration: 3000 });
+      this.toaster.warning('No session code to copy');
       return;
     }
 
     navigator.clipboard.writeText(this.SessionCode).then(
-      () => this.snackBar.open('Session code copied!', 'Close', { duration: 3000 }),
+      () => this.toaster.success('Session code copied!'),
       (err) => {
         console.error('Failed to copy session code:', err);
-        this.snackBar.open('Failed to copy session code', 'Close', { duration: 3000 });
+        this.toaster.error('Failed to copy session code', 'Error');
       }
     );
   }
@@ -750,9 +748,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
     if (otherMembers.length === 0) {
-      this.snackBar.open(this.translate.instant('NO_USERS_FOR_UPLOAD'), 'Close', {
-        duration: 3000,
-      });
+      this.toaster.info(this.translate.instant('NO_USERS_FOR_UPLOAD'));
       return;
     }
 

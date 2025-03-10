@@ -1,5 +1,4 @@
 import { Injectable } from '@angular/core';
-import Swal from 'sweetalert2';
 import { BehaviorSubject } from 'rxjs';
 import { LoggerService } from './logger.service';
 import { WebRTCService } from './webrtc.service';
@@ -11,6 +10,7 @@ import {
   FileUpload,
   MAX_BUFFERED_AMOUNT,
 } from '../../utils/constants';
+import { ToastrService } from 'ngx-toastr';
 
 @Injectable({
   providedIn: 'root',
@@ -35,7 +35,8 @@ export class FileTransferService {
 
   constructor(
     private loggerService: LoggerService,
-    private webrtcService: WebRTCService
+    private webrtcService: WebRTCService,
+    private toaster: ToastrService
   ) {
     this.webrtcService.incomingData$.subscribe(async ({ data, fromUser }) => {
       if (data instanceof ArrayBuffer) {
@@ -423,28 +424,17 @@ export class FileTransferService {
     }
   }
 
+  // ~~~~~~~~~~~~~~~~~~ UTILITY UI ALERTS ~~~~~~~~~~~~~~~~~~~~~~~~~~
   // TODO: Move to new service.
   private showInfo(message: string, title: string): void {
-    Swal.fire({
-      icon: 'info',
-      title: title,
-      text: message,
-    }).then(() => {});
+    this.toaster.info(title, message);
   }
 
   private showError(message: string, title: string): void {
-    Swal.fire({
-      icon: 'error',
-      title: title,
-      text: message,
-    }).then(() => {});
+    this.toaster.error(message, title);
   }
 
   private showSuccess(message: string, title: string): void {
-    Swal.fire({
-      icon: 'success',
-      title: title,
-      text: message,
-    }).then(() => {});
+    this.toaster.success(title, message);
   }
 }

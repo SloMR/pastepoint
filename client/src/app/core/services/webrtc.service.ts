@@ -17,7 +17,7 @@ import {
   RTC_SIGNALING_STATES,
   SignalMessageType,
 } from '../../utils/constants';
-import Swal from 'sweetalert2';
+import { ToastrService } from 'ngx-toastr';
 
 interface SignalMessage {
   type: SignalMessageType;
@@ -40,6 +40,7 @@ export class WebRTCService {
 
   public dataChannelOpen$ = new BehaviorSubject<boolean>(false);
   public chatMessages$ = new Subject<ChatMessage>();
+
   public fileOffers$ = new Subject<{
     fileName: string;
     fileSize: number;
@@ -70,7 +71,8 @@ export class WebRTCService {
     private loggerService: LoggerService,
     private wsService: WebSocketConnectionService,
     private userService: UserService,
-    private zone: NgZone
+    private zone: NgZone,
+    private toaster: ToastrService
   ) {
     this.wsService.signalMessages$.subscribe((message) => {
       if (message) this.handleSignalMessage(message);
@@ -262,11 +264,10 @@ export class WebRTCService {
         'handleDisconnection',
         `Max reconnection attempts reached for ${targetUser}. Could not reconnect.`
       );
-      Swal.fire({
-        icon: 'warning',
-        title: 'Connection Lost',
-        text: 'Could not reconnect to the user. Please try again later.',
-      }).then(() => {});
+      this.toaster.warning(
+        'Connection Lost',
+        'Could not reconnect to the user. Please try again later.'
+      );
       this.closePeerConnection(targetUser);
     }
   }
