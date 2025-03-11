@@ -314,11 +314,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const sessionCode = params.get('code');
       if (!sessionCode) {
         this.connect();
-      } else {
-        this.toaster.error(
-          this.translate.instant('SESSION_NOT_FOUND'),
-          this.translate.instant('ERROR')
-        );
       }
     });
 

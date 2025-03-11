@@ -68,9 +68,6 @@ export class RoomService {
       } else {
         this.logger.warn('handleSystemMessage', `No room to join found in message: ${message}`);
       }
-    } else {
-      this.logger.error('handleSystemMessage', `Unhandled system message: ${message}`);
-      return;
     }
   }
 }
