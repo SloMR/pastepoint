@@ -1,4 +1,4 @@
-# <img src="https://raw.githubusercontent.com/SloMR/pastepoint/main/client/public/pastepoint.svg" alt="PastePoint Logo" style="vertical-align: center; margin-right: 0.5em; width: 32px; height: 32px"/> PastePoint
+# <img src="https://raw.githubusercontent.com/SloMR/pastepoint/main/client/public/pastepoint.png" alt="PastePoint Logo" style="vertical-align: center; margin-right: 0.5em; width: 60px; height: 60px"/> PastePoint
 ![Docker](https://img.shields.io/badge/Docker-Containers-blue) ![Rust](https://img.shields.io/badge/Rust-Backend-orange) ![Angular](https://img.shields.io/badge/Angular-Frontend-red)
 
 PastePoint is a secure, feature-rich file-sharing service designed for local networks. It enables users to share files and communicate efficiently through peer-to-peer WebSocket connections. Built with a Rust-based backend using Actix Web and an Angular frontend, PastePoint prioritizes security, performance, and usability.
