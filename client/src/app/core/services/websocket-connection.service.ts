@@ -1,15 +1,13 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { LoggerService } from './logger.service';
 import { Router } from '@angular/router';
+import { NGXLogger } from 'ngx-logger';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WebSocketConnectionService {
-  private _logger: ReturnType<LoggerService['create']> | undefined;
-
   private socket: WebSocket | undefined;
   private webSocketProto = 'wss';
   private host = environment.apiUrl;
@@ -18,16 +16,9 @@ export class WebSocketConnectionService {
   public systemMessages$ = new BehaviorSubject<string>('');
   public signalMessages$ = new BehaviorSubject<any>(null);
 
-  private get logger() {
-    if (!this._logger) {
-      this._logger = this.loggerService.create('WebSocketConnectionService');
-    }
-    return this._logger;
-  }
-
   constructor(
-    private loggerService: LoggerService,
-    private router: Router
+    private router: Router,
+    private logger: NGXLogger
   ) {}
 
   public connect(code?: string): Promise<void> {

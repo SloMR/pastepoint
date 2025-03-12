@@ -16,6 +16,9 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideToastr } from 'ngx-toastr';
+import { LoggerModule } from 'ngx-logger';
+import { environment } from '../environments/environment';
+import { DatePipe } from '@angular/common';
 
 // Theme initialization function
 export function initializeTheme(themeService: ThemeService): () => void {
@@ -47,8 +50,16 @@ export const appConfig: ApplicationConfig = {
           provide: TranslateLoader,
           useClass: InMemoryTranslateLoader,
         },
+      }),
+      LoggerModule.forRoot({
+        level: environment.logLevel,
+        timestampFormat: 'yyyy-MM-dd HH:mm:ss',
+        enableSourceMaps: environment.enableSourceMaps,
+        disableFileDetails: environment.disableFileDetails,
+        disableConsoleLogging: environment.disableConsoleLogging,
       })
     ),
+    DatePipe,
     // Initialize theme on app startup using app initializer
     provideAppInitializer(() => {
       const themeService = inject(ThemeService);

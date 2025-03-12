@@ -1,6 +1,5 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { LoggerService } from './logger.service';
 import { WebRTCService } from './webrtc.service';
 import {
   CHUNK_SIZE,
@@ -13,13 +12,12 @@ import {
 import { ToastrService } from 'ngx-toastr';
 import { v4 as uuidv4 } from 'uuid';
 import { TranslateService } from '@ngx-translate/core';
+import { NGXLogger } from 'ngx-logger';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FileTransferService {
-  private _logger: ReturnType<LoggerService['create']> | undefined;
-
   public activeUploads$ = new BehaviorSubject<FileUpload[]>([]);
   public activeDownloads$ = new BehaviorSubject<FileDownload[]>([]);
   public incomingFileOffers$ = new BehaviorSubject<FileDownload[]>([]);
@@ -28,18 +26,11 @@ export class FileTransferService {
   private incomingFileTransfers = new Map<string, Map<string, FileDownload>>();
   private fileTransferStatus = new Map<string, FileStatus>();
 
-  private get logger() {
-    if (!this._logger) {
-      this._logger = this.loggerService.create('FileTransferService');
-    }
-    return this._logger;
-  }
-
   constructor(
-    private loggerService: LoggerService,
     private webrtcService: WebRTCService,
     private toaster: ToastrService,
-    public translate: TranslateService
+    public translate: TranslateService,
+    private logger: NGXLogger
   ) {
     this.webrtcService.incomingFileChunk$.subscribe(({ fromUser, fileId, chunk }) => {
       this.handleDataChunk(fileId, chunk, fromUser).then(() => {});

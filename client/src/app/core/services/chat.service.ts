@@ -1,32 +1,23 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { LoggerService } from './logger.service';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { WebRTCService } from './webrtc.service';
 import { UserService } from './user.service';
 import { ChatMessage, DATA_CHANNEL_MESSAGE_TYPES } from '../../utils/constants';
+import { NGXLogger } from 'ngx-logger';
 
 @Injectable({
   providedIn: 'root',
 })
 export class ChatService {
-  private _logger: ReturnType<LoggerService['create']> | undefined;
-
   public messages$ = new BehaviorSubject<ChatMessage[]>([]);
   private messages: ChatMessage[] = [];
 
-  private get logger() {
-    if (!this._logger) {
-      this._logger = this.loggerService.create('ChatService');
-    }
-    return this._logger;
-  }
-
   constructor(
-    private loggerService: LoggerService,
     private wsService: WebSocketConnectionService,
     private webrtcService: WebRTCService,
-    private userService: UserService
+    private userService: UserService,
+    private logger: NGXLogger
   ) {
     this.webrtcService.chatMessages$.subscribe((message) => {
       this.handleUserMessage(message);

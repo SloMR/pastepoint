@@ -29,7 +29,6 @@ import { ChatService } from '../../core/services/chat.service';
 import { RoomService } from '../../core/services/room.service';
 import { FileTransferService } from '../../core/services/file-transfer.service';
 import { WebRTCService } from '../../core/services/webrtc.service';
-import { LoggerService } from '../../core/services/logger.service';
 import { WebSocketConnectionService } from '../../core/services/websocket-connection.service';
 import { UserService } from '../../core/services/user.service';
 import { take } from 'rxjs/operators';
@@ -42,6 +41,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session.service';
 import { ToastrService } from 'ngx-toastr';
 import packageJson from '../../../../package.json';
+import { NGXLogger } from 'ngx-logger';
 
 /**
  * ==========================================================
@@ -71,14 +71,6 @@ import packageJson from '../../../../package.json';
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
-  /**
-   * ==========================================================
-   * PRIVATE LOGGER INSTANCE
-   * Used for structured logging within this component.
-   * ==========================================================
-   */
-  private _logger: ReturnType<LoggerService['create']> | undefined;
-
   /**
    * ==========================================================
    * PUBLIC PROPERTIES
@@ -126,26 +118,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
-   * LOGGER GETTER
-   * Creates or returns an existing logger instance for this component.
-   * ==========================================================
-   */
-  private get logger() {
-    if (!this._logger) {
-      this._logger = this.loggerService.create('ChatService');
-    }
-    return this._logger;
-  }
-
-  /**
-   * ==========================================================
    * CONSTRUCTOR
    * Dependency injection, TranslateService setup, and any
    * other initial tasks that run before ngOnInit.
    * ==========================================================
    */
   constructor(
-    private loggerService: LoggerService,
     public userService: UserService,
     private chatService: ChatService,
     private roomService: RoomService,
@@ -159,6 +137,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     public translate: TranslateService,
     private sessionService: SessionService,
     private route: ActivatedRoute,
+    private logger: NGXLogger,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
     this.translate.setDefaultLang('en');
@@ -205,8 +184,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         if (username) {
           this.logger.info('ngOnInit', `Username is set to: ${username}`);
           this.initializeChat();
-        } else {
-          this.logger.warn('ngOnInit', 'Username is not set');
         }
       })
     );

@@ -1,6 +1,5 @@
 import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { LoggerService } from './logger.service';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { UserService } from './user.service';
 import {
@@ -19,6 +18,7 @@ import {
 } from '../../utils/constants';
 import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
+import { NGXLogger } from 'ngx-logger';
 
 interface SignalMessage {
   type: SignalMessageType;
@@ -37,8 +37,6 @@ interface DataChannelMessage {
   providedIn: 'root',
 })
 export class WebRTCService {
-  private _logger: ReturnType<LoggerService['create']> | undefined;
-
   public dataChannelOpen$ = new BehaviorSubject<boolean>(false);
   public chatMessages$ = new Subject<ChatMessage>();
 
@@ -70,27 +68,18 @@ export class WebRTCService {
   private connectionLocks = new Set<string>();
   private lastSequences = new Map<string, number>();
 
-  private get logger() {
-    if (!this._logger) {
-      this._logger = this.loggerService.create('WebRTCService');
-    }
-    return this._logger;
-  }
-
   constructor(
-    private loggerService: LoggerService,
     private wsService: WebSocketConnectionService,
     private userService: UserService,
     private zone: NgZone,
     private toaster: ToastrService,
-    public translate: TranslateService
+    public translate: TranslateService,
+    private logger: NGXLogger
   ) {
     this.wsService.signalMessages$.subscribe((message) => {
       if (message) {
         this.logger.debug('WebRTCService', `Received signal message: ${JSON.stringify(message)}`);
         this.handleSignalMessage(message);
-      } else {
-        this.logger.warn('WebRTCService', 'Received empty signal message');
       }
     });
   }

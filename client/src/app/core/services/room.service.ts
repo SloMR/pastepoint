@@ -1,32 +1,23 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { LoggerService } from './logger.service';
 import { WebSocketConnectionService } from './websocket-connection.service';
+import { NGXLogger } from 'ngx-logger';
 
 @Injectable({
   providedIn: 'root',
 })
 export class RoomService {
-  private _logger: ReturnType<LoggerService['create']> | undefined;
-
   public rooms$ = new BehaviorSubject<string[]>([]);
   public members$ = new BehaviorSubject<string[]>([]);
   public currentRoom = 'main';
 
   constructor(
-    private loggerService: LoggerService,
-    private wsService: WebSocketConnectionService
+    private wsService: WebSocketConnectionService,
+    private logger: NGXLogger
   ) {
     this.wsService.systemMessages$.subscribe((message) => {
       this.handleSystemMessage(message);
     });
-  }
-
-  private get logger() {
-    if (!this._logger) {
-      this._logger = this.loggerService.create('RoomService');
-    }
-    return this._logger;
   }
 
   public listRooms(): void {
