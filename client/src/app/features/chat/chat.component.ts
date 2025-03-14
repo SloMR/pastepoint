@@ -35,7 +35,7 @@ import { take } from 'rxjs/operators';
 import { FormsModule, NgForm } from '@angular/forms';
 import { FlowbiteService } from '../../core/services/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ChatMessage, FileDownload, FileUpload } from '../../utils/constants';
+import { ChatMessage, FileDownload, FileUpload, MB } from '../../utils/constants';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session.service';
@@ -77,6 +77,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Bound to the template for data-binding and user interactions.
    * ==========================================================
    */
+  protected readonly MB = MB;
   message = '';
   newRoomName = '';
   SessionCode = '';

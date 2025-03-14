@@ -995,9 +995,7 @@
                   {{ incomingFile.fromUser }} {{ 'WANTS_TO_SEND_FILE' | translate }}
                 </h4>
                 <p class="text-xs no-geopattern text-secondary-600 dark:text-secondary-300">
-                  {{ incomingFile.fileName }} ({{
-                    incomingFile.fileSize / (1024 * 1024) | number: '1.2-2'
-                  }}
+                  {{ incomingFile.fileName }} ({{ incomingFile.fileSize / MB | number: '1.2-2' }}
                   MB)
                 </p>
               </div>
