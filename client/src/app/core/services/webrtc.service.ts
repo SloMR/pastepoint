@@ -15,23 +15,13 @@ import {
   ChatMessage,
   RTC_SIGNALING_STATES,
   SignalMessageType,
+  DataChannelMessage,
+  SignalMessage,
+  MAX_BUFFERED_AMOUNT,
 } from '../../utils/constants';
 import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
-
-interface SignalMessage {
-  type: SignalMessageType;
-  data: any;
-  from: string;
-  to: string;
-  sequence?: number;
-}
-
-interface DataChannelMessage {
-  type: string;
-  payload: any;
-}
 
 @Injectable({
   providedIn: 'root',
@@ -434,37 +424,68 @@ export class WebRTCService {
     }
   }
 
-  public sendRawData(data: ArrayBuffer, targetUser: string): void {
+  private isDataChannelReadyToSend(targetUser: string): boolean {
     const channel = this.dataChannels.get(targetUser);
 
-    if (channel && channel.readyState === 'open') {
-      channel.send(data);
-    } else if (channel && channel.readyState === 'connecting') {
+    if (!channel) {
+      this.logger.warn('isDataChannelReadyToSend', `No data channel exists for ${targetUser}`);
+      return false;
+    }
+
+    if (channel.readyState !== 'open') {
       this.logger.warn(
-        'sendRawData',
-        `Data channel with ${targetUser} is connecting. Data will be queued.`
+        'isDataChannelReadyToSend',
+        `Data channel with ${targetUser} is in state: ${channel.readyState}`
       );
+      return false;
+    }
+
+    if (channel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+      this.logger.warn(
+        'isDataChannelReadyToSend',
+        `Data channel buffer for ${targetUser} is full: ${channel.bufferedAmount} bytes`
+      );
+      return false;
+    }
+
+    return true;
+  }
+
+  public sendRawData(data: ArrayBuffer, targetUser: string): boolean {
+    if (!this.isDataChannelReadyToSend(targetUser)) {
       if (!this.messageQueues.has(targetUser)) {
         this.messageQueues.set(targetUser, []);
       }
       this.messageQueues.get(targetUser)!.push(data);
-    } else {
-      this.logger.error('sendRawData', `Data channel with ${targetUser} is not open`);
 
-      if (channel) {
-        this.dataChannels.delete(targetUser);
+      if (
+        !this.dataChannels.has(targetUser) ||
+        this.dataChannels.get(targetUser)?.readyState !== 'connecting'
+      ) {
+        this.initiateConnection(targetUser);
       }
-      const peerConnection = this.peerConnections.get(targetUser);
-      if (peerConnection) {
-        peerConnection.close();
-        this.peerConnections.delete(targetUser);
-      }
+      return false;
+    }
+
+    try {
+      const channel = this.dataChannels.get(targetUser)!;
+      channel.send(data);
+      return true;
+    } catch (error) {
+      this.logger.error('sendRawData', `Error sending raw data: ${error}`);
 
       if (!this.messageQueues.has(targetUser)) {
         this.messageQueues.set(targetUser, []);
       }
       this.messageQueues.get(targetUser)!.push(data);
-      this.initiateConnection(targetUser);
+
+      setTimeout(() => {
+        if (!this.isConnected(targetUser)) {
+          this.initiateConnection(targetUser);
+        }
+      }, 1000);
+
+      return false;
     }
   }
 
