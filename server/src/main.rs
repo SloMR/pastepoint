@@ -21,10 +21,11 @@ async fn main() -> Result<()> {
         .finish()
         .expect("Invalid rate limit configuration");
 
-    log::debug!("Rate limiting configured: {:?}", governor_conf);
+    log::debug!(target: "Websocket", "Rate limiting configured: {:?}", governor_conf);
 
     log::info!(
-        "[Websocket] Starting HTTPS server at https://{} - PastePoint({}) - {} - {}",
+        target: "Websocket",
+        "Starting HTTPS server at https://{} - PastePoint({}) - {} - {}",
         config.bind_address,
         NAME,
         VERSION,
@@ -34,15 +35,17 @@ async fn main() -> Result<()> {
     let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls())?;
     builder
         .set_private_key_file(&config.key_file_path, SslFiletype::PEM)
-        .map_err(|e| log::error!("[Websocket] Failed to load private key: {}", e))
+        .map_err(|e| log::error!(target: "Websocket","Failed to load private key: {}", e))
         .expect("Cannot find private key file");
     builder
         .set_certificate_chain_file(&config.cert_file_path)
-        .map_err(|e| log::error!("[Websocket] Failed to load certificate chain file: {}", e))
+        .map_err(
+            |e| log::error!(target: "Websocket","Failed to load certificate chain file: {}", e),
+        )
         .expect("Cannot find certificate chain file");
 
-    log::debug!("[Websocket] Using key file: {}", &config.key_file_path);
-    log::debug!("[Websocket] Using cert file: {}", &config.cert_file_path);
+    log::debug!(target: "Websocket","Using key file: {}", &config.key_file_path);
+    log::debug!(target: "Websocket","Using cert file: {}", &config.cert_file_path);
 
     let session_manager = Data::new(SessionStore::default());
     let server_config = Data::new(config.clone());

@@ -32,7 +32,8 @@ impl Handler<LeaveRoom> for WsChatServer {
                 if room.is_empty() && msg.1 != "main" {
                     rooms.remove(&msg.1);
                     log::debug!(
-                        "[Websocket] Room '{}' removed from session {}",
+                        target: "Websocket",
+                        "Room '{}' removed from session {}",
                         msg.1,
                         msg.0
                     );
@@ -42,7 +43,8 @@ impl Handler<LeaveRoom> for WsChatServer {
                 if all_empty {
                     self.rooms.remove(&msg.0);
                     log::debug!(
-                        "[Websocket] All rooms in session {} are empty, removing session",
+                        target: "Websocket",
+                        "All rooms in session {} are empty, removing session",
                         msg.0
                     );
                 } else {
@@ -53,7 +55,8 @@ impl Handler<LeaveRoom> for WsChatServer {
                 self.broadcast_room_members(&msg.0, &msg.1);
 
                 log::debug!(
-                    "[Websocket] User {} in {} left room {}. Rooms: {:?}",
+                    target: "Websocket",
+                    "User {} in {} left room {}. Rooms: {:?}",
                     msg.2,
                     msg.0,
                     msg.1,
@@ -97,7 +100,8 @@ impl Handler<RelaySignalMessage> for WsChatServer {
 
         if from == to {
             log::debug!(
-                "[Websocket] Skipping self-to-self signal from '{}' to '{}'",
+                target: "Websocket",
+                "Skipping self-to-self signal from '{}' to '{}'",
                 from,
                 to
             );
@@ -122,7 +126,7 @@ impl Handler<CleanupSession> for WsChatServer {
 
     fn handle(&mut self, msg: CleanupSession, _ctx: &mut Self::Context) -> Self::Result {
         if self.rooms.contains_key(&msg.0) {
-            log::debug!("[Websocket] Removing session {} from rooms", msg.0);
+            log::debug!(target: "Websocket","Removing session {} from rooms", msg.0);
             self.rooms.remove(&msg.0);
         }
     }
@@ -136,7 +140,8 @@ impl Handler<ValidateAndRelaySignal> for WsChatServer {
 
         if !shared_room {
             log::warn!(
-                "[Websocket] Attempted signal to user not in same room: {} -> {}",
+                target: "Websocket",
+                "Attempted signal to user not in same room: {} -> {}",
                 msg.from_user,
                 msg.to_user
             );

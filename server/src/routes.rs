@@ -24,7 +24,8 @@ pub async fn create_session(store: web::Data<SessionStore>) -> impl Responder {
             Ok(guard) => guard,
             Err(e) => {
                 log::error!(
-                    "[Websocket] Failed to acquire lock on key_to_session: {:?}",
+                    target: "Websocket",
+                    "Failed to acquire lock on key_to_session: {:?}",
                     e
                 );
                 return Err(ServerError::InternalServerError);
@@ -53,11 +54,11 @@ pub async fn chat_ws(
 ) -> Result<HttpResponse, Error> {
     if let Some(peer) = req.peer_addr() {
         let ip_str = peer.ip().to_string();
-        log::debug!("[Websocket] Peer IP: {}", ip_str);
+        log::debug!(target: "Websocket","Peer IP: {}", ip_str);
 
         store.start_websocket(config.get_ref(), &req, stream, &ip_str, false, false)
     } else {
-        log::debug!("[Websocket] No Public IP address found!");
+        log::debug!(target: "Websocket","No Public IP address found!");
         Ok(HttpResponse::BadRequest().body("No Public IP Address found"))
     }
 }
@@ -74,9 +75,9 @@ pub async fn private_chat_ws(
     config: web::Data<ServerConfig>,
 ) -> Result<HttpResponse, Error> {
     let code = path.into_inner();
-    log::debug!("[Websocket] Received session code: {}", code);
+    log::debug!(target: "Websocket", "Received session code: {}", code);
     if code.trim().is_empty() {
-        log::debug!("[Websocket] Empty code => returning 400");
+        log::debug!(target: "Websocket", "Empty code => returning 400");
         return Ok(HttpResponse::BadRequest().body("Session code cannot be empty"));
     }
 

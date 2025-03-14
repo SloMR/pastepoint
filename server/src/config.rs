@@ -23,7 +23,8 @@ impl ServerConfig {
     pub fn load(auto_join_override: Option<bool>) -> Result<Self, ConfigError> {
         let environment = env::var("RUN_ENV").unwrap_or_else(|_| "development".to_string());
         log::debug!(
-            "[Websocket] Loading configuration for environment: {}",
+            target: "Websocket",
+            "Loading configuration for environment: {}",
             environment
         );
 
