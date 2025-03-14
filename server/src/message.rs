@@ -58,3 +58,8 @@ pub struct RelaySignalMessage {
     pub(crate) to: String,              // session_id
     pub(crate) message: ChatMessage,    // signal message
 }
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct CleanupSession(pub String /* session_id */);
+

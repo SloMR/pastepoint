@@ -1,4 +1,5 @@
-use crate::{ServerConfig, WsChatSession, MAX_FRAME_SIZE};
+use crate::{message::CleanupSession, ServerConfig, WsChatServer, WsChatSession, MAX_FRAME_SIZE};
+use actix::SystemService;
 use actix_web::{web::Payload, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws as actix_actor_ws;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
@@ -166,6 +167,13 @@ impl SessionStore {
                     "[Websocket] Session {} has no more clients and is being removed",
                     uuid
                 );
+
+                if let Ok(_) =
+                    WsChatServer::from_registry().try_send(CleanupSession(uuid.to_string()))
+                {
+                    log::debug!("[Websocket] Sent cleanup request for session {}", uuid);
+                }
+
                 let mut map = self.key_to_session.lock().expect("lock poisoned");
                 // Remove all keys mapping to this UUID.
                 let keys: Vec<(String, bool)> = map

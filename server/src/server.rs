@@ -151,6 +151,15 @@ impl WsChatServer {
     pub fn remove_empty_rooms(&mut self, session_id: &str) {
         if let Some(rooms) = self.rooms.get_mut(session_id) {
             rooms.retain(|name, room| !room.is_empty() || name == "main");
+
+            let total_users = rooms.values().flat_map(|r| r.keys()).count();
+            if total_users == 0 {
+                self.rooms.remove(session_id);
+                log::debug!(
+                    "[Websocket] Session {} has no more users and is being removed",
+                    session_id
+                );
+            }
         }
         self.broadcast_room_list(session_id);
     }
