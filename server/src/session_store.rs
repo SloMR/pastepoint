@@ -53,7 +53,16 @@ impl SessionStore {
         }
 
         {
-            let map = self.key_to_session.lock().unwrap();
+            let map = match self.key_to_session.lock() {
+                Ok(guard) => guard,
+                Err(e) => {
+                    log::error!(
+                        "[Websocket] Failed to acquire lock on key_to_session: {:?}",
+                        e
+                    );
+                    return None;
+                }
+            };
             if let Some(data) = map.get(key) {
                 self.increment_client_count(data.uuid);
                 return Some(data.uuid.to_string());
@@ -70,7 +79,16 @@ impl SessionStore {
             is_private,
         };
         {
-            let mut map = self.key_to_session.lock().unwrap();
+            let mut map = match self.key_to_session.lock() {
+                Ok(guard) => guard,
+                Err(e) => {
+                    log::error!(
+                        "[Websocket] Failed to acquire lock on key_to_session: {:?}",
+                        e
+                    );
+                    return None;
+                }
+            };
             map.insert(key.to_string(), new_data);
         }
         self.increment_client_count(new_uuid);
@@ -114,7 +132,16 @@ impl SessionStore {
 
     /// Increments the client count for the session with the given UUID.
     fn increment_client_count(&self, uuid: Uuid) {
-        let mut counts = self.uuid_client_counts.lock().unwrap();
+        let mut counts = match self.uuid_client_counts.lock() {
+            Ok(guard) => guard,
+            Err(e) => {
+                log::error!(
+                    "[Websocket] Failed to acquire lock on uuid_client_counts: {:?}",
+                    e
+                );
+                return;
+            }
+        };
         let counter = counts.entry(uuid).or_default();
         let new_count = counter.fetch_add(1, Ordering::SeqCst) + 1;
         log::debug!("[Websocket] Session {} now has {} clients", uuid, new_count);

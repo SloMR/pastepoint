@@ -1,4 +1,4 @@
-use crate::{session_store::SessionData, ServerConfig, SessionStore};
+use crate::{session_store::SessionData, ServerConfig, ServerError, SessionStore};
 use actix_web::{get, web, Error, HttpRequest, HttpResponse, Responder};
 use serde_json::json;
 use uuid::Uuid;
@@ -20,7 +20,16 @@ pub async fn create_session(store: web::Data<SessionStore>) -> impl Responder {
     // Insert the new session without calling get_or_create_session_uuid.
     let new_uuid = Uuid::new_v4();
     {
-        let mut map = store.key_to_session.lock().unwrap();
+        let mut map = match store.key_to_session.lock() {
+            Ok(guard) => guard,
+            Err(e) => {
+                log::error!(
+                    "[Websocket] Failed to acquire lock on key_to_session: {:?}",
+                    e
+                );
+                return Err(ServerError::InternalServerError);
+            }
+        };
         map.insert(
             code.clone(),
             SessionData {
@@ -29,7 +38,7 @@ pub async fn create_session(store: web::Data<SessionStore>) -> impl Responder {
             },
         );
     }
-    HttpResponse::Ok().json(json!({ "code": code }))
+    Ok(HttpResponse::Ok().json(json!({ "code": code })))
 }
 
 // -----------------------------------------------------

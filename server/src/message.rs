@@ -54,7 +54,7 @@ pub struct ListRooms(pub String /* session_id */);
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct RelaySignalMessage {
-    pub(crate) from: String,
-    pub(crate) to: String,
-    pub(crate) message: ChatMessage,
+    pub(crate) from: String,            // session_id
+    pub(crate) to: String,              // session_id
+    pub(crate) message: ChatMessage,    // signal message
 }
