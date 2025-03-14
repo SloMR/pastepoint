@@ -2,6 +2,7 @@ use crate::{LeaveRoom, WsChatServer, WsChatSession};
 use actix::{prelude::Actor, Context};
 use actix_broker::BrokerSubscribe;
 use actix_web_actors::ws;
+use std::time::Instant;
 use uuid::Uuid;
 
 impl Actor for WsChatServer {
@@ -9,6 +10,7 @@ impl Actor for WsChatServer {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         self.subscribe_system_async::<LeaveRoom>(ctx);
+        self.start_cleanup_interval(ctx);
     }
 }
 
@@ -23,6 +25,9 @@ impl Actor for WsChatSession {
             self.id
         );
         log::debug!("[Websocket] Auto-join is set to: {}", self.auto_join);
+
+        self.last_heartbeat = Some(Instant::now());
+        self.start_heartbeat(ctx);
 
         if self.auto_join {
             self.join_room("main", ctx);

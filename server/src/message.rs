@@ -1,7 +1,6 @@
-use std::collections::HashMap;
-
 use crate::SessionStore;
 use actix::prelude::*;
+use std::{collections::HashMap, time::Instant};
 
 pub type Client = Recipient<ChatMessage>;
 pub type Room = HashMap<usize, ClientMetadata>;
@@ -13,12 +12,13 @@ pub struct WsChatServer {
 
 #[derive(Default, Clone)]
 pub struct WsChatSession {
-    pub session_id: String,          // session id
-    pub id: usize,                   // client id
-    pub room: String,                // room name
-    pub name: String,                // client name
-    pub auto_join: bool,             // flag to control auto-join
-    pub session_store: SessionStore, // reference to SessionStore
+    pub session_id: String,              // session id
+    pub id: usize,                       // client id
+    pub room: String,                    // room name
+    pub name: String,                    // client name
+    pub auto_join: bool,                 // flag to control auto-join
+    pub session_store: SessionStore,     // reference to SessionStore
+    pub last_heartbeat: Option<Instant>, // last heartbeat time
 }
 
 pub struct ClientMetadata {
@@ -54,7 +54,20 @@ pub struct ListRooms(pub String /* session_id */);
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct RelaySignalMessage {
-    pub(crate) from: String,
-    pub(crate) to: String,
-    pub(crate) message: ChatMessage,
+    pub(crate) from: String,         // session_id
+    pub(crate) to: String,           // session_id
+    pub(crate) message: ChatMessage, // signal message
+}
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct CleanupSession(pub String /* session_id */);
+
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct ValidateAndRelaySignal {
+    pub session_id: String,
+    pub from_user: String,
+    pub to_user: String,
+    pub payload: String,
 }

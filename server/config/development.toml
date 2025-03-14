@@ -5,3 +5,4 @@ cert_file_path = "../certs/cert.pem"
 auto_join = true
 rate_limit_per_second = 100
 rate_limit_burst_size = 200
+log_level = "debug"

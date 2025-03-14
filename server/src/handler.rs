@@ -1,8 +1,8 @@
 use actix::{Handler, MessageResult};
 
 use crate::{
-    message::RelaySignalMessage, ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer,
-    WsChatSession,
+    message::{CleanupSession, RelaySignalMessage, ValidateAndRelaySignal},
+    ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer, WsChatSession,
 };
 
 impl Handler<JoinRoom> for WsChatServer {
@@ -38,15 +38,17 @@ impl Handler<LeaveRoom> for WsChatServer {
                     );
                 }
 
-                if rooms.is_empty() {
+                let all_empty = rooms.values().all(|r| r.is_empty());
+                if all_empty {
+                    self.rooms.remove(&msg.0);
                     log::debug!(
-                        "[Websocket] Session {} has no rooms left. Removing session.",
+                        "[Websocket] All rooms in session {} are empty, removing session",
                         msg.0
                     );
-                    self.rooms.remove(&msg.0);
+                } else {
+                    self.remove_empty_rooms(&msg.0);
                 }
 
-                self.remove_empty_rooms(&msg.0);
                 self.broadcast_room_list(&msg.0);
                 self.broadcast_room_members(&msg.0, &msg.1);
 
@@ -112,5 +114,36 @@ impl Handler<RelaySignalMessage> for WsChatServer {
                 }
             }
         }
+    }
+}
+
+impl Handler<CleanupSession> for WsChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: CleanupSession, _ctx: &mut Self::Context) -> Self::Result {
+        if self.rooms.contains_key(&msg.0) {
+            log::debug!("[Websocket] Removing session {} from rooms", msg.0);
+            self.rooms.remove(&msg.0);
+        }
+    }
+}
+
+impl Handler<ValidateAndRelaySignal> for WsChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: ValidateAndRelaySignal, _ctx: &mut Self::Context) -> Self::Result {
+        let shared_room = self.users_share_room(&msg.session_id, &msg.from_user, &msg.to_user);
+
+        if !shared_room {
+            log::warn!(
+                "[Websocket] Attempted signal to user not in same room: {} -> {}",
+                msg.from_user,
+                msg.to_user
+            );
+            return;
+        }
+
+        let relay_msg = ChatMessage(format!("[SignalMessage] {}", msg.payload));
+        self.relay_message_to_user(&msg.to_user, relay_msg, &msg.from_user);
     }
 }

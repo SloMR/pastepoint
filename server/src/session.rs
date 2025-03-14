@@ -1,6 +1,9 @@
 use crate::{
+    consts::MAX_SIGNAL_SIZE,
     error::ServerError,
-    message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer, WsChatSession},
+    message::{
+        JoinRoom, LeaveRoom, ListRooms, ValidateAndRelaySignal, WsChatServer, WsChatSession,
+    },
     SessionStore,
 };
 use actix::prelude::*;
@@ -8,6 +11,7 @@ use actix_broker::BrokerIssue;
 use actix_web_actors::ws;
 use names::Generator;
 use serde_json::Value;
+use std::time::{Duration, Instant};
 
 impl WsChatSession {
     pub fn new(session_id: &str, auto_join: bool, session_store: SessionStore) -> Self {
@@ -21,6 +25,7 @@ impl WsChatSession {
             name,
             auto_join,
             session_store,
+            last_heartbeat: None,
         }
     }
 
@@ -120,29 +125,69 @@ impl WsChatSession {
     }
 
     fn handle_signal_message(&self, msg: &str, ctx: &mut ws::WebsocketContext<Self>) {
-        let payload = msg.trim_start_matches("[SignalMessage]").trim();
-
-        if let Ok(value) = serde_json::from_str::<Value>(payload) {
-            if let Some(to_user) = value.get("to").and_then(|v| v.as_str()) {
-                let relay_msg = ChatMessage(format!("[SignalMessage] {}", payload));
-
-                WsChatServer::from_registry().do_send(crate::message::RelaySignalMessage {
-                    from: self.name.clone(),
-                    to: to_user.to_string(),
-                    message: relay_msg,
-                });
-            } else {
-                ctx.text("[SystemError] Invalid signaling message format");
-            }
-        } else {
-            ctx.text("[SystemError] Failed to parse signaling message");
+        // 1. Size validation
+        if msg.len() > MAX_SIGNAL_SIZE {
+            log::warn!(
+                "[Websocket] Oversized signaling message ({} bytes) from user {}",
+                msg.len(),
+                self.name
+            );
+            ctx.text("[SystemError] Signal message too large");
+            return;
         }
+
+        // 2. Parse and validate the message
+        let payload = msg.trim_start_matches("[SignalMessage]").trim();
+        let value = match serde_json::from_str::<Value>(payload) {
+            Ok(v) => v,
+            Err(e) => {
+                log::warn!("[Websocket] Invalid signal JSON from {}: {}", self.name, e);
+                ctx.text("[SystemError] Invalid signaling message format");
+                return;
+            }
+        };
+
+        // 3. Validate target user
+        let to_user = match value.get("to").and_then(|v| v.as_str()) {
+            Some(user) => user,
+            None => {
+                log::warn!("[Websocket] Signal missing 'to' field from {}", self.name);
+                ctx.text("[SystemError] Signaling message missing 'to' field");
+                return;
+            }
+        };
+
+        // 4. Send validation and relay message to server instead of trying to check here
+        WsChatServer::from_registry().do_send(ValidateAndRelaySignal {
+            session_id: self.session_id.clone(),
+            from_user: self.name.clone(),
+            to_user: to_user.to_string(),
+            payload: payload.to_string(),
+        });
     }
 
     fn handle_user_disconnect(&self) {
         let leave_msg = LeaveRoom(self.session_id.clone(), self.room.clone(), self.id);
         self.issue_system_async(leave_msg);
         log::debug!("[Websocket] User {} disconnected", self.name);
+    }
+
+    pub fn start_heartbeat(&self, ctx: &mut ws::WebsocketContext<Self>) {
+        ctx.run_interval(Duration::from_secs(30), |act, ctx| {
+            if let Some(last) = act.last_heartbeat {
+                if Instant::now().duration_since(last) > Duration::from_secs(40) {
+                    log::debug!(
+                        "[Websocket] Heartbeat failed for user {}, disconnecting!",
+                        act.name
+                    );
+                    act.handle_user_disconnect();
+                    ctx.stop();
+                    return;
+                }
+            }
+            log::debug!("[Websocket] Sending heartbeat to user {}", act.name);
+            ctx.ping(b"");
+        });
     }
 }
 
@@ -183,6 +228,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         ServerError::NotFound
                     ));
                 }
+            }
+            ws::Message::Ping(msg) => {
+                log::debug!("[Websocket] Received ping message");
+                self.last_heartbeat = Some(Instant::now());
+                ctx.pong(&msg);
+            }
+            ws::Message::Pong(_) => {
+                log::debug!("[Websocket] Received pong message");
+                self.last_heartbeat = Some(Instant::now());
             }
             ws::Message::Close(reason) => {
                 log::debug!("[Websocket] Closing connection: {:?}", reason);

@@ -2,6 +2,11 @@ use config::{Config, ConfigError, File};
 use serde::Deserialize;
 use std::env;
 
+// This function provides a default value for the log level.
+fn default_log_level() -> String {
+    "debug".to_string()
+}
+
 #[derive(Clone, Debug, Deserialize)]
 pub struct ServerConfig {
     pub bind_address: String,
@@ -10,6 +15,8 @@ pub struct ServerConfig {
     pub auto_join: bool,
     pub rate_limit_per_second: u64,
     pub rate_limit_burst_size: u32,
+    #[serde(default = "default_log_level")]
+    pub log_level: String,
 }
 
 impl ServerConfig {

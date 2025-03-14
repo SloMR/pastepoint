@@ -5,12 +5,15 @@ use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use server::{chat_ws, create_session, index, private_chat_ws, ServerConfig, SessionStore};
 use std::io::Result;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+const NAME: &str = env!("CARGO_PKG_NAME");
+const AUTHORS: &str = env!("CARGO_PKG_AUTHORS");
+
 #[actix_web::main]
 async fn main() -> Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
-
     let config = ServerConfig::load(None).expect("Failed to load server configuration");
 
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or(&config.log_level));
     let governor_conf = GovernorConfigBuilder::default()
         .requests_per_second(config.rate_limit_per_second)
         .burst_size(config.rate_limit_burst_size)
@@ -21,8 +24,11 @@ async fn main() -> Result<()> {
     log::debug!("Rate limiting configured: {:?}", governor_conf);
 
     log::info!(
-        "[Websocket] Starting HTTPS server at https://{}",
-        config.bind_address
+        "[Websocket] Starting HTTPS server at https://{} - PastePoint({}) - {} - {}",
+        config.bind_address,
+        NAME,
+        VERSION,
+        AUTHORS
     );
 
     let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls())?;
