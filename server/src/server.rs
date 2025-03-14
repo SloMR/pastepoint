@@ -3,7 +3,10 @@ use crate::{
     LeaveRoom,
 };
 use actix::prelude::*;
-use std::collections::{hash_map::Entry::Vacant, HashMap};
+use std::{
+    collections::{hash_map::Entry::Vacant, HashMap},
+    time::Duration,
+};
 
 impl WsChatServer {
     pub fn take_room(&mut self, session_id: &str, room_name: &str) -> Option<Room> {
@@ -179,16 +182,43 @@ impl WsChatServer {
             }
         }
     }
+
+    pub fn start_cleanup_interval(&self, ctx: &mut Context<Self>) {
+        ctx.run_interval(Duration::from_secs(3600 /* Every Hour */), |act, _| {
+            act.cleanup_stale_sessions();
+        });
+    }
+
+    fn cleanup_stale_sessions(&mut self) {
+        let empty_sessions: Vec<String> = self
+            .rooms
+            .iter()
+            .filter(|(_, rooms_map)| {
+                rooms_map.values().all(|room| room.is_empty())
+            })
+            .map(|(session_id, _)| session_id.clone())
+            .collect();
+
+        for session_id in empty_sessions {
+            log::debug!("[Websocket] Cleanup: Removing empty session {}", session_id);
+            self.rooms.remove(&session_id);
+        }
+
+        log::debug!(
+            "[Websocket] Current server state: {} active sessions",
+            self.rooms.len()
+        );
+    }
 }
 
 impl SystemService for WsChatServer {
     fn service_started(&mut self, _ctx: &mut Context<Self>) {
-        log::debug!("[Websocket] WsChatServer started");
+        log::info!("[Websocket] WsChatServer started");
     }
 }
 
 impl Supervised for WsChatServer {
     fn restarting(&mut self, _ctx: &mut Context<Self>) {
-        log::debug!("[Websocket] WsChatServer restarting");
+        log::info!("[Websocket] WsChatServer restarting");
     }
 }

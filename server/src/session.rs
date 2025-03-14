@@ -8,6 +8,7 @@ use actix_broker::BrokerIssue;
 use actix_web_actors::ws;
 use names::Generator;
 use serde_json::Value;
+use std::time::{Duration, Instant};
 
 impl WsChatSession {
     pub fn new(session_id: &str, auto_join: bool, session_store: SessionStore) -> Self {
@@ -21,6 +22,7 @@ impl WsChatSession {
             name,
             auto_join,
             session_store,
+            last_heartbeat: None,
         }
     }
 
@@ -144,6 +146,24 @@ impl WsChatSession {
         self.issue_system_async(leave_msg);
         log::debug!("[Websocket] User {} disconnected", self.name);
     }
+
+    pub fn start_heartbeat(&self, ctx: &mut ws::WebsocketContext<Self>) {
+        ctx.run_interval(Duration::from_secs(30), |act, ctx| {
+            if let Some(last) = act.last_heartbeat {
+                if Instant::now().duration_since(last) > Duration::from_secs(40) {
+                    log::debug!(
+                        "[Websocket] Heartbeat failed for user {}, disconnecting!",
+                        act.name
+                    );
+                    act.handle_user_disconnect();
+                    ctx.stop();
+                    return;
+                }
+            }
+            log::debug!("[Websocket] Sending heartbeat to user {}", act.name);
+            ctx.ping(b"");
+        });
+    }
 }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
@@ -183,6 +203,15 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                         ServerError::NotFound
                     ));
                 }
+            }
+            ws::Message::Ping(msg) => {
+                log::debug!("[Websocket] Received ping message");
+                self.last_heartbeat = Some(Instant::now());
+                ctx.pong(&msg);
+            }
+            ws::Message::Pong(_) => {
+                log::debug!("[Websocket] Received pong message");
+                self.last_heartbeat = Some(Instant::now());
             }
             ws::Message::Close(reason) => {
                 log::debug!("[Websocket] Closing connection: {:?}", reason);

@@ -1,7 +1,6 @@
-use std::collections::HashMap;
-
 use crate::SessionStore;
 use actix::prelude::*;
+use std::{collections::HashMap, time::Instant};
 
 pub type Client = Recipient<ChatMessage>;
 pub type Room = HashMap<usize, ClientMetadata>;
@@ -13,12 +12,13 @@ pub struct WsChatServer {
 
 #[derive(Default, Clone)]
 pub struct WsChatSession {
-    pub session_id: String,          // session id
-    pub id: usize,                   // client id
-    pub room: String,                // room name
-    pub name: String,                // client name
-    pub auto_join: bool,             // flag to control auto-join
-    pub session_store: SessionStore, // reference to SessionStore
+    pub session_id: String,              // session id
+    pub id: usize,                       // client id
+    pub room: String,                    // room name
+    pub name: String,                    // client name
+    pub auto_join: bool,                 // flag to control auto-join
+    pub session_store: SessionStore,     // reference to SessionStore
+    pub last_heartbeat: Option<Instant>, // last heartbeat time
 }
 
 pub struct ClientMetadata {
