@@ -10,7 +10,7 @@ use std::{
 
 impl WsChatServer {
     pub fn take_room(&mut self, session_id: &str, room_name: &str) -> Option<Room> {
-        log::debug!("[Websocket] Getting room: {}", room_name);
+        log::debug!(target: "Websocket","Getting room: {}", room_name);
         let session_id = self.rooms.get_mut(session_id)?;
         let room = session_id.get_mut(room_name)?;
         let room = std::mem::take(room);
@@ -30,7 +30,7 @@ impl WsChatServer {
         if let Some(room) = self.rooms.get_mut(session_id) {
             if let Some(existing_room) = room.get_mut(room_name) {
                 return if let Vacant(e) = existing_room.entry(id) {
-                    log::debug!("[Websocket] Adding client to room: {}", room_name);
+                    log::debug!(target: "Websocket", "Adding client to room: {}", room_name);
                     e.insert(ClientMetadata {
                         recipient: client,
                         name,
@@ -38,7 +38,8 @@ impl WsChatServer {
                     id
                 } else {
                     log::debug!(
-                        "[Websocket] Client {} already in room: {}, skipping addition",
+                        target: "Websocket",
+                        "Client {} already in room: {}, skipping addition",
                         id,
                         room_name
                     );
@@ -73,7 +74,8 @@ impl WsChatServer {
         _src: usize,
     ) -> Option<()> {
         log::debug!(
-            "[Websocket] Sending join message to room {}: {}",
+            target: "Websocket",
+            "Sending join message to room {}: {}",
             room_name,
             msg
         );
@@ -89,13 +91,15 @@ impl WsChatServer {
                         .is_ok()
                     {
                         log::debug!(
-                            "[Websocket] Join Message sent to client {}, staying in room: {}",
+                            target: "Websocket",
+                            "Join Message sent to client {}, staying in room: {}",
                             id,
                             room_name
                         );
                     } else {
                         log::debug!(
-                            "[Websocket] Failed to send join message to client {}, removing from room: {}",
+                            target: "Websocket",
+                            "Failed to send join message to client {}, removing from room: {}",
                             id,
                             room_name
                         );
@@ -107,7 +111,8 @@ impl WsChatServer {
             Some(())
         } else {
             log::debug!(
-                "[Websocket] Room {} not found in session {}",
+                target: "Websocket",
+                "Room {} not found in session {}",
                 room_name,
                 session_id
             );
@@ -136,7 +141,8 @@ impl WsChatServer {
                     .map(|client_metadata| client_metadata.name.clone())
                     .collect();
                 log::debug!(
-                    "[Websocket] Broadcasting members of room {}: {:?}",
+                    target: "Websocket",
+                    "Broadcasting members of room {}: {:?}",
                     room_name,
                     member_list
                 );
@@ -159,7 +165,8 @@ impl WsChatServer {
             if total_users == 0 {
                 self.rooms.remove(session_id);
                 log::debug!(
-                    "[Websocket] Session {} has no more users and is being removed",
+                    target: "Websocket",
+                    "Session {} has no more users and is being removed",
                     session_id
                 );
             }
@@ -198,12 +205,13 @@ impl WsChatServer {
             .collect();
 
         for session_id in empty_sessions {
-            log::debug!("[Websocket] Cleanup: Removing empty session {}", session_id);
+            log::debug!(target: "Websocket","Cleanup: Removing empty session {}", session_id);
             self.rooms.remove(&session_id);
         }
 
         log::debug!(
-            "[Websocket] Current server state: {} active sessions",
+            target: "Websocket",
+            "Current server state: {} active sessions",
             self.rooms.len()
         );
     }
@@ -230,14 +238,16 @@ impl WsChatServer {
                         // try_send returns a Result
                         if let Err(e) = client.recipient.try_send(message) {
                             log::error!(
-                                "[Websocket] Failed to relay signal from {} to {}: {:?}",
+                                target: "Websocket",
+                                "Failed to relay signal from {} to {}: {:?}",
                                 from_user,
                                 to_user,
                                 e
                             );
                         } else {
                             log::debug!(
-                                "[Websocket] Successfully relayed signal from {} to {}",
+                                target: "Websocket",
+                                "Successfully relayed signal from {} to {}",
                                 from_user,
                                 to_user
                             );
@@ -249,7 +259,8 @@ impl WsChatServer {
         }
 
         log::debug!(
-            "[Websocket] Could not find target user {} to relay message from {}",
+            target: "Websocket",
+            "Could not find target user {} to relay message from {}",
             to_user,
             from_user
         );
@@ -258,12 +269,12 @@ impl WsChatServer {
 
 impl SystemService for WsChatServer {
     fn service_started(&mut self, _ctx: &mut Context<Self>) {
-        log::info!("[Websocket] WsChatServer started");
+        log::info!(target: "Websocket","WsChatServer started");
     }
 }
 
 impl Supervised for WsChatServer {
     fn restarting(&mut self, _ctx: &mut Context<Self>) {
-        log::info!("[Websocket] WsChatServer restarting");
+        log::info!(target: "Websocket","WsChatServer restarting");
     }
 }
