@@ -1,6 +1,9 @@
 use crate::{
+    consts::MAX_SIGNAL_SIZE,
     error::ServerError,
-    message::{ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer, WsChatSession},
+    message::{
+        JoinRoom, LeaveRoom, ListRooms, ValidateAndRelaySignal, WsChatServer, WsChatSession,
+    },
     SessionStore,
 };
 use actix::prelude::*;
@@ -122,23 +125,45 @@ impl WsChatSession {
     }
 
     fn handle_signal_message(&self, msg: &str, ctx: &mut ws::WebsocketContext<Self>) {
-        let payload = msg.trim_start_matches("[SignalMessage]").trim();
-
-        if let Ok(value) = serde_json::from_str::<Value>(payload) {
-            if let Some(to_user) = value.get("to").and_then(|v| v.as_str()) {
-                let relay_msg = ChatMessage(format!("[SignalMessage] {}", payload));
-
-                WsChatServer::from_registry().do_send(crate::message::RelaySignalMessage {
-                    from: self.name.clone(),
-                    to: to_user.to_string(),
-                    message: relay_msg,
-                });
-            } else {
-                ctx.text("[SystemError] Invalid signaling message format");
-            }
-        } else {
-            ctx.text("[SystemError] Failed to parse signaling message");
+        // 1. Size validation
+        if msg.len() > MAX_SIGNAL_SIZE {
+            log::warn!(
+                "[Websocket] Oversized signaling message ({} bytes) from user {}",
+                msg.len(),
+                self.name
+            );
+            ctx.text("[SystemError] Signal message too large");
+            return;
         }
+
+        // 2. Parse and validate the message
+        let payload = msg.trim_start_matches("[SignalMessage]").trim();
+        let value = match serde_json::from_str::<Value>(payload) {
+            Ok(v) => v,
+            Err(e) => {
+                log::warn!("[Websocket] Invalid signal JSON from {}: {}", self.name, e);
+                ctx.text("[SystemError] Invalid signaling message format");
+                return;
+            }
+        };
+
+        // 3. Validate target user
+        let to_user = match value.get("to").and_then(|v| v.as_str()) {
+            Some(user) => user,
+            None => {
+                log::warn!("[Websocket] Signal missing 'to' field from {}", self.name);
+                ctx.text("[SystemError] Signaling message missing 'to' field");
+                return;
+            }
+        };
+
+        // 4. Send validation and relay message to server instead of trying to check here
+        WsChatServer::from_registry().do_send(ValidateAndRelaySignal {
+            session_id: self.session_id.clone(),
+            from_user: self.name.clone(),
+            to_user: to_user.to_string(),
+            payload: payload.to_string(),
+        });
     }
 
     fn handle_user_disconnect(&self) {

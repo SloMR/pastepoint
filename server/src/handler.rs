@@ -1,7 +1,7 @@
 use actix::{Handler, MessageResult};
 
 use crate::{
-    message::{CleanupSession, RelaySignalMessage},
+    message::{CleanupSession, RelaySignalMessage, ValidateAndRelaySignal},
     ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer, WsChatSession,
 };
 
@@ -128,3 +128,22 @@ impl Handler<CleanupSession> for WsChatServer {
     }
 }
 
+impl Handler<ValidateAndRelaySignal> for WsChatServer {
+    type Result = ();
+
+    fn handle(&mut self, msg: ValidateAndRelaySignal, _ctx: &mut Self::Context) -> Self::Result {
+        let shared_room = self.users_share_room(&msg.session_id, &msg.from_user, &msg.to_user);
+
+        if !shared_room {
+            log::warn!(
+                "[Websocket] Attempted signal to user not in same room: {} -> {}",
+                msg.from_user,
+                msg.to_user
+            );
+            return;
+        }
+
+        let relay_msg = ChatMessage(format!("[SignalMessage] {}", msg.payload));
+        self.relay_message_to_user(&msg.to_user, relay_msg, &msg.from_user);
+    }
+}

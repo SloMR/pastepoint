@@ -54,12 +54,20 @@ pub struct ListRooms(pub String /* session_id */);
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct RelaySignalMessage {
-    pub(crate) from: String,            // session_id
-    pub(crate) to: String,              // session_id
-    pub(crate) message: ChatMessage,    // signal message
+    pub(crate) from: String,         // session_id
+    pub(crate) to: String,           // session_id
+    pub(crate) message: ChatMessage, // signal message
 }
 
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct CleanupSession(pub String /* session_id */);
 
+#[derive(Message)]
+#[rtype(result = "()")]
+pub struct ValidateAndRelaySignal {
+    pub session_id: String,
+    pub from_user: String,
+    pub to_user: String,
+    pub payload: String,
+}

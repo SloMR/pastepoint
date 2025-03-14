@@ -193,9 +193,7 @@ impl WsChatServer {
         let empty_sessions: Vec<String> = self
             .rooms
             .iter()
-            .filter(|(_, rooms_map)| {
-                rooms_map.values().all(|room| room.is_empty())
-            })
+            .filter(|(_, rooms_map)| rooms_map.values().all(|room| room.is_empty()))
             .map(|(session_id, _)| session_id.clone())
             .collect();
 
@@ -207,6 +205,53 @@ impl WsChatServer {
         log::debug!(
             "[Websocket] Current server state: {} active sessions",
             self.rooms.len()
+        );
+    }
+
+    pub fn users_share_room(&self, session_id: &str, user1: &str, user2: &str) -> bool {
+        if let Some(rooms) = self.rooms.get(session_id) {
+            for room in rooms.values() {
+                let user1_in_room = room.values().any(|cm| cm.name == user1);
+                let user2_in_room = room.values().any(|cm| cm.name == user2);
+
+                if user1_in_room && user2_in_room {
+                    return true;
+                }
+            }
+        }
+        false
+    }
+
+    pub fn relay_message_to_user(&self, to_user: &str, message: ChatMessage, from_user: &str) {
+        for rooms in self.rooms.values() {
+            for room in rooms.values() {
+                for client in room.values() {
+                    if client.name == to_user {
+                        // try_send returns a Result
+                        if let Err(e) = client.recipient.try_send(message) {
+                            log::error!(
+                                "[Websocket] Failed to relay signal from {} to {}: {:?}",
+                                from_user,
+                                to_user,
+                                e
+                            );
+                        } else {
+                            log::debug!(
+                                "[Websocket] Successfully relayed signal from {} to {}",
+                                from_user,
+                                to_user
+                            );
+                        }
+                        return;
+                    }
+                }
+            }
+        }
+
+        log::debug!(
+            "[Websocket] Could not find target user {} to relay message from {}",
+            to_user,
+            from_user
         );
     }
 }
