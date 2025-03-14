@@ -1,7 +1,10 @@
 // File transfer constants
-export const CHUNK_SIZE = 32 * 1024; // 32 KB
-export const MAX_BUFFERED_AMOUNT = 256 * 1024; // 256 KB
-export const BUFFERED_AMOUNT_LOW_THRESHOLD = 128 * 1024; // 128 KB
+export const KB = 1024;
+export const MB = 1024 * KB;
+
+export const CHUNK_SIZE = 256 * KB;
+export const MAX_BUFFERED_AMOUNT = 2 * MB;
+export const BUFFERED_AMOUNT_LOW_THRESHOLD = MB;
 
 // WebRTC constants
 export const MAX_RECONNECT_ATTEMPTS = 5;
@@ -21,8 +24,6 @@ export const RTC_SIGNALING_STATES = {
   STABLE: 'stable',
 } as const;
 
-export type RTCSignalingState = (typeof RTC_SIGNALING_STATES)[keyof typeof RTC_SIGNALING_STATES];
-
 export const ICE_SERVERS = [
   // Google STUN servers
   { urls: 'stun:stun.l.google.com:19302' },
@@ -41,7 +42,7 @@ export const ICE_SERVERS = [
 // WebRTC data channel constants
 export const DATA_CHANNEL_OPTIONS = {
   ordered: true,
-  maxPacketLifeTime: 3000,
+  maxPacketLifeTime: 5000,
 };
 
 // WebRTC signaling message types
@@ -57,6 +58,19 @@ export enum SignalMessageType {
   OFFER = 'offer',
   ANSWER = 'answer',
   CANDIDATE = 'candidate',
+}
+
+export interface SignalMessage {
+  type: SignalMessageType;
+  data: any;
+  from: string;
+  to: string;
+  sequence?: number;
+}
+
+export interface DataChannelMessage {
+  type: string;
+  payload: any;
 }
 
 // WebRTC file transfer message types
@@ -81,9 +95,6 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
 }
-
-// Logger service constants
-export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'TRACE';
 
 // File transfer interfaces
 export type FileStatus = 'pending' | 'accepted' | 'declined' | 'completed';

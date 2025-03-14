@@ -8,6 +8,7 @@ import {
   FileStatus,
   FileUpload,
   MAX_BUFFERED_AMOUNT,
+  MB,
 } from '../../utils/constants';
 import { ToastrService } from 'ngx-toastr';
 import { v4 as uuidv4 } from 'uuid';
@@ -25,6 +26,9 @@ export class FileTransferService {
   private fileTransfers = new Map<string, Map<string, FileUpload>>();
   private incomingFileTransfers = new Map<string, Map<string, FileDownload>>();
   private fileTransferStatus = new Map<string, FileStatus>();
+  private processingQueues = new Map<string, boolean>();
+  private consecutiveErrorCounts = new Map<string, number>();
+  private maxConsecutiveErrors = 5;
 
   constructor(
     private webrtcService: WebRTCService,
@@ -331,66 +335,102 @@ export class FileTransferService {
   }
 
   private async sendNextChunk(fileTransfer: FileUpload): Promise<void> {
-    while (fileTransfer.currentOffset < fileTransfer.file.size) {
-      const userMap = this.fileTransfers.get(fileTransfer.targetUser);
-      if (!userMap || !userMap.has(fileTransfer.fileId)) {
-        this.logger.warn(
-          'sendNextChunk',
-          `File transfer for user=${fileTransfer.targetUser}, fileId=${fileTransfer.fileId} does not exist anymore`
-        );
-        break;
+    const transferId = `${fileTransfer.targetUser}-${fileTransfer.fileId}`;
+    if (this.processingQueues.get(transferId)) {
+      return;
+    }
+
+    this.processingQueues.set(transferId, true);
+
+    try {
+      while (fileTransfer.currentOffset < fileTransfer.file.size) {
+        const userMap = this.fileTransfers.get(fileTransfer.targetUser);
+        if (!userMap || !userMap.has(fileTransfer.fileId)) {
+          this.logger.warn(
+            'sendNextChunk',
+            `File transfer for user=${fileTransfer.targetUser}, fileId=${fileTransfer.fileId} does not exist anymore`
+          );
+          break;
+        }
+
+        if (fileTransfer.isPaused) {
+          this.logger.warn('sendNextChunk', `Upload is paused for fileId=${fileTransfer.fileId}`);
+          break;
+        }
+
+        const dataChannel = this.webrtcService.getDataChannel(fileTransfer.targetUser);
+        if (!dataChannel) {
+          this.logger.error(
+            'sendNextChunk',
+            `Data channel is not available for ${fileTransfer.targetUser}`
+          );
+
+          this.webrtcService.initiateConnection(fileTransfer.targetUser);
+          await new Promise((resolve) => setTimeout(resolve, 1000));
+
+          const errorCount = this.consecutiveErrorCounts.get(transferId) || 0;
+          if (errorCount > this.maxConsecutiveErrors) {
+            break;
+          }
+          continue;
+        }
+
+        if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+          this.logger.warn(
+            'sendNextChunk',
+            `Data channel buffer is full (${dataChannel.bufferedAmount} bytes) for ${fileTransfer.targetUser}. Pausing upload.`
+          );
+          fileTransfer.isPaused = true;
+          break;
+        }
+
+        const start = fileTransfer.currentOffset;
+        const end = Math.min(start + CHUNK_SIZE, fileTransfer.file.size);
+        const blob = fileTransfer.file.slice(start, end);
+
+        try {
+          const arrayBuffer = await blob.arrayBuffer();
+          const chunkSent = await this.processFileChunk(arrayBuffer, fileTransfer, end);
+
+          if (!chunkSent) {
+            this.logger.warn('sendNextChunk', `Failed to send chunk, pausing for retry`);
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            continue;
+          }
+        } catch (error) {
+          this.logger.error('sendNextChunk', `Error preparing chunk: ${error}`);
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          continue;
+        }
+
+        if (fileTransfer.currentOffset >= fileTransfer.file.size) {
+          this.logger.info(
+            'sendNextChunk',
+            `FileId=${fileTransfer.fileId} fully sent to ${fileTransfer.targetUser}`
+          );
+
+          fileTransfer.progress = 100;
+          const key = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
+          this.fileTransferStatus.set(key, 'completed');
+
+          userMap.delete(fileTransfer.fileId);
+          this.updateActiveUploads();
+          this.checkAllUsersResponded();
+          break;
+        }
+
+        if (fileTransfer.currentOffset % MB < CHUNK_SIZE) {
+          const mbSent = (fileTransfer.currentOffset / MB).toFixed(2);
+          this.logger.info(
+            'sendNextChunk',
+            `FileId=${fileTransfer.fileId} sent ${mbSent}MB to ${fileTransfer.targetUser}`
+          );
+
+          await new Promise((resolve) => setTimeout(resolve, 1));
+        }
       }
-
-      if (fileTransfer.isPaused) {
-        this.logger.warn('sendNextChunk', `Upload is paused for fileId=${fileTransfer.fileId}`);
-        break;
-      }
-
-      const dataChannel = this.webrtcService.getDataChannel(fileTransfer.targetUser);
-      if (!dataChannel) {
-        this.logger.error(
-          'sendNextChunk',
-          `Data channel is not available for ${fileTransfer.targetUser}`
-        );
-        break;
-      }
-
-      if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
-        this.logger.warn(
-          'sendNextChunk',
-          `Data channel buffer is full for ${fileTransfer.targetUser}. Pausing upload.`
-        );
-        fileTransfer.isPaused = true;
-        break;
-      }
-
-      const start = fileTransfer.currentOffset;
-      const end = Math.min(start + CHUNK_SIZE, fileTransfer.file.size);
-      const blob = fileTransfer.file.slice(start, end);
-      const arrayBuffer = await blob.arrayBuffer();
-
-      await this.processFileChunk(arrayBuffer, fileTransfer, end);
-
-      if (fileTransfer.currentOffset >= fileTransfer.file.size) {
-        this.logger.info(
-          'sendNextChunk',
-          `FileId=${fileTransfer.fileId} fully sent to ${fileTransfer.targetUser}`
-        );
-
-        fileTransfer.progress = 100;
-        const key = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
-        this.fileTransferStatus.set(key, 'completed');
-
-        userMap.delete(fileTransfer.fileId);
-        this.updateActiveUploads();
-        this.checkAllUsersResponded();
-        break;
-      } else {
-        this.logger.info(
-          'sendNextChunk',
-          `FileId=${fileTransfer.fileId} sent chunk ${fileTransfer.currentOffset} to ${fileTransfer.targetUser}`
-        );
-      }
+    } finally {
+      this.processingQueues.set(transferId, false);
     }
   }
 
@@ -398,32 +438,67 @@ export class FileTransferService {
     arrayBuffer: ArrayBuffer,
     fileTransfer: FileUpload,
     end: number
-  ): Promise<void> {
+  ): Promise<boolean> {
     const dataChannel = this.webrtcService.getDataChannel(fileTransfer.targetUser);
     if (!dataChannel) {
       this.logger.error('processFileChunk', `No data channel for ${fileTransfer.targetUser}`);
-      return;
+      return false;
     }
 
-    while (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
-      await new Promise((resolve) => setTimeout(resolve, 100));
+    if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+      fileTransfer.isPaused = true;
+      this.logger.info(
+        'processFileChunk',
+        `Pausing transfer to ${fileTransfer.targetUser} due to buffer size: ${dataChannel.bufferedAmount}`
+      );
+      return false;
     }
 
-    const metaMessage = {
-      type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CHUNK,
-      payload: {
-        fileId: fileTransfer.fileId,
-        chunkSize: arrayBuffer.byteLength,
-      },
-    };
-    this.webrtcService.sendData(metaMessage, fileTransfer.targetUser);
-    this.webrtcService.sendRawData(arrayBuffer, fileTransfer.targetUser);
+    try {
+      const metaMessage = {
+        type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CHUNK,
+        payload: {
+          fileId: fileTransfer.fileId,
+          chunkSize: arrayBuffer.byteLength,
+        },
+      };
 
-    const progress = (fileTransfer.currentOffset / fileTransfer.file.size) * 100;
-    fileTransfer.currentOffset = end;
-    fileTransfer.progress = parseFloat(progress.toFixed(2));
+      this.webrtcService.sendData(metaMessage, fileTransfer.targetUser);
+      await new Promise((resolve) => setTimeout(resolve, 5));
 
-    this.updateActiveUploads();
+      const dataSent = this.webrtcService.sendRawData(arrayBuffer, fileTransfer.targetUser);
+      if (!dataSent) {
+        this.logger.warn(
+          'processFileChunk',
+          `Failed to send data chunk for ${fileTransfer.fileId}`
+        );
+        return false;
+      }
+      this.consecutiveErrorCounts.set(`${fileTransfer.targetUser}-${fileTransfer.fileId}`, 0);
+
+      const progress = (end / fileTransfer.file.size) * 100;
+      fileTransfer.currentOffset = end;
+      fileTransfer.progress = parseFloat(progress.toFixed(2));
+      this.updateActiveUploads();
+
+      return true;
+    } catch (error) {
+      const errorKey = `${fileTransfer.targetUser}-${fileTransfer.fileId}`;
+      const currentErrors = this.consecutiveErrorCounts.get(errorKey) || 0;
+      this.consecutiveErrorCounts.set(errorKey, currentErrors + 1);
+
+      this.logger.error('processFileChunk', `Error sending chunk: ${error}`);
+
+      if (currentErrors >= this.maxConsecutiveErrors) {
+        this.logger.error(
+          'processFileChunk',
+          `Too many consecutive errors (${currentErrors}). Canceling transfer.`
+        );
+        this.cancelUpload(fileTransfer.targetUser, fileTransfer.fileId);
+      }
+
+      return false;
+    }
   }
 
   public cancelUpload(targetUser: string, fileId: string): void {
