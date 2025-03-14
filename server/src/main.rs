@@ -7,10 +7,9 @@ use std::io::Result;
 
 #[actix_web::main]
 async fn main() -> Result<()> {
-    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
-
     let config = ServerConfig::load(None).expect("Failed to load server configuration");
 
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or(&config.log_level));
     let governor_conf = GovernorConfigBuilder::default()
         .requests_per_second(config.rate_limit_per_second)
         .burst_size(config.rate_limit_burst_size)

@@ -22,7 +22,6 @@ services:
     ports:
       - "9000:9000"
     environment:
-      RUST_LOG: "info"
       RUN_ENV: "production"
     volumes:
         - ./certs:/etc/ssl/certs
