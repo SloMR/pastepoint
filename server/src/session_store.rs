@@ -168,8 +168,9 @@ impl SessionStore {
                     uuid
                 );
 
-                if let Ok(_) =
-                    WsChatServer::from_registry().try_send(CleanupSession(uuid.to_string()))
+                if WsChatServer::from_registry()
+                    .try_send(CleanupSession(uuid.to_string()))
+                    .is_ok()
                 {
                     log::debug!("[Websocket] Sent cleanup request for session {}", uuid);
                 }
