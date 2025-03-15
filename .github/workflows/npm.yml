@@ -40,9 +40,12 @@ jobs:
         working-directory: client
         run: npm run build --configuration=production
 
+      - name: Setup Chrome for testing
+        uses: browser-actions/setup-chrome@latest
+
       - name: Run Tests with Coverage
         working-directory: client
-        run: npm run test:coverage:ci
+        run: npm run test:ci
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
