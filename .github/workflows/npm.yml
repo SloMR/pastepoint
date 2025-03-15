@@ -36,24 +36,19 @@ jobs:
           npm run lint
           npm run format
 
-# Uncomment if you want to include a test step
-#      - name: Run Tests
-#        working-directory: client
-#        run: npm test -- --watch=false --browsers=ChromeHeadless
-
-# Uncomment if you want to include a security audit step
-#      - name: Security Audit
-#        working-directory: client
-#        run: npm audit
-
       - name: Production Build
         working-directory: client
         run: npm run build --configuration=production
 
-# Uncomment if you want to upload the release artifact
-#      - name: Upload Artifact
-#        uses: actions/upload-artifact@v3
-#        if: success() && github.ref == 'refs/heads/main'
-#        with:
-#          name: angular-dist
-#          path: client/dist
+      - name: Run Tests with Coverage
+        working-directory: client
+        run: npm run test:coverage:ci
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./client/coverage/
+          flags: angular
+          name: angular-coverage
+          fail_ci_if_error: false
+          verbose: true

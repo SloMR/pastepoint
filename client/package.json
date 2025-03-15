@@ -11,7 +11,9 @@
     "serve:ssr:client": "node dist/client/server/server.mjs",
     "lint": "ng lint",
     "lint:fix": "ng lint --fix",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test:coverage": "ng test --code-coverage",
+    "test:coverage:ci": "ng test --no-watch --code-coverage --browsers=ChromeHeadless"
   },
   "private": true,
   "type": "module",

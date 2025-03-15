@@ -51,20 +51,21 @@ jobs:
         run: cargo test --all --verbose
         working-directory: server
 
-# Uncomment if you want to include a security audit step
-#      - name: Security Audit
-#        uses: actions-rs/audit-check@v1
-#        with:
-#          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Build Release
         run: cargo build --release --verbose
         working-directory: server
 
-# Uncomment if you want to upload the release artifact
-#      - name: Upload Artifact
-#        if: success() && github.ref == 'refs/heads/main'
-#        uses: actions/upload-artifact@v3
-#        with:
-#          name: server-binary
-#          path: server/target/release/server
+      - name: Run Tests with Coverage
+        run: |
+          cargo install cargo-tarpaulin
+          cargo tarpaulin --out Xml --output-dir ./coverage
+        working-directory: server
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          directory: ./server/coverage/
+          flags: rust
+          name: rust-coverage
+          fail_ci_if_error: false
+          verbose: true
