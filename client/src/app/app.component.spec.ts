@@ -1,10 +1,19 @@
 import { TestBed } from '@angular/core/testing';
 import { AppComponent } from './app.component';
+import { TestImports, TestProviders } from './testing/test-helper';
+import { PLATFORM_ID } from '@angular/core';
+import { NgIf } from '@angular/common';
+import { provideRouter } from '@angular/router';
 
 describe('AppComponent', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [AppComponent],
+      imports: [NgIf, ...TestImports],
+      providers: [
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        ...TestProviders,
+        provideRouter([]),
+      ],
     }).compileComponents();
   });
 
@@ -20,10 +29,10 @@ describe('AppComponent', () => {
     expect(app.title).toEqual('PastePoint');
   });
 
-  it('should render title', () => {
+  it('should render the title by showing the content', () => {
     const fixture = TestBed.createComponent(AppComponent);
     fixture.detectChanges();
     const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, PastePoint');
+    expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });

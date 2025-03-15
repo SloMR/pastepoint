@@ -114,7 +114,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Direct references to DOM elements for scrolling, focusing, etc.
    * ==========================================================
    */
-  @ViewChild('messageContainer') private messageContainer!: ElementRef;
+  @ViewChild('messageContainer') messageContainer!: ElementRef;
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
 
   /**
