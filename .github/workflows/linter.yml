@@ -46,4 +46,3 @@ jobs:
           VALIDATE_YAML_PRETTIER: false
           VALIDATE_TYPESCRIPT_ES: false
           VALIDATE_TYPESCRIPT_STANDARD: false
-          VALIDATE_GITHUB_ACTIONS: false
