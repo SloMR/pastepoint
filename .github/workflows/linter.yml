@@ -41,7 +41,9 @@ jobs:
           VALIDATE_RUST_2015: false
           VALIDATE_RUST_2018: false
           VALIDATE_RUST_CLIPPY: false
-          TYPESCRIPT_ES_CONFIG_FILE: "eslint.config.js"
-          TYPESCRIPT_STANDARD_TSCONFIG_FILE: "${DEFAULT_WORKSPACE}/client/tsconfig.json"
+          VALIDATE_CSS: false
+          VALIDATE_CSS_PRETTIER: false
           VALIDATE_YAML_PRETTIER: false
-          CSS_FILE_NAME: "stylelint.config.js"
+          LINTER_RULES_PATH: /
+          TYPESCRIPT_ES_CONFIG_FILE: client/eslint.config.js
+          TYPESCRIPT_STANDARD_TSCONFIG_FILE: client/tsconfig.json

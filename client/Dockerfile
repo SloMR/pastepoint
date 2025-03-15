@@ -30,7 +30,10 @@ RUN mkdir -p /var/cache/nginx/client_temp && \
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost || exit 1
+    CMD wget --quiet --tries=1 --spider http://localhost || exit 1
+
+# Switch to nginx user
+USER nginx
 
 EXPOSE 443
 CMD ["nginx", "-g", "daemon off;"]
