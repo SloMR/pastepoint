@@ -1,5 +1,5 @@
 # Stage 1: Build the Rust app
-FROM rust:latest AS builder
+FROM rust:1.85.0 AS builder
 
 WORKDIR /usr/src/app
 
@@ -34,6 +34,10 @@ COPY --from=builder /usr/src/app/config ./config
 # Create a non-root user
 RUN useradd -m appuser
 USER appuser
+
+# Add healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD curl --fail http://localhost:9000/ || exit 1
 
 # Set the command to run the binary
 CMD ["./server_bin"]
