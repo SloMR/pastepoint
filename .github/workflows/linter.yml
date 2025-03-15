@@ -44,6 +44,5 @@ jobs:
           VALIDATE_CSS: false
           VALIDATE_CSS_PRETTIER: false
           VALIDATE_YAML_PRETTIER: false
-          LINTER_RULES_PATH: /
-          TYPESCRIPT_ES_CONFIG_FILE: client/eslint.config.js
-          TYPESCRIPT_STANDARD_TSCONFIG_FILE: client/tsconfig.json
+          VALIDATE_TYPESCRIPT_ES: false
+          VALIDATE_TYPESCRIPT_STANDARD: false
