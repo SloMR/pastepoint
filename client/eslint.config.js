@@ -54,4 +54,16 @@ export default [
       ...angular.configs.recommended.rules,
     },
   },
+  {
+    files: ['**/*.spec.ts'],
+    languageOptions: {
+      globals: {
+        jasmine: 'writable',
+        describe: 'readonly',
+        it: 'readonly',
+        beforeEach: 'readonly',
+        expect: 'readonly',
+      },
+    },
+  },
 ];
