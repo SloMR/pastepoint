@@ -1,0 +1,159 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Server Run",
+      "type": "shell",
+      "command": "cargo run",
+      "group": "build",
+      "problemMatcher": ["$rustc"],
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      }
+    },
+    {
+      "label": "Server Test",
+      "type": "shell",
+      "command": "cargo test",
+      "group": "test",
+      "problemMatcher": ["$rustc"],
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      }
+    },
+    {
+      "label": "Server Clippy",
+      "type": "shell",
+      "command": "cargo clippy --all-targets --all-features -- -D warnings",
+      "group": "build",
+      "problemMatcher": ["$rustc"],
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      }
+    },
+    {
+      "label": "Server Format",
+      "type": "shell",
+      "command": "cargo fmt --all",
+      "group": "build",
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}/server"
+      }
+    },
+    {
+      "label": "Client Run",
+      "type": "shell",
+      "command": "npm run start",
+      "group": "build",
+      "problemMatcher": ["$tsc"],
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      }
+    },
+    {
+      "label": "Client Run Local",
+      "type": "shell",
+      "command": "npm run start-local",
+      "group": "build",
+      "problemMatcher": ["$tsc"],
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      }
+    },
+    {
+      "label": "Client Test",
+      "type": "shell",
+      "command": "npm run test",
+      "group": "test",
+      "problemMatcher": ["$tsc"],
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      }
+    },
+    {
+      "label": "Client Test Coverage",
+      "type": "shell",
+      "command": "npm run test:coverage",
+      "group": "test",
+      "problemMatcher": ["$tsc"],
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      }
+    },
+    {
+      "label": "Client Test CI",
+      "type": "shell",
+      "command": "npm run test:ci",
+      "group": "test",
+      "problemMatcher": ["$tsc"],
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      }
+    },
+    {
+      "label": "Client Format",
+      "type": "shell",
+      "command": "npm run format",
+      "group": "build",
+      "problemMatcher": [],
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      }
+    },
+    {
+      "label": "Client Lint Fix",
+      "type": "shell",
+      "command": "npm run lint:fix",
+      "group": "build",
+      "problemMatcher": ["$eslint-stylish"],
+      "options": {
+        "cwd": "${workspaceFolder}/client"
+      }
+    },
+    {
+      "label": "Format PastePoint",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Server Format", "Client Format"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Lint PastePoint",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Server Clippy", "Client Lint Fix"],
+      "group": {
+        "kind": "build",
+        "isDefault": false
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Test PastePoint",
+      "dependsOn": ["Server Test", "Client Test"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run PastePoint",
+      "dependsOn": ["Server Run", "Client Run Local"],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Run PastePoint (Non-Local)",
+      "dependsOn": ["Server Run", "Client Run"],
+      "group": "build",
+      "problemMatcher": []
+    }
+  ]
+}

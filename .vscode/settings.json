@@ -1,0 +1,40 @@
+{
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit",
+    "source.fixAll.stylelint": "explicit"
+  },
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[html]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[css]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[rust]": {
+    "editor.defaultFormatter": "rust-lang.rust-analyzer"
+  },
+  "prettier.singleQuote": true,
+  "prettier.trailingComma": "es5",
+  "prettier.printWidth": 100,
+  "stylelint.configFile": "./client/stylelint.config.js",
+  "stylelint.validate": ["css", "scss"],
+  "editor.tabSize": 2,
+  "rust-analyzer.check.command": "clippy",
+  "files.exclude": {
+    "**/client/.angular/cache": true,
+    "**/server/target": true,
+    "**/target": true
+  },
+  "taskExplorer.exclude": ["**/node_modules/**", "**/target/**"],
+  "taskExplorer.enabledTasks": {
+    "npm": false,
+    "tsc": false
+  }
+}
