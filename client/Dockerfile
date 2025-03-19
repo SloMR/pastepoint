@@ -16,6 +16,7 @@ COPY --from=builder /usr/src/app/dist/client/browser /usr/share/nginx/html/brows
 
 # Copy our recommended nginx.conf or template-based config
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf
+COPY nginx/security-headers.conf /etc/nginx/security-headers.conf
 
 # Create directories and set appropriate permissions for the nginx user
 RUN mkdir -p /var/cache/nginx/client_temp /var/run/nginx /var/log/nginx && \

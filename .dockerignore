@@ -30,3 +30,11 @@ docker-compose.yml
 .editorconfig
 .clippy.toml
 .rustfmt.toml
+
+# Ignore OS-specific files
+.hg
+.bzr
+.svn
+._darcs
+BitKeeper
+CVS
