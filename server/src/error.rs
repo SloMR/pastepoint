@@ -25,21 +25,37 @@ impl ResponseError for ServerError {
     fn error_response(&self) -> HttpResponse {
         match *self {
             ServerError::InternalServerError => {
-                HttpResponse::InternalServerError().body("Internal Server Error")
+                HttpResponse::InternalServerError()
+                    .content_type("text/plain; charset=utf-8")
+                    .body("Internal Server Error")
             }
-            ServerError::NotFound => HttpResponse::NotFound().body("Not Found"),
+            ServerError::NotFound => HttpResponse::NotFound()
+                .content_type("text/plain; charset=utf-8")
+                .body("Not Found"),
             ServerError::BadRequest(ref message) => {
-                HttpResponse::BadRequest().body(message.clone())
+                HttpResponse::BadRequest()
+                    .content_type("text/plain; charset=utf-8")
+                    .body(message.clone())
             }
-            ServerError::IndexOutOfBounds => HttpResponse::BadRequest().body("Index out of bounds"),
-            ServerError::ChunkMissing => HttpResponse::BadRequest().body("Chunk Missing"),
+            ServerError::IndexOutOfBounds => HttpResponse::BadRequest()
+                .content_type("text/plain; charset=utf-8")
+                .body("Index out of bounds"),
+            ServerError::ChunkMissing => HttpResponse::BadRequest()
+                .content_type("text/plain; charset=utf-8")
+                .body("Chunk Missing"),
             ServerError::FileReassemblyError => {
-                HttpResponse::BadRequest().body("File Reassembly Error")
+                HttpResponse::BadRequest()
+                    .content_type("text/plain; charset=utf-8")
+                    .body("File Reassembly Error")
             }
             ServerError::MetadataParsingError => {
-                HttpResponse::BadRequest().body("Metadata Parsing Error")
+                HttpResponse::BadRequest()
+                    .content_type("text/plain; charset=utf-8")
+                    .body("Metadata Parsing Error")
             }
-            ServerError::InvalidFile => HttpResponse::BadRequest().body("Invalid File"),
+            ServerError::InvalidFile => HttpResponse::BadRequest()
+                .content_type("text/plain; charset=utf-8")
+                .body("Invalid File"),
         }
     }
 }

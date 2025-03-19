@@ -8,7 +8,9 @@ use uuid::Uuid;
 // -----------------------------------------------------
 #[get("/")]
 pub async fn index() -> impl Responder {
-    HttpResponse::Ok().body("Hello, this is PastePoint!")
+    HttpResponse::Ok()
+        .content_type("text/plain; charset=utf-8")
+        .body("Hello, this is PastePoint!")
 }
 
 // -----------------------------------------------------
@@ -39,7 +41,9 @@ pub async fn create_session(store: web::Data<SessionStore>) -> impl Responder {
             },
         );
     }
-    Ok(HttpResponse::Ok().json(json!({ "code": code })))
+    Ok(HttpResponse::Ok()
+        .content_type(header::ContentType::json())
+        .json(json!({ "code": code })))
 }
 
 // -----------------------------------------------------
@@ -78,7 +82,9 @@ pub async fn private_chat_ws(
     log::debug!(target: "Websocket", "Received session code: {}", code);
     if code.trim().is_empty() {
         log::debug!(target: "Websocket", "Empty code => returning 400");
-        return Ok(HttpResponse::BadRequest().body("Session code cannot be empty"));
+        return Ok(HttpResponse::BadRequest()
+            .content_type("text/plain; charset=utf-8")
+            .body("Session code cannot be empty"));
     }
 
     store.start_websocket(config.get_ref(), &req, stream, &code, true, true)

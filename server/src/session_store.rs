@@ -120,7 +120,9 @@ impl SessionStore {
                 .start(),
                 Err(_) => {
                     log::error!(target: "Websocket", "Invalid UUID returned: {}", uuid_str);
-                    Ok(HttpResponse::InternalServerError().body("Server configuration error"))
+                    Ok(HttpResponse::InternalServerError()
+                        .content_type("text/plain; charset=utf-8")
+                        .body("Server configuration error"))
                 }
             },
             None => {
@@ -129,7 +131,9 @@ impl SessionStore {
                     "Key '{}' not found in strict mode, returning 404",
                     key
                 );
-                Ok(HttpResponse::NotFound().body("Unknown session code"))
+                Ok(HttpResponse::NotFound()
+                    .content_type("text/plain; charset=utf-8")
+                    .body("Unknown session code"))
             }
         }
     }
