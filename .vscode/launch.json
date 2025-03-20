@@ -1,0 +1,49 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "lldb",
+      "request": "launch",
+      "name": "Debug Rust Server",
+      "cargo": {
+        "args": ["build", "--bin=pastedrop"],
+        "filter": {
+          "name": "pastedrop",
+          "kind": "bin"
+        }
+      },
+      "args": [],
+      "cwd": "${workspaceFolder}/server"
+    },
+    {
+      "type": "chrome",
+      "request": "launch",
+      "name": "Debug Client in Chrome",
+      "url": "http://localhost:4200",
+      "webRoot": "${workspaceFolder}/client",
+      "sourceMapPathOverrides": {
+        "webpack:///./~/*": "${webRoot}/node_modules/*",
+        "webpack:///./*": "${webRoot}/*",
+        "webpack:///*": "*"
+      }
+    },
+    {
+      "name": "Debug Full Stack",
+      "type": "node",
+      "request": "launch",
+      "preLaunchTask": "Run Full Stack",
+      "presentation": {
+        "hidden": false,
+        "group": "",
+        "order": 1
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Debug Server & Client",
+      "configurations": ["Debug Rust Server", "Debug Client in Chrome"],
+      "stopAll": true
+    }
+  ]
+}

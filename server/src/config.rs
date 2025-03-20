@@ -17,6 +17,7 @@ pub struct ServerConfig {
     pub rate_limit_burst_size: u32,
     #[serde(default = "default_log_level")]
     pub log_level: String,
+    pub cors_allowed_origins: String,
 }
 
 impl ServerConfig {
@@ -37,5 +38,10 @@ impl ServerConfig {
 
         let settings = builder.build()?;
         settings.get::<ServerConfig>("server")
+    }
+
+    pub fn is_dev_env() -> bool {
+        let environment = env::var("RUN_ENV").unwrap_or_else(|_| "development".to_string());
+        environment == "development" || environment == "docker-dev"
     }
 }

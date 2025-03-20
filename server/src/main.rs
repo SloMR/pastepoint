@@ -51,8 +51,9 @@ async fn main() -> Result<()> {
     let server_config = Data::new(config.clone());
 
     HttpServer::new(move || {
+        let cors_config = &server_config.cors_allowed_origins;
         let cors = Cors::default()
-            .allowed_origin("https://127.0.0.1") // Change this to your domain name or IP address
+            .allowed_origin(cors_config)
             .allowed_methods(vec!["GET", "OPTIONS"])
             .supports_credentials()
             .max_age(3600);

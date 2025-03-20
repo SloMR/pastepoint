@@ -1,7 +1,8 @@
 # Stage 1: Build the Rust app
 FROM rust:1.85.0 AS builder
-
 WORKDIR /usr/src/app
+
+ARG RUST_BUILD_MODE=release
 
 # Copy the Cargo.toml and Cargo.lock files
 COPY server/Cargo.toml server/Cargo.lock ./
@@ -18,7 +19,11 @@ COPY server/src ./src
 COPY server/config ./config
 
 # Final build
-RUN cargo build --release
+RUN if [ "$RUST_BUILD_MODE" = "debug" ]; then \
+      cargo build; \
+    else \
+      cargo build --release; \
+    fi
 
 # Stage 2: Prepare the runtime environment
 FROM ubuntu:24.10
@@ -26,7 +31,8 @@ FROM ubuntu:24.10
 WORKDIR /usr/local/bin
 
 # Copy the built binary from the builder stage
-COPY --from=builder /usr/src/app/target/release/server_bin .
+ARG RUST_BUILD_MODE=release
+COPY --from=builder /usr/src/app/target/$RUST_BUILD_MODE/server_bin .
 
 # Copy the config files into the final image
 COPY --from=builder /usr/src/app/config ./config
