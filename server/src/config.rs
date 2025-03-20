@@ -42,6 +42,11 @@ impl ServerConfig {
 
     pub fn is_dev_env() -> bool {
         let environment = env::var("RUN_ENV").unwrap_or_else(|_| "development".to_string());
+        log::debug!(
+            target: "Websocket",
+            "Checking if environment is development: {}",
+            environment
+        );
         environment == "development" || environment == "docker-dev"
     }
 }
