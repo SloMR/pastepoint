@@ -6,3 +6,4 @@ auto_join = true
 rate_limit_per_second = 100
 rate_limit_burst_size = 200
 log_level = "debug"
+cors_allowed_origins = "https://127.0.0.1"

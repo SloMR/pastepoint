@@ -17,6 +17,7 @@ pub struct ServerConfig {
     pub rate_limit_burst_size: u32,
     #[serde(default = "default_log_level")]
     pub log_level: String,
+    pub cors_allowed_origins: String,
 }
 
 impl ServerConfig {
