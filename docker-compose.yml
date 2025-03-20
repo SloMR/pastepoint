@@ -22,7 +22,7 @@ services:
       context: .
       dockerfile: server/Dockerfile
       args:
-        RUST_BUILD_MODE: ${RUST_BUILD_MODE}
+        RUST_BUILD_MODE: ${RUST_BUILD_MODE:-release}
     ports:
       - "9000:9000"
     environment:
@@ -39,7 +39,7 @@ services:
       context: .
       dockerfile: client/Dockerfile
       args:
-        NPM_BUILD_CONFIG: ${NPM_BUILD_CONFIG}
+        NPM_BUILD_CONFIG: ${NPM_BUILD_CONFIG:-docker}
     environment:
       SERVER_NAME: ${SERVER_NAME:-pastepoint.com www.pastepoint.com}
       SSL_CERT_PATH: ${SSL_CERT_PATH:-/etc/ssl/pastepoint/cert.pem}

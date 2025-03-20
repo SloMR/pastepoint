@@ -6,13 +6,13 @@
 # Production environment (default)
 prod:
 	@echo "Starting production environment..."
-	docker compose up -d
+	docker compose up --build --force-recreate -d
 	@echo "Production services are starting. View logs with: make logs"
 
 # Development environment
 dev:
 	@echo "Starting development environment..."
-	docker compose --env-file .env.development up --build -d
+	docker compose --env-file .env.development up --build --force-recreate -d
 	@echo "Development services are starting. View logs with: make logs"
 
 # Stop all containers

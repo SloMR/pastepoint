@@ -23,6 +23,12 @@ COPY --from=builder /usr/src/app/dist/client/browser /usr/share/nginx/html/brows
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf.template
 COPY nginx/security-headers.conf /etc/nginx/security-headers.conf
 
+# Copy the entrypoint script and make it executable
+COPY docker-entrypoint.sh /
+RUN chmod +x /docker-entrypoint.sh && \
+    chown nginx:nginx /docker-entrypoint.sh && \
+    chown nginx:nginx /etc/nginx/conf.d/default.conf.template
+
 # Create directories and set appropriate permissions for the nginx user
 RUN mkdir -p /var/cache/nginx/client_temp /var/run/nginx /var/log/nginx && \
     touch /var/run/nginx.pid && \
@@ -41,8 +47,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 RUN chown -R nginx:nginx /etc/nginx/conf.d
 USER nginx
 
-# Copy the entrypoint script
-COPY docker-entrypoint.sh /
+# Set environment variables for NGINX
 ENTRYPOINT ["/docker-entrypoint.sh"]
 
 EXPOSE 443
