@@ -1,5 +1,5 @@
 # Stage 1: Build the Angular app
-FROM node:22.6.0 AS builder
+FROM node:22.14.0 AS builder
 WORKDIR /usr/src/app
 
 ARG NPM_BUILD_CONFIG=docker
