@@ -52,7 +52,7 @@ async fn main() -> Result<()> {
 
     HttpServer::new(move || {
         let cors = Cors::default()
-            .allowed_origin("https://127.0.0.1") // Change this to your domain name or IP address
+            .allowed_origin("https://pastepoint.com")
             .allowed_methods(vec!["GET", "OPTIONS"])
             .supports_credentials()
             .max_age(3600);
