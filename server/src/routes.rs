@@ -1,6 +1,5 @@
 use crate::{session_store::SessionData, ServerConfig, ServerError, SessionStore};
-use actix_web::{get, web, Error, HttpRequest, HttpResponse, Responder};
-use actix_web::http::header;
+use actix_web::{get, http::header, web, Error, HttpRequest, HttpResponse, Responder};
 use serde_json::json;
 use uuid::Uuid;
 
@@ -57,9 +56,7 @@ pub async fn chat_ws(
     store: web::Data<SessionStore>,
     config: web::Data<ServerConfig>,
 ) -> Result<HttpResponse, Error> {
-    let is_dev_mode = std::env::var("RUN_ENV")
-        .unwrap_or_else(|_| "development".to_string())
-        .to_lowercase() == "development";
+    let is_dev_mode = ServerConfig::is_dev_env();
 
     let ip_str = get_client_ip(&req, is_dev_mode)?;
     check_suspicious_connection(&req, &ip_str);
@@ -92,7 +89,6 @@ pub async fn private_chat_ws(
 
     store.start_websocket(config.get_ref(), &req, stream, &code, true, true)
 }
-
 
 // -----------------------------------------------------
 // Helper functions for WebSocket connections
@@ -131,7 +127,8 @@ fn get_client_ip(req: &HttpRequest, is_dev_mode: bool) -> Result<String, Error> 
 
 // Helper function to create a session key
 fn create_session_key(req: &HttpRequest, ip_str: &str) -> String {
-    let host = req.headers()
+    let host = req
+        .headers()
         .get("Host")
         .and_then(|h| h.to_str().ok())
         .unwrap_or("unknown_host");
@@ -141,7 +138,8 @@ fn create_session_key(req: &HttpRequest, ip_str: &str) -> String {
 
 // Helper function to check for suspicious connections
 fn check_suspicious_connection(req: &HttpRequest, ip_str: &str) {
-    let user_agent = req.headers()
+    let user_agent = req
+        .headers()
         .get("User-Agent")
         .and_then(|v| v.to_str().ok())
         .unwrap_or("unknown");
