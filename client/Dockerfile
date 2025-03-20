@@ -14,7 +14,7 @@ RUN npm run build -- --configuration=$NPM_BUILD_CONFIG
 FROM nginx:alpine
 
 # Install envsubst for env variable substitution in nginx.conf
-RUN apk add --no-cache gettext
+RUN apk add --no-cache gettext=0.22.5-r0
 
 # Copy build artifacts
 COPY --from=builder /usr/src/app/dist/client/browser /usr/share/nginx/html/browser
@@ -39,7 +39,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Use the non-root nginx user
 RUN chown -R nginx:nginx /etc/nginx/conf.d
-USER root
+USER nginx
 
 # Copy the entrypoint script
 COPY docker-entrypoint.sh /
