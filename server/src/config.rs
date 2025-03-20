@@ -40,9 +40,7 @@ impl ServerConfig {
     }
 
     pub fn is_dev_env() -> bool {
-        match env::var("RUN_ENV") {
-            Ok(env_val) => env_val == "development" || env_val == "docker-dev",
-            Err(_) => false,
-        }
+        let environment = env::var("RUN_ENV").unwrap_or_else(|_| "development".to_string());
+        environment == "development" || environment == "docker-dev"
     }
 }
