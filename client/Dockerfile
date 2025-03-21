@@ -21,7 +21,10 @@ COPY --from=builder /usr/src/app/dist/client/browser /usr/share/nginx/html/brows
 
 # Copy our recommended nginx.conf or template-based config
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf.template
-COPY nginx/security-headers.conf /etc/nginx/security-headers.conf
+COPY nginx/security_headers.conf /etc/nginx/security_headers.conf
+COPY nginx/security_settings.conf /etc/nginx/security_settings.conf
+COPY nginx/ssl.conf /etc/nginx/ssl.conf
+COPY nginx/locations.conf /etc/nginx/locations.conf
 
 # Copy the entrypoint script and make it executable
 COPY docker-entrypoint.sh /
