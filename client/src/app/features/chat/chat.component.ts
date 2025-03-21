@@ -35,9 +35,16 @@ import { take } from 'rxjs/operators';
 import { FormsModule, NgForm } from '@angular/forms';
 import { FlowbiteService } from '../../core/services/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ChatMessage, FileDownload, FileUpload, MB } from '../../utils/constants';
+import { ChatMessage, FileDownload, FileUpload, IDLE_TIMEOUT, MB } from '../../utils/constants';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import {
+  ActivatedRoute,
+  NavigationEnd,
+  NavigationStart,
+  RoutesRecognized,
+  Router,
+  RouterLink,
+} from '@angular/router';
 import { SessionService } from '../../core/services/session.service';
 import { ToastrService } from 'ngx-toastr';
 import packageJson from '../../../../package.json';
@@ -98,6 +105,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   incomingFiles: FileDownload[] = [];
 
   appVersion: string = packageJson.version;
+
+  /**
+   * ==========================================================
+   * IDLE TRACKING
+   * For tracking user inactivity and clearing session
+   * ==========================================================
+   */
+  private idleTimer: any;
+
   /**
    * ==========================================================
    * PRIVATE SUBSCRIPTIONS
@@ -138,6 +154,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     public translate: TranslateService,
     private sessionService: SessionService,
     private route: ActivatedRoute,
+    private router: Router,
     private logger: NGXLogger,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
@@ -166,16 +183,49 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.logger.debug('ngOnInit', `Flowbite loaded`);
     });
 
-    // Check if route has a session code in URL
+    window.addEventListener('beforeunload', this.handlePageClose.bind(this));
+    this.setupIdleTimer();
+
+    // Subscribe to router events to clear session code
+    this.subscriptions.push(
+      this.router.events.subscribe((event) => {
+        if (
+          event instanceof NavigationStart ||
+          event instanceof NavigationEnd ||
+          event instanceof RoutesRecognized
+        ) {
+          this.clearSessionCode();
+          this.logger.debug(
+            'router event',
+            `Cleared session code due to ${event.constructor.name}`
+          );
+        }
+      })
+    );
+
+    // Subscribe to URL changes to clear session code
+    this.subscriptions.push(
+      this.route.url.subscribe(() => {
+        this.clearSessionCode();
+        this.logger.debug('route url change', 'Cleared session code due to route URL change');
+      })
+    );
+
+    // Subscribe to route parameters to get the session code
     this.route.paramMap.subscribe((params) => {
-      const sessionCode = params.get('code') ?? localStorage.getItem('SessionCode');
+      const sessionCode = params.get('code');
 
       if (sessionCode) {
-        this.SessionCode = sessionCode;
+        this.storeSessionCode(sessionCode);
         this.connect(sessionCode);
       } else {
-        this.chatService.clearMessages();
-        this.messages = [];
+        const storedCode = this.getStoredSessionCode();
+        if (storedCode) {
+          this.connect(storedCode);
+        } else {
+          this.chatService.clearMessages();
+          this.messages = [];
+        }
       }
     });
 
@@ -193,6 +243,193 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     const themePreference = localStorage.getItem('themePreference');
     this.isDarkMode = themePreference === 'dark';
     this.applyTheme(this.isDarkMode);
+  }
+
+  /**
+   * ==========================================================
+   * LIFECYCLE HOOK: NGONDESTROY
+   * Cleans up all subscriptions and closes any WebRTC connections
+   * when the component is torn down.
+   * ==========================================================
+   */
+  ngOnDestroy(): void {
+    this.subscriptions.forEach((sub) => sub.unsubscribe());
+    this.webrtcService.closeAllConnections();
+    this.wsConnectionService.disconnect();
+    this.chatService.clearMessages();
+    this.messages = [];
+    clearTimeout(this.emojiPickerTimeout);
+    this.clearIdleTimer();
+
+    if (isPlatformBrowser(this.platformId)) {
+      window.removeEventListener('beforeunload', this.handlePageClose);
+    }
+  }
+
+  /**
+   * ==========================================================
+   * HANDLE PAGE CLOSE
+   * Clears session code when user closes or refreshes the page
+   * ==========================================================
+   */
+  private handlePageClose(): void {
+    this.clearSessionCode();
+    this.logger.debug('handlePageClose', 'Cleared session code due to page close');
+  }
+
+  /**
+   * ==========================================================
+   * IDLE TIMER SETUP
+   * Sets up monitoring for user inactivity
+   * ==========================================================
+   */
+  private setupIdleTimer(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    this.resetIdleTimer();
+    ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'].forEach((eventName) => {
+      window.addEventListener(eventName, this.resetIdleTimer.bind(this));
+    });
+  }
+
+  /**
+   * ==========================================================
+   * RESET IDLE TIMER
+   * Resets the timer whenever user activity is detected
+   * ==========================================================
+   */
+  private resetIdleTimer(): void {
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+    }
+    this.idleTimer = setTimeout(() => {
+      this.handleIdleTimeout();
+    }, IDLE_TIMEOUT);
+  }
+
+  /**
+   * ==========================================================
+   * CLEAR IDLE TIMER
+   * Cleans up the idle timer and event listeners
+   * ==========================================================
+   */
+  private clearIdleTimer(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    if (this.idleTimer) {
+      clearTimeout(this.idleTimer);
+    }
+
+    ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart'].forEach((eventName) => {
+      window.removeEventListener(eventName, this.resetIdleTimer);
+    });
+  }
+
+  /**
+   * ==========================================================
+   * HANDLE IDLE TIMEOUT
+   * Clears session code after the idle timeout period
+   * ==========================================================
+   */
+  private handleIdleTimeout(): void {
+    this.clearSessionCode();
+    this.logger.debug('handleIdleTimeout', 'Cleared session code due to idle timeout');
+
+    if (isPlatformBrowser(this.platformId)) {
+      this.toaster.info(
+        this.translate.instant('SESSION_EXPIRED_IDLE'),
+        this.translate.instant('INFO')
+      );
+
+      this.chatService.clearMessages();
+      this.messages = [];
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * ==========================================================
+   * SESSION CODE STORAGE
+   * Methods to handle storing and retrieving session codes with expiry
+   * ==========================================================
+   */
+  private storeSessionCode(code: string, expiryHours: number = 24): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    const expiryTime = new Date();
+    expiryTime.setHours(expiryTime.getHours() + expiryHours);
+
+    const sessionData = {
+      code: code,
+      expiry: expiryTime.getTime(),
+    };
+
+    localStorage.setItem('SessionCodeData', JSON.stringify(sessionData));
+    this.SessionCode = code;
+    this.logger.debug(
+      'storeSessionCode',
+      `Stored session code ${code} with expiry in ${expiryHours} hours`
+    );
+  }
+
+  private getStoredSessionCode(): string | null {
+    if (!isPlatformBrowser(this.platformId)) return null;
+
+    const sessionDataString = localStorage.getItem('SessionCodeData');
+    if (!sessionDataString) return null;
+
+    try {
+      const sessionData = JSON.parse(sessionDataString);
+      const now = new Date().getTime();
+
+      if (now < sessionData.expiry) {
+        this.logger.debug(
+          'getStoredSessionCode',
+          `Retrieved valid session code ${sessionData.code}`
+        );
+        return sessionData.code;
+      } else {
+        this.logger.debug('getStoredSessionCode', 'Session code expired, removing');
+        localStorage.removeItem('SessionCodeData');
+        this.handleSessionExpired();
+        return null;
+      }
+    } catch (e) {
+      this.logger.error('getStoredSessionCode', `Error parsing session data: ${e}`);
+      localStorage.removeItem('SessionCodeData');
+      return null;
+    }
+  }
+
+  /**
+   * ==========================================================
+   * HANDLE SESSION EXPIRED
+   * Updates UI and notifies user when session expires
+   * ==========================================================
+   */
+  private handleSessionExpired(): void {
+    this.logger.debug('handleSessionExpired', 'Session expired');
+    this.SessionCode = '';
+    this.chatService.clearMessages();
+    this.messages = [];
+    this.cdr.detectChanges();
+    this.clearIdleTimer();
+
+    if (isPlatformBrowser(this.platformId)) {
+      this.toaster.info(this.translate.instant('SESSION_EXPIRED'), this.translate.instant('INFO'));
+    }
+  }
+
+  private clearSessionCode(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    if (this.SessionCode || localStorage.getItem('SessionCodeData')) {
+      localStorage.removeItem('SessionCodeData');
+      this.SessionCode = '';
+
+      this.cdr.detectChanges();
+      this.logger.debug('clearSessionCode', 'Session code cleared and UI updated');
+    }
   }
 
   /**
@@ -350,6 +587,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       })
       .catch((error) => {
         this.logger.error('connect', `WebSocket connection failed: ${error}`);
+
+        if (code && code === this.SessionCode) {
+          this.logger.debug('connect', `Failed to connect to private session: ${code}`);
+          this.clearSessionCode();
+          this.toaster.error(
+            this.translate.instant('SESSION_NOT_FOUND'),
+            this.translate.instant('ERROR')
+          );
+        }
       });
   }
 
@@ -470,8 +716,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   joinRoom(room: string): void {
     if (room !== this.currentRoom) {
       if (this.SessionCode) {
-        localStorage.removeItem('SessionCode');
-        this.SessionCode = '';
+        this.clearSessionCode();
       }
       this.roomService.joinRoom(room);
       this.currentRoom = room;
@@ -540,11 +785,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   private openChatSession(code: string): void {
-    if (this.SessionCode) {
-      localStorage.removeItem('SessionCode');
-      this.SessionCode = '';
-    }
-    localStorage.setItem('SessionCode', code);
+    this.storeSessionCode(code);
     window.open(`/chat/${code}`, '_self');
   }
 
@@ -580,27 +821,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   isMyMessage(msg: ChatMessage): boolean {
     return msg.from === this.userService.user;
-  }
-
-  /**
-   * ==========================================================
-   * LIFECYCLE HOOK: NGONDESTROY
-   * Cleans up all subscriptions and closes any WebRTC connections
-   * when the component is torn down.
-   * ==========================================================
-   */
-  ngOnDestroy(): void {
-    this.subscriptions.forEach((sub) => sub.unsubscribe());
-    this.webrtcService.closeAllConnections();
-    this.wsConnectionService.disconnect();
-    this.chatService.clearMessages();
-    clearTimeout(this.emojiPickerTimeout);
-    this.messages = [];
-
-    if (this.SessionCode) {
-      localStorage.removeItem('SessionCode');
-      this.SessionCode = '';
-    }
   }
 
   /**
@@ -746,7 +966,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
     if (otherMembers.length === 0) {
-      this.toaster.info(this.translate.instant('NO_USERS_FOR_UPLOAD'));
+      this.toaster.info(
+        this.translate.instant('NO_USERS_FOR_UPLOAD'),
+        this.translate.instant('INFO')
+      );
       return;
     }
 
