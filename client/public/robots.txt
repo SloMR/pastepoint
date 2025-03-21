@@ -1,0 +1,8 @@
+# robots.txt file for PastePoint
+User-agent: *
+Allow: /
+
+Disallow: /chat/*/
+Disallow: /404
+
+Sitemap: https://pastepoint.com/sitemap.xml
