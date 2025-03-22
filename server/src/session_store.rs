@@ -1,5 +1,6 @@
 use crate::{message::CleanupSession, ServerConfig, WsChatServer, WsChatSession, MAX_FRAME_SIZE};
 use actix::SystemService;
+use actix_rt::{spawn, task, time};
 use actix_web::{web::Payload, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws as actix_actor_ws;
 use rand::{distributions::Alphanumeric, thread_rng, Rng};
@@ -10,7 +11,6 @@ use std::{
         Arc, Mutex,
     },
 };
-use actix_rt::{spawn, task, time};
 use uuid::Uuid;
 
 /// Stores the session’s UUID and whether it’s private.
@@ -212,19 +212,18 @@ impl SessionStore {
                         let handle = spawn(async move {
                             time::sleep(std::time::Duration::from_secs(60)).await;
 
-                            let mut scheduled = store_clone.scheduled_expirations
+                            let mut scheduled = store_clone
+                                .scheduled_expirations
                                 .lock()
                                 .expect("lock poisoned");
 
                             if scheduled.remove(&key_clone).is_some() {
-                                let mut map = store_clone.key_to_session
-                                    .lock()
-                                    .expect("lock poisoned");
+                                let mut map =
+                                    store_clone.key_to_session.lock().expect("lock poisoned");
 
                                 if map.remove(&key_clone).is_some() {
-                                    let mut expired = store_clone.expired_private_codes
-                                        .lock()
-                                        .unwrap();
+                                    let mut expired =
+                                        store_clone.expired_private_codes.lock().unwrap();
                                     expired.insert(key_clone.clone());
                                     log::debug!("Private session code {} expired", key_clone);
                                 }
