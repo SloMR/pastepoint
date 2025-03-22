@@ -46,7 +46,7 @@ export const ICE_SERVERS = [
 // WebRTC data channel constants
 export const DATA_CHANNEL_OPTIONS = {
   ordered: true,
-  maxPacketLifeTime: 5000,
+  maxPacketLifeTime: 30000,
 };
 
 // WebRTC signaling message types
