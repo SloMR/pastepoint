@@ -6,6 +6,10 @@ export const CHUNK_SIZE = 256 * KB;
 export const MAX_BUFFERED_AMOUNT = 2 * MB;
 export const BUFFERED_AMOUNT_LOW_THRESHOLD = MB;
 
+// Inactivity timeout constants
+export const IDLE_TIMEOUT = 12 * 60 * 60 * 1000; // 12 hours
+export const BACKGROUND_EXPIRY_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+
 // WebRTC constants
 export const MAX_RECONNECT_ATTEMPTS = 5;
 export const RECONNECT_DELAY = 2000;
