@@ -2,8 +2,9 @@ use actix_cors::Cors;
 use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
-use server::{chat_ws, create_session, index, private_chat_ws, ServerConfig, SessionStore};
+use server::{chat_ws, create_session, index, private_chat_ws, ServerConfig, SessionStore, KEEP_ALIVE_INTERVAL};
 use std::io::Result;
+use actix_http::KeepAlive;
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const NAME: &str = env!("CARGO_PKG_NAME");
@@ -69,6 +70,7 @@ async fn main() -> Result<()> {
             .service(chat_ws)
             .service(private_chat_ws)
     })
+    .keep_alive(KeepAlive::Timeout(KEEP_ALIVE_INTERVAL))
     .bind_openssl(&config.bind_address, builder)?
     .run()
     .await

@@ -10,7 +10,7 @@ mod session;
 mod session_store;
 
 pub use config::ServerConfig;
-pub use consts::MAX_FRAME_SIZE;
+pub use consts::{MAX_FRAME_SIZE, KEEP_ALIVE_INTERVAL};
 pub use error::ServerError;
 pub use message::{
     ChatMessage, ClientMetadata, JoinRoom, LeaveRoom, ListRooms, RelaySignalMessage, WsChatServer,
