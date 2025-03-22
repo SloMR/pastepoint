@@ -5,6 +5,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
 import { ThemeService } from '../../core/services/theme.service';
 import packageJson from '../../../../package.json';
+import { NGXLogger } from 'ngx-logger';
+import { MigrationService } from '../../core/services/migration.service';
 
 @Component({
   imports: [CommonModule, RouterLink, NgOptimizedImage, TranslateModule],
@@ -19,7 +21,9 @@ export class NotFoundComponent implements OnInit {
     @Inject(PLATFORM_ID) private platformId: object,
     protected translate: TranslateService,
     private cdr: ChangeDetectorRef,
-    private themeService: ThemeService
+    private themeService: ThemeService,
+    private logger: NGXLogger,
+    private migrationService: MigrationService
   ) {
     this.translate.setDefaultLang('en');
 
@@ -29,6 +33,16 @@ export class NotFoundComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
+    // Check if migration is needed due to version change
+    const migrationPerformed = this.migrationService.checkAndMigrateIfNeeded(this.appVersion, true);
+    if (migrationPerformed) {
+      this.logger.debug('ngOnInit', 'Migration performed due to version change');
+    } else {
+      this.logger.debug('ngOnInit', 'No migration needed');
+    }
+
     const themePreference = localStorage.getItem('themePreference');
     this.isDarkMode = themePreference === 'dark';
     this.applyTheme(this.isDarkMode);

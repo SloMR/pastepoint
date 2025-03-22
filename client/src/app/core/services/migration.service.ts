@@ -1,0 +1,110 @@
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { NGXLogger } from 'ngx-logger';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class MigrationService {
+  private readonly VERSION_KEY = 'app_version';
+
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: object,
+    private logger: NGXLogger
+  ) {}
+
+  /**
+   * Checks if the application version has changed and runs migration if needed
+   * @param currentVersion The current application version from package.json
+   * @param forceCleanForNewUsers If true, will perform migration for users who don't have a version key yet
+   * @returns boolean indicating if migration was performed
+   */
+  public checkAndMigrateIfNeeded(
+    currentVersion: string,
+    forceCleanForNewUsers: boolean = false
+  ): boolean {
+    if (!isPlatformBrowser(this.platformId)) return false;
+
+    const storedVersion = localStorage.getItem(this.VERSION_KEY);
+
+    if (storedVersion === null) {
+      this.logger.debug(
+        'MigrationService',
+        `First-time version check: setting to ${currentVersion}`
+      );
+
+      if (forceCleanForNewUsers) {
+        this.logger.debug('MigrationService', 'Performing initial migration for new/existing user');
+        this.performMigration();
+      } else {
+        this.logger.debug('MigrationService', 'No migration needed for new user');
+      }
+
+      localStorage.setItem(this.VERSION_KEY, currentVersion);
+      return forceCleanForNewUsers;
+    }
+
+    if (storedVersion !== currentVersion) {
+      this.logger.debug(
+        'MigrationService',
+        `Version change detected: ${storedVersion} → ${currentVersion}`
+      );
+      this.performMigration();
+      localStorage.setItem(this.VERSION_KEY, currentVersion);
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * Clears all client-side storage
+   * - localStorage
+   * - sessionStorage
+   * - cookies
+   */
+  private performMigration(): void {
+    this.logger.debug('MigrationService', 'Performing migration - clearing all storage');
+
+    this.clearLocalStorage();
+    this.clearSessionStorage();
+    this.clearCookies();
+  }
+
+  /**
+   * Clears all localStorage items except the version key
+   */
+  private clearLocalStorage(): void {
+    const versionValue = localStorage.getItem(this.VERSION_KEY);
+    localStorage.clear();
+
+    if (versionValue) {
+      localStorage.setItem(this.VERSION_KEY, versionValue);
+    }
+    this.logger.debug('MigrationService', 'localStorage cleared');
+  }
+
+  /**
+   * Clears all sessionStorage items
+   */
+  private clearSessionStorage(): void {
+    sessionStorage.clear();
+    this.logger.debug('MigrationService', 'sessionStorage cleared');
+  }
+
+  /**
+   * Clears all cookies
+   */
+  private clearCookies(): void {
+    const cookies = document.cookie.split(';');
+
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i];
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substring(0, eqPos).trim() : cookie.trim();
+      document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/`;
+    }
+
+    this.logger.debug('MigrationService', 'All cookies cleared');
+  }
+}

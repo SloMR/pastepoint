@@ -42,6 +42,7 @@ import { SessionService } from '../../core/services/session.service';
 import { ToastrService } from 'ngx-toastr';
 import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
+import { MigrationService } from '../../core/services/migration.service';
 
 /**
  * ==========================================================
@@ -149,6 +150,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private sessionService: SessionService,
     private route: ActivatedRoute,
     private logger: NGXLogger,
+    private migrationService: MigrationService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
     this.translate.setDefaultLang('en');
@@ -168,8 +170,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   ngOnInit(): void {
-    // Abort if not in the browser (SSR scenario)
     if (!isPlatformBrowser(this.platformId)) return;
+
+    // Check if migration is needed due to version change
+    const migrationPerformed = this.migrationService.checkAndMigrateIfNeeded(this.appVersion, true);
+    if (migrationPerformed) {
+      this.logger.debug('ngOnInit', 'Migration performed due to version change');
+    } else {
+      this.logger.debug('ngOnInit', 'No migration needed');
+    }
 
     // Load Flowbite (if needed)
     this.flowbiteService.loadFlowbite(() => {
