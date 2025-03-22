@@ -34,6 +34,14 @@ export const translations: Record<LanguageCode, TranslationData> = {
     VERSION: 'Version',
     TRANSFERS: 'File Transfers',
 
+    // Room Info Messages
+    PRIVATE_SESSION_ACTIVE: 'Private Session Active',
+    PRIVATE_SESSION_INFO:
+      'Share the session code with others to start a private conversation. Only users with this code can join and exchange messages securely.',
+    PUBLIC_ROOM: 'Public Room',
+    PUBLIC_ROOM_INFO:
+      "You're in a public room on your local network. Anyone who accesses PastePoint from the same network can join this room and exchange messages.",
+
     // Toast Notifications
     DATA_CHANNEL_CLOSED: 'Data channel is not open.',
     NO_USERS_FOR_UPLOAD: 'No other users available to send the file.',
@@ -87,6 +95,14 @@ export const translations: Record<LanguageCode, TranslationData> = {
     COPYRIGHT_NOTICE: '© 2025 PastePoint. جميع الحقوق محفوظة.',
     VERSION: 'الإصدار',
     TRANSFERS: 'نقل الملفات',
+
+    // Room Info Messages
+    PRIVATE_SESSION_ACTIVE: 'جلسة خاصة نشطة',
+    PRIVATE_SESSION_INFO:
+      'شارك رمز الجلسة مع الآخرين لبدء محادثة خاصة. يمكن فقط للمستخدمين الذين لديهم هذا الرمز الانضمام وتبادل الرسائل بشكل آمن.',
+    PUBLIC_ROOM: 'غرفة عامة',
+    PUBLIC_ROOM_INFO:
+      'أنت في غرفة عامة على شبكتك المحلية. يمكن لأي شخص يصل إلى بيست بوينت من نفس الشبكة الانضمام إلى هذه الغرفة وتبادل الرسائل.',
 
     // Toast Notifications
     DATA_CHANNEL_CLOSED: 'القناة غير مفتوحة',

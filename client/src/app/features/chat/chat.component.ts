@@ -99,6 +99,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   isMenuOpen: boolean = false;
   isEmojiPickerVisible: boolean = false;
   isDragging: boolean = false;
+  showSessionInfo: boolean = true;
 
   activeUploads: FileUpload[] = [];
   activeDownloads: FileDownload[] = [];
@@ -814,6 +815,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.roomService.joinRoom(room);
       this.currentRoom = room;
       this.isMenuOpen = false;
+      this.showSessionInfo = true;
     } else {
       this.toaster.warning(this.translate.instant('ALREADY_IN_ROOM'));
     }
@@ -843,6 +845,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   createPrivateSession(): void {
     this.sessionService.createNewSessionCode().subscribe({
       next: (res) => {
+        this.showSessionInfo = true;
         const code = res.code;
         this.openChatSession(code);
       },
@@ -864,6 +867,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   joinPrivateSession(): void {
     const code = this.newSessionCode.trim();
+    this.showSessionInfo = true;
     if (!code) {
       console.error('Session code is required to join a session.');
       return;
@@ -1000,6 +1004,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const chosenEmoji = event.emoji.native;
     this.message = (this.message || '') + chosenEmoji;
+  }
+
+  /**
+   * ==========================================================
+   * SHOW SeSSION INFO
+   * Dismisses the session info banner.
+   * ==========================================================
+   */
+  dismissSessionInfo(): void {
+    this.showSessionInfo = false;
   }
 
   /**
