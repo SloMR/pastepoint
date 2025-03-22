@@ -35,16 +35,16 @@ import { take } from 'rxjs/operators';
 import { FormsModule, NgForm } from '@angular/forms';
 import { FlowbiteService } from '../../core/services/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ChatMessage, FileDownload, FileUpload, IDLE_TIMEOUT, MB } from '../../utils/constants';
-import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import {
-  ActivatedRoute,
-  NavigationEnd,
-  NavigationStart,
-  RoutesRecognized,
-  Router,
-  RouterLink,
-} from '@angular/router';
+  BACKGROUND_EXPIRY_THRESHOLD,
+  ChatMessage,
+  FileDownload,
+  FileUpload,
+  IDLE_TIMEOUT,
+  MB,
+} from '../../utils/constants';
+import { PickerComponent } from '@ctrl/ngx-emoji-mart';
+import { ActivatedRoute, NavigationEnd, Router, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session.service';
 import { ToastrService } from 'ngx-toastr';
 import packageJson from '../../../../package.json';
@@ -84,21 +84,21 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Bound to the template for data-binding and user interactions.
    * ==========================================================
    */
-  protected readonly MB = MB;
-  message = '';
-  newRoomName = '';
-  SessionCode = '';
-  newSessionCode = '';
+  protected readonly MB: number = MB;
+  message: string = '';
+  newRoomName: string = '';
+  SessionCode: string = '';
+  newSessionCode: string = '';
 
   messages: ChatMessage[] = [];
   rooms: string[] = [];
   members: string[] = [];
 
-  currentRoom = 'main';
-  isDarkMode = false;
-  isMenuOpen = false;
-  isEmojiPickerVisible = false;
-  isDragging = false;
+  currentRoom: string = 'main';
+  isDarkMode: boolean = false;
+  isMenuOpen: boolean = false;
+  isEmojiPickerVisible: boolean = false;
+  isDragging: boolean = false;
 
   activeUploads: FileUpload[] = [];
   activeDownloads: FileDownload[] = [];
@@ -182,36 +182,25 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.flowbiteService.loadFlowbite(() => {
       this.logger.debug('ngOnInit', `Flowbite loaded`);
     });
-
-    window.addEventListener('beforeunload', this.handlePageClose.bind(this));
+    document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
     this.setupIdleTimer();
 
-    // Subscribe to router events to clear session code
     this.subscriptions.push(
       this.router.events.subscribe((event) => {
-        if (
-          event instanceof NavigationStart ||
-          event instanceof NavigationEnd ||
-          event instanceof RoutesRecognized
-        ) {
-          this.clearSessionCode();
-          this.logger.debug(
-            'router event',
-            `Cleared session code due to ${event.constructor.name}`
-          );
+        if (event instanceof NavigationEnd) {
+          const currentUrl = event.urlAfterRedirects || event.url;
+          if (this.SessionCode || localStorage.getItem('SessionCodeData')) {
+            this.clearSessionCode();
+            this.logger.debug(
+              'router event',
+              `Cleared session code due to route change to: ${currentUrl}`
+            );
+          }
         }
       })
     );
 
-    // Subscribe to URL changes to clear session code
-    this.subscriptions.push(
-      this.route.url.subscribe(() => {
-        this.clearSessionCode();
-        this.logger.debug('route url change', 'Cleared session code due to route URL change');
-      })
-    );
-
-    // Subscribe to route parameters to get the session code
+    // Check if route has a session code in URL
     this.route.paramMap.subscribe((params) => {
       const sessionCode = params.get('code');
 
@@ -262,19 +251,92 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.clearIdleTimer();
 
     if (isPlatformBrowser(this.platformId)) {
-      window.removeEventListener('beforeunload', this.handlePageClose);
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange);
     }
   }
 
   /**
    * ==========================================================
-   * HANDLE PAGE CLOSE
-   * Clears session code when user closes or refreshes the page
+   * HANDLE VISIBILITY CHANGE
+   * Handles page visibility changes
    * ==========================================================
    */
-  private handlePageClose(): void {
-    this.clearSessionCode();
-    this.logger.debug('handlePageClose', 'Cleared session code due to page close');
+  private handleVisibilityChange(): void {
+    if (!this.SessionCode) {
+      return;
+    }
+
+    if (document.visibilityState === 'hidden') {
+      const backgroundData = {
+        time: Date.now(),
+        sessionCode: this.SessionCode,
+      };
+      localStorage.setItem('appBackgroundData', JSON.stringify(backgroundData));
+      this.logger.debug('visibilityChange', 'Private session moved to background');
+    } else if (document.visibilityState === 'visible') {
+      const backgroundDataStr = localStorage.getItem('appBackgroundData');
+      if (!backgroundDataStr) {
+        this.logger.debug('visibilityChange', 'No background data found on return to foreground');
+        this.resetIdleTimer();
+        return;
+      }
+
+      try {
+        const backgroundData = JSON.parse(backgroundDataStr);
+        const foregroundTime = Date.now();
+        const timeInBackground = foregroundTime - backgroundData.time;
+
+        this.logger.debug(
+          'visibilityChange',
+          `Private session returned to foreground after ${timeInBackground / 1000} seconds`
+        );
+
+        if (backgroundData.sessionCode === this.SessionCode) {
+          if (timeInBackground > BACKGROUND_EXPIRY_THRESHOLD) {
+            this.logger.debug(
+              'visibilityChange',
+              'Background time exceeded threshold, clearing session'
+            );
+            this.clearSessionAndNavigateHome();
+          } else {
+            this.logger.debug(
+              'visibilityChange',
+              'Background time within limits, session code is still valid'
+            );
+          }
+        } else {
+          this.logger.debug(
+            'visibilityChange',
+            'Session code mismatch - user is in a different session now'
+          );
+        }
+      } catch (e) {
+        this.logger.error('visibilityChange', `Error parsing background data: ${e}`);
+      } finally {
+        localStorage.removeItem('appBackgroundData');
+        this.resetIdleTimer();
+      }
+    }
+  }
+
+  /**
+   * ==========================================================
+   * CLEAR SESSION AND NAVIGATE HOME
+   * Centralized method to handle session clearing and navigation
+   * ==========================================================
+   */
+  private clearSessionAndNavigateHome(): void {
+    localStorage.removeItem('SessionCodeData');
+    localStorage.removeItem('appBackgroundData');
+    this.SessionCode = '';
+
+    this.router.navigate(['/chat']).then(() => {
+      this.toaster.info(this.translate.instant('SESSION_EXPIRED'), this.translate.instant('INFO'));
+    });
+
+    this.chatService.clearMessages();
+    this.messages = [];
+    this.cdr.detectChanges();
   }
 
   /**
@@ -303,7 +365,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       clearTimeout(this.idleTimer);
     }
     this.idleTimer = setTimeout(() => {
-      this.handleIdleTimeout();
+      if (document.visibilityState === 'visible') {
+        this.handleIdleTimeout();
+      } else {
+        this.resetIdleTimer();
+      }
     }, IDLE_TIMEOUT);
   }
 
@@ -374,6 +440,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private getStoredSessionCode(): string | null {
     if (!isPlatformBrowser(this.platformId)) return null;
+    if (!this.SessionCode) {
+      this.clearSessionCode();
+      return null;
+    }
 
     const sessionDataString = localStorage.getItem('SessionCodeData');
     if (!sessionDataString) return null;
@@ -414,6 +484,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.messages = [];
     this.cdr.detectChanges();
     this.clearIdleTimer();
+    localStorage.removeItem('appBackgroundData');
 
     if (isPlatformBrowser(this.platformId)) {
       this.toaster.info(this.translate.instant('SESSION_EXPIRED'), this.translate.instant('INFO'));
@@ -423,8 +494,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private clearSessionCode(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    if (document.visibilityState === 'hidden' && this.SessionCode) {
+      this.logger.debug('clearSessionCode', 'Prevented session clear while app in background');
+      return;
+    }
+
     if (this.SessionCode || localStorage.getItem('SessionCodeData')) {
       localStorage.removeItem('SessionCodeData');
+      localStorage.removeItem('appBackgroundData');
       this.SessionCode = '';
 
       this.cdr.detectChanges();
@@ -582,19 +659,35 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       .connect(code)
       .then(() => {
         this.logger.info('connect', `Connected to session: ${code || 'No code provided'}`);
+        if (code) {
+          this.SessionCode = code;
+        }
         this.roomService.listRooms();
         this.chatService.getUsername();
       })
       .catch((error) => {
         this.logger.error('connect', `WebSocket connection failed: ${error}`);
 
-        if (code && code === this.SessionCode) {
-          this.logger.debug('connect', `Failed to connect to private session: ${code}`);
-          this.clearSessionCode();
-          this.toaster.error(
-            this.translate.instant('SESSION_NOT_FOUND'),
-            this.translate.instant('ERROR')
+        if (code) {
+          this.logger.debug(
+            'connect',
+            `Failed to connect to session: ${code} - clearing session code`
           );
+
+          localStorage.removeItem('SessionCodeData');
+          localStorage.removeItem('appBackgroundData');
+          this.SessionCode = '';
+
+          if (code === this.getStoredSessionCode() || code === this.SessionCode) {
+            this.logger.debug('connect', 'Redirecting to main chat due to invalid session');
+
+            this.router.navigate(['/chat'], { replaceUrl: true }).then(() => {
+              this.toaster.error(
+                this.translate.instant('SESSION_NOT_FOUND'),
+                this.translate.instant('ERROR')
+              );
+            });
+          }
         }
       });
   }
