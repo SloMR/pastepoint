@@ -17,6 +17,7 @@ actix-web-actors = "4.3.1"
 actix-http = "3.9.0"
 actix-governor = "0.8.0"
 actix-cors = "0.7"
+actix-rt = "2.10.0"
 
 uuid = { version = "1.10", features = ["v4"] }
 names = { version = "0.14.0", default-features = false }

@@ -10,6 +10,7 @@ use std::{
         Arc, Mutex,
     },
 };
+use actix_rt::{spawn, task, time};
 use uuid::Uuid;
 
 /// Stores the session’s UUID and whether it’s private.
@@ -28,6 +29,8 @@ pub struct SessionStore {
     pub uuid_client_counts: Arc<Mutex<HashMap<Uuid, AtomicUsize>>>,
     /// For private sessions, tracks expired codes.
     pub expired_private_codes: Arc<Mutex<HashSet<String>>>,
+    /// For private sessions, tracks scheduled expirations.
+    pub scheduled_expirations: Arc<Mutex<HashMap<String, task::JoinHandle<()>>>>,
 }
 
 impl SessionStore {
@@ -51,6 +54,15 @@ impl SessionStore {
         if is_private && self.is_code_expired(key) {
             log::debug!(target: "Websocket", "Private session code {} is expired", key);
             return None;
+        }
+
+        // Make sure to always cancel any scheduled expiration when reconnecting
+        if is_private {
+            let mut scheduled = self.scheduled_expirations.lock().expect("lock poisoned");
+            if let Some(handle) = scheduled.remove(key) {
+                handle.abort();
+                log::debug!("Cancelled scheduled expiration for {}", key);
+            }
         }
 
         {
@@ -165,18 +177,13 @@ impl SessionStore {
             let new_count = prev.saturating_sub(1);
             log::debug!(
                 target: "Websocket",
-                "Removing session {}: count went from {} to {}",
+                "Client count for session {} decreased from {} to {}",
                 uuid,
                 prev,
                 new_count
             );
             if new_count == 0 {
                 counts.remove(uuid);
-                log::debug!(
-                    target: "Websocket",
-                    "Session {} has no more clients and is being removed",
-                    uuid
-                );
 
                 if WsChatServer::from_registry()
                     .try_send(CleanupSession(uuid.to_string()))
@@ -185,23 +192,49 @@ impl SessionStore {
                     log::debug!(target: "Websocket", "Sent cleanup request for session {}", uuid);
                 }
 
-                let mut map = self.key_to_session.lock().expect("lock poisoned");
-                // Remove all keys mapping to this UUID.
+                let map = self.key_to_session.lock().expect("lock poisoned");
                 let keys: Vec<(String, bool)> = map
                     .iter()
                     .filter(|(_, data)| data.uuid == *uuid)
                     .map(|(k, data)| (k.clone(), data.is_private))
                     .collect();
+                drop(map);
+
                 for (key, is_private) in keys {
-                    map.remove(&key);
-                    if is_private {
-                        self.expired_private_codes
-                            .lock()
-                            .unwrap()
-                            .insert(key.clone());
-                        log::debug!(target: "Websocket", "Private session code {} marked as expired", key);
-                    } else {
+                    if !is_private {
+                        let mut map = self.key_to_session.lock().expect("lock poisoned");
+                        map.remove(&key);
                         log::debug!(target: "Websocket", "Public session code {} removed", key);
+                    } else {
+                        let store_clone = self.clone();
+                        let key_clone = key.clone();
+
+                        let handle = spawn(async move {
+                            time::sleep(std::time::Duration::from_secs(60)).await;
+
+                            let mut scheduled = store_clone.scheduled_expirations
+                                .lock()
+                                .expect("lock poisoned");
+
+                            if scheduled.remove(&key_clone).is_some() {
+                                let mut map = store_clone.key_to_session
+                                    .lock()
+                                    .expect("lock poisoned");
+
+                                if map.remove(&key_clone).is_some() {
+                                    let mut expired = store_clone.expired_private_codes
+                                        .lock()
+                                        .unwrap();
+                                    expired.insert(key_clone.clone());
+                                    log::debug!("Private session code {} expired", key_clone);
+                                }
+                            }
+                        });
+
+                        self.scheduled_expirations
+                            .lock()
+                            .expect("lock poisoned")
+                            .insert(key.clone(), handle);
                     }
                 }
             }

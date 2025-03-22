@@ -126,7 +126,7 @@ impl Handler<CleanupSession> for WsChatServer {
 
     fn handle(&mut self, msg: CleanupSession, _ctx: &mut Self::Context) -> Self::Result {
         if self.rooms.contains_key(&msg.0) {
-            log::debug!(target: "Websocket","Removing session {} from rooms", msg.0);
+            log::debug!(target: "Websocket","Removing client {} from rooms", msg.0);
             self.rooms.remove(&msg.0);
         }
     }
