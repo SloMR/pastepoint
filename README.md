@@ -1,6 +1,10 @@
-# <img src="https://raw.githubusercontent.com/SloMR/pastepoint/main/client/public/pastepoint.png" alt="PastePoint Logo" style="vertical-align: center; margin-right: 0.5em; width: 60px; height: 60px"/> PastePoint
-![Docker](https://img.shields.io/badge/Docker-Containers-blue) ![Rust](https://img.shields.io/badge/Rust-Backend-orange) ![Angular](https://img.shields.io/badge/Angular-Frontend-red)
+<div align="center">
+  <img src="client/public/pastepoint-light.svg" alt="PastePoint Logo" style="width: 250px; height: 250px"/>
 
+![Docker](https://img.shields.io/badge/Docker-Containers-blue) ![Rust](https://img.shields.io/badge/Rust-Backend-orange) ![Angular](https://img.shields.io/badge/Angular-Frontend-red) [![Nginx](https://img.shields.io/badge/Nginx-Reverse_Proxy-green)](https://nginx.org)
+</div>
+
+# PastePoint
 PastePoint is a secure, feature-rich file-sharing service designed for local networks. It enables users to share files and communicate efficiently through peer-to-peer WebSocket connections. Built with a Rust-based backend using Actix Web and an Angular frontend, PastePoint prioritizes security, performance, and usability.
 
 [![GPL-3.0 License](https://img.shields.io/github/license/SloMR/pastepoint)](LICENSE)
@@ -112,7 +116,7 @@ pastepoint/
 
 2. Build and Start Services:
    ```bash
-   docker-compose up --build
+   docker compose up --build
    ```
 
 3. Access PastePoint:
