@@ -1,7 +1,7 @@
 import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
-import { WebSocketConnectionService } from './websocket-connection.service';
-import { UserService } from './user.service';
+import { WebSocketConnectionService } from '../communication/websocket-connection.service';
+import { UserService } from '../user-management/user.service';
 import {
   BUFFERED_AMOUNT_LOW_THRESHOLD,
   OFFER_OPTIONS,
@@ -18,7 +18,7 @@ import {
   DataChannelMessage,
   SignalMessage,
   MAX_BUFFERED_AMOUNT,
-} from '../../utils/constants';
+} from '../../../utils/constants';
 import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';

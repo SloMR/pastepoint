@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { WebRTCService } from './webrtc.service';
+import { WebRTCService } from '../communication/webrtc.service';
 import {
   CHUNK_SIZE,
   FILE_TRANSFER_MESSAGE_TYPES,
@@ -9,7 +9,7 @@ import {
   FileUpload,
   MAX_BUFFERED_AMOUNT,
   MB,
-} from '../../utils/constants';
+} from '../../../utils/constants';
 import { ToastrService } from 'ngx-toastr';
 import { v4 as uuidv4 } from 'uuid';
 import { TranslateService } from '@ngx-translate/core';

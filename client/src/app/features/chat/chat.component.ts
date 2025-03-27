@@ -24,25 +24,25 @@ import {
   UpperCasePipe,
 } from '@angular/common';
 
-import { ThemeService } from '../../core/services/theme.service';
-import { ChatService } from '../../core/services/chat.service';
-import { RoomService } from '../../core/services/room.service';
-import { FileTransferService } from '../../core/services/file-transfer.service';
-import { WebRTCService } from '../../core/services/webrtc.service';
-import { WebSocketConnectionService } from '../../core/services/websocket-connection.service';
-import { UserService } from '../../core/services/user.service';
+import { ThemeService } from '../../core/services/ui/theme.service';
+import { ChatService } from '../../core/services/communication/chat.service';
+import { RoomService } from '../../core/services/room-management/room.service';
+import { FileTransferService } from '../../core/services/file-management/file-transfer.service';
+import { WebRTCService } from '../../core/services/communication/webrtc.service';
+import { WebSocketConnectionService } from '../../core/services/communication/websocket-connection.service';
+import { UserService } from '../../core/services/user-management/user.service';
 import { take } from 'rxjs/operators';
 import { FormsModule, NgForm } from '@angular/forms';
-import { FlowbiteService } from '../../core/services/flowbite.service';
+import { FlowbiteService } from '../../core/services/ui/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ChatMessage, FileDownload, FileUpload, MB } from '../../utils/constants';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { SessionService } from '../../core/services/session.service';
+import { SessionService } from '../../core/services/room-management/session.service';
 import { ToastrService } from 'ngx-toastr';
 import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
-import { MigrationService } from '../../core/services/migration.service';
+import { MigrationService } from '../../core/services/migration/migration.service';
 
 /**
  * ==========================================================

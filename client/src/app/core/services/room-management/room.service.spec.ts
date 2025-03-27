@@ -1,12 +1,11 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
-import { TestImports, TestProviders } from '../../testing/test-helper';
+import { TestImports, TestProviders } from '../../../testing/test-helper';
 
-describe('WebSocketConnectionService', () => {
+describe('RoomService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [...TestImports],
-      providers: [...TestProviders, provideRouter([])],
+      providers: [...TestProviders],
     });
   });
 

@@ -1,9 +1,9 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { WebSocketConnectionService } from './websocket-connection.service';
-import { WebRTCService } from './webrtc.service';
-import { UserService } from './user.service';
-import { ChatMessage, DATA_CHANNEL_MESSAGE_TYPES } from '../../utils/constants';
+import { WebSocketConnectionService } from '../communication/websocket-connection.service';
+import { WebRTCService } from '../communication/webrtc.service';
+import { UserService } from '../user-management/user.service';
+import { ChatMessage, DATA_CHANNEL_MESSAGE_TYPES } from '../../../utils/constants';
 import { NGXLogger } from 'ngx-logger';
 
 @Injectable({

@@ -3,10 +3,10 @@ import { CommonModule, isPlatformBrowser, NgOptimizedImage } from '@angular/comm
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { ThemeService } from '../../core/services/theme.service';
+import { ThemeService } from '../../core/services/ui/theme.service';
 import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
-import { MigrationService } from '../../core/services/migration.service';
+import { MigrationService } from '../../core/services/migration/migration.service';
 
 @Component({
   imports: [CommonModule, RouterLink, NgOptimizedImage, TranslateModule],
