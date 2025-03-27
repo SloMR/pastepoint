@@ -36,5 +36,8 @@
   "taskExplorer.enabledTasks": {
     "npm": false,
     "tsc": false
+  },
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
   }
 }
