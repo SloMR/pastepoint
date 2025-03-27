@@ -14,11 +14,12 @@ import { ToastrService } from 'ngx-toastr';
 import { v4 as uuidv4 } from 'uuid';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
+import { IFileTransferService } from '../../interfaces/file-transfer.interface';
 
 @Injectable({
   providedIn: 'root',
 })
-export class FileTransferService {
+export class FileTransferService implements IFileTransferService {
   public activeUploads$ = new BehaviorSubject<FileUpload[]>([]);
   public activeDownloads$ = new BehaviorSubject<FileDownload[]>([]);
   public incomingFileOffers$ = new BehaviorSubject<FileDownload[]>([]);
@@ -193,16 +194,16 @@ export class FileTransferService {
     }
   }
 
-  public startSavingFile(fromUser: string, fileId: string): void {
+  public acceptFileOffer(fromUser: string, fileId: string): void {
     const userMap = this.incomingFileTransfers.get(fromUser);
     if (!userMap) {
-      this.logger.error('startSavingFile', `No incoming file map found from user: ${fromUser}`);
+      this.logger.error('acceptFileOffer', `No incoming file map found from user: ${fromUser}`);
       return;
     }
 
     const fileDownload = userMap.get(fileId);
     if (!fileDownload) {
-      this.logger.error('startSavingFile', `No file with id=${fileId} from ${fromUser} to accept`);
+      this.logger.error('acceptFileOffer', `No file with id=${fileId} from ${fromUser} to accept`);
       return;
     }
 
@@ -217,7 +218,7 @@ export class FileTransferService {
     };
 
     this.logger.info(
-      'startSavingFile',
+      'acceptFileOffer',
       `Sending file acceptance to ${fromUser} for fileId=${fileId}`
     );
     this.webrtcService.sendData(message, fromUser);
@@ -494,14 +495,14 @@ export class FileTransferService {
           'processFileChunk',
           `Too many consecutive errors (${currentErrors}). Canceling transfer.`
         );
-        this.cancelUpload(fileTransfer.targetUser, fileTransfer.fileId);
+        this.cancelFileUpload(fileTransfer.targetUser, fileTransfer.fileId);
       }
 
       return false;
     }
   }
 
-  public cancelUpload(targetUser: string, fileId: string): void {
+  public cancelFileUpload(targetUser: string, fileId: string): void {
     const userMap = this.fileTransfers.get(targetUser);
     if (userMap && userMap.has(fileId)) {
       userMap.delete(fileId);
@@ -519,7 +520,7 @@ export class FileTransferService {
     }
   }
 
-  public cancelDownload(fromUser: string, fileId: string): void {
+  public cancelFileDownload(fromUser: string, fileId: string): void {
     const userMap = this.incomingFileTransfers.get(fromUser);
     if (userMap && userMap.has(fileId)) {
       userMap.delete(fileId);

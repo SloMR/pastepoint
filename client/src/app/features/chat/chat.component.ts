@@ -468,7 +468,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   public acceptIncomingFile(fileDownload: FileDownload): void {
-    this.fileTransferService.startSavingFile(fileDownload.fromUser, fileDownload.fileId);
+    this.fileTransferService.acceptFileOffer(fileDownload.fromUser, fileDownload.fileId);
   }
 
   /**
@@ -488,7 +488,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   public cancelUpload(upload: FileUpload): void {
-    this.fileTransferService.cancelUpload(upload.targetUser, upload.fileId);
+    this.fileTransferService.cancelFileUpload(upload.targetUser, upload.fileId);
   }
 
   /**
@@ -498,7 +498,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   public cancelDownload(download: FileDownload): void {
-    this.fileTransferService.cancelDownload(download.fromUser, download.fileId);
+    this.fileTransferService.cancelFileDownload(download.fromUser, download.fileId);
   }
 
   /**

@@ -1,11 +1,12 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { NGXLogger } from 'ngx-logger';
+import { IMigrationService } from '../../interfaces/migration.interface';
 
 @Injectable({
   providedIn: 'root',
 })
-export class MigrationService {
+export class MigrationService implements IMigrationService {
   private readonly VERSION_KEY = 'app_version';
 
   constructor(

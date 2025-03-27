@@ -1,10 +1,11 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { IThemeService } from '../../interfaces/theme.interface';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ThemeService {
+export class ThemeService implements IThemeService {
   private readonly THEME_KEY = 'themePreference';
 
   constructor(@Inject(PLATFORM_ID) private platformId: object) {}

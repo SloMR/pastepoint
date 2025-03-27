@@ -1,15 +1,16 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { WebSocketConnectionService } from '../communication/websocket-connection.service';
-import { WebRTCService } from '../communication/webrtc.service';
+import { WebRTCService } from './webrtc.service';
 import { UserService } from '../user-management/user.service';
 import { ChatMessage, DATA_CHANNEL_MESSAGE_TYPES } from '../../../utils/constants';
+import { IChatService } from '../../interfaces/chat.interface';
+import { WebSocketConnectionService } from './websocket-connection.service';
 import { NGXLogger } from 'ngx-logger';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ChatService {
+export class ChatService implements IChatService {
   public messages$ = new BehaviorSubject<ChatMessage[]>([]);
   private messages: ChatMessage[] = [];
 

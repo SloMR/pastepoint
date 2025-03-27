@@ -2,11 +2,12 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { WebSocketConnectionService } from '../communication/websocket-connection.service';
 import { NGXLogger } from 'ngx-logger';
+import { IRoomService } from '../../interfaces/room.interface';
 
 @Injectable({
   providedIn: 'root',
 })
-export class RoomService {
+export class RoomService implements IRoomService {
   public rooms$ = new BehaviorSubject<string[]>([]);
   public members$ = new BehaviorSubject<string[]>([]);
   public currentRoom = 'main';
