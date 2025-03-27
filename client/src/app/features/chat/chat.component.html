@@ -21,9 +21,9 @@
         <div class="flex items-center">
           <a routerLink="/chat" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'">
             <img
-              ngSrc="pastepoint.png"
+              [ngSrc]="isDarkMode ? 'pastepoint-light.svg' : 'pastepoint-dark.svg'"
               alt="PastePoint Logo"
-              class="h-10 w-auto cursor-pointer"
+              class="h-12 w-auto cursor-pointer"
               width="755"
               height="675"
               loading="lazy"
