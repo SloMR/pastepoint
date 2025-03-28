@@ -1,3 +1,4 @@
+use actix_http::header::HeaderValue;
 use config::{Config, ConfigError, File};
 use serde::Deserialize;
 use std::env;
@@ -48,5 +49,15 @@ impl ServerConfig {
             environment
         );
         environment == "development" || environment == "docker-dev"
+    }
+
+    pub fn check_origin(&self, origin: &HeaderValue) -> bool {
+        if let Ok(origin_str) = origin.to_str() {
+            origin_str
+                .as_bytes()
+                .ends_with(self.cors_allowed_origins.as_bytes())
+        } else {
+            false
+        }
     }
 }
