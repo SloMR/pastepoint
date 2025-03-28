@@ -2,48 +2,56 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Debug Server",
       "type": "lldb",
       "request": "launch",
-      "name": "Debug Rust Server",
       "cargo": {
-        "args": ["build", "--bin=pastedrop"],
-        "filter": {
-          "name": "pastedrop",
-          "kind": "bin"
-        }
+        "args": ["build", "--bin=server"]
       },
       "args": [],
-      "cwd": "${workspaceFolder}/server"
-    },
-    {
-      "type": "chrome",
-      "request": "launch",
-      "name": "Debug Client in Chrome",
-      "url": "http://localhost:4200",
-      "webRoot": "${workspaceFolder}/client",
-      "sourceMapPathOverrides": {
-        "webpack:///./~/*": "${webRoot}/node_modules/*",
-        "webpack:///./*": "${webRoot}/*",
-        "webpack:///*": "*"
+      "cwd": "${workspaceFolder}/server",
+      "sourceMap": {
+        "/rustc": "${env:USERPROFILE}/.rustup/toolchains/stable-x86_64-pc-windows-msvc/lib/rustlib/src/rust"
       }
     },
     {
-      "name": "Debug Full Stack",
-      "type": "node",
+      "name": "Debug Client",
+      "type": "chrome",
       "request": "launch",
-      "preLaunchTask": "Run Full Stack",
-      "presentation": {
-        "hidden": false,
-        "group": "",
-        "order": 1
+      "url": "https://localhost:4200",
+      "webRoot": "${workspaceFolder}/client",
+      "sourceMapPathOverrides": {
+        "webpack:/*": "${webRoot}/*"
+      }
+    },
+    {
+      "name": "Debug Client (Production)",
+      "type": "chrome",
+      "request": "launch",
+      "url": "https://localhost:4200",
+      "webRoot": "${workspaceFolder}/client/dist/client",
+      "sourceMapPathOverrides": {
+        "webpack:/*": "${webRoot}/*"
+      }
+    },
+    {
+      "name": "Attach to Server",
+      "type": "lldb",
+      "request": "attach",
+      "pid": "${command:PickProcess}",
+      "sourceMap": {
+        "/rustc": "${env:USERPROFILE}/.rustup/toolchains/stable-x86_64-pc-windows-msvc/lib/rustlib/src/rust"
       }
     }
   ],
   "compounds": [
     {
-      "name": "Debug Server & Client",
-      "configurations": ["Debug Rust Server", "Debug Client in Chrome"],
-      "stopAll": true
+      "name": "Debug Full Stack",
+      "configurations": ["Debug Server", "Debug Client"]
+    },
+    {
+      "name": "Debug Full Stack (Production)",
+      "configurations": ["Debug Server", "Debug Client (Production)"]
     }
   ]
 }
