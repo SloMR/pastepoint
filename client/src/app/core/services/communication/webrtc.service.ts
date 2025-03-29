@@ -10,44 +10,79 @@ import { WebRTCCommunicationService } from './webrtc-communication.service';
   providedIn: 'root',
 })
 export class WebRTCService implements IWebRTCService {
-  // =============== Properties ===============
-
-  // Public Subjects
-  public dataChannelOpen$: BehaviorSubject<boolean>;
-  public chatMessages$: Subject<ChatMessage>;
-  public fileOffers$: Subject<{
-    fileName: string;
-    fileSize: number;
-    fromUser: string;
-    fileId: string;
-  }>;
-  public fileResponses$: Subject<{ accepted: boolean; fromUser: string; fileId: string }>;
-  public fileUploadCancelled$: Subject<{ fromUser: string; fileId: string }>;
-  public fileDownloadCancelled$: Subject<{ fromUser: string; fileId: string }>;
-  public bufferedAmountLow$: Subject<string>;
-  public incomingFileChunk$: Subject<{
-    fromUser: string;
-    fileId: string;
-    chunk: ArrayBuffer;
-  }>;
-
   constructor(
     public translate: TranslateService,
     private signalingService: WebRTCSignalingService,
     private communicationService: WebRTCCommunicationService
-  ) {
-    this.dataChannelOpen$ = this.communicationService.dataChannelOpen$;
-    this.chatMessages$ = this.communicationService.chatMessages$;
-    this.fileOffers$ = this.communicationService.fileOffers$;
-    this.fileResponses$ = this.communicationService.fileResponses$;
-    this.fileUploadCancelled$ = this.communicationService.fileUploadCancelled$;
-    this.fileDownloadCancelled$ = this.communicationService.fileDownloadCancelled$;
-    this.bufferedAmountLow$ = this.communicationService.bufferedAmountLow$;
-    this.incomingFileChunk$ = this.communicationService.incomingFileChunk$;
+  ) {}
+
+  // =============== Public Properties ===============
+  /**
+   * Gets the data channel open subject
+   */
+  public get dataChannelOpen$(): BehaviorSubject<boolean> {
+    return this.communicationService.dataChannelOpen$;
+  }
+
+  /**
+   * Gets the chat messages subject
+   */
+  public get chatMessages$(): Subject<ChatMessage> {
+    return this.communicationService.chatMessages$;
+  }
+
+  /**
+   * Gets the file offers subject
+   */
+  public get fileOffers$(): Subject<{
+    fileName: string;
+    fileSize: number;
+    fromUser: string;
+    fileId: string;
+  }> {
+    return this.communicationService.fileOffers$;
+  }
+
+  /**
+   * Gets the file responses subject
+   */
+  public get fileResponses$(): Subject<{ accepted: boolean; fromUser: string; fileId: string }> {
+    return this.communicationService.fileResponses$;
+  }
+
+  /**
+   * Gets the file upload cancelled subject
+   */
+  public get fileUploadCancelled$(): Subject<{ fromUser: string; fileId: string }> {
+    return this.communicationService.fileUploadCancelled$;
+  }
+
+  /**
+   * Gets the file download cancelled subject
+   */
+  public get fileDownloadCancelled$(): Subject<{ fromUser: string; fileId: string }> {
+    return this.communicationService.fileDownloadCancelled$;
+  }
+
+  /**
+   * Gets the buffered amount low subject
+   */
+  public get bufferedAmountLow$(): Subject<string> {
+    return this.communicationService.bufferedAmountLow$;
+  }
+
+  /**
+   * Gets the incoming file chunk subject
+   */
+  public get incomingFileChunk$(): Subject<{
+    fromUser: string;
+    fileId: string;
+    chunk: ArrayBuffer;
+  }> {
+    return this.communicationService.incomingFileChunk$;
   }
 
   // =============== Public Methods ===============
-
   /**
    * Initiates a new WebRTC connection with a target user
    * @param targetUser The user to connect with
