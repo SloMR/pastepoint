@@ -37,7 +37,7 @@ export class ChatService implements IChatService {
     this.userService.user = value;
   }
 
-  public sendMessage(content: string, targetUser: string): void {
+  public async sendMessage(content: string, targetUser: string): Promise<void> {
     if (content.trim()) {
       const chatMsg: ChatMessage = {
         from: this.user,

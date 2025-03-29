@@ -6,10 +6,10 @@ export interface IFileTransferService {
   activeDownloads$: BehaviorSubject<FileDownload[]>;
   incomingFileOffers$: BehaviorSubject<FileDownload[]>;
 
-  prepareFileForSending(file: File, targetUser: string): void;
-  sendAllFileOffers(targetUser: string): void;
-  cancelFileUpload(targetUser: string, fileId: string): void;
-  cancelFileDownload(fromUser: string, fileId: string): void;
-  acceptFileOffer(fromUser: string, fileId: string): void;
-  declineFileOffer(fromUser: string, fileId: string): void;
+  prepareFileForSending(file: File, targetUser: string): Promise<void>;
+  sendAllFileOffers(targetUser: string): Promise<void>;
+  cancelFileUpload(targetUser: string, fileId: string): Promise<void>;
+  cancelFileDownload(fromUser: string, fileId: string): Promise<void>;
+  acceptFileOffer(fromUser: string, fileId: string): Promise<void>;
+  declineFileOffer(fromUser: string, fileId: string): Promise<void>;
 }

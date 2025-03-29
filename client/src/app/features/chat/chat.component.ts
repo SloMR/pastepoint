@@ -5,6 +5,7 @@ import {
   CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
   Inject,
+  NgZone,
   OnDestroy,
   OnInit,
   PLATFORM_ID,
@@ -144,6 +145,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private wsConnectionService: WebSocketConnectionService,
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
     private toaster: ToastrService,
     private flowbiteService: FlowbiteService,
     public translate: TranslateService,
@@ -297,24 +299,36 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     // Listen for active file uploads
     this.subscriptions.push(
       this.fileTransferService.activeUploads$.subscribe((uploads: FileUpload[]) => {
-        this.activeUploads = uploads;
-        this.cdr.detectChanges();
+        this.logger.info('activeUploads', `Active uploads: ${uploads.length} (length)`);
+        this.ngZone.run(() => {
+          this.activeUploads = uploads;
+          this.cdr.detectChanges();
+        });
       })
     );
 
     // Listen for active file downloads
     this.subscriptions.push(
       this.fileTransferService.activeDownloads$.subscribe((downloads: FileDownload[]) => {
-        this.activeDownloads = downloads;
-        this.cdr.detectChanges();
+        this.logger.info('activeDownloads', `Active downloads: ${downloads.length} (length)`);
+        this.ngZone.run(() => {
+          this.activeDownloads = downloads;
+          this.cdr.detectChanges();
+        });
       })
     );
 
     // Listen for incoming file offers
     this.subscriptions.push(
       this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles: FileDownload[]) => {
-        this.incomingFiles = incomingFiles;
-        this.cdr.detectChanges();
+        this.logger.info(
+          'incomingFileOffers',
+          `Incoming file offers: ${incomingFiles.length} (length)`
+        );
+        this.ngZone.run(() => {
+          this.incomingFiles = incomingFiles;
+          this.cdr.detectChanges();
+        });
       })
     );
   }
@@ -400,7 +414,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * the input field and scrolls chat down.
    * ==========================================================
    */
-  sendMessage(messageForm: NgForm): void {
+  async sendMessage(messageForm: NgForm): Promise<void> {
     if (this.message && this.message.trim()) {
       const tempMessage: ChatMessage = {
         from: this.userService.user,
@@ -410,8 +424,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.messages = [...this.messages, tempMessage];
 
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
-      otherMembers.forEach((member) => {
-        this.chatService.sendMessage(this.message, member);
+      otherMembers.forEach(async (member) => {
+        await this.chatService.sendMessage(this.message, member);
       });
 
       this.message = '';
@@ -429,7 +443,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Attempts to establish WebRTC connections if not already open.
    * ==========================================================
    */
-  sendAttachments(event: Event): void {
+  async sendAttachments(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const filesToSend = Array.from(input.files);
@@ -439,22 +453,32 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.toaster.warning(this.translate.instant('NO_USERS_FOR_UPLOAD'));
         return;
       }
-      filesToSend.forEach((fileToSend) => {
-        otherMembers.forEach((member) => {
-          this.fileTransferService.prepareFileForSending(fileToSend, member);
+
+      // First prepare all files for all members
+      for (const fileToSend of filesToSend) {
+        for (const member of otherMembers) {
+          await this.fileTransferService.prepareFileForSending(fileToSend, member);
           if (!this.webrtcService.isConnected(member)) {
             this.webrtcService.initiateConnection(member);
           }
+        }
+      }
 
-          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: any) => {
+      // Then send all file offers once per member
+      for (const member of otherMembers) {
+        await new Promise<void>((resolve) => {
+          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe(async (isOpen: any) => {
             if (isOpen) {
-              this.fileTransferService.sendAllFileOffers(member);
+              await this.fileTransferService.sendAllFileOffers(member);
+              this.logger.debug('sendAttachments', `Sent ${filesToSend.length} files to ${member}`);
             } else {
               this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
             }
+            resolve();
           });
         });
-      });
+      }
+
       input.value = '';
     } else {
       this.toaster.warning(this.translate.instant('NO_FILES_SELECTED'));
@@ -467,8 +491,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * User confirms file download from another user.
    * ==========================================================
    */
-  public acceptIncomingFile(fileDownload: FileDownload): void {
-    this.fileTransferService.acceptFileOffer(fileDownload.fromUser, fileDownload.fileId);
+  public async acceptIncomingFile(fileDownload: FileDownload): Promise<void> {
+    await this.fileTransferService.acceptFileOffer(fileDownload.fromUser, fileDownload.fileId);
   }
 
   /**
@@ -477,8 +501,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * User declines file transfer request from another user.
    * ==========================================================
    */
-  public declineIncomingFile(fileDownload: FileDownload): void {
-    this.fileTransferService.declineFileOffer(fileDownload.fromUser, fileDownload.fileId);
+  public async declineIncomingFile(fileDownload: FileDownload): Promise<void> {
+    await this.fileTransferService.declineFileOffer(fileDownload.fromUser, fileDownload.fileId);
   }
 
   /**
@@ -487,8 +511,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Invoked by the user to cancel an ongoing file upload.
    * ==========================================================
    */
-  public cancelUpload(upload: FileUpload): void {
-    this.fileTransferService.cancelFileUpload(upload.targetUser, upload.fileId);
+  public async cancelUpload(upload: FileUpload): Promise<void> {
+    await this.fileTransferService.cancelFileUpload(upload.targetUser, upload.fileId);
   }
 
   /**
@@ -497,8 +521,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Invoked by the user to cancel an ongoing file download.
    * ==========================================================
    */
-  public cancelDownload(download: FileDownload): void {
-    this.fileTransferService.cancelFileDownload(download.fromUser, download.fileId);
+  public async cancelDownload(download: FileDownload): Promise<void> {
+    await this.fileTransferService.cancelFileDownload(download.fromUser, download.fileId);
   }
 
   /**
@@ -767,7 +791,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Processes files dropped into the chat area
    * ==========================================================
    */
-  protected handleDrop(event: DragEvent): void {
+  protected async handleDrop(event: DragEvent): Promise<void> {
     event.preventDefault();
     this.isDragging = false;
     if (!event.dataTransfer?.files) return;
@@ -783,22 +807,29 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       );
       return;
     }
-
-    files.forEach((file) => {
-      otherMembers.forEach((member) => {
-        this.fileTransferService.prepareFileForSending(file, member);
+    // First prepare all files for all members
+    for (const fileToSend of files) {
+      for (const member of otherMembers) {
+        await this.fileTransferService.prepareFileForSending(fileToSend, member);
         if (!this.webrtcService.isConnected(member)) {
           this.webrtcService.initiateConnection(member);
         }
+      }
+    }
 
-        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: boolean) => {
+    // Then send all file offers once per member
+    for (const member of otherMembers) {
+      await new Promise<void>((resolve) => {
+        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe(async (isOpen: any) => {
           if (isOpen) {
-            this.fileTransferService.sendAllFileOffers(member);
+            await this.fileTransferService.sendAllFileOffers(member);
+            this.logger.debug('sendAttachments', `Sent ${files.length} files to ${member}`);
           } else {
             this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
           }
+          resolve();
         });
       });
-    });
+    }
   }
 }

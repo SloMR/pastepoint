@@ -29,9 +29,11 @@ export class FileUploadService extends FileTransferBaseService {
     super(webrtcService, toaster, translate, logger);
   }
 
-  public prepareFileForSending(file: File, targetUser: string): void {
-    if (!FileTransferBaseService.fileTransfers.has(targetUser)) {
-      FileTransferBaseService.fileTransfers.set(targetUser, new Map<string, FileUpload>());
+  public async prepareFileForSending(file: File, targetUser: string): Promise<void> {
+    let userMap = await this.getFileTransfers(targetUser);
+    if (!userMap) {
+      userMap = new Map<string, FileUpload>();
+      await this.setFileTransfers(targetUser, userMap);
     }
 
     const fileId = this.generateFileId();
@@ -43,13 +45,14 @@ export class FileUploadService extends FileTransferBaseService {
       targetUser,
       progress: 0,
     };
-    FileTransferBaseService.fileTransfers.get(targetUser)!.set(fileId, fileTransfer);
 
-    this.updateActiveUploads();
+    userMap.set(fileId, fileTransfer);
+    await this.setFileTransfers(targetUser, userMap);
+    await this.updateActiveUploads();
   }
 
-  private sendFileOffer(fileId: string, targetUser: string): void {
-    const userMap = FileTransferBaseService.fileTransfers.get(targetUser);
+  private async sendFileOffer(fileId: string, targetUser: string): Promise<void> {
+    const userMap = await this.getFileTransfers(targetUser);
     if (!userMap) {
       this.logger.error('sendFileOffer', 'No Map of files for ' + targetUser);
       return;
@@ -69,37 +72,42 @@ export class FileUploadService extends FileTransferBaseService {
         fileId: fileId,
         fileName: fileTransfer.file.name,
         fileSize: fileTransfer.file.size,
+        fromUser: targetUser,
       },
     };
 
     const key = this.getOrCreateStatusKey(targetUser, fileId);
-    FileTransferBaseService.fileTransferStatus.set(key, 'pending');
+    await this.setFileTransferStatus(key, 'pending');
     this.sendData(message, targetUser);
   }
 
-  public sendAllFileOffers(targetUser: string): void {
-    const userMap = FileTransferBaseService.fileTransfers.get(targetUser);
-    if (!userMap) return;
+  public async sendAllFileOffers(targetUser: string): Promise<void> {
+    const userMap = await this.getFileTransfers(targetUser);
+    if (!userMap) {
+      this.logger.error('sendAllFileOffers', `No file transfers found for user: ${targetUser}`);
+      return;
+    }
 
-    userMap.forEach((fileTransfer) => {
+    this.logger.debug('sendAllFileOffers', `Found ${userMap.size} files to send to ${targetUser}`);
+    for (const fileTransfer of userMap.values()) {
       const key = this.getOrCreateStatusKey(targetUser, fileTransfer.fileId);
-      const status = FileTransferBaseService.fileTransferStatus.get(key);
+      const status = await this.getFileTransferStatus(key);
       if (!status || status === 'pending') {
-        this.sendFileOffer(fileTransfer.fileId, targetUser);
+        await this.sendFileOffer(fileTransfer.fileId, targetUser);
       } else {
         this.logger.info(
           'sendAllFileOffers',
           `FileId=${fileTransfer.fileId} already sent or completed. Skipping.`
         );
       }
-    });
+    }
   }
 
   public async startSendingFile(targetUser: string, fileId: string): Promise<void> {
     const transferId = this.getOrCreateStatusKey(targetUser, fileId);
-    FileTransferBaseService.fileTransferStatus.set(transferId, 'accepted');
+    await this.setFileTransferStatus(transferId, 'accepted');
 
-    const userMap = FileTransferBaseService.fileTransfers.get(targetUser);
+    const userMap = await this.getFileTransfers(targetUser);
     if (!userMap) {
       this.logger.error('startSendingFile', `No fileTransfers map for user: ${targetUser}`);
       return;
@@ -128,14 +136,15 @@ export class FileUploadService extends FileTransferBaseService {
 
   public async declineFileOffer(targetUser: string, fileId: string): Promise<void> {
     const transferId = this.getOrCreateStatusKey(targetUser, fileId);
-    FileTransferBaseService.fileTransferStatus.set(transferId, 'declined');
+    await this.setFileTransferStatus(transferId, 'declined');
 
-    const userMap = FileTransferBaseService.fileTransfers.get(targetUser);
+    const userMap = await this.getFileTransfers(targetUser);
     if (userMap) {
       userMap.delete(fileId);
+      await this.setFileTransfers(targetUser, userMap);
     }
-    this.updateActiveUploads();
-    this.checkAllUsersResponded();
+    await this.updateActiveUploads();
+    await this.checkAllUsersResponded();
   }
 
   private async sendNextChunk(fileTransfer: FileUpload): Promise<void> {
@@ -148,7 +157,7 @@ export class FileUploadService extends FileTransferBaseService {
 
     try {
       while (fileTransfer.currentOffset < fileTransfer.file.size) {
-        const userMap = FileTransferBaseService.fileTransfers.get(fileTransfer.targetUser);
+        const userMap = await this.getFileTransfers(fileTransfer.targetUser);
         if (!userMap || !userMap.has(fileTransfer.fileId)) {
           this.logger.warn(
             'sendNextChunk',
@@ -215,11 +224,12 @@ export class FileUploadService extends FileTransferBaseService {
 
           fileTransfer.progress = 100;
           const key = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
-          FileTransferBaseService.fileTransferStatus.set(key, 'completed');
+          await this.setFileTransferStatus(key, 'completed');
 
           userMap.delete(fileTransfer.fileId);
-          this.updateActiveUploads();
-          this.checkAllUsersResponded();
+          await this.setFileTransfers(fileTransfer.targetUser, userMap);
+          await this.updateActiveUploads();
+          await this.checkAllUsersResponded();
           break;
         }
 
@@ -259,7 +269,6 @@ export class FileUploadService extends FileTransferBaseService {
     }
 
     const transferId = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
-
     try {
       const metaMessage = {
         type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CHUNK,
@@ -280,18 +289,24 @@ export class FileUploadService extends FileTransferBaseService {
         );
         return false;
       }
-
       this.consecutiveErrorCounts.set(transferId, 0);
 
       const progress = (end / fileTransfer.file.size) * 100;
       fileTransfer.currentOffset = end;
       fileTransfer.progress = parseFloat(progress.toFixed(2));
-      this.updateActiveUploads();
+
+      const userMap = await this.getFileTransfers(fileTransfer.targetUser);
+      if (userMap) {
+        userMap.set(fileTransfer.fileId, fileTransfer);
+        await this.setFileTransfers(fileTransfer.targetUser, userMap);
+      }
+      await this.updateActiveUploads();
 
       return true;
     } catch (error) {
-      const currentErrors = this.consecutiveErrorCounts.get(transferId) || 0;
-      this.consecutiveErrorCounts.set(transferId, currentErrors + 1);
+      const errorKey = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
+      const currentErrors = this.consecutiveErrorCounts.get(errorKey) || 0;
+      this.consecutiveErrorCounts.set(errorKey, currentErrors + 1);
 
       this.logger.error('processFileChunk', `Error sending chunk: ${error}`);
 
@@ -300,20 +315,27 @@ export class FileUploadService extends FileTransferBaseService {
           'processFileChunk',
           `Too many consecutive errors (${currentErrors}). Canceling transfer.`
         );
-        this.cancelFileUpload(fileTransfer.targetUser, fileTransfer.fileId);
+        await this.cancelFileUpload(fileTransfer.targetUser, fileTransfer.fileId);
       }
 
       return false;
     }
   }
 
-  public cancelFileUpload(targetUser: string, fileId: string): void {
-    const userMap = FileTransferBaseService.fileTransfers.get(targetUser);
+  public async cancelFileUpload(targetUser: string, fileId: string): Promise<void> {
+    const userMap = await this.getFileTransfers(targetUser);
     if (userMap && userMap.has(fileId)) {
+      const fileTransfer = userMap.get(fileId);
+      if (fileTransfer) {
+        fileTransfer.isPaused = true;
+        await this.setFileTransfers(targetUser, userMap);
+      }
+
       userMap.delete(fileId);
       const key = this.getOrCreateStatusKey(targetUser, fileId);
-      FileTransferBaseService.fileTransferStatus.delete(key);
-      this.updateActiveUploads();
+      await this.deleteFileTransferStatus(key);
+      await this.setFileTransfers(targetUser, userMap);
+      await this.updateActiveUploads();
 
       const message = {
         type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_UPLOAD,
@@ -322,11 +344,16 @@ export class FileUploadService extends FileTransferBaseService {
         },
       };
       this.sendData(message, targetUser);
+    } else {
+      this.logger.error(
+        'cancelFileUpload',
+        `No file transfer found for ${targetUser} and fileId=${fileId}`
+      );
     }
   }
 
-  private checkAllUsersResponded(): void {
-    const allStatuses = Array.from(FileTransferBaseService.fileTransferStatus.values());
+  private async checkAllUsersResponded(): Promise<void> {
+    const allStatuses = Array.from(await this.getFileTransferStatuses());
     this.logger.debug('checkAllUsersResponded', 'All statuses:', allStatuses);
 
     const allResponded = allStatuses.every(
@@ -339,17 +366,16 @@ export class FileUploadService extends FileTransferBaseService {
         this.translate.instant('ALL_FILES_RESPONDED'),
         this.translate.instant('SUCCESS')
       );
-      FileTransferBaseService.fileTransfers.clear();
-      FileTransferBaseService.fileTransferStatus.clear();
-      this.updateActiveUploads();
+      await this.clearFileTransfers();
+      await this.updateActiveUploads();
     }
   }
 
-  public resumePausedTransfer(targetUser: string): void {
-    const userMap = FileTransferBaseService.fileTransfers.get(targetUser);
+  public async resumePausedTransfer(targetUser: string): Promise<void> {
+    const userMap = await this.getFileTransfers(targetUser);
     if (!userMap) return;
 
-    userMap.forEach((fileTransfer) => {
+    for (const fileTransfer of userMap.values()) {
       if (fileTransfer.isPaused && fileTransfer.currentOffset < fileTransfer.file.size) {
         const dataChannel = this.getDataChannel(fileTransfer.targetUser);
         if (dataChannel && dataChannel.bufferedAmount <= MAX_BUFFERED_AMOUNT) {
@@ -358,6 +384,7 @@ export class FileUploadService extends FileTransferBaseService {
             `Buffered amount low for ${targetUser}, resuming fileId=${fileTransfer.fileId}`
           );
           fileTransfer.isPaused = false;
+          await this.setFileTransfers(targetUser, userMap);
           this.sendNextChunk(fileTransfer).catch((error) => {
             this.logger.error('resumePausedTransfer', `Error resuming file transfer: ${error}`);
           });
@@ -368,6 +395,6 @@ export class FileUploadService extends FileTransferBaseService {
           `FileId=${fileTransfer.fileId} is not paused or already completed.`
         );
       }
-    });
+    }
   }
 }

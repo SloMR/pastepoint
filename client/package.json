@@ -34,6 +34,7 @@
     "@fortawesome/angular-fontawesome": "^1.0.0",
     "@ngx-translate/core": "^16.0.4",
     "@ngx-translate/http-loader": "^16.0.1",
+    "async-mutex": "^0.5.0",
     "express": "^4.21.2",
     "flowbite": "^3.0.0",
     "ngx-logger": "^5.0.12",

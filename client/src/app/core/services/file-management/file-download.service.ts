@@ -24,13 +24,12 @@ export class FileDownloadService extends FileTransferBaseService {
     chunk: ArrayBuffer,
     fromUser: string
   ): Promise<void> {
-    const userMap = FileTransferBaseService.incomingFileTransfers.get(fromUser);
+    const userMap = await this.getIncomingFileTransfers(fromUser);
     if (!userMap) {
       this.logger.warn(
         'handleDataChunk',
         `Discarding chunk - no incomingFileTransfers map found for user ${fromUser}`
       );
-      this.logger.warn('incomingFileTransfers', FileTransferBaseService.incomingFileTransfers);
       return;
     }
 
@@ -49,7 +48,7 @@ export class FileDownloadService extends FileTransferBaseService {
     const progress = (fileDownload.receivedSize / fileDownload.fileSize) * 100;
     fileDownload.progress = parseFloat(progress.toFixed(2));
 
-    this.updateActiveDownloads();
+    await this.updateActiveDownloads();
 
     if (fileDownload.receivedSize >= fileDownload.fileSize) {
       this.logger.info('handleDataChunk', `File received successfully (fileId=${fileId})`);
@@ -75,9 +74,10 @@ export class FileDownloadService extends FileTransferBaseService {
 
       userMap.delete(fileId);
       if (userMap.size === 0) {
-        FileTransferBaseService.incomingFileTransfers.delete(fromUser);
+        await this.deleteIncomingFileTransfers(fromUser);
       }
-      this.updateActiveDownloads();
+
+      await this.updateActiveDownloads();
     } else {
       this.logger.info(
         'handleDataChunk',
@@ -86,13 +86,13 @@ export class FileDownloadService extends FileTransferBaseService {
     }
   }
 
-  public cancelFileDownload(fromUser: string, fileId: string): void {
-    const userMap = FileTransferBaseService.incomingFileTransfers.get(fromUser);
+  public async cancelFileDownload(fromUser: string, fileId: string): Promise<void> {
+    const userMap = await this.getIncomingFileTransfers(fromUser);
     if (userMap && userMap.has(fileId)) {
       userMap.delete(fileId);
       const key = this.getOrCreateStatusKey(fromUser, fileId);
-      FileTransferBaseService.fileTransferStatus.delete(key);
-      this.updateActiveDownloads();
+      await this.deleteFileTransferStatus(key);
+      await this.updateActiveDownloads();
 
       const message = {
         type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_DOWNLOAD,
@@ -105,22 +105,22 @@ export class FileDownloadService extends FileTransferBaseService {
     }
   }
 
-  public handleFileUploadCancellation(fromUser: string, fileId: string): void {
-    this.logger.info(
+  public async handleFileUploadCancellation(fromUser: string, fileId: string): Promise<void> {
+    this.logger.debug(
       'handleFileUploadCancellation',
       `File upload from ${fromUser} (fileId=${fileId}) was cancelled`
     );
 
-    const userMap = FileTransferBaseService.incomingFileTransfers.get(fromUser);
+    const userMap = await this.getIncomingFileTransfers(fromUser);
     if (userMap) {
       userMap.delete(fileId);
       if (userMap.size === 0) {
-        FileTransferBaseService.incomingFileTransfers.delete(fromUser);
+        await this.deleteIncomingFileTransfers(fromUser);
       }
     }
 
-    this.updateIncomingFileOffers();
-    this.updateActiveDownloads();
+    await this.updateIncomingFileOffers();
+    await this.updateActiveDownloads();
 
     this.toaster.info(
       this.translate.instant('FILE_UPLOAD_CANCELLED'),
@@ -128,22 +128,22 @@ export class FileDownloadService extends FileTransferBaseService {
     );
   }
 
-  public handleFileDownloadCancellation(fromUser: string, fileId: string): void {
-    this.logger.info(
+  public async handleFileDownloadCancellation(fromUser: string, fileId: string): Promise<void> {
+    this.logger.debug(
       'handleFileDownloadCancellation',
       `File download from ${fromUser} (fileId=${fileId}) was cancelled.`
     );
 
-    const userMap = FileTransferBaseService.fileTransfers.get(fromUser);
+    const userMap = await this.getFileTransfers(fromUser);
     if (userMap) {
       userMap.delete(fileId);
       if (userMap.size === 0) {
-        FileTransferBaseService.fileTransfers.delete(fromUser);
+        await this.deleteFileTransfers(fromUser);
       }
     }
 
-    this.updateIncomingFileOffers();
-    this.updateActiveDownloads();
+    await this.updateIncomingFileOffers();
+    await this.updateActiveDownloads();
 
     this.toaster.info(
       this.translate.instant('FILE_DOWNLOAD_CANCELLED'),

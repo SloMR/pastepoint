@@ -101,7 +101,7 @@ export interface ChatMessage {
 }
 
 // File transfer interfaces
-export type FileStatus = 'pending' | 'accepted' | 'declined' | 'completed';
+export type FileTransferStatus = 'pending' | 'accepted' | 'declined' | 'completed';
 
 export interface FileUpload {
   fileId: string;

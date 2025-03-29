@@ -19,18 +19,19 @@ export class FileOfferService extends FileTransferBaseService {
     super(webrtcService, toaster, translate, logger);
   }
 
-  public receiveFileOffer(offer: {
+  public async receiveFileOffer(offer: {
     fileId: string;
     fileName: string;
     fileSize: number;
     fromUser: string;
-  }): void {
+  }): Promise<void> {
     const { fromUser, fileId, fileName, fileSize } = offer;
-    if (!FileTransferBaseService.incomingFileTransfers.has(fromUser)) {
-      FileTransferBaseService.incomingFileTransfers.set(fromUser, new Map<string, FileDownload>());
+    const userMap = await this.getIncomingFileTransfers(fromUser);
+    if (!userMap) {
+      await this.setIncomingFileTransfers(fromUser, new Map<string, FileDownload>());
     }
 
-    const fileTransfers = FileTransferBaseService.incomingFileTransfers.get(fromUser);
+    const fileTransfers = await this.getIncomingFileTransfers(fromUser);
     if (fileTransfers) {
       const fileDownload: FileDownload = {
         fileId,
@@ -44,15 +45,16 @@ export class FileOfferService extends FileTransferBaseService {
       };
 
       fileTransfers.set(fileId, fileDownload);
-      this.updateIncomingFileOffers();
+      await this.setIncomingFileTransfers(fromUser, fileTransfers);
+      await this.updateIncomingFileOffers();
     } else {
       this.logger.error('receiveFileOffer', `No file transfers map for user: ${fromUser}`);
       return;
     }
   }
 
-  public acceptFileOffer(fromUser: string, fileId: string): void {
-    const userMap = FileTransferBaseService.incomingFileTransfers.get(fromUser);
+  public async acceptFileOffer(fromUser: string, fileId: string): Promise<void> {
+    const userMap = await this.getIncomingFileTransfers(fromUser);
     if (!userMap) {
       this.logger.error('acceptFileOffer', `No incoming file map found from user: ${fromUser}`);
       return;
@@ -65,7 +67,8 @@ export class FileOfferService extends FileTransferBaseService {
     }
 
     fileDownload.isAccepted = true;
-    this.updateIncomingFileOffers();
+    await this.setIncomingFileTransfers(fromUser, userMap);
+    await this.updateIncomingFileOffers();
 
     const message = {
       type: FILE_TRANSFER_MESSAGE_TYPES.FILE_ACCEPT,
@@ -74,20 +77,23 @@ export class FileOfferService extends FileTransferBaseService {
       },
     };
 
-    this.logger.info(
+    this.logger.debug(
       'acceptFileOffer',
       `Sending file acceptance to ${fromUser} for fileId=${fileId}`
     );
     this.sendData(message, fromUser);
-    this.updateActiveDownloads();
+    await this.updateActiveDownloads();
   }
 
-  public declineFileOffer(fromUser: string, fileId: string): void {
-    const userMap = FileTransferBaseService.incomingFileTransfers.get(fromUser);
+  public async declineFileOffer(fromUser: string, fileId: string): Promise<void> {
+    const userMap = await this.getIncomingFileTransfers(fromUser);
     if (userMap) {
       userMap.delete(fileId);
+      if (userMap.size === 0) {
+        await this.deleteIncomingFileTransfers(fromUser);
+      }
     }
-    this.updateIncomingFileOffers();
+    await this.updateIncomingFileOffers();
 
     const message = {
       type: FILE_TRANSFER_MESSAGE_TYPES.FILE_DECLINE,
