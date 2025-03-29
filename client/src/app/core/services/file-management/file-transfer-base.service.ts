@@ -12,6 +12,7 @@ import { Mutex } from 'async-mutex';
   providedIn: 'root',
 })
 export class FileTransferBaseService {
+  // =============== Static Properties ===============
   // Make BehaviorSubjects static so they're shared across all services
   public static activeUploads$ = new BehaviorSubject<FileUpload[]>([]);
   private static fileTransfers = new Map<string, Map<string, FileUpload>>();
@@ -21,6 +22,7 @@ export class FileTransferBaseService {
   public static incomingFileOffers$ = new BehaviorSubject<FileDownload[]>([]);
   private static incomingFileTransfers = new Map<string, Map<string, FileDownload>>();
 
+  // =============== Mutex Locks ===============
   // Mutex instances for each shared resource
   private static fileTransfersMutex = new Mutex();
   private static fileTransferStatusMutex = new Mutex();
@@ -29,6 +31,7 @@ export class FileTransferBaseService {
   private static activeDownloadsMutex = new Mutex();
   private static incomingFileOffersMutex = new Mutex();
 
+  // =============== Constructor ===============
   constructor(
     protected webrtcService: WebRTCService,
     protected toaster: ToastrService,
@@ -36,32 +39,56 @@ export class FileTransferBaseService {
     protected logger: NGXLogger
   ) {}
 
+  // =============== Utility Methods ===============
+  /**
+   * Generates a unique file ID using UUID and timestamp
+   */
   protected generateFileId(): string {
     const timestamp = Date.now();
     const uuid = uuidv4();
     return `${uuid}-${timestamp}`;
   }
 
+  /**
+   * Creates a unique status key for a file transfer
+   */
   protected getOrCreateStatusKey(user: string, fileId: string): string {
     return `${user}-${fileId}`;
   }
 
+  // =============== WebRTC Communication Methods ===============
+  /**
+   * Sends a message to a target user
+   */
   protected sendData(message: any, targetUser: string): void {
     this.webrtcService.sendData(message, targetUser);
   }
 
+  /**
+   * Gets the data channel for a target user
+   */
   protected getDataChannel(targetUser: string): RTCDataChannel | null {
     return this.webrtcService.getDataChannel(targetUser);
   }
 
+  /**
+   * Sends raw binary data to a target user
+   */
   protected sendRawData(data: ArrayBuffer, targetUser: string): boolean {
     return this.webrtcService.sendRawData(data, targetUser);
   }
 
+  /**
+   * Initiates WebRTC connection with a target user
+   */
   protected initiateConnection(targetUser: string): void {
     this.webrtcService.initiateConnection(targetUser);
   }
 
+  // =============== State Update Methods ===============
+  /**
+   * Updates the active uploads list
+   */
   protected async updateActiveUploads(): Promise<void> {
     const allUploads: FileUpload[] = [];
 
@@ -80,6 +107,9 @@ export class FileTransferBaseService {
     this.logger.debug('updateActiveUploads', `Updated active uploads, count: ${allUploads.length}`);
   }
 
+  /**
+   * Updates the active downloads list
+   */
   protected async updateActiveDownloads(): Promise<void> {
     const allDownloads: FileDownload[] = [];
 
@@ -103,6 +133,9 @@ export class FileTransferBaseService {
     );
   }
 
+  /**
+   * Updates the incoming file offers list
+   */
   protected async updateIncomingFileOffers(): Promise<void> {
     const allOffers: FileDownload[] = [];
 
@@ -126,12 +159,19 @@ export class FileTransferBaseService {
     );
   }
 
+  // =============== File Transfers Data Access Methods ===============
+  /**
+   * Gets file transfer data for a specific user
+   */
   protected async getFileTransfers(user: string): Promise<Map<string, FileUpload> | undefined> {
     return await FileTransferBaseService.fileTransfersMutex.runExclusive(() => {
       return FileTransferBaseService.fileTransfers.get(user);
     });
   }
 
+  /**
+   * Sets file transfer data for a specific user
+   */
   protected async setFileTransfers(
     user: string,
     transfers: Map<string, FileUpload>
@@ -141,18 +181,27 @@ export class FileTransferBaseService {
     });
   }
 
+  /**
+   * Gets file transfer status for a specific key
+   */
   protected async getFileTransferStatus(key: string): Promise<FileTransferStatus | undefined> {
     return await FileTransferBaseService.fileTransferStatusMutex.runExclusive(() => {
       return FileTransferBaseService.fileTransferStatus.get(key);
     });
   }
 
+  /**
+   * Sets file transfer status for a specific key
+   */
   protected async setFileTransferStatus(key: string, status: FileTransferStatus): Promise<void> {
     await FileTransferBaseService.fileTransferStatusMutex.runExclusive(() => {
       FileTransferBaseService.fileTransferStatus.set(key, status);
     });
   }
 
+  /**
+   * Gets incoming file transfers for a specific user
+   */
   protected async getIncomingFileTransfers(
     user: string
   ): Promise<Map<string, FileDownload> | undefined> {
@@ -161,6 +210,9 @@ export class FileTransferBaseService {
     });
   }
 
+  /**
+   * Sets incoming file transfers for a specific user
+   */
   protected async setIncomingFileTransfers(
     user: string,
     transfers: Map<string, FileDownload>
@@ -170,30 +222,46 @@ export class FileTransferBaseService {
     });
   }
 
+  // =============== Delete Methods ===============
+  /**
+   * Deletes incoming file transfers for a specific user
+   */
   protected async deleteIncomingFileTransfers(user: string): Promise<void> {
     await FileTransferBaseService.incomingFileTransfersMutex.runExclusive(() => {
       FileTransferBaseService.incomingFileTransfers.delete(user);
     });
   }
 
+  /**
+   * Deletes file transfers for a specific user
+   */
   protected async deleteFileTransfers(user: string): Promise<void> {
     await FileTransferBaseService.fileTransfersMutex.runExclusive(() => {
       FileTransferBaseService.fileTransfers.delete(user);
     });
   }
 
+  /**
+   * Deletes file transfer status for a specific key
+   */
   protected async deleteFileTransferStatus(key: string): Promise<void> {
     await FileTransferBaseService.fileTransferStatusMutex.runExclusive(() => {
       FileTransferBaseService.fileTransferStatus.delete(key);
     });
   }
 
+  /**
+   * Gets all file transfer statuses
+   */
   protected async getFileTransferStatuses(): Promise<string[]> {
     return await FileTransferBaseService.fileTransferStatusMutex.runExclusive(() => {
       return Array.from(FileTransferBaseService.fileTransferStatus.values());
     });
   }
 
+  /**
+   * Clears all file transfers data
+   */
   protected async clearFileTransfers(): Promise<void> {
     await FileTransferBaseService.fileTransfersMutex.runExclusive(() => {
       FileTransferBaseService.fileTransfers.clear();

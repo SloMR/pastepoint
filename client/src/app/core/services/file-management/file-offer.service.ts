@@ -10,6 +10,7 @@ import { NGXLogger } from 'ngx-logger';
   providedIn: 'root',
 })
 export class FileOfferService extends FileTransferBaseService {
+  // =============== Constructor ===============
   constructor(
     webrtcService: WebRTCService,
     toaster: ToastrService,
@@ -19,6 +20,10 @@ export class FileOfferService extends FileTransferBaseService {
     super(webrtcService, toaster, translate, logger);
   }
 
+  // =============== File Offer Methods ===============
+  /**
+   * Receives and processes a file offer from another user
+   */
   public async receiveFileOffer(offer: {
     fileId: string;
     fileName: string;
@@ -53,6 +58,9 @@ export class FileOfferService extends FileTransferBaseService {
     }
   }
 
+  /**
+   * Accepts a file offer and notifies the sender
+   */
   public async acceptFileOffer(fromUser: string, fileId: string): Promise<void> {
     const userMap = await this.getIncomingFileTransfers(fromUser);
     if (!userMap) {
@@ -85,6 +93,9 @@ export class FileOfferService extends FileTransferBaseService {
     await this.updateActiveDownloads();
   }
 
+  /**
+   * Declines a file offer and notifies the sender
+   */
   public async declineFileOffer(fromUser: string, fileId: string): Promise<void> {
     const userMap = await this.getIncomingFileTransfers(fromUser);
     if (userMap) {

@@ -10,6 +10,7 @@ import { NGXLogger } from 'ngx-logger';
   providedIn: 'root',
 })
 export class FileDownloadService extends FileTransferBaseService {
+  // =============== Constructor ===============
   constructor(
     webrtcService: WebRTCService,
     toaster: ToastrService,
@@ -19,6 +20,10 @@ export class FileDownloadService extends FileTransferBaseService {
     super(webrtcService, toaster, translate, logger);
   }
 
+  // =============== Data Handling Methods ===============
+  /**
+   * Handles incoming file data chunks and assembles the file
+   */
   public async handleDataChunk(
     fileId: string,
     chunk: ArrayBuffer,
@@ -86,6 +91,10 @@ export class FileDownloadService extends FileTransferBaseService {
     }
   }
 
+  // =============== Cancellation Methods ===============
+  /**
+   * Cancels an active file download and notifies the sender
+   */
   public async cancelFileDownload(fromUser: string, fileId: string): Promise<void> {
     const userMap = await this.getIncomingFileTransfers(fromUser);
     if (userMap && userMap.has(fileId)) {
@@ -105,6 +114,9 @@ export class FileDownloadService extends FileTransferBaseService {
     }
   }
 
+  /**
+   * Handles file upload cancellation from the sender
+   */
   public async handleFileUploadCancellation(fromUser: string, fileId: string): Promise<void> {
     this.logger.debug(
       'handleFileUploadCancellation',
@@ -128,6 +140,9 @@ export class FileDownloadService extends FileTransferBaseService {
     );
   }
 
+  /**
+   * Handles file download cancellation notification
+   */
   public async handleFileDownloadCancellation(fromUser: string, fileId: string): Promise<void> {
     this.logger.debug(
       'handleFileDownloadCancellation',

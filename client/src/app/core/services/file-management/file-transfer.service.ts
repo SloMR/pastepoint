@@ -12,6 +12,7 @@ import { FileTransferBaseService } from './file-transfer-base.service';
   providedIn: 'root',
 })
 export class FileTransferService implements IFileTransferService {
+  // =============== Constructor ===============
   constructor(
     private webrtcService: WebRTCService,
     public translate: TranslateService,
@@ -73,45 +74,76 @@ export class FileTransferService implements IFileTransferService {
     });
   }
 
+  // =============== Properties ===============
+  /**
+   * Get active file uploads in progress
+   */
   public get activeUploads$() {
     return FileTransferBaseService.activeUploads$;
   }
 
+  /**
+   * Get active file downloads in progress
+   */
   public get activeDownloads$() {
     return FileTransferBaseService.activeDownloads$;
   }
 
+  /**
+   * Get incoming file offers awaiting user response
+   */
   public get incomingFileOffers$() {
     return FileTransferBaseService.incomingFileOffers$;
   }
 
+  // =============== Upload Methods ===============
+  /**
+   * Prepares a file for sending to a target user
+   */
   public async prepareFileForSending(file: File, targetUser: string): Promise<void> {
     await this.fileUploadService.prepareFileForSending(file, targetUser);
     this.logger.debug('FileTransferService', `File upload prepared for sending to ${targetUser}`);
   }
 
+  /**
+   * Sends all prepared file offers to a target user
+   */
   public async sendAllFileOffers(targetUser: string): Promise<void> {
     await this.fileUploadService.sendAllFileOffers(targetUser);
     this.logger.debug('FileTransferService', `All file offers sent to ${targetUser}`);
   }
 
-  public async acceptFileOffer(fromUser: string, fileId: string): Promise<void> {
-    await this.fileOfferService.acceptFileOffer(fromUser, fileId);
-    this.logger.debug('FileTransferService', `File offer ${fileId} accepted by ${fromUser}`);
-  }
-
-  public async declineFileOffer(fromUser: string, fileId: string): Promise<void> {
-    await this.fileOfferService.declineFileOffer(fromUser, fileId);
-    this.logger.debug('FileTransferService', `File offer ${fileId} declined by ${fromUser}`);
-  }
-
+  /**
+   * Cancels an ongoing file upload to a target user
+   */
   public async cancelFileUpload(targetUser: string, fileId: string): Promise<void> {
     await this.fileUploadService.cancelFileUpload(targetUser, fileId);
     this.logger.debug('cancelFileUpload', `File upload ${fileId} cancelled by ${targetUser}`);
   }
 
+  // =============== Download Methods ===============
+  /**
+   * Cancels an ongoing file download from a user
+   */
   public async cancelFileDownload(fromUser: string, fileId: string): Promise<void> {
     await this.fileDownloadService.cancelFileDownload(fromUser, fileId);
     this.logger.debug('FileTransferService', `File download ${fileId} cancelled by ${fromUser}`);
+  }
+
+  // =============== File Offer Methods ===============
+  /**
+   * Accepts a file offer from a user
+   */
+  public async acceptFileOffer(fromUser: string, fileId: string): Promise<void> {
+    await this.fileOfferService.acceptFileOffer(fromUser, fileId);
+    this.logger.debug('FileTransferService', `File offer ${fileId} accepted by ${fromUser}`);
+  }
+
+  /**
+   * Declines a file offer from a user
+   */
+  public async declineFileOffer(fromUser: string, fileId: string): Promise<void> {
+    await this.fileOfferService.declineFileOffer(fromUser, fileId);
+    this.logger.debug('FileTransferService', `File offer ${fileId} declined by ${fromUser}`);
   }
 }
