@@ -1,38 +1,11 @@
 # robots.txt file for PastePoint
 User-agent: *
-Disallow: /
-
-User-agent: Applebot
-User-agent: Baiduspider
-User-agent: Baiduspider-image
-User-agent: Baiduspider-mobile
-User-agent: Baiduspider-video
-User-agent: Bingbot
-User-agent: DuckDuckBot
-User-agent: facebookexternalhit
-User-agent: Googlebot
-User-agent: Googlebot-Image
-User-agent: Googlebot-Video
-User-agent: LinkedInBot
-User-agent: Screaming Frog SEO Spider
-User-agent: SeznamBot
-User-agent: Slurp
-User-agent: Twitterbot
-User-agent: Y!J-WSC
-User-agent: Yandex
-User-agent: YandexBot
-User-agent: YandexMobileBot
-User-agent: YandexSitelinks
-User-agent: YandexVideo
-User-agent: YandexWebmaster
-User-agent: Yeti
-User-agent: YJ-WSC
-Allow: /
 Allow: /chat
 
 Disallow: /chat/*/
 Disallow: /404
 Disallow: /ws/
 Disallow: /create-session
+Disallow: /Login.aspx
 
 Sitemap: https://pastepoint.com/sitemap.xml

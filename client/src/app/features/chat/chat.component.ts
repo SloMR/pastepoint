@@ -44,6 +44,7 @@ import { ToastrService } from 'ngx-toastr';
 import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
 import { MigrationService } from '../../core/services/migration/migration.service';
+import { SeoService } from '../../core/services/ui/seo.service';
 
 /**
  * ==========================================================
@@ -155,6 +156,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private route: ActivatedRoute,
     private logger: NGXLogger,
     private migrationService: MigrationService,
+    private seoService: SeoService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
     this.translate.setDefaultLang('en');
@@ -199,9 +201,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       if (sessionCode) {
         this.SessionCode = sessionCode;
         this.connect(sessionCode);
+        this.seoService.setRobotsTag('noindex');
       } else {
         this.chatService.clearMessages();
         this.messages = [];
+        this.seoService.setRobotsTag('index, follow');
+        this.seoService.setCanonicalUrl('https://pastepoint.com/chat');
+        this.seoService.setOpenGraphUrl('https://pastepoint.com/chat');
       }
     });
 
