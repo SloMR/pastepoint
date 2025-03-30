@@ -6,10 +6,28 @@ import { IThemeService } from '../../interfaces/theme.interface';
   providedIn: 'root',
 })
 export class ThemeService implements IThemeService {
+  /**
+   * ==========================================================
+   * CONSTANTS
+   * Storage key for theme preference
+   * ==========================================================
+   */
   private readonly THEME_KEY = 'themePreference';
 
+  /**
+   * ==========================================================
+   * CONSTRUCTOR
+   * Dependency injection
+   * ==========================================================
+   */
   constructor(@Inject(PLATFORM_ID) private platformId: object) {}
 
+  /**
+   * ==========================================================
+   * PUBLIC METHODS
+   * APIs for theme initialization and management
+   * ==========================================================
+   */
   initializeTheme(): void {
     if (!isPlatformBrowser(this.platformId)) return;
     const themePreference = this.getThemePreference();
@@ -23,6 +41,12 @@ export class ThemeService implements IThemeService {
     this.applyTheme(themePreference);
   }
 
+  /**
+   * ==========================================================
+   * PRIVATE METHODS
+   * Utility methods for theme operations
+   * ==========================================================
+   */
   private getThemePreference(): string | null {
     return localStorage.getItem(this.THEME_KEY);
   }

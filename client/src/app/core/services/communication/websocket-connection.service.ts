@@ -8,19 +8,43 @@ import { NGXLogger } from 'ngx-logger';
   providedIn: 'root',
 })
 export class WebSocketConnectionService {
+  /**
+   * ==========================================================
+   * PRIVATE PROPERTIES
+   * Core WebSocket connection and configuration
+   * ==========================================================
+   */
   private socket: WebSocket | undefined;
   private webSocketProto = 'wss';
   private host = environment.apiUrl;
 
+  /**
+   * ==========================================================
+   * PUBLIC OBSERVABLES
+   * BehaviorSubjects for communication with other services
+   * ==========================================================
+   */
   public messages$ = new BehaviorSubject<string>('');
   public systemMessages$ = new BehaviorSubject<string>('');
   public signalMessages$ = new BehaviorSubject<any>(null);
 
+  /**
+   * ==========================================================
+   * CONSTRUCTOR
+   * Dependency injection
+   * ==========================================================
+   */
   constructor(
     private router: Router,
     private logger: NGXLogger
   ) {}
 
+  /**
+   * ==========================================================
+   * CONNECTION MANAGEMENT
+   * Methods for establishing and managing WebSocket connection
+   * ==========================================================
+   */
   public connect(code?: string): Promise<void> {
     if (!code) {
       const urlSegments = window.location.pathname.split('/');
@@ -85,6 +109,12 @@ export class WebSocketConnectionService {
     }
   }
 
+  /**
+   * ==========================================================
+   * MESSAGE SENDING
+   * Methods for sending different types of messages
+   * ==========================================================
+   */
   public send(message: string): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(message);
@@ -102,6 +132,12 @@ export class WebSocketConnectionService {
     }
   }
 
+  /**
+   * ==========================================================
+   * UTILITY METHODS
+   * Helper methods for WebSocket operations
+   * ==========================================================
+   */
   private isSystemMessage(message: string): boolean {
     return (
       message.includes('[SystemMessage]') ||
@@ -110,5 +146,12 @@ export class WebSocketConnectionService {
       message.includes('[SystemMembers]') ||
       message.includes('[SystemName]')
     );
+  }
+
+  /**
+   * Check if the WebSocket connection is currently active
+   */
+  public isConnected(): boolean {
+    return this.socket !== undefined && this.socket.readyState === WebSocket.OPEN;
   }
 }

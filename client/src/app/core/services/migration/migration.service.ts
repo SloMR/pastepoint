@@ -7,13 +7,31 @@ import { IMigrationService } from '../../interfaces/migration.interface';
   providedIn: 'root',
 })
 export class MigrationService implements IMigrationService {
+  /**
+   * ==========================================================
+   * CONSTANTS
+   * Key values for storage
+   * ==========================================================
+   */
   private readonly VERSION_KEY = 'app_version';
 
+  /**
+   * ==========================================================
+   * CONSTRUCTOR
+   * Dependency injection
+   * ==========================================================
+   */
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,
     private logger: NGXLogger
   ) {}
 
+  /**
+   * ==========================================================
+   * PUBLIC METHODS
+   * External API for version checking and migration
+   * ==========================================================
+   */
   /**
    * Checks if the application version has changed and runs migration if needed
    * @param currentVersion The current application version from package.json
@@ -58,6 +76,12 @@ export class MigrationService implements IMigrationService {
     return false;
   }
 
+  /**
+   * ==========================================================
+   * PRIVATE METHODS
+   * Storage cleanup implementation
+   * ==========================================================
+   */
   /**
    * Clears all client-side storage
    * - localStorage
