@@ -108,7 +108,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * For tracking user inactivity and clearing session
    * ==========================================================
    */
-  private idleTimer: any;
+  private reconnectTimer: any;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 3;
 
   /**
    * ==========================================================
@@ -174,6 +176,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
+    // Add visibility change event listener for mobile background handling
+    document.addEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
+
     // Check if migration is needed due to version change
     const migrationPerformed = this.migrationService.checkAndMigrateIfNeeded(this.appVersion, true);
     if (migrationPerformed) {
@@ -230,6 +235,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.chatService.clearMessages();
     this.messages = [];
     clearTimeout(this.emojiPickerTimeout);
+    clearTimeout(this.reconnectTimer);
+
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange.bind(this));
 
     if (this.SessionCode) {
       localStorage.removeItem('SessionCode');
@@ -389,21 +397,72 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
+   * HANDLE VISIBILITY CHANGE
+   * Handles the case when the app goes to background and returns
+   * ==========================================================
+   */
+  private handleVisibilityChange(): void {
+    if (document.visibilityState === 'visible') {
+      this.logger.debug('handleVisibilityChange', 'App is now visible');
+      if (!this.wsConnectionService.isConnected() && this.SessionCode) {
+        this.logger.debug('handleVisibilityChange', 'Connection lost, attempting to reconnect');
+        this.reconnectSession();
+      }
+    } else {
+      this.logger.debug('handleVisibilityChange', 'App is now hidden');
+    }
+  }
+
+  /**
+   * ==========================================================
+   * RECONNECT SESSION
+   * Attempts to reconnect to the current session
+   * ==========================================================
+   */
+  private reconnectSession(): void {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      this.logger.warn('reconnectSession', 'Maximum reconnect attempts reached');
+      this.toaster.error(
+        this.translate.instant('SESSION_RECONNECT_FAILED'),
+        this.translate.instant('ERROR')
+      );
+      this.reconnectAttempts = 0;
+      return;
+    }
+
+    this.reconnectAttempts++;
+    this.logger.info(
+      'reconnectSession',
+      `Attempting to reconnect (${this.reconnectAttempts}/${this.maxReconnectAttempts})`
+    );
+
+    this.connect(this.SessionCode).catch(() => {
+      this.logger.warn('reconnectSession', 'Reconnect failed, will retry in 3 seconds');
+      // Try again in 3 seconds
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = setTimeout(() => this.reconnectSession(), 3000);
+    });
+  }
+
+  /**
+   * ==========================================================
    * CONNECT
    * Establishes a WebSocket connection to a session (if provided).
    * Upon success, lists rooms and grabs the username.
    * ==========================================================
    */
-  connect(code?: string): void {
-    this.wsConnectionService
+  connect(code?: string): Promise<void> {
+    return this.wsConnectionService
       .connect(code)
       .then(() => {
         this.logger.info('connect', `Connected to session: ${code || 'No code provided'}`);
+        this.reconnectAttempts = 0;
         this.roomService.listRooms();
         this.chatService.getUsername();
       })
       .catch((error) => {
         this.logger.error('connect', `WebSocket connection failed: ${error}`);
+        throw error; // Rethrow to handle in reconnectSession
       });
   }
 
