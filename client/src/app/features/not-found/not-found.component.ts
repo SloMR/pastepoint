@@ -7,6 +7,7 @@ import { ThemeService } from '../../core/services/ui/theme.service';
 import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
 import { MigrationService } from '../../core/services/migration/migration.service';
+import { MetaService } from '../../core/services/ui/meta.service';
 
 @Component({
   imports: [CommonModule, RouterLink, NgOptimizedImage, TranslateModule],
@@ -23,7 +24,8 @@ export class NotFoundComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private themeService: ThemeService,
     private logger: NGXLogger,
-    private migrationService: MigrationService
+    private migrationService: MigrationService,
+    private metaService: MetaService
   ) {
     this.translate.setDefaultLang('en');
 
@@ -46,6 +48,9 @@ export class NotFoundComponent implements OnInit {
     const themePreference = localStorage.getItem('themePreference');
     this.isDarkMode = themePreference === 'dark';
     this.applyTheme(this.isDarkMode);
+
+    // Set specific meta tags for 404 page
+    this.metaService.updateNotFoundMetadata();
   }
 
   toggleTheme(): void {
