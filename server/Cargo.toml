@@ -35,4 +35,4 @@ config = "0.15.11"
 actix-test = "0.1.5"
 futures-util = { version = "0.3.31", default-features = false, features = ["std"] }
 awc = "3.6.0"
-tokio = "1.44.1"
+tokio = "1.44.2"
