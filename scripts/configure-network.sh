@@ -34,12 +34,12 @@ update_file() {
 
 # Get local IP address
 echo "Please enter your local IP address (e.g., 192.168.1.100):"
-read local_ip
+read -r local_ip
 
 # Validate IP address
 while ! validate_ip "$local_ip"; do
     echo "Invalid IP address format. Please enter a valid IP address:"
-    read local_ip
+    read -r local_ip
 done
 
 # Update .env.development

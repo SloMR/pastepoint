@@ -440,7 +440,9 @@
                     <div class="flex items-center gap-1">
                       <span class="text-xs text-secondary-500">{{ transfer.progress }}%</span>
                       <button
-                        (click)="cancelUpload(transfer)"
+                        (click)="
+                          $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
+                        "
                         class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
                       >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -471,7 +473,11 @@
                     <div class="flex items-center gap-1">
                       <span class="text-xs text-secondary-500"> {{ download.progress }}% </span>
                       <button
-                        (click)="cancelDownload(download)"
+                        (click)="
+                          $event.stopPropagation();
+                          $event.preventDefault();
+                          cancelDownload(download)
+                        "
                         class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
                       >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -893,7 +899,9 @@
                     <div class="flex items-center gap-1">
                       <span class="text-xs text-secondary-500">{{ transfer.progress }}%</span>
                       <button
-                        (click)="cancelUpload(transfer)"
+                        (click)="
+                          $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
+                        "
                         class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
                       >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -924,7 +932,11 @@
                     <div class="flex items-center gap-1">
                       <span class="text-xs text-secondary-500"> {{ download.progress }}% </span>
                       <button
-                        (click)="cancelDownload(download)"
+                        (click)="
+                          $event.stopPropagation();
+                          $event.preventDefault();
+                          cancelDownload(download)
+                        "
                         class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
                       >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

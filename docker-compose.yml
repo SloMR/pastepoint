@@ -15,7 +15,7 @@ services:
       '
     volumes:
       - ${CERT_PATH:-/etc/ssl/pastepoint}:/etc/ssl/${CERT_MOUNT:-pastepoint}:ro
-    restart: "no"
+    restart: 'no'
 
   server:
     build:
@@ -24,7 +24,7 @@ services:
       args:
         RUST_BUILD_MODE: ${RUST_BUILD_MODE:-release}
     ports:
-      - "9000:9000"
+      - '9000:9000'
     environment:
       - RUN_ENV=${SERVER_ENV:-production}
     volumes:
@@ -45,8 +45,8 @@ services:
       SSL_CERT_PATH: ${SSL_CERT_PATH:-/etc/ssl/pastepoint/cert.pem}
       SSL_CERT_KEY_PATH: ${SSL_CERT_KEY_PATH:-/etc/ssl/pastepoint/key.pem}
     ports:
-      - "443:443"
-      - "80:80"
+      - '443:443'
+      - '80:80'
     volumes:
       - ${CERT_PATH:-/etc/ssl/pastepoint}:/etc/ssl/${CERT_MOUNT:-pastepoint}:ro
     depends_on:
