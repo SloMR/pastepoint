@@ -17,6 +17,14 @@ export class WebSocketConnectionService {
   private socket: WebSocket | undefined;
   private webSocketProto = 'wss';
   private host = environment.apiUrl;
+  private sessionCode: string | undefined;
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 1000;
+  private maxReconnectDelay = 30000;
+  private reconnectTimer: any;
+  private manualDisconnect = false;
+  private isConnecting = false;
 
   /**
    * ==========================================================
@@ -46,10 +54,30 @@ export class WebSocketConnectionService {
    * ==========================================================
    */
   public connect(code?: string): Promise<void> {
+    if (this.isConnecting) {
+      this.logger.warn('connect', 'Connection already in progress, ignoring duplicate request');
+      return Promise.resolve();
+    }
+
+    if (this.isConnected() && this.sessionCode === code) {
+      this.logger.info('connect', `Already connected to session ${code}, skipping connection`);
+      return Promise.resolve();
+    }
+
+    if (this.socket) {
+      this.logger.info('connect', 'Disconnecting existing connection before creating a new one');
+      this.disconnect(false);
+    }
+
+    this.isConnecting = true;
+    this.manualDisconnect = false;
+
     if (!code) {
       const urlSegments = window.location.pathname.split('/');
       code = urlSegments.length > 2 ? urlSegments[2] : undefined;
     }
+
+    this.sessionCode = code;
 
     const wsUri = `${this.webSocketProto}://${this.host}/ws${code ? `/${code}` : ''}`;
     return new Promise<void>((resolve, reject) => {
@@ -58,6 +86,9 @@ export class WebSocketConnectionService {
 
       this.socket.onopen = () => {
         this.logger.info('connect', 'WebSocket connected');
+        this.reconnectAttempts = 0;
+        this.reconnectDelay = 1000;
+        this.isConnecting = false;
         resolve();
       };
 
@@ -79,27 +110,86 @@ export class WebSocketConnectionService {
       };
 
       this.socket.onclose = (event) => {
+        this.isConnecting = false;
+
+        // If we get a 1006 code immediately after trying to connect, treat it as an invalid session
+        if (event.code === 1006 && this.reconnectAttempts === 0) {
+          this.logger.warn('connect', 'WebSocket closed: Invalid session code (1006)');
+          this.clearSessionCode();
+          this.router.navigate(['/404']);
+          return;
+        }
+
         if (event.code === 1006) {
-          this.router.navigate(['/404']).then(() => {
+          if (!this.manualDisconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.scheduleReconnect();
+          } else {
             this.logger.warn(
               'connect',
-              `WebSocket closed with code ${event.code}. Navigating to 404.`
+              `WebSocket closed with code ${event.code}. Navigating to 404 after max reconnect attempts.`
             );
-          });
+            this.router.navigate(['/404']);
+          }
         } else {
-          // handle normal closure or attempt reconnect
           this.logger.warn('connect', `WebSocket closed with code ${event.code}`);
+          if (!this.manualDisconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
+            this.scheduleReconnect();
+          }
         }
       };
 
       this.socket.onerror = (error) => {
         this.logger.error('connect', 'WebSocket error: ' + error);
+        this.isConnecting = false;
         reject(error);
       };
     });
   }
 
-  public disconnect(): void {
+  private scheduleReconnect(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+    }
+
+    this.reconnectAttempts++;
+    const currentDelay = Math.min(
+      this.reconnectDelay * Math.pow(2, this.reconnectAttempts - 1),
+      this.maxReconnectDelay
+    );
+
+    this.logger.info(
+      'scheduleReconnect',
+      `Scheduling reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts} in ${currentDelay}ms`
+    );
+
+    this.reconnectTimer = setTimeout(() => {
+      this.connect(this.sessionCode).catch((error) => {
+        this.logger.error('scheduleReconnect', `Reconnect failed: ${error}`);
+
+        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+          this.logger.warn('scheduleReconnect', 'Maximum reconnect attempts reached');
+          this.router.navigate(['/404']);
+        }
+      });
+    }, currentDelay);
+  }
+
+  private clearSessionCode(): void {
+    localStorage.removeItem('SessionCode');
+    this.sessionCode = undefined;
+  }
+
+  public disconnect(isManual: boolean = true): void {
+    if (isManual) {
+      this.manualDisconnect = true;
+      this.clearSessionCode();
+    }
+
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.logger.info('disconnect', 'Closing WebSocket connection.');
       this.socket.close();

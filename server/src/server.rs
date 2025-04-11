@@ -231,6 +231,16 @@ impl WsChatServer {
     }
 
     pub fn relay_message_to_user(&self, to_user: &str, message: ChatMessage, from_user: &str) {
+        if to_user == from_user {
+            log::debug!(
+                target: "Websocket",
+                "Skipping self-relay from {} to {}",
+                from_user,
+                to_user
+            );
+            return;
+        }
+
         for rooms in self.rooms.values() {
             for room in rooms.values() {
                 for client in room.values() {

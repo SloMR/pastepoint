@@ -95,7 +95,7 @@ export class FileTransferBaseService {
     await FileTransferBaseService.fileTransfersMutex.runExclusive(() => {
       FileTransferBaseService.fileTransfers.forEach((mapOfUploads) => {
         mapOfUploads.forEach((fileUpload) => {
-          allUploads.push({ ...fileUpload });
+          allUploads.push(fileUpload);
         });
       });
     });
@@ -117,7 +117,7 @@ export class FileTransferBaseService {
       FileTransferBaseService.incomingFileTransfers.forEach((mapOfDownloads) => {
         mapOfDownloads.forEach((fileDownload) => {
           if (fileDownload.isAccepted) {
-            allDownloads.push({ ...fileDownload });
+            allDownloads.push(fileDownload);
           }
         });
       });
@@ -143,7 +143,7 @@ export class FileTransferBaseService {
       FileTransferBaseService.incomingFileTransfers.forEach((mapOfDownloads) => {
         mapOfDownloads.forEach((fileDownload) => {
           if (!fileDownload.isAccepted) {
-            allOffers.push({ ...fileDownload });
+            allOffers.push(fileDownload);
           }
         });
       });

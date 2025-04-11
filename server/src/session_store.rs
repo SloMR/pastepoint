@@ -140,10 +140,10 @@ impl SessionStore {
             None => {
                 log::warn!(
                     target: "Websocket",
-                    "Key '{}' not found in strict mode, returning 404",
+                    "Key '{}' not found in strict mode",
                     key
                 );
-                Ok(HttpResponse::NotFound()
+                Ok(HttpResponse::Ok()
                     .content_type("text/plain; charset=utf-8")
                     .body("Unknown session code"))
             }
