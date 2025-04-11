@@ -176,9 +176,9 @@ impl WsChatSession {
     }
 
     pub fn start_heartbeat(&self, ctx: &mut ws::WebsocketContext<Self>) {
-        ctx.run_interval(Duration::from_secs(30), |act, ctx| {
+        ctx.run_interval(Duration::from_secs(120), |act, ctx| {
             if let Some(last) = act.last_heartbeat {
-                if Instant::now().duration_since(last) > Duration::from_secs(40) {
+                if Instant::now().duration_since(last) > Duration::from_secs(300) {
                     log::debug!(
                         target: "Websocket",
                         "Heartbeat failed for user {}, disconnecting!",
