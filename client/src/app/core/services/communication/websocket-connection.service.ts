@@ -66,9 +66,18 @@ export class WebSocketConnectionService {
 
     if (this.socket) {
       this.logger.info('connect', 'Disconnecting existing connection before creating a new one');
-      this.disconnect(false);
+      this.disconnect(true);
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          this.establishConnection(code).then(resolve);
+        }, 100);
+      });
     }
 
+    return this.establishConnection(code);
+  }
+
+  private establishConnection(code?: string): Promise<void> {
     this.isConnecting = true;
     this.manualDisconnect = false;
 
@@ -112,8 +121,8 @@ export class WebSocketConnectionService {
       this.socket.onclose = (event) => {
         this.isConnecting = false;
 
-        // If we get a 1006 code immediately after trying to connect, treat it as an invalid session
-        if (event.code === 1006 && this.reconnectAttempts === 0) {
+        // Only treat 1006 as an invalid session if it's not the first attempt
+        if (event.code === 1006 && this.reconnectAttempts > 0) {
           this.logger.warn('connect', 'WebSocket closed: Invalid session code (1006)');
           this.clearSessionCode();
           this.router.navigate(['/404']);
