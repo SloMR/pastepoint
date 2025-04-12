@@ -39,7 +39,7 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ChatMessage, FileDownload, FileUpload, MB } from '../../utils/constants';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { SessionService } from '../../core/services/room-management/session.service';
+import { SessionService } from '../../core/services/session/session.service';
 import { ToastrService } from 'ngx-toastr';
 import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
