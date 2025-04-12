@@ -2,17 +2,12 @@ import { Routes } from '@angular/router';
 
 export const routes: Routes = [
   {
-    path: 'chat',
-    loadComponent: () => import('./features/chat/chat.component').then((m) => m.ChatComponent),
-  },
-  {
-    path: 'chat/:code',
-    loadComponent: () => import('./features/chat/chat.component').then((m) => m.ChatComponent),
-  },
-  {
     path: '',
-    redirectTo: '/chat',
-    pathMatch: 'full',
+    loadComponent: () => import('./features/chat/chat.component').then((m) => m.ChatComponent),
+  },
+  {
+    path: 'private/:code',
+    loadComponent: () => import('./features/chat/chat.component').then((m) => m.ChatComponent),
   },
   {
     path: '404',

@@ -72,20 +72,17 @@ export class MetaInitService {
    */
   private handleRouteChange(url: string): void {
     // Handle different routes
-    if (url.includes('/chat')) {
-      // Check if it's a private session
-      if (url.match(/\/chat\/[^/]+$/)) {
-        // Private session - no indexing
-        this.metaService.updateChatMetadata(true);
-      } else {
-        // Regular chat page
-        this.metaService.updateChatMetadata(false);
-      }
+    if (url.includes('/private/')) {
+      // Private session - no indexing
+      this.metaService.updateChatMetadata(true);
+    } else if (url === '/' || url === '') {
+      // Regular chat page (now at root)
+      this.metaService.updateChatMetadata(false);
     } else if (url.includes('/404') || url.includes('not-found')) {
       // 404 page
       this.metaService.updateNotFoundMetadata();
     } else {
-      // Home page or other pages - use default metadata
+      // Other pages - use default metadata
       this.initializeAppMetadata();
     }
   }
@@ -174,8 +171,8 @@ export class MetaInitService {
         {
           '@type': 'ListItem',
           position: 2,
-          name: 'Chat',
-          item: 'https://pastepoint.com/chat',
+          name: 'Private Sessions',
+          item: 'https://pastepoint.com/private',
         },
       ],
     };

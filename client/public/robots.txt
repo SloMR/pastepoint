@@ -1,8 +1,8 @@
 # robots.txt file for PastePoint
 User-agent: *
-Allow: /chat
+Allow: /
 
-Disallow: /chat/*/
+Disallow: /private/*/
 Disallow: /404
 Disallow: /ws/
 Disallow: /create-session

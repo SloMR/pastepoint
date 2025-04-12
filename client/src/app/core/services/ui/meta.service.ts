@@ -135,9 +135,9 @@ export class MetaService {
       this.update({
         title: 'PastePoint Chat - Secure Messaging',
         robots: 'index, follow',
-        canonical: 'https://pastepoint.com/chat',
+        canonical: 'https://pastepoint.com/',
         og: {
-          url: 'https://pastepoint.com/chat',
+          url: 'https://pastepoint.com/',
           title: 'PastePoint Chat - Secure Messaging',
           description: "Chat securely with others using PastePoint's encrypted messaging.",
         },

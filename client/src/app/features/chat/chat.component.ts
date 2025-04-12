@@ -603,7 +603,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   /**
    * ==========================================================
    * OPEN CHAT SESSION
-   * Redirects the user to /chat/:code in the same browser tab.
+   * Redirects the user to /private/:code in the same browser tab.
    * ==========================================================
    */
   private openChatSession(code: string): void {
@@ -613,7 +613,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     localStorage.setItem('SessionCode', code);
-    window.open(`/chat/${code}`, '_self');
+    window.open(`/private/${code}`, '_self');
   }
 
   /**
