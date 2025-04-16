@@ -35,8 +35,10 @@ export class NotFoundComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-
+    if (!isPlatformBrowser(this.platformId)) {
+      this.metaService.updateNotFoundMetadata();
+      return;
+    }
     // Check if migration is needed due to version change
     const migrationPerformed = this.migrationService.checkAndMigrateIfNeeded(this.appVersion, true);
     if (migrationPerformed) {

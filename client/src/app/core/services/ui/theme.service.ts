@@ -29,16 +29,22 @@ export class ThemeService implements IThemeService {
    * ==========================================================
    */
   initializeTheme(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    const themePreference = this.getThemePreference();
-    this.applyTheme(themePreference);
+    if (!isPlatformBrowser(this.platformId)) {
+      this.applyTheme('light');
+    } else {
+      const themePreference = this.getThemePreference();
+      this.applyTheme(themePreference);
+    }
   }
 
   setThemePreference(isDarkMode: boolean): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    const themePreference = isDarkMode ? 'dark' : 'light';
-    localStorage.setItem(this.THEME_KEY, themePreference);
-    this.applyTheme(themePreference);
+    if (!isPlatformBrowser(this.platformId)) {
+      this.applyTheme(isDarkMode ? 'dark' : 'light');
+    } else {
+      const themePreference = isDarkMode ? 'dark' : 'light';
+      localStorage.setItem(this.THEME_KEY, themePreference);
+      this.applyTheme(themePreference);
+    }
   }
 
   /**
@@ -48,6 +54,9 @@ export class ThemeService implements IThemeService {
    * ==========================================================
    */
   private getThemePreference(): string | null {
+    if (!isPlatformBrowser(this.platformId)) {
+      return 'light';
+    }
     return localStorage.getItem(this.THEME_KEY);
   }
 
@@ -55,7 +64,10 @@ export class ThemeService implements IThemeService {
     if (!themePreference) {
       return;
     }
-    document.body.classList.toggle('dark-mode', themePreference === 'dark');
-    document.body.classList.toggle('light-mode', themePreference !== 'dark');
+
+    if (isPlatformBrowser(this.platformId)) {
+      document.body.classList.toggle('dark-mode', themePreference === 'dark');
+      document.body.classList.toggle('light-mode', themePreference !== 'dark');
+    }
   }
 }

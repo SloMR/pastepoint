@@ -1,8 +1,9 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
 import { NGXLogger } from 'ngx-logger';
+import { isPlatformBrowser } from '@angular/common';
 
 @Injectable({
   providedIn: 'root',
@@ -44,7 +45,8 @@ export class WebSocketConnectionService {
    */
   constructor(
     private router: Router,
-    private logger: NGXLogger
+    private logger: NGXLogger,
+    @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
   /**
@@ -172,19 +174,26 @@ export class WebSocketConnectionService {
     );
 
     this.reconnectTimer = setTimeout(() => {
-      this.connect(this.sessionCode).catch((error) => {
-        this.logger.error('scheduleReconnect', `Reconnect failed: ${error}`);
+      if (this.isConnected()) {
+        this.logger.info('scheduleReconnect', 'Already connected, skipping reconnect');
+        return;
+      } else {
+        this.connect(this.sessionCode).catch((error) => {
+          this.logger.error('scheduleReconnect', `Reconnect failed: ${error}`);
 
-        if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-          this.logger.warn('scheduleReconnect', 'Maximum reconnect attempts reached');
-          this.router.navigate(['/404']);
-        }
-      });
+          if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+            this.logger.warn('scheduleReconnect', 'Maximum reconnect attempts reached');
+            this.router.navigate(['/404']);
+          }
+        });
+      }
     }, currentDelay);
   }
 
   private clearSessionCode(): void {
-    localStorage.removeItem('SessionCode');
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('SessionCode');
+    }
     this.sessionCode = undefined;
   }
 

@@ -166,7 +166,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   ngOnInit(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!isPlatformBrowser(this.platformId)) {
+      this.route.paramMap.subscribe((params) => {
+        const privateSession = params.get('code');
+
+        if (privateSession) {
+          this.metaService.updateChatMetadata(true);
+        } else {
+          this.metaService.updateChatMetadata(false);
+        }
+      });
+      return;
+    }
 
     // Check if migration is needed due to version change
     const migrationPerformed = this.migrationService.checkAndMigrateIfNeeded(this.appVersion, true);
@@ -394,8 +405,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   connect(code?: string): Promise<void> {
-    if (this.wsConnectionService.isConnected() && !code) {
-      this.logger.debug('connect', 'Already connected with no code provided, skipping connection');
+    if (this.wsConnectionService.isConnected()) {
+      this.logger.debug('connect', 'Already connected, skipping connection');
       return Promise.resolve();
     }
 
@@ -612,8 +623,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.wsConnectionService.disconnect();
     }
 
-    localStorage.setItem('SessionCode', code);
-    window.open(`/private/${code}`, '_self');
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('SessionCode', code);
+      window.open(`/private/${code}`, '_self');
+    }
   }
 
   /**
@@ -648,7 +661,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * =========================================================
    */
   private clearSessionCode(): void {
-    localStorage.removeItem('SessionCode');
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('SessionCode');
+    }
+
     this.SessionCode = '';
   }
 

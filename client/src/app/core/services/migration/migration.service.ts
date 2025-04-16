@@ -89,6 +89,7 @@ export class MigrationService implements IMigrationService {
    * - cookies
    */
   private performMigration(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
     this.logger.debug('MigrationService', 'Performing migration - clearing all storage');
 
     this.clearLocalStorage();
@@ -100,6 +101,8 @@ export class MigrationService implements IMigrationService {
    * Clears all localStorage items except the version key
    */
   private clearLocalStorage(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     const versionValue = localStorage.getItem(this.VERSION_KEY);
     localStorage.clear();
 
@@ -113,6 +116,8 @@ export class MigrationService implements IMigrationService {
    * Clears all sessionStorage items
    */
   private clearSessionStorage(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     sessionStorage.clear();
     this.logger.debug('MigrationService', 'sessionStorage cleared');
   }
@@ -121,6 +126,8 @@ export class MigrationService implements IMigrationService {
    * Clears all cookies
    */
   private clearCookies(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+
     const cookies = document.cookie.split(';');
 
     for (let i = 0; i < cookies.length; i++) {
