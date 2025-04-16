@@ -12,7 +12,7 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { InMemoryTranslateLoader } from './core/i18n/translate-loader';
 import { ThemeService } from './core/services/ui/theme.service';
-import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideAnimations } from '@angular/platform-browser/animations';
 import { provideToastr } from 'ngx-toastr';
@@ -27,7 +27,7 @@ export function initializeTheme(themeService: ThemeService): () => void {
 
 export const appConfig: ApplicationConfig = {
   providers: [
-    provideHttpClient(),
+    provideHttpClient(withFetch()),
     provideAnimationsAsync(),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
