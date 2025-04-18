@@ -6,6 +6,8 @@
     "start": "ng serve",
     "start-local": "ng serve --host 0.0.0.0",
     "build": "ng build",
+    "build:dev": "ng build --configuration=development",
+    "build:prod": "ng build --configuration=production",
     "watch": "ng build --watch",
     "test": "ng test",
     "serve:ssr:client": "node dist/client/server/server.mjs",

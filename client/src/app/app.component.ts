@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, Inject, OnInit, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { MetaInitService } from './core/services/ui/meta-init.service';
@@ -8,6 +8,7 @@ import { MetaInitService } from './core/services/ui/meta-init.service';
   templateUrl: './app.component.html',
   styleUrl: './app.component.css',
   imports: [RouterOutlet],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements OnInit {
   title = 'PastePoint';

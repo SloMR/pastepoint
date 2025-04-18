@@ -10,6 +10,7 @@ html {
 
 * {
   transition: border-color 0.2s ease-in-out;
+  backface-visibility: hidden;
 }
 
 .no-geopattern {
@@ -60,4 +61,42 @@ html {
 .toast-container .ngx-toastr.toast-info,
 .toast-container .ngx-toastr.toast-warning {
   background-size: 20px 20px !important;
+}
+
+/* Animation for elements that need to fade in */
+@media screen and (prefers-reduced-motion: no-preference) {
+  .animate-on-load {
+    animation-duration: 0.3s;
+    animation-fill-mode: both;
+    animation-name: fade-in;
+  }
+
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+
+    to {
+      opacity: 1;
+    }
+  }
+}
+
+@media screen and (prefers-reduced-motion: reduce) {
+  .animate-on-load {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* Use hardware acceleration for animations */
+.hardware-accelerated {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Only use will-change when needed */
+.will-animate:hover,
+.will-animate:focus {
+  will-change: transform, opacity;
 }
