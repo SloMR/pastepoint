@@ -7,7 +7,7 @@
 
 # PastePoint
 
-PastePoint is a secure, feature-rich file-sharing service designed for local networks. It enables users to share files and communicate efficiently through peer-to-peer WebSocket connections. Built with a Rust-based backend using Actix Web and an Angular frontend, PastePoint prioritizes security, performance, and usability.
+PastePoint is a secure, feature-rich file-sharing service designed for local networks. It enables users to share files and communicate efficiently through peer-to-peer WebSocket connections. Built with a Rust-based backend using Actix Web and an Angular frontend with SSR support, PastePoint prioritizes security, performance, and usability.
 
 [![GPL-3.0 License](https://img.shields.io/github/license/SloMR/pastepoint)](LICENSE)
 [![Open Issues](https://img.shields.io/github/issues/SloMR/pastepoint)](https://github.com/SloMR/pastepoint/issues)
@@ -27,6 +27,7 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 
   - Peer-to-peer WebSocket connections for sending files and text.
   - File compression for efficient transfers.
+  - Optimized chunk-based file transfer with progress tracking.
 
 - **Security**:
 
@@ -42,6 +43,13 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 - 📦 Isolated microservices architecture
 - 🔧 Configurable environments (dev/prod)
 - ✅ Comprehensive test suites
+
+### **Performance & SEO**
+
+- 🚀 Server-Side Rendering (SSR) for improved initial load time
+- 🔍 Complete SEO optimization with metadata, sitemap, and robots.txt
+- 📦 Response compression for faster page loads
+- 🎯 Static asset optimization with proper caching headers
 
 ---
 
@@ -62,6 +70,7 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 [![Tailwind](https://img.shields.io/badge/Tailwind-3.4-blue)](https://tailwindcss.com/)
 [![Flowbite](https://img.shields.io/badge/Flowbite-3.0-cyan)](https://flowbite.com/)
 
+- **Rendering**: Server-Side Rendering with Angular Universal
 - **State Management**: RxJS observables
 - **Styling**: Tailwind CSS with dark mode
 - **I18n**: ngx-translate integration
@@ -70,11 +79,13 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 
 [![Nginx](https://img.shields.io/badge/Nginx-Reverse_Proxy-green)](https://nginx.org)
 [![Docker](https://img.shields.io/badge/Docker-24.0-blue)](https://www.docker.com)
+[![Express](https://img.shields.io/badge/Express-4.21-purple)](https://expressjs.com/)
 
 - **Container Orchestration**: Docker Compose with multi-stage builds
 - **Reverse Proxy**: Nginx with enhanced security features
 - **SSL/TLS**: Automated certificate management
 - **Health Monitoring**: Built-in health check endpoints
+- **SSR Server**: Express.js with compression middleware
 
 ---
 
@@ -82,7 +93,7 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 
 ```
 pastepoint/
-├── client/        # Angular-based frontend
+├── client/        # Angular-based frontend with SSR
 ├── server/        # Rust-based backend
 ├── nginx/         # Nginx configuration and security settings
 ├── scripts/       # Shell scripts for SSL certificate generation
@@ -102,18 +113,20 @@ pastepoint/
 
 #### Frontend (Angular):
 
-- `angular.json`: Angular project configuration.
+- `angular.json`: Angular project configuration with SSR settings.
 - `src/app/`: Angular application code.
-- `public/`: Static assets.
+- `src/server.ts`: SSR server implementation with Express.
+- `src/main.server.ts`: Angular SSR bootstrap entry point.
+- `public/`: Static assets, including SEO files (robots.txt, sitemap.xml).
 - `src/app/core/i18n/`: Internationalization files.
-- `src/app/core/services/`: Services for WebSocket communication.
+- `src/app/core/services/`: Services for WebSocket communication and metadata.
 - `src/environments/`: Environment configurations.
 
 #### Deployment:
 
 - `docker-compose.yml`: Manages containers for:
   - Backend service (Rust)
-  - Frontend service (Angular)
+  - Frontend SSR service (Angular + Express)
   - Certificate checker service
   - Nginx reverse proxy
 - `scripts/generate-certs.sh`: Script to generate self-signed certificates
@@ -121,7 +134,7 @@ pastepoint/
 - `nginx/nginx.conf`: Main Nginx configuration
 - `nginx/security_settings.conf`: Security and rate limiting settings
 - `nginx/security_headers.conf`: Security headers configuration
-- `nginx/locations.conf`: Location block configurations
+- `nginx/locations.conf`: Location block configurations including SEO routes
 - `nginx/ssl.conf`: SSL/TLS settings
 
 ---
@@ -192,6 +205,8 @@ pastepoint/
 - `RUST_BUILD_MODE`: Rust build mode (default: `release`)
 - `NPM_BUILD_CONFIG`: npm build configuration (default: `docker`)
 - `SERVER_ENV`: Server environment (default: `production`)
+- `PORT`: SSR server port (default: `4000`)
+- `HOST`: SSR server host (default: `0.0.0.0`)
 
 ### Backend Development (Rust):
 
@@ -218,6 +233,10 @@ pastepoint/
 3. Run the development server:
    ```bash
    ng serve
+   ```
+4. To test SSR locally:
+   ```bash
+   npm run build && npm run serve:ssr:client
    ```
 
 ### Testing:
@@ -248,10 +267,17 @@ pastepoint/
    Run: `./scripts/generate-certs.sh`
 
 2. Local Network Access Issues
+
    - Ensure your firewall allows connections on ports 80 and 443
    - Verify your local IP address is correctly configured using `./scripts/configure-network.sh`
    - Check that all services are running with `docker compose ps`
    - Verify SSL certificates are properly mounted in the containers
+
+3. SSR Issues
+
+   - Check SSR container logs: `docker logs pastepoint-ssr`
+   - Verify Express server is running on the configured port
+   - Check Nginx configuration for proper proxy to SSR service
 
 ---
 
