@@ -1,4 +1,4 @@
-import { Inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { Inject, Injectable, PLATFORM_ID, OnDestroy } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
@@ -8,7 +8,7 @@ import { isPlatformBrowser } from '@angular/common';
 @Injectable({
   providedIn: 'root',
 })
-export class WebSocketConnectionService {
+export class WebSocketConnectionService implements OnDestroy {
   /**
    * ==========================================================
    * PRIVATE PROPERTIES
@@ -26,6 +26,10 @@ export class WebSocketConnectionService {
   private reconnectTimer: any;
   private manualDisconnect = false;
   private isConnecting = false;
+
+  // For bfcache support
+  private pageHideListener: (() => void) | undefined;
+  private pageShowListener: (() => void) | undefined;
 
   /**
    * ==========================================================
@@ -47,7 +51,70 @@ export class WebSocketConnectionService {
     private router: Router,
     private logger: NGXLogger,
     @Inject(PLATFORM_ID) private platformId: object
-  ) {}
+  ) {
+    if (isPlatformBrowser(this.platformId)) {
+      this.setupBFCacheHandlers();
+    }
+  }
+
+  /**
+   * ==========================================================
+   * BFCACHE SUPPORT
+   * Setup handlers for page hide/show events to support bfcache
+   * ==========================================================
+   */
+  private setupBFCacheHandlers(): void {
+    // Handle page hide event (browser might store page in bfcache)
+    this.pageHideListener = () => {
+      this.logger.info('pageHide', 'Page entering bfcache, closing WebSocket temporarily');
+      if (this.isConnected()) {
+        // Store the session code for later reconnection
+        this.sessionCode = this.sessionCode || this.getSessionCodeFromUrl();
+        // Temporary disconnect without clearing session code
+        this.temporaryDisconnect();
+      }
+    };
+
+    // Handle page show event (page restored from bfcache)
+    this.pageShowListener = () => {
+      // Check if page was restored from bfcache
+      if (this.sessionCode && !this.isConnected() && !this.isConnecting) {
+        this.logger.info('pageShow', 'Page restored from bfcache, reconnecting WebSocket');
+        this.connect(this.sessionCode).catch((err) => {
+          this.logger.error('pageShow', `Failed to reconnect after bfcache: ${err}`);
+        });
+      }
+    };
+
+    // Add event listeners
+    window.addEventListener('pagehide', this.pageHideListener);
+    window.addEventListener('pageshow', this.pageShowListener);
+  }
+
+  /**
+   * Get session code from URL if available
+   */
+  private getSessionCodeFromUrl(): string | undefined {
+    const urlSegments = window.location.pathname.split('/');
+    return urlSegments.length > 2 ? urlSegments[2] : undefined;
+  }
+
+  /**
+   * Temporarily disconnect WebSocket without clearing session
+   * Used for bfcache support
+   */
+  private temporaryDisconnect(): void {
+    if (this.reconnectTimer) {
+      clearTimeout(this.reconnectTimer);
+      this.reconnectTimer = null;
+    }
+
+    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+      this.logger.info('temporaryDisconnect', 'Closing WebSocket connection for bfcache.');
+      this.socket.close();
+      this.socket = undefined;
+    }
+  }
 
   /**
    * ==========================================================
@@ -261,5 +328,21 @@ export class WebSocketConnectionService {
    */
   public isConnected(): boolean {
     return this.socket !== undefined && this.socket.readyState === WebSocket.OPEN;
+  }
+
+  /**
+   * Clean up resources when service is destroyed
+   */
+  ngOnDestroy(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      // Remove event listeners
+      window.removeEventListener('pagehide', this.pageHideListener || (() => {}));
+      window.removeEventListener('pageshow', this.pageShowListener || (() => {}));
+
+      // Close WebSocket connection
+      if (this.isConnected()) {
+        this.disconnect(true);
+      }
+    }
   }
 }
