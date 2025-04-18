@@ -311,7 +311,7 @@ This project is licensed under the GPL-3.0 License. See the [LICENSE](LICENSE) f
 
 For issues or feature requests:
 
-- [🐙 GitHub Issues](https://github.com/SloMR/pastepoint/issuesm)
+- [🐙 GitHub Issues](https://github.com/SloMR/pastepoint/issues)
 - [📧 sulaimanromaih@gmail.com](mailto:sulaimanromaih@gmail.com).
 
 ---
