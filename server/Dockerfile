@@ -20,10 +20,10 @@ COPY server/config ./config
 
 # Final build
 RUN if [ "$RUST_BUILD_MODE" = "debug" ]; then \
-      cargo build; \
-    else \
-      cargo build --release; \
-    fi
+  cargo build; \
+  else \
+  cargo build --release; \
+  fi
 
 # Stage 2: Prepare the runtime environment
 FROM ubuntu:24.10

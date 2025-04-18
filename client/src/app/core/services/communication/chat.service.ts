@@ -1,18 +1,31 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { WebSocketConnectionService } from './websocket-connection.service';
 import { WebRTCService } from './webrtc.service';
-import { UserService } from './user.service';
-import { ChatMessage, DATA_CHANNEL_MESSAGE_TYPES } from '../../utils/constants';
+import { UserService } from '../user-management/user.service';
+import { ChatMessage, DATA_CHANNEL_MESSAGE_TYPES } from '../../../utils/constants';
+import { IChatService } from '../../interfaces/chat.interface';
+import { WebSocketConnectionService } from './websocket-connection.service';
 import { NGXLogger } from 'ngx-logger';
 
 @Injectable({
   providedIn: 'root',
 })
-export class ChatService {
+export class ChatService implements IChatService {
+  /**
+   * ==========================================================
+   * PROPERTIES & OBSERVABLES
+   * BehaviorSubject for message state and private message storage
+   * ==========================================================
+   */
   public messages$ = new BehaviorSubject<ChatMessage[]>([]);
   private messages: ChatMessage[] = [];
 
+  /**
+   * ==========================================================
+   * CONSTRUCTOR
+   * Dependency injection and subscription setup
+   * ==========================================================
+   */
   constructor(
     private wsService: WebSocketConnectionService,
     private webrtcService: WebRTCService,
@@ -28,6 +41,12 @@ export class ChatService {
     });
   }
 
+  /**
+   * ==========================================================
+   * USER MANAGEMENT
+   * Getter and setter for the current user
+   * ==========================================================
+   */
   public get user(): string {
     return this.userService.user;
   }
@@ -36,7 +55,13 @@ export class ChatService {
     this.userService.user = value;
   }
 
-  public sendMessage(content: string, targetUser: string): void {
+  /**
+   * ==========================================================
+   * PUBLIC METHODS
+   * Methods for sending messages and managing chat state
+   * ==========================================================
+   */
+  public async sendMessage(content: string, targetUser: string): Promise<void> {
     if (content.trim()) {
       const chatMsg: ChatMessage = {
         from: this.user,
@@ -64,6 +89,21 @@ export class ChatService {
     }
   }
 
+  public getUsername(): void {
+    this.wsService.send('[UserCommand] /name');
+  }
+
+  public clearMessages(): void {
+    this.messages = [];
+    this.messages$.next(this.messages);
+  }
+
+  /**
+   * ==========================================================
+   * PRIVATE METHODS
+   * Handlers for incoming messages
+   * ==========================================================
+   */
   private handleUserMessage(incoming: ChatMessage): void {
     this.messages.push(incoming);
     this.messages$.next(this.messages);
@@ -83,14 +123,5 @@ export class ChatService {
         this.logger.warn('handleSystemMessage', `No username found in message: ${message}`);
       }
     }
-  }
-
-  public getUsername(): void {
-    this.wsService.send('[UserCommand] /name');
-  }
-
-  public clearMessages(): void {
-    this.messages = [];
-    this.messages$.next(this.messages);
   }
 }

@@ -20,13 +20,16 @@
   "[rust]": {
     "editor.defaultFormatter": "rust-lang.rust-analyzer"
   },
+  "[shellscript]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
   "prettier.singleQuote": true,
   "prettier.trailingComma": "es5",
   "prettier.printWidth": 100,
   "stylelint.configFile": "./client/stylelint.config.js",
   "stylelint.validate": ["css", "scss"],
   "editor.tabSize": 2,
-  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.check.command": "check",
   "files.exclude": {
     "**/client/.angular/cache": true,
     "**/server/target": true,
@@ -36,5 +39,11 @@
   "taskExplorer.enabledTasks": {
     "npm": false,
     "tsc": false
+  },
+  "[dockerfile]": {
+    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
+  },
+  "[dotenv]": {
+    "editor.defaultFormatter": "foxundermoon.shell-format"
   }
 }

@@ -20,13 +20,13 @@
           LOGO & TITLE
         -->
         <div class="flex items-center">
-          <a routerLink="/chat" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'">
+          <a routerLink="/" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'">
             <img
-              ngSrc="pastepoint.png"
+              [ngSrc]="isDarkMode ? 'pastepoint-light.svg' : 'pastepoint-dark.svg'"
               alt="PastePoint Logo"
-              class="h-10 w-auto cursor-pointer"
-              height="40"
-              width="40"
+              class="h-12 w-auto cursor-pointer"
+              width="755"
+              height="675"
               loading="lazy"
             />
           </a>
@@ -115,7 +115,7 @@
         {{ 'INVALID_LINK_MESSAGE' | translate }}
       </p>
       <a
-        routerLink="/chat"
+        routerLink="/"
         class="inline-block rounded-md px-4 py-2 text-white bg-primary-600 hover:bg-primary-700"
       >
         {{ 'GO_BACK_HOME' | translate }}

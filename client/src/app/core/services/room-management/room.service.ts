@@ -1,16 +1,29 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { WebSocketConnectionService } from './websocket-connection.service';
+import { WebSocketConnectionService } from '../communication/websocket-connection.service';
 import { NGXLogger } from 'ngx-logger';
+import { IRoomService } from '../../interfaces/room.interface';
 
 @Injectable({
   providedIn: 'root',
 })
-export class RoomService {
+export class RoomService implements IRoomService {
+  /**
+   * ==========================================================
+   * PROPERTIES & OBSERVABLES
+   * BehaviorSubjects for room and member state
+   * ==========================================================
+   */
   public rooms$ = new BehaviorSubject<string[]>([]);
   public members$ = new BehaviorSubject<string[]>([]);
   public currentRoom = 'main';
 
+  /**
+   * ==========================================================
+   * CONSTRUCTOR
+   * Dependency injection and subscription setup
+   * ==========================================================
+   */
   constructor(
     private wsService: WebSocketConnectionService,
     private logger: NGXLogger
@@ -20,6 +33,12 @@ export class RoomService {
     });
   }
 
+  /**
+   * ==========================================================
+   * PUBLIC METHODS
+   * Methods for room management operations
+   * ==========================================================
+   */
   public listRooms(): void {
     this.logger.info('listRooms', 'Listing rooms');
     this.wsService.send('[UserCommand] /list');
@@ -34,6 +53,12 @@ export class RoomService {
     }
   }
 
+  /**
+   * ==========================================================
+   * PRIVATE METHODS
+   * Handlers for system messages
+   * ==========================================================
+   */
   private handleSystemMessage(message: string): void {
     if (message.includes('[SystemRooms]')) {
       const matchRooms = message.match(/\[SystemRooms]\s*(.*?)$/);

@@ -5,6 +5,7 @@ import {
   CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
   Inject,
+  NgZone,
   OnDestroy,
   OnInit,
   PLATFORM_ID,
@@ -24,25 +25,26 @@ import {
   UpperCasePipe,
 } from '@angular/common';
 
-import { ThemeService } from '../../core/services/theme.service';
-import { ChatService } from '../../core/services/chat.service';
-import { RoomService } from '../../core/services/room.service';
-import { FileTransferService } from '../../core/services/file-transfer.service';
-import { WebRTCService } from '../../core/services/webrtc.service';
-import { WebSocketConnectionService } from '../../core/services/websocket-connection.service';
-import { UserService } from '../../core/services/user.service';
-import { take } from 'rxjs/operators';
+import { ThemeService } from '../../core/services/ui/theme.service';
+import { ChatService } from '../../core/services/communication/chat.service';
+import { RoomService } from '../../core/services/room-management/room.service';
+import { FileTransferService } from '../../core/services/file-management/file-transfer.service';
+import { WebRTCService } from '../../core/services/communication/webrtc.service';
+import { WebSocketConnectionService } from '../../core/services/communication/websocket-connection.service';
+import { UserService } from '../../core/services/user-management/user.service';
+import { debounceTime, distinctUntilChanged, take } from 'rxjs/operators';
 import { FormsModule, NgForm } from '@angular/forms';
-import { FlowbiteService } from '../../core/services/flowbite.service';
+import { FlowbiteService } from '../../core/services/ui/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ChatMessage, FileDownload, FileUpload, MB } from '../../utils/constants';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { SessionService } from '../../core/services/session.service';
+import { SessionService } from '../../core/services/session/session.service';
 import { ToastrService } from 'ngx-toastr';
 import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
-import { MigrationService } from '../../core/services/migration.service';
+import { MigrationService } from '../../core/services/migration/migration.service';
+import { MetaService } from '../../core/services/ui/meta.service';
 
 /**
  * ==========================================================
@@ -101,13 +103,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   appVersion: string = packageJson.version;
 
-  /**
-   * ==========================================================
-   * IDLE TRACKING
-   * For tracking user inactivity and clearing session
-   * ==========================================================
-   */
-  private idleTimer: any;
+  private visibilityChangeListener: (() => void) | undefined;
 
   /**
    * ==========================================================
@@ -144,6 +140,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private wsConnectionService: WebSocketConnectionService,
     private themeService: ThemeService,
     private cdr: ChangeDetectorRef,
+    private ngZone: NgZone,
     private toaster: ToastrService,
     private flowbiteService: FlowbiteService,
     public translate: TranslateService,
@@ -151,6 +148,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private route: ActivatedRoute,
     private logger: NGXLogger,
     private migrationService: MigrationService,
+    private metaService: MetaService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
     this.translate.setDefaultLang('en');
@@ -170,7 +168,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   ngOnInit(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
+    if (!isPlatformBrowser(this.platformId)) {
+      this.route.paramMap.subscribe((params) => {
+        const privateSession = params.get('code');
+
+        if (privateSession) {
+          this.metaService.updateChatMetadata(true);
+        } else {
+          this.metaService.updateChatMetadata(false);
+        }
+      });
+      return;
+    }
 
     // Check if migration is needed due to version change
     const migrationPerformed = this.migrationService.checkAndMigrateIfNeeded(this.appVersion, true);
@@ -185,16 +194,21 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.logger.debug('ngOnInit', `Flowbite loaded`);
     });
 
-    // Check if route has a session code in URL
+    // Check if route has a session code in URL but don't connect yet
     this.route.paramMap.subscribe((params) => {
-      const sessionCode = params.get('code') ?? localStorage.getItem('SessionCode');
+      const sessionCode = params.get('code');
+      const storedSessionCode = localStorage.getItem('SessionCode');
 
       if (sessionCode) {
         this.SessionCode = sessionCode;
-        this.connect(sessionCode);
+        this.metaService.updateChatMetadata(true);
+      } else if (storedSessionCode) {
+        this.SessionCode = storedSessionCode;
+        this.metaService.updateChatMetadata(true);
       } else {
         this.chatService.clearMessages();
         this.messages = [];
+        this.metaService.updateChatMetadata(false);
       }
     });
 
@@ -224,14 +238,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this.subscriptions.forEach((sub) => sub.unsubscribe());
     this.webrtcService.closeAllConnections();
-    this.wsConnectionService.disconnect();
+    this.wsConnectionService.disconnect(true);
+
+    if (isPlatformBrowser(this.platformId) && this.visibilityChangeListener) {
+      document.removeEventListener('visibilitychange', this.visibilityChangeListener);
+    }
+
     this.chatService.clearMessages();
     this.messages = [];
     clearTimeout(this.emojiPickerTimeout);
 
     if (this.SessionCode) {
-      localStorage.removeItem('SessionCode');
-      this.SessionCode = '';
+      this.clearSessionCode();
     }
   }
 
@@ -296,25 +314,47 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Listen for active file uploads
     this.subscriptions.push(
-      this.fileTransferService.activeUploads$.subscribe((uploads: FileUpload[]) => {
-        this.activeUploads = uploads;
-        this.cdr.detectChanges();
-      })
+      this.fileTransferService.activeUploads$
+        .pipe(
+          debounceTime(50),
+          distinctUntilChanged((prev, curr) => prev.length === curr.length)
+        )
+        .subscribe((uploads: FileUpload[]) => {
+          this.logger.info('activeUploads', `Active uploads: ${uploads.length} (length)`);
+          this.ngZone.run(() => {
+            this.activeUploads = uploads;
+            this.cdr.detectChanges();
+          });
+        })
     );
 
     // Listen for active file downloads
     this.subscriptions.push(
-      this.fileTransferService.activeDownloads$.subscribe((downloads: FileDownload[]) => {
-        this.activeDownloads = downloads;
-        this.cdr.detectChanges();
-      })
+      this.fileTransferService.activeDownloads$
+        .pipe(
+          debounceTime(50),
+          distinctUntilChanged((prev, curr) => prev.length === curr.length)
+        )
+        .subscribe((downloads: FileDownload[]) => {
+          this.logger.info('activeDownloads', `Active downloads: ${downloads.length} (length)`);
+          this.ngZone.run(() => {
+            this.activeDownloads = downloads;
+            this.cdr.detectChanges();
+          });
+        })
     );
 
     // Listen for incoming file offers
     this.subscriptions.push(
       this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles: FileDownload[]) => {
-        this.incomingFiles = incomingFiles;
-        this.cdr.detectChanges();
+        this.logger.info(
+          'incomingFileOffers',
+          `Incoming file offers: ${incomingFiles.length} (length)`
+        );
+        this.ngZone.run(() => {
+          this.incomingFiles = incomingFiles;
+          this.cdr.detectChanges();
+        });
       })
     );
   }
@@ -328,12 +368,26 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   ngAfterViewInit(): void {
     if (!isPlatformBrowser(this.platformId)) return;
-    this.route.paramMap.pipe(take(1)).subscribe((params) => {
-      const sessionCode = params.get('code');
-      if (!sessionCode) {
-        this.connect();
+
+    if (this.SessionCode) {
+      this.connect(this.SessionCode);
+    } else {
+      this.connect();
+    }
+
+    this.visibilityChangeListener = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        this.SessionCode &&
+        !this.wsConnectionService.isConnected()
+      ) {
+        // When tab becomes visible again and we have a session code but no connection
+        this.logger.info('visibilitychange', 'Page visible, reconnecting if needed');
+        this.connect(this.SessionCode);
       }
-    });
+    };
+
+    document.addEventListener('visibilitychange', this.visibilityChangeListener);
 
     this.cdr.detectChanges();
     if (this.messageInput?.nativeElement) {
@@ -380,8 +434,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Upon success, lists rooms and grabs the username.
    * ==========================================================
    */
-  connect(code?: string): void {
-    this.wsConnectionService
+  connect(code?: string): Promise<void> {
+    // Store session code in component for later reconnection
+    if (code) {
+      this.SessionCode = code;
+    }
+
+    if (this.wsConnectionService.isConnected()) {
+      this.logger.debug('connect', 'Already connected, skipping connection');
+      return Promise.resolve();
+    }
+
+    return this.wsConnectionService
       .connect(code)
       .then(() => {
         this.logger.info('connect', `Connected to session: ${code || 'No code provided'}`);
@@ -390,6 +454,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       })
       .catch((error) => {
         this.logger.error('connect', `WebSocket connection failed: ${error}`);
+        throw error;
       });
   }
 
@@ -400,7 +465,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * the input field and scrolls chat down.
    * ==========================================================
    */
-  sendMessage(messageForm: NgForm): void {
+  async sendMessage(messageForm: NgForm): Promise<void> {
     if (this.message && this.message.trim()) {
       const tempMessage: ChatMessage = {
         from: this.userService.user,
@@ -410,8 +475,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.messages = [...this.messages, tempMessage];
 
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
-      otherMembers.forEach((member) => {
-        this.chatService.sendMessage(this.message, member);
+      otherMembers.forEach(async (member) => {
+        await this.chatService.sendMessage(this.message, member);
       });
 
       this.message = '';
@@ -429,7 +494,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Attempts to establish WebRTC connections if not already open.
    * ==========================================================
    */
-  sendAttachments(event: Event): void {
+  async sendAttachments(event: Event): Promise<void> {
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const filesToSend = Array.from(input.files);
@@ -439,22 +504,32 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.toaster.warning(this.translate.instant('NO_USERS_FOR_UPLOAD'));
         return;
       }
-      filesToSend.forEach((fileToSend) => {
-        otherMembers.forEach((member) => {
-          this.fileTransferService.prepareFileForSending(fileToSend, member);
+
+      // First prepare all files for all members
+      for (const fileToSend of filesToSend) {
+        for (const member of otherMembers) {
+          await this.fileTransferService.prepareFileForSending(fileToSend, member);
           if (!this.webrtcService.isConnected(member)) {
             this.webrtcService.initiateConnection(member);
           }
+        }
+      }
 
-          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: any) => {
+      // Then send all file offers once per member
+      for (const member of otherMembers) {
+        await new Promise<void>((resolve) => {
+          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe(async (isOpen: any) => {
             if (isOpen) {
-              this.fileTransferService.sendAllFileOffers(member);
+              await this.fileTransferService.sendAllFileOffers(member);
+              this.logger.debug('sendAttachments', `Sent ${filesToSend.length} files to ${member}`);
             } else {
               this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
             }
+            resolve();
           });
         });
-      });
+      }
+
       input.value = '';
     } else {
       this.toaster.warning(this.translate.instant('NO_FILES_SELECTED'));
@@ -467,8 +542,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * User confirms file download from another user.
    * ==========================================================
    */
-  public acceptIncomingFile(fileDownload: FileDownload): void {
-    this.fileTransferService.startSavingFile(fileDownload.fromUser, fileDownload.fileId);
+  public async acceptIncomingFile(fileDownload: FileDownload): Promise<void> {
+    await this.fileTransferService.acceptFileOffer(fileDownload.fromUser, fileDownload.fileId);
   }
 
   /**
@@ -477,8 +552,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * User declines file transfer request from another user.
    * ==========================================================
    */
-  public declineIncomingFile(fileDownload: FileDownload): void {
-    this.fileTransferService.declineFileOffer(fileDownload.fromUser, fileDownload.fileId);
+  public async declineIncomingFile(fileDownload: FileDownload): Promise<void> {
+    await this.fileTransferService.declineFileOffer(fileDownload.fromUser, fileDownload.fileId);
   }
 
   /**
@@ -487,8 +562,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Invoked by the user to cancel an ongoing file upload.
    * ==========================================================
    */
-  public cancelUpload(upload: FileUpload): void {
-    this.fileTransferService.cancelUpload(upload.targetUser, upload.fileId);
+  public async cancelUpload(upload: FileUpload): Promise<void> {
+    await this.fileTransferService.cancelFileUpload(upload.targetUser, upload.fileId);
   }
 
   /**
@@ -497,8 +572,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Invoked by the user to cancel an ongoing file download.
    * ==========================================================
    */
-  public cancelDownload(download: FileDownload): void {
-    this.fileTransferService.cancelDownload(download.fromUser, download.fileId);
+  public async cancelDownload(download: FileDownload): Promise<void> {
+    await this.fileTransferService.cancelFileDownload(download.fromUser, download.fileId);
   }
 
   /**
@@ -509,10 +584,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   joinRoom(room: string): void {
     if (room !== this.currentRoom) {
-      if (this.SessionCode) {
-        localStorage.removeItem('SessionCode');
-        this.SessionCode = '';
-      }
       this.roomService.joinRoom(room);
       this.currentRoom = room;
       this.isMenuOpen = false;
@@ -578,16 +649,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   /**
    * ==========================================================
    * OPEN CHAT SESSION
-   * Redirects the user to /chat/:code in the same browser tab.
+   * Redirects the user to /private/:code in the same browser tab.
    * ==========================================================
    */
   private openChatSession(code: string): void {
     if (this.SessionCode) {
-      localStorage.removeItem('SessionCode');
-      this.SessionCode = '';
+      this.clearSessionCode();
+      this.wsConnectionService.disconnect();
     }
-    localStorage.setItem('SessionCode', code);
-    window.open(`/chat/${code}`, '_self');
+
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.setItem('SessionCode', code);
+      window.open(`/private/${code}`, '_self');
+    }
   }
 
   /**
@@ -612,6 +686,21 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         );
       }
     );
+  }
+
+  /**
+   * ==========================================================
+   * CLEAR SESSION CODE
+   * Removes the session code from localStorage and resets
+   * the SessionCode property.
+   * =========================================================
+   */
+  private clearSessionCode(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      localStorage.removeItem('SessionCode');
+    }
+
+    this.SessionCode = '';
   }
 
   /**
@@ -767,7 +856,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Processes files dropped into the chat area
    * ==========================================================
    */
-  protected handleDrop(event: DragEvent): void {
+  protected async handleDrop(event: DragEvent): Promise<void> {
     event.preventDefault();
     this.isDragging = false;
     if (!event.dataTransfer?.files) return;
@@ -783,22 +872,29 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       );
       return;
     }
-
-    files.forEach((file) => {
-      otherMembers.forEach((member) => {
-        this.fileTransferService.prepareFileForSending(file, member);
+    // First prepare all files for all members
+    for (const fileToSend of files) {
+      for (const member of otherMembers) {
+        await this.fileTransferService.prepareFileForSending(fileToSend, member);
         if (!this.webrtcService.isConnected(member)) {
           this.webrtcService.initiateConnection(member);
         }
+      }
+    }
 
-        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: boolean) => {
+    // Then send all file offers once per member
+    for (const member of otherMembers) {
+      await new Promise<void>((resolve) => {
+        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe(async (isOpen: any) => {
           if (isOpen) {
-            this.fileTransferService.sendAllFileOffers(member);
+            await this.fileTransferService.sendAllFileOffers(member);
+            this.logger.debug('sendAttachments', `Sent ${files.length} files to ${member}`);
           } else {
             this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
           }
+          resolve();
         });
       });
-    });
+    }
   }
 }

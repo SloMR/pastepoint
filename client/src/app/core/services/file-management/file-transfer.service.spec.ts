@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
-import { TestImports, TestProviders } from '../../testing/test-helper';
+import { TestImports, TestProviders } from '../../../testing/test-helper';
 
-describe('MigrationService', () => {
+describe('FileTransferService', () => {
   beforeEach(() => {
     TestBed.configureTestingModule({
       imports: [...TestImports],

@@ -1,7 +1,9 @@
 services:
+  # ---------- Certificate checker ----------
   cert-checker:
     image: alpine
     user: ${CONTAINER_USER:-nobody}
+    container_name: pastepoint-cert-checker
     entrypoint: |
       sh -c '
       if [ ! -f /etc/ssl/${CERT_MOUNT:-pastepoint}/cert.pem ] || [ ! -f /etc/ssl/${CERT_MOUNT:-pastepoint}/key.pem ]; then
@@ -15,16 +17,18 @@ services:
       '
     volumes:
       - ${CERT_PATH:-/etc/ssl/pastepoint}:/etc/ssl/${CERT_MOUNT:-pastepoint}:ro
-    restart: "no"
+    restart: 'no'
 
+  # ---------- Server container ----------
   server:
     build:
       context: .
       dockerfile: server/Dockerfile
       args:
         RUST_BUILD_MODE: ${RUST_BUILD_MODE:-release}
+    container_name: pastepoint-server
     ports:
-      - "9000:9000"
+      - '9000:9000'
     environment:
       - RUN_ENV=${SERVER_ENV:-production}
     volumes:
@@ -34,22 +38,42 @@ services:
         condition: service_completed_successfully
     restart: always
 
-  client:
+  # ---------- Angular SSR container ----------
+  ssr:
     build:
       context: .
       dockerfile: client/Dockerfile
+      target: ssr
       args:
         NPM_BUILD_CONFIG: ${NPM_BUILD_CONFIG:-docker}
+    container_name: pastepoint-ssr
     environment:
-      SERVER_NAME: ${SERVER_NAME:-pastepoint.com www.pastepoint.com}
-      SSL_CERT_PATH: ${SSL_CERT_PATH:-/etc/ssl/pastepoint/cert.pem}
-      SSL_CERT_KEY_PATH: ${SSL_CERT_KEY_PATH:-/etc/ssl/pastepoint/key.pem}
-    ports:
-      - "443:443"
-      - "80:80"
-    volumes:
-      - ${CERT_PATH:-/etc/ssl/pastepoint}:/etc/ssl/${CERT_MOUNT:-pastepoint}:ro
+      PORT: ${PORT:-4000}
+      HOST: ${HOST:-0.0.0.0}
+    expose:
+      - '4000'
     depends_on:
       server:
         condition: service_started
+    restart: always
+
+  # ---------- NGINX container ----------
+  nginx:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+      target: nginx
+    container_name: pastepoint-nginx
+    environment:
+      SERVER_NAME: ${SERVER_NAME:-pastepoint.com}
+      SSL_CERT_PATH: ${SSL_CERT_PATH:-/etc/ssl/pastepoint/cert.pem}
+      SSL_CERT_KEY_PATH: ${SSL_CERT_KEY_PATH:-/etc/ssl/pastepoint/key.pem}
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - ${CERT_PATH:-/etc/ssl/pastepoint}:/etc/ssl/${CERT_MOUNT:-pastepoint}:ro
+    depends_on:
+      ssr:
+        condition: service_healthy
     restart: always

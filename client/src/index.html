@@ -2,97 +2,16 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
-    <title>PastePoint - Secure File Sharing and Messaging</title>
+    <title>PastePoint</title>
     <base href="/" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta
-      name="description"
-      content="PastePoint: Secure P2P file sharing & encrypted messaging for local networks. Transfer files privately without cloud storage using WebSocket technology."
-    />
-    <meta
-      name="keywords"
-      content="secure file sharing, encrypted messaging, peer-to-peer, P2P, WebSocket, local network transfer, private file transfer"
-    />
-    <meta name="author" content="PastePoint" />
-    <meta name="robots" content="index, follow" />
-    <meta http-equiv="content-language" content="en" />
-    <meta name="theme-color" content="#4285f4" />
-
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://pastepoint.com/chat" />
-
-    <!-- Google Site Verification -->
-    <meta name="google-site-verification" content="zwaPPawWJXUKTH2XgrrfKkCOIbIwilUTBI" />
-
-    <!-- Favicon and App Icons -->
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="shortcut icon" href="/favicon.ico" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-    <meta name="apple-mobile-web-app-title" content="PastePoint" />
-    <link rel="manifest" href="/site.webmanifest" />
-
-    <!-- Preconnect to Required Origins -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="PastePoint - Secure File Sharing and Messaging" />
-    <meta
-      property="og:description"
-      content="PastePoint is a secure, feature-rich file sharing and messaging service designed for local networks and private sessions using peer-to-peer WebSocket connections."
-    />
-    <meta property="og:url" content="https://pastepoint.com/chat" />
-    <meta property="og:site_name" content="PastePoint" />
-
-    <!-- Twitter Card Meta Tags -->
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="PastePoint - Secure File Sharing and Messaging" />
-    <meta
-      name="twitter:description"
-      content="PastePoint is a secure, feature-rich file sharing and messaging service designed for local networks and private sessions using peer-to-peer WebSocket connections."
-    />
+    <link rel="preload" href="/styles.css" as="style" />
+    <link rel="stylesheet" href="/styles.css" media="print" onload="this.media='all'" />
+    <noscript>
+      <link rel="stylesheet" href="/styles.css" />
+    </noscript>
   </head>
   <body class="geopattern mat-typography">
-    <app-root></app-root>
-
-    <!-- Structured Data: SoftwareApplication -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "WebApplication",
-        "name": "PastePoint",
-        "url": "https://pastepoint.com",
-        "applicationCategory": "CommunicationApplication",
-        "operatingSystem": "Web",
-        "description": "Secure peer-to-peer file sharing and encrypted messaging solution for local networks.",
-        "featureList": "Encrypted messaging, P2P file transfer, WebSocket connections, Local network optimization",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.9",
-          "reviewCount": "150"
-        },
-        "itemListElement": [
-          {
-            "@type": "ListItem",
-            "position": 1,
-            "name": "Home",
-            "item": "https://pastepoint.com/"
-          },
-          {
-            "@type": "ListItem",
-            "position": 2,
-            "name": "Chat",
-            "item": "https://pastepoint.com/chat"
-          }
-        ]
-      }
-    </script>
+    <app-root ngSkipHydration></app-root>
   </body>
 </html>

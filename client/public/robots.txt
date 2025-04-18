@@ -28,11 +28,11 @@ User-agent: YandexWebmaster
 User-agent: Yeti
 User-agent: YJ-WSC
 Allow: /
-Allow: /chat
 
-Disallow: /chat/*/
+Disallow: /private/*/
 Disallow: /404
 Disallow: /ws/
 Disallow: /create-session
+Disallow: /Login.aspx
 
 Sitemap: https://pastepoint.com/sitemap.xml

@@ -1,4 +1,5 @@
 use actix::prelude::*;
+use actix_cors::Cors;
 use actix_web::{http::StatusCode, test, web, App};
 use bytes::Bytes;
 use server::{
@@ -185,4 +186,73 @@ async fn test_join_leave_room() {
         .get(session_id)
         .and_then(|rooms| rooms.get(room_name))
         .is_none());
+}
+
+#[actix_rt::test]
+async fn test_cors_origin_checking() {
+    let session_manager = web::Data::new(SessionStore::default());
+    let config = web::Data::new(
+        ServerConfig::load(Some(false)).expect("Failed to load server configuration"),
+    );
+    let config_for_test = config.clone();
+    let allowed_domain = config_for_test.cors_allowed_origins.clone();
+
+    let app = test::init_service(
+        App::new()
+            .wrap(
+                Cors::default()
+                    .allowed_origin_fn(move |origin, _req_head| {
+                        config_for_test.check_origin(origin)
+                    })
+                    .allowed_methods(vec!["GET", "OPTIONS"])
+                    .supports_credentials()
+                    .max_age(3600),
+            )
+            .app_data(session_manager.clone())
+            .app_data(config.clone())
+            .service(index),
+    )
+    .await;
+
+    // Test allowed origin based on configuration
+    let origin = format!("https://{}", allowed_domain);
+    let req = test::TestRequest::get()
+        .uri("/")
+        .insert_header(("Origin", origin.clone()))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(
+        resp.headers().get("Access-Control-Allow-Origin").unwrap(),
+        &origin
+    );
+
+    // Test allowed origin with www subdomain
+    let origin = format!("https://www.{}", allowed_domain);
+    let req = test::TestRequest::get()
+        .uri("/")
+        .insert_header(("Origin", origin.clone()))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(
+        resp.headers().get("Access-Control-Allow-Origin").unwrap(),
+        &origin
+    );
+
+    // Test disallowed origin
+    let origin = "https://malicious-site.com";
+    let req = test::TestRequest::get()
+        .uri("/")
+        .insert_header(("Origin", origin))
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    assert!(resp.headers().get("Access-Control-Allow-Origin").is_none());
+
+    // Test missing origin header
+    let req = test::TestRequest::get().uri("/").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    assert!(resp.headers().get("Access-Control-Allow-Origin").is_none());
 }

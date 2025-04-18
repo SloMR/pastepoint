@@ -3,10 +3,11 @@ import { CommonModule, isPlatformBrowser, NgOptimizedImage } from '@angular/comm
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
-import { ThemeService } from '../../core/services/theme.service';
+import { ThemeService } from '../../core/services/ui/theme.service';
 import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
-import { MigrationService } from '../../core/services/migration.service';
+import { MigrationService } from '../../core/services/migration/migration.service';
+import { MetaService } from '../../core/services/ui/meta.service';
 
 @Component({
   imports: [CommonModule, RouterLink, NgOptimizedImage, TranslateModule],
@@ -23,7 +24,8 @@ export class NotFoundComponent implements OnInit {
     private cdr: ChangeDetectorRef,
     private themeService: ThemeService,
     private logger: NGXLogger,
-    private migrationService: MigrationService
+    private migrationService: MigrationService,
+    private metaService: MetaService
   ) {
     this.translate.setDefaultLang('en');
 
@@ -33,8 +35,10 @@ export class NotFoundComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-
+    if (!isPlatformBrowser(this.platformId)) {
+      this.metaService.updateNotFoundMetadata();
+      return;
+    }
     // Check if migration is needed due to version change
     const migrationPerformed = this.migrationService.checkAndMigrateIfNeeded(this.appVersion, true);
     if (migrationPerformed) {
@@ -46,6 +50,9 @@ export class NotFoundComponent implements OnInit {
     const themePreference = localStorage.getItem('themePreference');
     this.isDarkMode = themePreference === 'dark';
     this.applyTheme(this.isDarkMode);
+
+    // Set specific meta tags for 404 page
+    this.metaService.updateNotFoundMetadata();
   }
 
   toggleTheme(): void {

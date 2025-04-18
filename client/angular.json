@@ -40,7 +40,13 @@
               "node_modules/@ctrl/ngx-emoji-mart/picker.css",
               "node_modules/ngx-toastr/toastr.css"
             ],
-            "scripts": []
+            "scripts": [],
+            "server": "src/main.server.ts",
+            "prerender": true,
+            "ssr": {
+              "entry": "src/server.ts"
+            },
+            "allowedCommonJsDependencies": ["compression"]
           },
           "configurations": {
             "production": {
@@ -60,6 +66,7 @@
               "outputHashing": "all",
               "sourceMap": false,
               "namedChunks": false,
+              "aot": true,
               "extractLicenses": true,
               "fileReplacements": [
                 {
@@ -89,6 +96,7 @@
               "optimization": true,
               "outputHashing": "all",
               "sourceMap": false,
+              "aot": true,
               "namedChunks": false,
               "extractLicenses": true,
               "fileReplacements": [

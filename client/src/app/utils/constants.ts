@@ -101,7 +101,7 @@ export interface ChatMessage {
 }
 
 // File transfer interfaces
-export type FileStatus = 'pending' | 'accepted' | 'declined' | 'completed';
+export type FileTransferStatus = 'pending' | 'accepted' | 'declined' | 'completed';
 
 export interface FileUpload {
   fileId: string;
@@ -121,4 +121,53 @@ export interface FileDownload {
   dataBuffer: Uint8Array[];
   progress: number;
   isAccepted: boolean;
+}
+
+// Metadata configuration interfaces
+/**
+ * Configuration interface for metadata settings
+ */
+export interface MetaConfig {
+  title?: string;
+  description?: string;
+  keywords?: string;
+  author?: string;
+  canonical?: string;
+  robots?: string;
+  themeColor?: string;
+
+  // Viewport configuration for responsive design
+  viewport?: string;
+
+  // Cache control headers
+  cacheControl?: {
+    pragma?: string;
+    cacheControl?: string;
+    expires?: string;
+  };
+
+  // Open Graph
+  og?: {
+    title?: string;
+    description?: string;
+    type?: string;
+    url?: string;
+    image?: string;
+    siteName?: string;
+  };
+
+  // Twitter Cards
+  twitter?: {
+    card?: string;
+    title?: string;
+    description?: string;
+    image?: string;
+  };
+}
+
+/**
+ * Interface for structured data (JSON-LD)
+ */
+export interface StructuredData {
+  [key: string]: any;
 }

@@ -13,7 +13,7 @@ use std::{
 };
 use uuid::Uuid;
 
-/// Stores the session’s UUID and whether it’s private.
+/// Stores the session's UUID and whether it's private.
 #[derive(Clone, Copy)]
 pub struct SessionData {
     pub uuid: Uuid,

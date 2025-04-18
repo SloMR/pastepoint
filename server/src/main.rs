@@ -55,9 +55,10 @@ async fn main() -> Result<()> {
     let server_config = Data::new(config.clone());
 
     HttpServer::new(move || {
-        let cors_config = &server_config.cors_allowed_origins;
+        let server_config = server_config.clone();
+        let server_config_for_app = server_config.clone();
         let cors = Cors::default()
-            .allowed_origin(cors_config)
+            .allowed_origin_fn(move |origin, _req_head| server_config.check_origin(origin))
             .allowed_methods(vec!["GET", "OPTIONS"])
             .supports_credentials()
             .max_age(3600);
@@ -67,7 +68,7 @@ async fn main() -> Result<()> {
             .wrap(Logger::default())
             .wrap(cors)
             .app_data(session_manager.clone())
-            .app_data(server_config.clone())
+            .app_data(server_config_for_app)
             .service(index)
             .service(create_session)
             .service(chat_ws)

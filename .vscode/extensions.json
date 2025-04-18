@@ -6,6 +6,7 @@
     "dbaeumer.vscode-eslint",
     "stylelint.vscode-stylelint",
     "angular.ng-template",
-    "spmeesseman.vscode-taskexplorer"
+    "spmeesseman.vscode-taskexplorer",
+    "foxundermoon.shell-format"
   ]
 }

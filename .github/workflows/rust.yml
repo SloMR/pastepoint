@@ -54,22 +54,3 @@ jobs:
       - name: Build Release
         run: cargo build --release --verbose
         working-directory: server
-
-      - name: Install Tarpaulin
-        run: cargo install cargo-tarpaulin
-        working-directory: server
-
-      - name: Run Coverage
-        run: cargo tarpaulin --out Xml --output-dir coverage --all
-        working-directory: server
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v5
-        with:
-          files: server/coverage/cobertura.xml
-          flags: rust
-          name: rust-coverage
-          fail_ci_if_error: false
-          verbose: true
-          token: ${{ secrets.CODECOV_TOKEN }}
-          slug: SloMR/pastepoint
