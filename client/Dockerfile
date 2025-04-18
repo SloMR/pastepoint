@@ -68,9 +68,6 @@ RUN mkdir -p /var/cache/nginx/client_temp /var/run/nginx /var/log/nginx && \
     chown -R nginx:nginx /usr/share/nginx/html && \
     chown -R nginx:nginx /etc/nginx/conf.d
 
-# Non-root user
-USER nginx
-
 # Expose HTTPS port
 EXPOSE 443
 
