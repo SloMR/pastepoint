@@ -27,6 +27,10 @@ RUN npm ci --omit=dev
 # Expose SSR server port
 EXPOSE 4000
 
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --spider -q http://localhost:4000/ || exit 1
+
 # Launch SSR server
 CMD ["node", "dist/client/server/server.mjs"]
 
@@ -69,6 +73,10 @@ USER nginx
 
 # Expose HTTPS port
 EXPOSE 443
+
+# Add health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --spider -q http://localhost || exit 1
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
 CMD ["nginx", "-g", "daemon off;"]

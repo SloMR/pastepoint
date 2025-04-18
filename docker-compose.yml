@@ -48,19 +48,13 @@ services:
         NPM_BUILD_CONFIG: ${NPM_BUILD_CONFIG:-docker}
     container_name: pastepoint-ssr
     environment:
-      PORT: 4000
-      HOST: 0.0.0.0
+      PORT: ${PORT:-4000}
+      HOST: ${HOST:-0.0.0.0}
     expose:
       - '4000'
     depends_on:
       server:
         condition: service_started
-    healthcheck:
-      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:4000/']
-      interval: 30s
-      timeout: 10s
-      start_period: 5s
-      retries: 3
     restart: always
 
   # ---------- NGINX container ----------
@@ -82,10 +76,4 @@ services:
     depends_on:
       ssr:
         condition: service_healthy
-    healthcheck:
-      test: ['CMD', 'wget', '--spider', '-q', 'http://localhost:4000/']
-      interval: 30s
-      timeout: 10s
-      start_period: 5s
-      retries: 3
     restart: always

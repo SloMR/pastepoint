@@ -44,6 +44,7 @@ done
 
 # Update .env.development
 update_file "$PROJECT_ROOT/.env.development" "SERVER_NAME=127.0.0.1" "SERVER_NAME=$local_ip"
+update_file "$PROJECT_ROOT/.env.development" "HOST=127.0.0.1" "HOST=0.0.0.0"
 
 # Update client environment
 update_file "$PROJECT_ROOT/client/src/environments/environment.ts" "apiUrl: '127.0.0.1:9000'" "apiUrl: '$local_ip:9000'"
