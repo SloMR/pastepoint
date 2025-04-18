@@ -41,6 +41,8 @@
           <button
             (click)="toggleTheme()"
             class="rounded-lg p-2 text-secondary-600 hover:bg-secondary-100 dark:text-secondary-300 dark:hover:bg-secondary-700"
+            [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+            [attr.title]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
           >
             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -70,6 +72,8 @@
                   ? 'bg-primary-600 text-white'
                   : 'text-secondary-600 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700'
               "
+              [attr.aria-label]="'Switch language to ' + (lang | uppercase)"
+              [attr.title]="'Switch language to ' + (lang | uppercase)"
             >
               {{ lang | uppercase }}
             </button>
@@ -92,6 +96,9 @@
       <button
         (click)="isMenuOpen = !isMenuOpen"
         class="rounded-lg border p-2 shadow-sm transition-colors border-primary-300 bg-primary-100 text-secondary-600 hover:bg-secondary-100 dark:border-secondary-700 dark:bg-secondary-800 dark:text-secondary-300 dark:hover:bg-secondary-700"
+        [attr.aria-label]="isMenuOpen ? 'Close menu' : 'Open menu'"
+        [attr.aria-expanded]="isMenuOpen"
+        [attr.title]="isMenuOpen ? 'Close menu' : 'Open menu'"
       >
         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path
@@ -130,6 +137,8 @@
         <button
           (click)="isMenuOpen = false"
           class="text-secondary-600 hover:text-secondary-800 dark:text-secondary-300 dark:hover:text-secondary-100"
+          aria-label="Close menu"
+          title="Close menu"
         >
           <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
@@ -192,6 +201,8 @@
                     ? 'bg-primary-200 dark:bg-primary-900 text-primary-700 dark:text-primary-100'
                     : 'text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700'
                 "
+                [attr.aria-label]="'Join room ' + room"
+                [attr.title]="'Join room ' + room"
               >
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -218,6 +229,8 @@
             <button
               (click)="createRoom()"
               class="w-full rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
+              aria-label="Create or join room"
+              title="Create or join room"
             >
               {{ 'JOIN_CREATE' | translate }}
             </button>
@@ -290,6 +303,8 @@
                 type="button"
                 (click)="copySessionCode()"
                 class="absolute right-2 rounded-md transition-colors p-1.5 bg-secondary-200 hover:bg-secondary-300 dark:bg-secondary-600 dark:hover:bg-secondary-500"
+                aria-label="Copy session code"
+                title="Copy session code"
               >
                 <svg
                   class="w-4 h-4 text-gray-800 dark:text-white"
@@ -322,6 +337,8 @@
                 <button
                   (click)="createPrivateSession()"
                   class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
+                  aria-label="Create new private session"
+                  title="Create new private session"
                 >
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -370,6 +387,8 @@
                 <button
                   (click)="joinPrivateSession()"
                   class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
+                  aria-label="Join private session"
+                  title="Join private session"
                 >
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -444,6 +463,8 @@
                           $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
                         "
                         class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
+                        aria-label="Cancel upload"
+                        title="Cancel upload"
                       >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path
@@ -479,6 +500,8 @@
                           cancelDownload(download)
                         "
                         class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
+                        aria-label="Cancel download"
+                        title="Cancel download"
                       >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path
@@ -649,6 +672,8 @@
                     ? 'bg-primary-200 dark:bg-primary-900 text-primary-700 dark:text-primary-100'
                     : 'text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700'
                 "
+                [attr.aria-label]="'Join room ' + room"
+                [attr.title]="'Join room ' + room"
               >
                 <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -675,6 +700,8 @@
             <button
               (click)="createRoom()"
               class="w-full rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
+              aria-label="Create or join room"
+              title="Create or join room"
             >
               {{ 'JOIN_CREATE' | translate }}
             </button>
@@ -747,6 +774,8 @@
                 type="button"
                 (click)="copySessionCode()"
                 class="absolute right-2 rounded-md transition-colors p-1.5 bg-secondary-200 hover:bg-secondary-300 dark:bg-secondary-600 dark:hover:bg-secondary-500"
+                aria-label="Copy session code"
+                title="Copy session code"
               >
                 <svg
                   class="w-4 h-4 text-gray-800 dark:text-white"
@@ -779,6 +808,8 @@
                 <button
                   (click)="createPrivateSession()"
                   class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
+                  aria-label="Create new private session"
+                  title="Create new private session"
                 >
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -827,6 +858,8 @@
                 <button
                   (click)="joinPrivateSession()"
                   class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
+                  aria-label="Join private session"
+                  title="Join private session"
                 >
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -903,6 +936,8 @@
                           $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
                         "
                         class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
+                        aria-label="Cancel upload"
+                        title="Cancel upload"
                       >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path
@@ -938,6 +973,8 @@
                           cancelDownload(download)
                         "
                         class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
+                        aria-label="Cancel download"
+                        title="Cancel download"
                       >
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path
@@ -1024,6 +1061,8 @@
               <button
                 (click)="dismissSessionInfo()"
                 class="flex-shrink-0 rounded-full p-1 transition-colors duration-200 bg-primary-100 hover:bg-primary-200 dark:bg-primary-800 dark:hover:bg-primary-700"
+                aria-label="Dismiss session info"
+                title="Dismiss session info"
               >
                 <svg
                   class="h-3 w-3 text-primary-500 dark:text-primary-400"
@@ -1080,6 +1119,8 @@
               <button
                 (click)="dismissSessionInfo()"
                 class="flex-shrink-0 rounded-full p-1 transition-colors duration-200 bg-secondary-100 hover:bg-secondary-200 dark:bg-secondary-700 dark:hover:bg-secondary-600"
+                aria-label="Dismiss session info"
+                title="Dismiss session info"
               >
                 <svg
                   class="h-3 w-3 text-secondary-500 dark:text-secondary-400"
@@ -1169,6 +1210,8 @@
                 <button
                   (click)="acceptIncomingFile(incomingFile)"
                   class="rounded-md text-white no-geopattern bg-success-600 p-1.5 hover:bg-success-700"
+                  aria-label="Accept file"
+                  title="Accept file"
                 >
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -1182,6 +1225,8 @@
                 <button
                   (click)="declineIncomingFile(incomingFile)"
                   class="rounded-md text-white no-geopattern bg-danger-600 p-1.5 hover:bg-danger-700"
+                  aria-label="Decline file"
+                  title="Decline file"
                 >
                   <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
@@ -1253,6 +1298,8 @@
               class="absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-500 transition-colors duration-300 hover:textsecondary-700 dark:hover:text-secondary-300 hidden md:block"
               (mouseenter)="isEmojiPickerVisible = true"
               (mouseleave)="handleEmojiIconMouseLeave()"
+              aria-label="Open emoji picker"
+              title="Open emoji picker"
             >
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -1275,7 +1322,7 @@
               (mouseleave)="isHoveringOverPicker = false; isEmojiPickerVisible = false"
             >
               <emoji-mart
-                *ngIf="isEmojiPickerVisible"
+                *ngIf="isEmojiPickerVisible || isHoveringOverPicker"
                 class="emoji-mart"
                 (emojiSelect)="addEmoji($event)"
                 [darkMode]="isDarkMode"
@@ -1288,6 +1335,8 @@
               type="button"
               (click)="fileInput.click()"
               class="absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-500 transition-colors duration-300 hover:text-secondary-700 dark:hover:text-secondary-300"
+              aria-label="Attach file"
+              title="Attach file"
             >
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path
@@ -1311,6 +1360,8 @@
           <button
             type="submit"
             class="rounded-xl px-4 py-2 text-white transition-colors duration-300 bg-primary-600 hover:bg-primary-700"
+            aria-label="Send message"
+            title="Send message"
           >
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -1371,7 +1422,7 @@
               0 0 0 24 12.296c0-6.627-5.373-12-12-12z"
             />
           </svg>
-          GitHub
+          <p class="text-xs">GitHub</p>
         </a>
 
         <!-- LinkedIn Icon & Link -->
@@ -1404,7 +1455,7 @@
               0z"
             />
           </svg>
-          LinkedIn
+          <p class="text-xs">LinkedIn</p>
         </a>
       </div>
       <!-- Version Display -->
