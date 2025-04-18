@@ -15,7 +15,7 @@ FROM node:22.14.0-alpine AS ssr
 WORKDIR /usr/src/app
 
 # Install wget
-RUN apk add --no-cache wget
+RUN apk add --no-cache wget=1.25.0-r0
 
 # Copy built artifacts & package files
 COPY --from=builder /usr/src/app/dist /usr/src/app/dist
@@ -70,6 +70,9 @@ RUN mkdir -p /var/cache/nginx/client_temp /var/run/nginx /var/log/nginx && \
 
 # Expose HTTPS port
 EXPOSE 443
+
+# Switch to nginx user
+USER nginx
 
 # Add health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
