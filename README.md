@@ -12,8 +12,6 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 [![GPL-3.0 License](https://img.shields.io/github/license/SloMR/pastepoint)](LICENSE)
 [![Open Issues](https://img.shields.io/github/issues/SloMR/pastepoint)](https://github.com/SloMR/pastepoint/issues)
 
----
-
 ## 🌟 Features
 
 ### Core Features:
@@ -51,8 +49,6 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 - 📦 Response compression for faster page loads
 - 🎯 Static asset optimization with proper caching headers
 
----
-
 ## 🛠️ Tech Stack
 
 ### **Backend** (Rust)
@@ -86,8 +82,6 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 - **SSL/TLS**: Automated certificate management
 - **Health Monitoring**: Built-in health check endpoints
 - **SSR Server**: Express.js with compression middleware
-
----
 
 ## Directory Structure
 
@@ -136,8 +130,6 @@ pastepoint/
 - `nginx/security_headers.conf`: Security headers configuration
 - `nginx/locations.conf`: Location block configurations including SEO routes
 - `nginx/ssl.conf`: SSL/TLS settings
-
----
 
 ## 🔧 Development Guide
 
@@ -257,8 +249,6 @@ pastepoint/
 - **Frontend**:
   - `client/src/environments/*`: Update environment variables for development and production.
 
----
-
 ## 🚨 Troubleshooting
 
 **Common Issues**:
@@ -279,8 +269,6 @@ pastepoint/
    - Verify Express server is running on the configured port
    - Check Nginx configuration for proper proxy to SSR service
 
----
-
 ## 🤝 Contributing
 
 **We welcome contributions! Please follow these steps**:
@@ -299,13 +287,13 @@ pastepoint/
 - **Angular**: Adhere to provided `.prettierrc` and `eslint` rules
 - **Tests**: Maintain 80%+ coverage
 
----
-
 ## 📜 License
 
 This project is licensed under the GPL-3.0 License. See the [LICENSE](LICENSE) file for details.
 
----
+## ⚠️ Usage Disclaimer
+
+- [📜 Disclaimer](DISCLAIMER.md)
 
 ## 📬 Contact
 
@@ -313,8 +301,6 @@ For issues or feature requests:
 
 - [🐙 GitHub Issues](https://github.com/SloMR/pastepoint/issues)
 - [📧 sulaimanromaih@gmail.com](mailto:sulaimanromaih@gmail.com).
-
----
 
 ## 🔒 Security Considerations
 
