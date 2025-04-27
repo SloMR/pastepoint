@@ -63,7 +63,7 @@
                 }
               ],
               "optimization": true,
-              "outputHashing": "all",
+              "outputHashing": "media",
               "sourceMap": false,
               "namedChunks": false,
               "aot": true,
@@ -94,7 +94,7 @@
                 }
               ],
               "optimization": true,
-              "outputHashing": "all",
+              "outputHashing": "media",
               "sourceMap": false,
               "aot": true,
               "namedChunks": false,
