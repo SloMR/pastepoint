@@ -337,7 +337,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.logger.warn('Heartbeat', `Suspension detected: last beat was ${diff}ms ago.`);
         this.toaster.warning(
           this.translate.instant('CONNECTION_LOST'),
-          this.translate.instant('POSSIBLY_HIDDEN')
+          this.translate.instant('AUTO_REFRESH_NOTICE')
         );
 
         // Force page refresh to completely reset the app state if needed
