@@ -101,9 +101,26 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   activeDownloads: FileDownload[] = [];
   incomingFiles: FileDownload[] = [];
 
+  private heartbeatIntervalId: any;
+  private lastHeartbeat: number = Date.now();
+  private readonly HEARTBEAT_INTERVAL_MS = 1000;
+  private readonly HEARTBEAT_TIMEOUT_MS = 2000;
+
   appVersion: string = packageJson.version;
 
-  private visibilityChangeListener: (() => void) | undefined;
+  private visibilityChangeListener = () => {
+    if (
+      document.visibilityState === 'visible' &&
+      this.SessionCode &&
+      !this.wsConnectionService.isConnected()
+    ) {
+      this.logger.info('visibilitychange', 'Page visible, reconnecting if needed');
+      this.connect(this.SessionCode);
+    }
+  };
+  private beforeUnloadHandler = () => {
+    this.clearSessionCode();
+  };
 
   /**
    * ==========================================================
@@ -181,6 +198,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
+    // Initialize the chat service and set up the heartbeat monitor
+    this.startHeartbeatMonitor();
+
     // Check if migration is needed due to version change
     const migrationPerformed = this.migrationService.checkAndMigrateIfNeeded(this.appVersion, true);
     if (migrationPerformed) {
@@ -236,21 +256,98 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   ngOnDestroy(): void {
-    this.subscriptions.forEach((sub) => sub.unsubscribe());
-    this.webrtcService.closeAllConnections();
-    this.wsConnectionService.disconnect(true);
+    this.unsubscribeAll();
+    this.closeConnections();
 
     if (isPlatformBrowser(this.platformId) && this.visibilityChangeListener) {
       document.removeEventListener('visibilitychange', this.visibilityChangeListener);
     }
 
-    this.chatService.clearMessages();
-    this.messages = [];
+    if (isPlatformBrowser(this.platformId) && this.beforeUnloadHandler) {
+      window.removeEventListener('beforeunload', this.beforeUnloadHandler);
+    }
+
+    this.clearMessages();
     clearTimeout(this.emojiPickerTimeout);
 
     if (this.SessionCode) {
       this.clearSessionCode();
     }
+
+    if (this.heartbeatIntervalId) {
+      clearInterval(this.heartbeatIntervalId);
+      this.logger.debug('ngOnDestroy', 'Heartbeat monitor cleared');
+    }
+  }
+
+  /**
+   * ==========================================================
+   * UNSUBSCRIBE ALL
+   * Cleans up all subscriptions to prevent memory leaks.
+   * ==========================================================
+   */
+  unsubscribeAll(): void {
+    this.subscriptions.forEach((subscription) => {
+      subscription.unsubscribe();
+    });
+    this.subscriptions = [];
+  }
+
+  /**
+   * ==========================================================
+   * CLEAR MESSAGES
+   * Clears the chat messages and resets the local messages array.
+   * ==========================================================
+   */
+  clearMessages(): void {
+    this.chatService.clearMessages();
+    this.messages = [];
+  }
+
+  /**
+   * ==========================================================
+   * CLOSE ALL CONNECTIONS
+   * Closes all WebRTC connections and disconnects the WebSocket.
+   * ==========================================================
+   */
+  closeConnections(): void {
+    this.webrtcService.closeAllConnections();
+    this.wsConnectionService.disconnect(true);
+    this.logger.debug('closeConnections', 'All WebRTC connections closed');
+  }
+
+  /**
+   * ==========================================================
+   * HEARTBEAT MONITOR
+   * Monitors the heartbeat to detect if the app is hidden or suspended.
+   * If the heartbeat is missed, it closes all connections and notifies the user.
+   * ==========================================================
+   */
+  private startHeartbeatMonitor(): void {
+    this.heartbeatIntervalId = setInterval(() => {
+      const now = Date.now();
+      const diff = now - this.lastHeartbeat;
+
+      // Simulate heartbeat update
+      this.lastHeartbeat = now;
+      this.logger.debug('Heartbeat', `Last heartbeat: ${this.lastHeartbeat}`);
+
+      // Detect suspension
+      if (diff > this.HEARTBEAT_TIMEOUT_MS) {
+        this.logger.warn('Heartbeat', `Suspension detected: last beat was ${diff}ms ago.`);
+        this.toaster.warning(
+          this.translate.instant('CONNECTION_LOST'),
+          this.translate.instant('POSSIBLY_HIDDEN')
+        );
+
+        // Force page refresh to completely reset the app state if needed
+        if (isPlatformBrowser(this.platformId)) {
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }
+      }
+    }, this.HEARTBEAT_INTERVAL_MS);
   }
 
   /**
@@ -375,19 +472,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.connect();
     }
 
-    this.visibilityChangeListener = () => {
-      if (
-        document.visibilityState === 'visible' &&
-        this.SessionCode &&
-        !this.wsConnectionService.isConnected()
-      ) {
-        // When tab becomes visible again and we have a session code but no connection
-        this.logger.info('visibilitychange', 'Page visible, reconnecting if needed');
-        this.connect(this.SessionCode);
-      }
-    };
-
     document.addEventListener('visibilitychange', this.visibilityChangeListener);
+    window.addEventListener('beforeunload', this.beforeUnloadHandler);
 
     this.cdr.detectChanges();
     if (this.messageInput?.nativeElement) {
