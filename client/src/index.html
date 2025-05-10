@@ -1,15 +1,113 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <script>
+      (function () {
+        // Check localStorage first
+        var storedTheme = localStorage.getItem('themePreference');
+        // Apply theme immediately before any content renders
+        if (
+          storedTheme === 'dark' ||
+          (!storedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        ) {
+          document.documentElement.classList.add('dark');
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.setAttribute('data-theme', 'light');
+        }
+      })();
+    </script>
+
     <meta charset="utf-8" />
-    <title>PastePoint</title>
+    <title>PastePoint – Encrypted File Sharing &amp; Real-Time Messaging</title>
     <base href="/" />
+
+    <!-- Core Meta Tags -->
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="PastePoint is a secure peer-to-peer file sharing and messaging platform. Share files with end-to-end encryption, no cloud storage, and zero tracking."
+    />
+    <meta
+      name="keywords"
+      content="secure file sharing, encrypted messaging, peer-to-peer transfer, private file sharing, WebRTC chat, direct file transfer, real-time messaging, zero tracking, no cloud, local network sharing"
+    />
+    <meta name="author" content="PastePoint" />
+
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://pastepoint.com/" />
+    <meta property="og:title" content="PastePoint – Encrypted File Sharing & Real-Time Messaging" />
+    <meta
+      property="og:description"
+      content="PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies."
+    />
+    <meta property="og:site_name" content="PastePoint" />
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://pastepoint.com/" />
+    <meta
+      property="twitter:title"
+      content="PastePoint – Encrypted File Sharing & Real-Time Messaging"
+    />
+    <meta
+      property="twitter:description"
+      content="PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies."
+    />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://pastepoint.com/" />
+
+    <!-- Preconnect Resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+    <!-- Favicon & App Icons -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Stylesheets -->
     <link rel="preload" href="/styles.css" as="style" />
     <link rel="stylesheet" href="/styles.css" media="print" onload="this.media='all'" />
     <noscript>
       <link rel="stylesheet" href="/styles.css" />
     </noscript>
+
+    <!-- Preloads -->
+    <link rel="preconnect" href="/" />
+    <link rel="preload" href="/pastepoint-light.svg" as="image" />
+    <link rel="preload" href="/pastepoint-dark.svg" as="image" />
+
+    <!-- Structured Data for Rich Snippets -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "PastePoint",
+        "url": "https://pastepoint.com",
+        "applicationCategory": "CommunicationApplication",
+        "operatingSystem": "Web",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "Secure peer-to-peer file sharing and messaging platform. Transfer files with end-to-end encryption without cloud storage or user accounts.",
+        "featureList": "End-to-end encryption, No cloud storage, Direct file transfers, Private messaging, No registration required",
+        "screenshot": "https://pastepoint.com/screenshot.jpg",
+        "softwareVersion": "0.9.0",
+        "author": {
+          "@type": "Organization",
+          "name": "PastePoint",
+          "url": "https://pastepoint.com"
+        }
+      }
+    </script>
   </head>
   <body class="geopattern mat-typography">
     <app-root ngSkipHydration></app-root>
