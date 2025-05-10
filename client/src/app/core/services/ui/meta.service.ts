@@ -130,20 +130,39 @@ export class MetaService {
     if (isPrivateSession) {
       // Private session - no indexing
       this.setTag('robots', 'noindex');
+      this.update({
+        title: 'Private Session – Secure File Sharing & Encrypted Chat App',
+        canonical: 'https://pastepoint.com/',
+        og: {
+          title: 'Private Session – Secure File Sharing & Encrypted Chat App',
+          url: 'https://pastepoint.com/',
+        },
+        twitter: {
+          title: 'Private Session – Secure File Sharing & Encrypted Chat App',
+        },
+      });
     } else {
       // Regular chat page
       this.update({
-        title: 'PastePoint Chat - Secure Messaging',
+        title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
+        description:
+          'PastePoint is a secure peer-to-peer file sharing and messaging platform. Share files with end-to-end encryption, no cloud storage, and zero tracking.',
+        keywords:
+          'secure file sharing, encrypted messaging, peer-to-peer transfer, private file sharing, WebRTC chat, direct file transfer, real-time messaging, zero tracking, no cloud, local network sharing',
         robots: 'index, follow',
         canonical: 'https://pastepoint.com/',
         og: {
           url: 'https://pastepoint.com/',
-          title: 'PastePoint Chat - Secure Messaging',
-          description: "Chat securely with others using PastePoint's encrypted messaging.",
+          title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
+          description:
+            'PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies.',
+          type: 'website',
         },
         twitter: {
-          title: 'PastePoint Chat - Secure Messaging',
-          description: "Chat securely with others using PastePoint's encrypted messaging.",
+          title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
+          description:
+            'PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies.',
+          card: 'summary_large_image',
         },
       });
     }
@@ -154,17 +173,17 @@ export class MetaService {
    */
   public updateNotFoundMetadata(): void {
     this.update({
-      title: 'Page Not Found - PastePoint',
+      title: 'Page Not Found – Secure File Sharing & Encrypted Chat App',
       description: 'The page you are looking for could not be found.',
       robots: 'noindex, nofollow',
       canonical: 'https://pastepoint.com/404',
       og: {
-        title: 'Page Not Found - PastePoint',
+        title: 'Page Not Found – Secure File Sharing & Encrypted Chat App',
         description: 'The page you are looking for could not be found.',
         url: 'https://pastepoint.com/404',
       },
       twitter: {
-        title: 'Page Not Found - PastePoint',
+        title: 'Page Not Found – Secure File Sharing & Encrypted Chat App',
         description: 'The page you are looking for could not be found.',
       },
     });

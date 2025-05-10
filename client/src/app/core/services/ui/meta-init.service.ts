@@ -94,11 +94,11 @@ export class MetaInitService {
    */
   private getDefaultMetaConfig(): MetaConfig {
     return {
-      title: 'PastePoint - Secure File Sharing and Messaging',
+      title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
       description:
-        'PastePoint: Secure P2P file sharing & encrypted messaging for local networks. Transfer files privately without cloud storage using WebSocket technology.',
+        'PastePoint is a secure peer-to-peer file sharing and messaging platform. Share files with end-to-end encryption, no cloud storage, and zero tracking.',
       keywords:
-        'secure file sharing, encrypted messaging, peer-to-peer, P2P, WebSocket, local network transfer, private file transfer',
+        'secure file sharing, encrypted messaging, peer-to-peer transfer, private file sharing, WebRTC chat, direct file transfer, real-time messaging, zero tracking, no cloud, local network sharing',
       author: 'PastePoint',
       themeColor: '#4285f4',
       robots: 'index, follow',
@@ -117,9 +117,9 @@ export class MetaInitService {
       // Open Graph metadata
       og: {
         type: 'website',
-        title: 'PastePoint - Secure File Sharing and Messaging',
+        title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
         description:
-          'PastePoint is a secure, feature-rich file sharing and messaging service designed for local networks and private sessions using peer-to-peer WebSocket connections.',
+          'PastePoint is a secure, feature-rich file sharing and messaging platform. Transfer files directly using peer-to-peer WebRTC connections with no tracking or cloud storage.',
         siteName: 'PastePoint',
         url: 'https://pastepoint.com',
       },
@@ -127,9 +127,9 @@ export class MetaInitService {
       // Twitter Card metadata
       twitter: {
         card: 'summary_large_image',
-        title: 'PastePoint - Secure File Sharing and Messaging',
+        title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
         description:
-          'PastePoint is a secure, feature-rich file sharing and messaging service designed for local networks and private sessions using peer-to-peer WebSocket connections.',
+          'Send messages and files securely with PastePoint. Peer-to-peer file transfers, end-to-end encryption, and no cloud.',
       },
     };
   }

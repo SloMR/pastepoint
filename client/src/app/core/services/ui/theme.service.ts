@@ -1,4 +1,11 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import {
+  Injectable,
+  Inject,
+  PLATFORM_ID,
+  TransferState,
+  makeStateKey,
+  StateKey,
+} from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { IThemeService } from '../../interfaces/theme.interface';
 
@@ -12,7 +19,7 @@ export class ThemeService implements IThemeService {
    * Storage key for theme preference
    * ==========================================================
    */
-  private readonly THEME_KEY = 'themePreference';
+  private readonly THEME_KEY: StateKey<string> = makeStateKey<string>('themePreference');
 
   /**
    * ==========================================================
@@ -20,7 +27,10 @@ export class ThemeService implements IThemeService {
    * Dependency injection
    * ==========================================================
    */
-  constructor(@Inject(PLATFORM_ID) private platformId: object) {}
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: object,
+    private transferState: TransferState
+  ) {}
 
   /**
    * ==========================================================
@@ -30,9 +40,20 @@ export class ThemeService implements IThemeService {
    */
   initializeTheme(): void {
     if (!isPlatformBrowser(this.platformId)) {
-      this.applyTheme('light');
+      let themePreference = 'light';
+      this.transferState.set(this.THEME_KEY, themePreference);
+      this.applyTheme(themePreference);
     } else {
-      const themePreference = this.getThemePreference();
+      const storedTheme = this.getThemePreference();
+
+      // Use transfer state if available, otherwise localStorage
+      let themePreference = storedTheme;
+      if (this.transferState.hasKey(this.THEME_KEY)) {
+        themePreference = this.transferState.get(this.THEME_KEY, storedTheme || 'light');
+        // Once used, remove from transfer state
+        this.transferState.remove(this.THEME_KEY);
+      }
+
       this.applyTheme(themePreference);
     }
   }
