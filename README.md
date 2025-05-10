@@ -192,7 +192,6 @@ pastepoint/
 ### Environment Variables:
 
 - `CERT_PATH`: Path to SSL certificates (default: `/etc/ssl/pastepoint`)
-- `CERT_MOUNT`: Certificate mount point in containers (default: `pastepoint`)
 - `SERVER_NAME`: Server name for SSL (default: `pastepoint.com www.pastepoint.com`)
 - `RUST_BUILD_MODE`: Rust build mode (default: `release`)
 - `NPM_BUILD_CONFIG`: npm build configuration (default: `docker`)

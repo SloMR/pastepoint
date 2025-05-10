@@ -141,8 +141,8 @@
             "docker-dev": {
               "buildTarget": "client:build:docker-dev",
               "ssl": true,
-              "sslKey": "/etc/ssl/certs/key.pem",
-              "sslCert": "/etc/ssl/certs/cert.pem",
+              "sslKey": "/etc/ssl/pastepoint/key.pem",
+              "sslCert": "/etc/ssl/pastepoint/cert.pem",
               "port": 443
             }
           },

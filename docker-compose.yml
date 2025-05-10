@@ -6,7 +6,7 @@ services:
     container_name: pastepoint-cert-checker
     entrypoint: |
       sh -c '
-      if [ ! -f /etc/ssl/${CERT_MOUNT:-pastepoint}/cert.pem ] || [ ! -f /etc/ssl/${CERT_MOUNT:-pastepoint}/key.pem ]; then
+      if [ ! -f /etc/ssl/pastepoint/cert.pem ] || [ ! -f /etc/ssl/pastepoint/key.pem ]; then
         echo "ERROR: Missing SSL certificates!"
         echo "Please create ${CERT_PATH:-/etc/ssl/pastepoint} directory with cert.pem and key.pem files"
         echo "Use generate-certs.sh script to generate self-signed certificates for development or provide your own for production."
@@ -16,7 +16,7 @@ services:
       echo "Certificates exist, continuing..."
       '
     volumes:
-      - ${CERT_PATH:-/etc/ssl/pastepoint}:/etc/ssl/${CERT_MOUNT:-pastepoint}:ro
+      - ${CERT_PATH:-/etc/ssl/pastepoint}:/etc/ssl/pastepoint:ro
     restart: 'no'
 
   # ---------- Server container ----------
@@ -32,7 +32,7 @@ services:
     environment:
       - RUN_ENV=${SERVER_ENV:-production}
     volumes:
-      - ${CERT_PATH:-/etc/ssl/pastepoint}:/etc/ssl/${CERT_MOUNT:-pastepoint}:ro
+      - ${CERT_PATH:-/etc/ssl/pastepoint}:/etc/ssl/pastepoint:ro
     depends_on:
       cert-checker:
         condition: service_completed_successfully
@@ -66,13 +66,13 @@ services:
     container_name: pastepoint-nginx
     environment:
       SERVER_NAME: ${SERVER_NAME:-pastepoint.com}
-      SSL_CERT_PATH: ${SSL_CERT_PATH:-/etc/ssl/pastepoint/cert.pem}
-      SSL_CERT_KEY_PATH: ${SSL_CERT_KEY_PATH:-/etc/ssl/pastepoint/key.pem}
+      SSL_CERT_PATH: /etc/ssl/pastepoint/cert.pem
+      SSL_CERT_KEY_PATH: /etc/ssl/pastepoint/key.pem
     ports:
       - '80:80'
       - '443:443'
     volumes:
-      - ${CERT_PATH:-/etc/ssl/pastepoint}:/etc/ssl/${CERT_MOUNT:-pastepoint}:ro
+      - ${CERT_PATH:-/etc/ssl/pastepoint}:/etc/ssl/pastepoint:ro
     depends_on:
       ssr:
         condition: service_healthy

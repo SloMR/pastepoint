@@ -1,0 +1,10 @@
+target/
+.git/
+.gitignore
+**/*.rs.bk
+**/*.swp
+**/*.swo
+**/.DS_Store
+tests/
+Dockerfile
+README.md
