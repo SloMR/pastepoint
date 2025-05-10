@@ -1,28 +1,41 @@
 # ---------- Stage 1: Build the Angular app ----------
-FROM node:22.14.0 AS builder
+FROM node:22.14.0-slim AS builder
 WORKDIR /usr/src/app
 
 ARG NPM_BUILD_CONFIG=docker
 
+# Copy package.json and package-lock.json first for better caching
 COPY client/package*.json ./
-RUN npm ci
 
+# Use npm ci for consistent installs and clean up cache
+RUN npm ci && \
+    npm cache clean --force
+
+# Copy application code
 COPY client/ ./
+
+# Build the application
 RUN npm run build -- --configuration=$NPM_BUILD_CONFIG
 
 # ---------- Stage 2: SSR Server ----------
 FROM node:22.14.0-alpine AS ssr
 WORKDIR /usr/src/app
 
-# Install wget
+# Install only necessary packages
 RUN apk add --no-cache wget=1.25.0-r0
 
 # Copy built artifacts & package files
 COPY --from=builder /usr/src/app/dist /usr/src/app/dist
 COPY --from=builder /usr/src/app/package*.json ./
+COPY --from=builder /usr/src/app/package-lock.json ./
 
-# Install only prod deps
-RUN npm ci --omit=dev
+# Install only prod deps and clean npm cache
+RUN npm ci --only=production && \
+    npm cache clean --force \
+    && rm -rf /tmp/* /root/.npm /usr/src/app/node_modules/.cache
+
+# Create a non-root user
+USER node
 
 # Expose SSR server port
 EXPOSE 4000
@@ -35,12 +48,12 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 CMD ["node", "dist/client/server/server.mjs"]
 
 # ---------- Stage 3: NGINX to reverse proxy SSR ----------
-FROM nginx:alpine AS nginx
+FROM nginx:1.27-alpine-slim AS nginx
 
-# Install envsubst if needed
+# Install only necessary packages
 RUN apk add --no-cache gettext=0.22.5-r0
 
-# Copy build artifacts
+# Copy only the specific static files needed
 COPY --from=builder /usr/src/app/dist/client/browser/robots.txt /usr/share/nginx/html/browser/robots.txt
 COPY --from=builder /usr/src/app/dist/client/browser/sitemap.xml /usr/share/nginx/html/browser/sitemap.xml
 

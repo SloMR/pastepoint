@@ -1,7 +1,7 @@
 [server]
 bind_address = "0.0.0.0:9000"
-key_file_path = "/etc/ssl/certs/key.pem"
-cert_file_path = "/etc/ssl/certs/cert.pem"
+key_file_path = "/etc/ssl/pastepoint/key.pem"
+cert_file_path = "/etc/ssl/pastepoint/cert.pem"
 auto_join = true
 rate_limit_per_second = 100
 rate_limit_burst_size = 200
