@@ -5,6 +5,7 @@ WORKDIR /usr/src/app
 ARG RUST_BUILD_MODE=release
 
 # Install build dependencies
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
   pkg-config \
   libssl-dev \
@@ -31,12 +32,10 @@ COPY server/config ./config
 
 # Final build with actual source code
 RUN if [ "$RUST_BUILD_MODE" = "release" ]; then \
-  RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-s" && \
   cargo build --release && \
   strip target/release/server_bin && \
   cp target/release/server_bin /usr/src/app/server_bin; \
   else \
-  RUSTFLAGS="-C target-feature=+crt-static -C link-arg=-s" && \
   cargo build && \
   strip target/debug/server_bin && \
   cp target/debug/server_bin /usr/src/app/server_bin; \
@@ -48,6 +47,7 @@ FROM debian:stable-slim
 WORKDIR /usr/local/bin
 
 # Install only runtime dependencies (not build dependencies)
+# hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends \
   ca-certificates \
   libssl3 \
