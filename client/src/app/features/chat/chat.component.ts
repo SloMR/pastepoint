@@ -101,7 +101,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   activeDownloads: FileDownload[] = [];
   incomingFiles: FileDownload[] = [];
 
-  private heartbeatIntervalId: any;
+  private heartbeatIntervalId: ReturnType<typeof setInterval> | null = null;
   private lastHeartbeat: number = Date.now();
   private readonly HEARTBEAT_INTERVAL_MS = 1000;
   private readonly HEARTBEAT_TIMEOUT_MS = 2000;
