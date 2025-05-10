@@ -2,7 +2,6 @@ import {
   Injectable,
   Inject,
   PLATFORM_ID,
-  REQUEST,
   TransferState,
   makeStateKey,
   StateKey,
