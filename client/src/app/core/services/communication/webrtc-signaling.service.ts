@@ -72,11 +72,19 @@ export class WebRTCSignalingService {
         })
         .catch((error) => {
           this.logger.error('initiateConnection', `Offer creation failed: ${error}`);
+          this.toaster.error(
+            this.translate.instant('CONNECTION_LOST'),
+            this.translate.instant('ERROR')
+          );
           this.reconnect(targetUser);
         })
         .finally(() => this.connectionLocks.delete(targetUser));
     } catch (error) {
       this.logger.error('initiateConnection', `Connection initiation failed: ${error}`);
+      this.toaster.error(
+        this.translate.instant('CONNECTION_LOST'),
+        this.translate.instant('ERROR')
+      );
       this.connectionLocks.delete(targetUser);
     }
   }
@@ -379,6 +387,10 @@ export class WebRTCSignalingService {
           this.reconnect(targetUser);
         } else {
           this.logger.error('handleAnswer', `Answer handling failed: ${error}`);
+          this.toaster.error(
+            this.translate.instant('CONNECTION_LOST'),
+            this.translate.instant('ERROR')
+          );
         }
       });
   }

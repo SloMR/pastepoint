@@ -4,6 +4,8 @@ import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
 import { NGXLogger } from 'ngx-logger';
 import { isPlatformBrowser } from '@angular/common';
+import { ToastrService } from 'ngx-toastr';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root',
@@ -50,6 +52,8 @@ export class WebSocketConnectionService implements OnDestroy {
   constructor(
     private router: Router,
     private logger: NGXLogger,
+    private toaster: ToastrService,
+    public translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
     if (isPlatformBrowser(this.platformId)) {
@@ -82,6 +86,10 @@ export class WebSocketConnectionService implements OnDestroy {
         this.logger.info('pageShow', 'Page restored from bfcache, reconnecting WebSocket');
         this.connect(this.sessionCode).catch((err) => {
           this.logger.error('pageShow', `Failed to reconnect after bfcache: ${err}`);
+          this.toaster.error(
+            this.translate.instant('SESSION_RECONNECT_FAILED'),
+            this.translate.instant('ERROR')
+          );
         });
       }
     };
@@ -206,6 +214,10 @@ export class WebSocketConnectionService implements OnDestroy {
               'connect',
               `WebSocket closed with code ${event.code}. Navigating to 404 after max reconnect attempts.`
             );
+            this.toaster.error(
+              this.translate.instant('SESSION_RECONNECT_FAILED'),
+              this.translate.instant('ERROR')
+            );
             this.router.navigate(['/404']);
           }
         } else {
@@ -250,6 +262,10 @@ export class WebSocketConnectionService implements OnDestroy {
 
           if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             this.logger.warn('scheduleReconnect', 'Maximum reconnect attempts reached');
+            this.toaster.error(
+              this.translate.instant('SESSION_RECONNECT_FAILED'),
+              this.translate.instant('ERROR')
+            );
             this.router.navigate(['/404']);
           }
         });
