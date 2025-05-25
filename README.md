@@ -1,6 +1,9 @@
 <div align="center">
   <img src="client/public/pastepoint-light.svg" alt="PastePoint Logo" style="width: 250px; height: 250px"/>
 
+<br>
+<br>
+
 ![Docker](https://img.shields.io/badge/Docker-Containers-blue) ![Rust](https://img.shields.io/badge/Rust-Backend-orange) ![Angular](https://img.shields.io/badge/Angular-Frontend-red) [![Nginx](https://img.shields.io/badge/Nginx-Reverse_Proxy-green)](https://nginx.org)
 
 </div>
@@ -9,8 +12,9 @@
 
 PastePoint is a secure, feature-rich file-sharing service designed for local networks. It enables users to share files and communicate efficiently through peer-to-peer WebSocket connections. Built with a Rust-based backend using Actix Web and an Angular frontend with SSR support, PastePoint prioritizes security, performance, and usability.
 
-[![GPL-3.0 License](https://img.shields.io/github/license/SloMR/pastepoint)](LICENSE)
-[![Open Issues](https://img.shields.io/github/issues/SloMR/pastepoint)](https://github.com/SloMR/pastepoint/issues)
+## ⚠️ Usage Disclaimer
+
+- [📜 Disclaimer](DISCLAIMER.md)
 
 ## 🌟 Features
 
@@ -51,7 +55,7 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 
 ## 🛠️ Tech Stack
 
-### **Backend** (Rust)
+### **Server** (Rust)
 
 [![Actix](https://img.shields.io/badge/Actix-4.7-blue)](https://actix.rs/)
 [![OpenSSL](https://img.shields.io/badge/OpenSSL-0.10-yellow)](https://www.openssl.org/)
@@ -60,7 +64,9 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 - **Security**: OpenSSL for TLS termination
 - **Utilities**: UUID generation, Serde serialization
 
-### **Frontend** (Angular)
+### **Clients**
+
+#### Web (Angular)
 
 [![Angular](https://img.shields.io/badge/Angular-19-red)](https://angular.io/)
 [![Tailwind](https://img.shields.io/badge/Tailwind-3.4-blue)](https://tailwindcss.com/)
@@ -87,34 +93,26 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 
 ```
 pastepoint/
-├── client/        # Angular-based frontend with SSR
-├── server/        # Rust-based backend
-├── nginx/         # Nginx configuration and security settings
-├── scripts/       # Shell scripts for SSL certificate generation
-├── docker-compose.yml  # Docker Compose configuration
-└── README.md      # Project documentation
+├── 📁 client/                      # Angular frontend with SSR
+├── 📁 server/                      # Rust backend with WebSockets
+├── 📁 nginx/                       # Reverse proxy & SSL termination
+├── 📁 scripts/                     # Development & deployment scripts
+├── docker-compose.yml              # Multi-container orchestration
+├── .nvmrc                          # Node.js version specification
+├── rust-toolchain                  # Rust toolchain specification
+├── Makefile                        # Makefile for development
+└── README.md                       # Project documentation
 ```
 
-### Key Files
+#### Server (Rust):
 
-#### Backend (Rust):
+- [Server README](server/README.md)
 
-- `Cargo.toml`: Dependency definitions.
-- `src/main.rs`: Entry point for the server.
-- `src/lib.rs`: Server modules and routes.
-- `config/`: Configuration files for development and production environments.
-- `tests/`: Unit tests for the server.
+#### Clients:
 
-#### Frontend (Angular):
+###### Web (Angular):
 
-- `angular.json`: Angular project configuration with SSR settings.
-- `src/app/`: Angular application code.
-- `src/server.ts`: SSR server implementation with Express.
-- `src/main.server.ts`: Angular SSR bootstrap entry point.
-- `public/`: Static assets, including SEO files (robots.txt, sitemap.xml).
-- `src/app/core/i18n/`: Internationalization files.
-- `src/app/core/services/`: Services for WebSocket communication and metadata.
-- `src/environments/`: Environment configurations.
+- [Web README](client/README.md)
 
 #### Deployment:
 
@@ -175,19 +173,16 @@ pastepoint/
 4. Build and Start Services:
 
    ```bash
-   docker compose up --build
+   make dev # or make prod
    ```
 
 5. Access PastePoint:
    - 🔗 Frontend:
      - Localhost: [https://localhost](https://localhost)
      - Local Network: `https://<your-local-ip>`
-   - 🔌 Backend API:
+   - 🔌 Server API:
      - Localhost: [https://localhost:9000](https://localhost:9000)
      - Local Network: `https://<your-local-ip>:9000`
-   - 🏥 Health Check:
-     - Localhost: [https://localhost/health](https://localhost/health)
-     - Local Network: `https://<your-local-ip>/health`
 
 ### Environment Variables:
 
@@ -199,54 +194,9 @@ pastepoint/
 - `PORT`: SSR server port (default: `4000`)
 - `HOST`: SSR server host (default: `0.0.0.0`)
 
-### Backend Development (Rust):
+## 🤝 Contributing
 
-1. Navigate to the server directory:
-   ```bash
-   cd server
-   ```
-2. Build and run the server:
-   ```bash
-   cargo build
-   cargo run
-   ```
-
-### Frontend Development (Angular):
-
-1. Navigate to the client directory:
-   ```bash
-   cd client
-   ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Run the development server:
-   ```bash
-   ng serve
-   ```
-4. To test SSR locally:
-   ```bash
-   npm run build && npm run serve:ssr:client
-   ```
-
-### Testing:
-
-- **Backend Tests**:
-  ```bash
-  cargo test
-  ```
-- **Frontend Tests**:
-  ```bash
-  npm test
-  ```
-
-### Environment Configuration
-
-- **Backend**:
-  - `server/config/*.toml`: Update configurations for development and production environments.
-- **Frontend**:
-  - `client/src/environments/*`: Update environment variables for development and production.
+- [Contributing](CONTRIBUTING.md)
 
 ## 🚨 Troubleshooting
 
@@ -254,52 +204,6 @@ pastepoint/
 
 1. SSL Certificate Errors
    Run: `./scripts/generate-certs.sh`
-
-2. Local Network Access Issues
-
-   - Ensure your firewall allows connections on ports 80 and 443
-   - Verify your local IP address is correctly configured using `./scripts/configure-network.sh`
-   - Check that all services are running with `docker compose ps`
-   - Verify SSL certificates are properly mounted in the containers
-
-3. SSR Issues
-
-   - Check SSR container logs: `docker logs pastepoint-ssr`
-   - Verify Express server is running on the configured port
-   - Check Nginx configuration for proper proxy to SSR service
-
-## 🤝 Contributing
-
-**We welcome contributions! Please follow these steps**:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feat/amazing-feature`)
-3. Commit changes following Conventional Commits
-4. Push to branch (`git push origin feat/amazing-feature`)
-5. Open a Pull Request
-6. After review, your changes will be merged
-7. Celebrate your contribution!
-
-**Code Standards**:
-
-- **Rust**: Follow `rustfmt` and `clippy` rules
-- **Angular**: Adhere to provided `.prettierrc` and `eslint` rules
-- **Tests**: Maintain 80%+ coverage
-
-## 📜 License
-
-This project is licensed under the GPL-3.0 License. See the [LICENSE](LICENSE) file for details.
-
-## ⚠️ Usage Disclaimer
-
-- [📜 Disclaimer](DISCLAIMER.md)
-
-## 📬 Contact
-
-For issues or feature requests:
-
-- [🐙 GitHub Issues](https://github.com/SloMR/pastepoint/issues)
-- [📧 sulaimanromaih@gmail.com](mailto:sulaimanromaih@gmail.com).
 
 ## 🔒 Security Considerations
 
@@ -309,36 +213,19 @@ For issues or feature requests:
   - Keep private keys secure and never commit them to version control
 
 - **Data Privacy**:
+
   - All file transfers are encrypted end-to-end
   - No data is stored permanently on servers
   - Session data is cleared on server restart or leaving the session
 
-## 💾 Backup and Data Persistence
+## 📜 License
 
-- **Session Data**: Ephemeral, cleared on restart or leaving the session
-- **Configuration**:
-  - Store SSL certificates securely
-  - Version control for environment files
+This project is licensed under the GPL-3.0 License. See the [LICENSE](LICENSE) file for details.
 
-## 🔄 Version Compatibility
+## 📬 Contact
 
-| Component | Minimum Version | Recommended Version | Notes                          |
-| --------- | --------------- | ------------------- | ------------------------------ |
-| Docker    | 20.10.0         | 24.0.0              | Required for BuildKit features |
-| Node.js   | 18.0.0          | 22.14.0             | Required for Angular features  |
-| Rust      | 1.75.0          | 1.85.0              | Required for async features    |
-| Windows   | 10 (1909)       | 11 22H2             | WSL2 support needed            |
-| Linux     | Kernel 5.4      | Kernel 6.x          | For optimal performance        |
+For issues or feature requests:
 
-## 🚀 Performance Recommendations
-
-- **Hardware Requirements**:
-
-  - CPU: 4+ cores recommended
-  - RAM: 8GB minimum, 16GB recommended
-  - Storage: SSD recommended for Docker containers
-
-- **Network**:
-  - Gigabit Ethernet recommended
-  - Low latency network (<50ms) for optimal WebSocket performance
-  - QoS settings for prioritizing WebSocket traffic
+- [🐙 GitHub Issues](https://github.com/SloMR/pastepoint/issues)
+- [📧 sulaimanromaih@gmail.com](mailto:sulaimanromaih@gmail.com).
+- [🌐 LinkedIn](https://www.linkedin.com/in/sulaiman-alromaih-845700202/)
