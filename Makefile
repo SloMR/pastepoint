@@ -1,7 +1,7 @@
 # Simple makefile for managing Docker Compose environments
 # Usage: make prod | make dev | make down
 
-.PHONY: dev prod down stop logs certs
+.PHONY: dev prod down stop logs certs help
 
 # Production environment (default)
 prod:
