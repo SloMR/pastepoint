@@ -110,7 +110,7 @@ pastepoint/
 
 #### Clients:
 
-###### Web (Angular):
+##### Web (Angular):
 
 - [Web readme](client/README.md)
 
