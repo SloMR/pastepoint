@@ -8,8 +8,8 @@ ARG NPM_BUILD_CONFIG=docker
 COPY client/package*.json ./
 
 # Use npm ci for consistent installs and clean up cache
-RUN npm ci && \
-    npm cache clean --force
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci && npm cache clean --force
 
 # Copy application code
 COPY client/ ./
@@ -30,9 +30,9 @@ COPY --from=builder /usr/src/app/package*.json ./
 COPY --from=builder /usr/src/app/package-lock.json ./
 
 # Install only prod deps and clean npm cache
-RUN npm ci --only=production && \
-    npm cache clean --force \
-    && rm -rf /tmp/* /root/.npm /usr/src/app/node_modules/.cache
+RUN --mount=type=cache,target=/root/.npm \
+    npm ci --only=production && npm cache clean --force \
+    rm -rf /tmp/* /usr/src/app/node_modules/.cache
 
 # Create a non-root user
 USER node
