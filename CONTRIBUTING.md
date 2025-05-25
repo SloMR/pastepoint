@@ -133,7 +133,7 @@ make dev
 ## 🆘 Need Help?
 
 - Check [existing issues](https://github.com/SloMR/pastepoint/issues)
-- Read project README files
+- Read project readme files
 - Contact maintainers
 
 Thank you for contributing! 🚀

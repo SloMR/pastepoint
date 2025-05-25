@@ -36,7 +36,7 @@ server/
 
 ### Prerequisites
 
-- **Rust**: Nightly toolchain (specified in `../rust-toolchain`)
+- **Rust**: stable toolchain (specified in `../rust-toolchain`)
 - **OpenSSL**: Required for SSL/TLS support
   - Linux: `sudo apt-get install libssl-dev pkg-config`
   - macOS: `brew install openssl pkg-config`

@@ -137,7 +137,7 @@ pastepoint/
 
 - Docker and Docker Compose
 - Node.js (v22.4.0 as specified in `.nvmrc`)
-- Rust (Nightly, specified in `rust-toolchain`)
+- Rust (stable, specified in `rust-toolchain`)
 
 #### Windows-Specific Requirements:
 
