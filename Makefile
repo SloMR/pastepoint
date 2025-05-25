@@ -1,7 +1,7 @@
 # Simple makefile for managing Docker Compose environments
 # Usage: make prod | make dev | make down
 
-.PHONY: dev prod down logs certs
+.PHONY: dev prod down stop logs certs help
 
 # Production environment (default)
 prod:
@@ -15,10 +15,15 @@ dev:
 	docker compose --env-file .env.development up --build --force-recreate -d
 	@echo "Development services are starting. View logs with: make logs"
 
-# Stop all containers
+# Stop and remove PastePoint containers
 down:
-	@echo "Stopping all services..."
+	@echo "Stopping and removing PastePoint services..."
 	docker compose down
+
+# Stop PastePoint containers without removing them
+stop:
+	@echo "Stopping PastePoint services..."
+	docker compose stop
 
 # View logs
 logs:
@@ -38,7 +43,8 @@ help:
 	@echo "-----------------------------------"
 	@echo "make dev     - Start development environment"
 	@echo "make prod    - Start production environment"
-	@echo "make down    - Stop all services"
+	@echo "make down    - Stop and remove PastePoint services"
+	@echo "make stop    - Stop PastePoint services (without removing)"
 	@echo "make logs    - View logs"
 	@echo "make certs   - Generate self-signed certificates"
 	@echo "make help    - Show this help message"
