@@ -25,7 +25,7 @@ jobs:
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: nightly-2025-01-25
+          toolchain: nightly-2025-02-25
           components: rustfmt, clippy
 
       - name: Cache cargo dependencies

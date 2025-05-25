@@ -106,13 +106,13 @@ pastepoint/
 
 #### Server (Rust):
 
-- [Server README](server/README.md)
+- [Server readme](server/README.md)
 
 #### Clients:
 
 ###### Web (Angular):
 
-- [Web README](client/README.md)
+- [Web readme](client/README.md)
 
 #### Deployment:
 

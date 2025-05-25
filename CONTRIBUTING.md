@@ -38,7 +38,7 @@ Use descriptive branch names with these prefixes:
 | Prefix      | Purpose           | Example                       |
 | ----------- | ----------------- | ----------------------------- |
 | `feat/`     | New features      | `feat/file-compression`       |
-| `fix/`      | Bug fixes         | `fix/websocket-connection`    |
+| `fix/`      | Bugfixes          | `fix/websocket-connection`    |
 | `docs/`     | Documentation     | `docs/api-endpoints`          |
 | `style/`    | Code formatting   | `style/rust-clippy-fixes`     |
 | `refactor/` | Code refactoring  | `refactor/session-management` |

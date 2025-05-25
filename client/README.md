@@ -14,7 +14,7 @@ The PastePoint client is a modern Angular application with Server-Side Rendering
 - **Testing**: Jasmine and Karma for unit tests
 - **Linting**: ESLint with Angular-specific rules
 - **Formatting**: Prettier with custom configuration
-- **Styling**: Stylelint for CSS/SCSS validation
+- **Styling**: stylelint for CSS/SCSS validation
 
 ## 📁 Project Structure
 
@@ -106,7 +106,7 @@ export const environment = {
 
 Key configurations in `angular.json`:
 
-- **Build optimization**: Bundle optimization and tree-shaking
+- **Build optimization**: Bundle optimization and tree shaking
 - **SSR configuration**: Server-side rendering setup
 - **Asset optimization**: Image and font optimization
 - **Service worker**: PWA configuration
@@ -242,6 +242,6 @@ This project is licensed under the GPL-3.0 License. See the [LICENSE](../LICENSE
 
 ## 🔗 Related Documentation
 
-- [Main Project README](../README.md)
-- [Server README](../server/README.md)
-- [Docker Compose Setup](../docker-compose.yml)
+- [Main project readme](../README.md)
+- [Server readme](../server/README.md)
+- [Docker Compose setup](../docker-compose.yml)

@@ -131,6 +131,6 @@ This project is licensed under the GPL-3.0 License. See the [LICENSE](../LICENSE
 
 ## 🔗 Related Documentation
 
-- [Main Project README](../README.md)
-- [Client README](../client/README.md)
-- [Docker Compose Setup](../docker-compose.yml)
+- [Main project readme](../README.md)
+- [Client readme](../client/README.md)
+- [Docker Compose setup](../docker-compose.yml)
