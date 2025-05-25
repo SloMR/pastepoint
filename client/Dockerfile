@@ -31,7 +31,7 @@ COPY --from=builder /usr/src/app/package-lock.json ./
 
 # Install only prod deps and clean npm cache
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --only=production && npm cache clean --force \
+    npm ci --only=production && npm cache clean --force && \
     rm -rf /tmp/* /usr/src/app/node_modules/.cache
 
 # Create a non-root user
