@@ -59,6 +59,7 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 
 [![Actix](https://img.shields.io/badge/Actix-4.7-blue)](https://actix.rs/)
 [![OpenSSL](https://img.shields.io/badge/OpenSSL-0.10-yellow)](https://www.openssl.org/)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FSloMR%2Fpastepoint.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2FSloMR%2Fpastepoint?ref=badge_shield)
 
 - **Framework**: Actix Web with WebSocket support
 - **Security**: OpenSSL for TLS termination
@@ -221,6 +222,9 @@ pastepoint/
 ## 📜 License
 
 This project is licensed under the GPL-3.0 License. See the [LICENSE](LICENSE) file for details.
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FSloMR%2Fpastepoint.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FSloMR%2Fpastepoint?ref=badge_large)
 
 ## 📬 Contact
 
