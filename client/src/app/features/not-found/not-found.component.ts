@@ -8,6 +8,9 @@ import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
 import { MigrationService } from '../../core/services/migration/migration.service';
 import { MetaService } from '../../core/services/ui/meta.service';
+import { LanguageService } from '../../core/services/ui/language.service';
+import { LanguageCode } from '../../core/i18n/translate-loader';
+import { THEME_PREFERENCE_KEY } from '../../utils/constants';
 
 @Component({
   imports: [CommonModule, RouterLink, NgOptimizedImage, TranslateModule],
@@ -16,6 +19,7 @@ import { MetaService } from '../../core/services/ui/meta.service';
 })
 export class NotFoundComponent implements OnInit {
   isDarkMode = false;
+  currentLanguage: LanguageCode = 'en';
   appVersion: string = packageJson.version;
 
   constructor(
@@ -23,16 +27,11 @@ export class NotFoundComponent implements OnInit {
     protected translate: TranslateService,
     private cdr: ChangeDetectorRef,
     private themeService: ThemeService,
+    private languageService: LanguageService,
     private logger: NGXLogger,
     private migrationService: MigrationService,
     private metaService: MetaService
-  ) {
-    this.translate.setDefaultLang('en');
-
-    const browserLang = this.translate.getBrowserLang() || 'en';
-    const languageToUse = browserLang.match(/en|ar/) ? browserLang : 'en';
-    this.translate.use(languageToUse);
-  }
+  ) {}
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) {
@@ -47,12 +46,15 @@ export class NotFoundComponent implements OnInit {
       this.logger.debug('ngOnInit', 'No migration needed');
     }
 
-    const themePreference = localStorage.getItem('themePreference');
+    const themePreference = localStorage.getItem(THEME_PREFERENCE_KEY);
     this.isDarkMode = themePreference === 'dark';
     this.applyTheme(this.isDarkMode);
 
     // Set specific meta tags for 404 page
     this.metaService.updateNotFoundMetadata();
+
+    // Get current language from language service
+    this.currentLanguage = this.languageService.getCurrentLanguage();
   }
 
   toggleTheme(): void {
@@ -76,11 +78,14 @@ export class NotFoundComponent implements OnInit {
   }
 
   switchLanguage(language: string) {
-    this.translate.use(language);
+    const languageCode = language as LanguageCode;
+    this.languageService.setLanguagePreference(languageCode);
+    this.currentLanguage = languageCode;
+    this.cdr.detectChanges();
   }
 
   get isRTL(): boolean {
     if (!isPlatformBrowser(this.platformId)) return false;
-    return document.dir === 'rtl' || this.translate.currentLang === 'ar';
+    return document.dir === 'rtl' || this.currentLanguage === 'ar';
   }
 }
