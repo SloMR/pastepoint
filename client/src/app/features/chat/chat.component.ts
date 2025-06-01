@@ -36,7 +36,14 @@ import { take } from 'rxjs/operators';
 import { FormsModule, NgForm } from '@angular/forms';
 import { FlowbiteService } from '../../core/services/ui/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { ChatMessage, FileDownload, FileUpload, MB } from '../../utils/constants';
+import {
+  ChatMessage,
+  FileDownload,
+  FileUpload,
+  MB,
+  SESSION_CODE_KEY,
+  THEME_PREFERENCE_KEY,
+} from '../../utils/constants';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session/session.service';
@@ -45,6 +52,8 @@ import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
 import { MigrationService } from '../../core/services/migration/migration.service';
 import { MetaService } from '../../core/services/ui/meta.service';
+import { LanguageService } from '../../core/services/ui/language.service';
+import { LanguageCode } from '../../core/i18n/translate-loader';
 
 /**
  * ==========================================================
@@ -92,6 +101,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   currentRoom = 'main';
   isDarkMode = false;
+  currentLanguage: LanguageCode = 'en';
   isMenuOpen = false;
   isEmojiPickerVisible = false;
   isDragging = false;
@@ -156,6 +166,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private webrtcService: WebRTCService,
     private wsConnectionService: WebSocketConnectionService,
     private themeService: ThemeService,
+    private languageService: LanguageService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
     private toaster: ToastrService,
@@ -167,14 +178,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private migrationService: MigrationService,
     private metaService: MetaService,
     @Inject(PLATFORM_ID) private platformId: object
-  ) {
-    this.translate.setDefaultLang('en');
-
-    // Detect browser language and set if it matches supported languages
-    const browserLang = this.translate.getBrowserLang() || 'en';
-    const languageToUse = browserLang.match(/en|ar/) ? browserLang : 'en';
-    this.translate.use(languageToUse);
-  }
+  ) {}
 
   /**
    * ==========================================================
@@ -217,7 +221,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     // Check if route has a session code in URL but don't connect yet
     this.route.paramMap.subscribe((params) => {
       const sessionCode = params.get('code');
-      const storedSessionCode = localStorage.getItem('SessionCode');
+      const storedSessionCode = localStorage.getItem(SESSION_CODE_KEY);
 
       if (sessionCode) {
         this.SessionCode = sessionCode;
@@ -243,9 +247,28 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     );
 
     // Load theme preference from localStorage
-    const themePreference = localStorage.getItem('themePreference');
+    const themePreference = localStorage.getItem(THEME_PREFERENCE_KEY);
     this.isDarkMode = themePreference === 'dark';
     this.applyTheme(this.isDarkMode);
+
+    // Get current language from language service
+    this.currentLanguage = this.languageService.getCurrentLanguage();
+    this.logger.debug(
+      'ngOnInit',
+      'Chat component - initial currentLanguage:',
+      this.currentLanguage
+    );
+
+    // Add a small delay to ensure language service has fully initialized
+    setTimeout(() => {
+      this.currentLanguage = this.languageService.getCurrentLanguage();
+      this.logger.debug(
+        'ngOnInit',
+        'Chat component - currentLanguage after timeout:',
+        this.currentLanguage
+      );
+      this.cdr.detectChanges();
+    }, 100);
   }
 
   /**
@@ -358,7 +381,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   switchLanguage(language: string) {
-    this.translate.use(language);
+    const languageCode = language as LanguageCode;
+    this.languageService.setLanguagePreference(languageCode);
+    this.currentLanguage = languageCode;
+    this.cdr.detectChanges();
   }
 
   /**
@@ -698,7 +724,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.openChatSession(code);
       },
       error: (err) => {
-        console.error('Failed to create new session code:', err);
+        this.logger.error('createPrivateSession', 'Failed to create new session code:', err);
         this.toaster.error(
           this.translate.instant('SESSION_CREATION_FAILED'),
           this.translate.instant('ERROR')
@@ -717,7 +743,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     const code = this.newSessionCode.trim();
     this.showSessionInfo = true;
     if (!code) {
-      console.error('Session code is required to join a session.');
+      this.logger.error('joinPrivateSession', 'Session code is required to join a session.');
       return;
     }
     this.openChatSession(code);
@@ -736,7 +762,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('SessionCode', code);
+      localStorage.setItem(SESSION_CODE_KEY, code);
       window.open(`/private/${code}`, '_self');
     }
   }
@@ -756,7 +782,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     navigator.clipboard.writeText(this.SessionCode).then(
       () => this.toaster.success(this.translate.instant('COPY_SESSION_SUCCESS')),
       (err) => {
-        console.error('Failed to copy session code:', err);
+        this.logger.error('copySessionCode', 'Failed to copy session code:', err);
         this.toaster.error(
           this.translate.instant('COPY_SESSION_FAILED'),
           this.translate.instant('ERROR')
@@ -774,7 +800,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   private clearSessionCode(): void {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('SessionCode');
+      localStorage.removeItem(SESSION_CODE_KEY);
     }
 
     this.SessionCode = '';
@@ -842,7 +868,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   get isRTL(): boolean {
     if (!isPlatformBrowser(this.platformId)) return false;
-    return document.dir === 'rtl' || this.translate.currentLang === 'ar';
+    return document.dir === 'rtl' || this.currentLanguage === 'ar';
   }
 
   /**
