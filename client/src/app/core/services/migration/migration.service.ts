@@ -2,19 +2,12 @@ import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { NGXLogger } from 'ngx-logger';
 import { IMigrationService } from '../../interfaces/migration.interface';
+import { APP_VERSION_KEY } from '../../../utils/constants';
 
 @Injectable({
   providedIn: 'root',
 })
 export class MigrationService implements IMigrationService {
-  /**
-   * ==========================================================
-   * CONSTANTS
-   * Key values for storage
-   * ==========================================================
-   */
-  private readonly VERSION_KEY = 'app_version';
-
   /**
    * ==========================================================
    * CONSTRUCTOR
@@ -38,13 +31,10 @@ export class MigrationService implements IMigrationService {
    * @param forceCleanForNewUsers If true, will perform migration for users who don't have a version key yet
    * @returns boolean indicating if migration was performed
    */
-  public checkAndMigrateIfNeeded(
-    currentVersion: string,
-    forceCleanForNewUsers = false
-  ): boolean {
+  public checkAndMigrateIfNeeded(currentVersion: string, forceCleanForNewUsers = false): boolean {
     if (!isPlatformBrowser(this.platformId)) return false;
 
-    const storedVersion = localStorage.getItem(this.VERSION_KEY);
+    const storedVersion = localStorage.getItem(APP_VERSION_KEY);
 
     if (storedVersion === null) {
       this.logger.debug(
@@ -59,7 +49,7 @@ export class MigrationService implements IMigrationService {
         this.logger.debug('MigrationService', 'No migration needed for new user');
       }
 
-      localStorage.setItem(this.VERSION_KEY, currentVersion);
+      localStorage.setItem(APP_VERSION_KEY, currentVersion);
       return forceCleanForNewUsers;
     }
 
@@ -69,7 +59,7 @@ export class MigrationService implements IMigrationService {
         `Version change detected: ${storedVersion} → ${currentVersion}`
       );
       this.performMigration();
-      localStorage.setItem(this.VERSION_KEY, currentVersion);
+      localStorage.setItem(APP_VERSION_KEY, currentVersion);
       return true;
     }
 
@@ -103,11 +93,11 @@ export class MigrationService implements IMigrationService {
   private clearLocalStorage(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
-    const versionValue = localStorage.getItem(this.VERSION_KEY);
+    const versionValue = localStorage.getItem(APP_VERSION_KEY);
     localStorage.clear();
 
     if (versionValue) {
-      localStorage.setItem(this.VERSION_KEY, versionValue);
+      localStorage.setItem(APP_VERSION_KEY, versionValue);
     }
     this.logger.debug('MigrationService', 'localStorage cleared');
   }

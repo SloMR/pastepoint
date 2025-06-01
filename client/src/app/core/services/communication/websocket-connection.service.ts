@@ -6,7 +6,7 @@ import { NGXLogger } from 'ngx-logger';
 import { isPlatformBrowser } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
-
+import { SESSION_CODE_KEY } from '../../../utils/constants';
 @Injectable({
   providedIn: 'root',
 })
@@ -275,7 +275,7 @@ export class WebSocketConnectionService implements OnDestroy {
 
   private clearSessionCode(): void {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('SessionCode');
+      localStorage.removeItem(SESSION_CODE_KEY);
     }
     this.sessionCode = undefined;
   }
