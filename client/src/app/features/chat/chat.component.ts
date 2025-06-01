@@ -569,7 +569,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   async sendMessage(messageForm: NgForm): Promise<void> {
-    if (this.message?.trim()) {
+    if (this.message.trim()) {
       const tempMessage: ChatMessage = {
         from: this.userService.user,
         text: this.message,
@@ -621,14 +621,21 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       // Then send all file offers once per member
       for (const member of otherMembers) {
         await new Promise<void>((resolve) => {
-          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe(async (isOpen: unknown) => {
-            if (isOpen) {
-              await this.fileTransferService.sendAllFileOffers(member);
-              this.logger.debug('sendAttachments', `Sent ${filesToSend.length} files to ${member}`);
-            } else {
-              this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
-            }
-            resolve();
+          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: unknown) => {
+            const handle = async () => {
+              if (typeof isOpen === 'boolean' && isOpen) {
+                await this.fileTransferService.sendAllFileOffers(member);
+                this.logger.debug(
+                  'sendAttachments',
+                  `Sent ${filesToSend.length} files to ${member}`
+                );
+              } else {
+                this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
+              }
+              resolve();
+            };
+
+            void handle();
           });
         });
       }
@@ -892,7 +899,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   protected addEmoji(event: { emoji: { native: string } }): void {
-    if (event?.emoji?.native) {
+    if (event.emoji?.native) {
       this.message += event.emoji.native;
       this.isEmojiPickerVisible = false;
       this.emojiPickerTimeout = setTimeout(() => {
@@ -989,14 +996,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     // Then send all file offers once per member
     for (const member of otherMembers) {
       await new Promise<void>((resolve) => {
-        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe(async (isOpen: unknown) => {
-          if (isOpen) {
-            await this.fileTransferService.sendAllFileOffers(member);
-            this.logger.debug('sendAttachments', `Sent ${files.length} files to ${member}`);
-          } else {
-            this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
-          }
-          resolve();
+        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: unknown) => {
+          const handle = async () => {
+            if (typeof isOpen === 'boolean' && isOpen) {
+              await this.fileTransferService.sendAllFileOffers(member);
+              this.logger.debug('sendAttachments', `Sent ${files.length} files to ${member}`);
+            } else {
+              this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
+            }
+            resolve();
+          };
+
+          void handle();
         });
       });
     }

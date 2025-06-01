@@ -276,7 +276,9 @@ export class MetaService {
     const existingIcons = this.document.querySelectorAll(
       'link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
     );
-    existingIcons.forEach((icon) => { icon.remove(); });
+    existingIcons.forEach((icon) => {
+      icon.remove();
+    });
 
     // Add new icons
     if (icons.favicon) {
@@ -331,7 +333,9 @@ export class MetaService {
    */
   public setPreconnect(urls: string[], crossorigin = false): void {
     const existingLinks = this.document.querySelectorAll('link[rel="preconnect"]');
-    existingLinks.forEach((link) => { link.remove(); });
+    existingLinks.forEach((link) => {
+      link.remove();
+    });
 
     urls.forEach((url) => {
       const link = this.document.createElement('link');

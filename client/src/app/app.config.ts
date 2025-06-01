@@ -79,12 +79,12 @@ export const appConfig: ApplicationConfig = {
     // Initialize theme on app startup using app initializer
     provideAppInitializer(() => {
       const themeService = inject(ThemeService);
-      initializeTheme(themeService)();
+      void initializeTheme(themeService)();
     }),
     // Initialize language on app startup using app initializer
     provideAppInitializer(() => {
       const languageService = inject(LanguageService);
-      initializeLanguage(languageService)();
+      void initializeLanguage(languageService)();
     }),
   ],
 };

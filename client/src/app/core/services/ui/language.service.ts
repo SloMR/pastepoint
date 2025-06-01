@@ -113,7 +113,7 @@ export class LanguageService implements ILanguageService {
   }
 
   getCurrentLanguage(): LanguageCode {
-    return (this.translateService.currentLang as LanguageCode) || 'en';
+    return this.translateService.currentLang as LanguageCode;
   }
 
   /**

@@ -7,7 +7,11 @@ export class MockToastrService {
   toasts: { type: string; message: string; title: string }[] = [];
   private _config: Partial<IndividualConfig> | undefined;
 
-  success(message: string, title?: string, config?: Partial<IndividualConfig>): Observable<unknown> {
+  success(
+    message: string,
+    title?: string,
+    config?: Partial<IndividualConfig>
+  ): Observable<unknown> {
     this._config = config;
     this.toasts.push({ type: 'success', message, title: title ?? '' });
     return of({});
@@ -25,7 +29,11 @@ export class MockToastrService {
     return of({});
   }
 
-  warning(message: string, title?: string, config?: Partial<IndividualConfig>): Observable<unknown> {
+  warning(
+    message: string,
+    title?: string,
+    config?: Partial<IndividualConfig>
+  ): Observable<unknown> {
     this._config = config;
     this.toasts.push({ type: 'warning', message, title: title ?? '' });
     return of({});

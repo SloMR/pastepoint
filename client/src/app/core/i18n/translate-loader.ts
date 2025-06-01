@@ -13,7 +13,7 @@ export class InMemoryTranslateLoader implements TranslateLoader {
   };
 
   getTranslation(lang: LanguageCode): Observable<TranslationObject> {
-    const translation = this.translations[lang] || this.translations['en'];
+    const translation = this.translations[lang];
     return of(translation);
   }
 }

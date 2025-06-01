@@ -2,10 +2,11 @@ import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { AppComponent } from './app/app.component';
 import { TranslateService } from '@ngx-translate/core';
+import { LANGUAGE_PREFERENCE_KEY } from './app/utils/constants';
 
 function getStoredLanguage(): string {
   if (typeof window !== 'undefined' && window.localStorage) {
-    return localStorage.getItem('language_preference') || 'en';
+    return localStorage.getItem(LANGUAGE_PREFERENCE_KEY) ?? 'en';
   }
   return 'en';
 }
