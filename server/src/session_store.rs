@@ -3,7 +3,7 @@ use actix::SystemService;
 use actix_rt::{spawn, task, time};
 use actix_web::{web::Payload, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws as actix_actor_ws;
-use rand::{distributions::Alphanumeric, thread_rng, Rng};
+use rand::{distr::Alphanumeric, rng, Rng};
 use std::{
     collections::{HashMap, HashSet},
     sync::{
@@ -248,7 +248,7 @@ impl SessionStore {
 
     /// Generates a random alphanumeric code.
     pub fn generate_random_code(length: usize) -> String {
-        thread_rng()
+        rng()
             .sample_iter(&Alphanumeric)
             .take(length)
             .map(char::from)
