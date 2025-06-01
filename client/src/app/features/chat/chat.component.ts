@@ -32,7 +32,7 @@ import { FileTransferService } from '../../core/services/file-management/file-tr
 import { WebRTCService } from '../../core/services/communication/webrtc.service';
 import { WebSocketConnectionService } from '../../core/services/communication/websocket-connection.service';
 import { UserService } from '../../core/services/user-management/user.service';
-import { debounceTime, distinctUntilChanged, take } from 'rxjs/operators';
+import { take } from 'rxjs/operators';
 import { FormsModule, NgForm } from '@angular/forms';
 import { FlowbiteService } from '../../core/services/ui/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -412,34 +412,24 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Listen for active file uploads
     this.subscriptions.push(
-      this.fileTransferService.activeUploads$
-        .pipe(
-          debounceTime(50),
-          distinctUntilChanged((prev, curr) => prev.length === curr.length)
-        )
-        .subscribe((uploads: FileUpload[]) => {
-          this.logger.info('activeUploads', `Active uploads: ${uploads.length} (length)`);
-          this.ngZone.run(() => {
-            this.activeUploads = uploads;
-            this.cdr.detectChanges();
-          });
-        })
+      this.fileTransferService.activeUploads$.subscribe((uploads: FileUpload[]) => {
+        this.logger.info('activeUploads', `Active uploads: ${uploads.length} (length)`);
+        this.ngZone.run(() => {
+          this.activeUploads = uploads;
+          this.cdr.detectChanges();
+        });
+      })
     );
 
     // Listen for active file downloads
     this.subscriptions.push(
-      this.fileTransferService.activeDownloads$
-        .pipe(
-          debounceTime(50),
-          distinctUntilChanged((prev, curr) => prev.length === curr.length)
-        )
-        .subscribe((downloads: FileDownload[]) => {
-          this.logger.info('activeDownloads', `Active downloads: ${downloads.length} (length)`);
-          this.ngZone.run(() => {
-            this.activeDownloads = downloads;
-            this.cdr.detectChanges();
-          });
-        })
+      this.fileTransferService.activeDownloads$.subscribe((downloads: FileDownload[]) => {
+        this.logger.info('activeDownloads', `Active downloads: ${downloads.length} (length)`);
+        this.ngZone.run(() => {
+          this.activeDownloads = downloads;
+          this.cdr.detectChanges();
+        });
+      })
     );
 
     // Listen for incoming file offers
