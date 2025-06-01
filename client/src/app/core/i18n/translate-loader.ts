@@ -7,13 +7,17 @@ export type LanguageCode = 'en' | 'ar';
 type TranslationObject = Record<string, string>;
 
 export class InMemoryTranslateLoader implements TranslateLoader {
-  private translations: Record<string, TranslationObject> = {
+  private translations: { en: TranslationObject; ar: TranslationObject } = {
     en: enTranslations,
     ar: arTranslations,
   };
 
   getTranslation(lang: LanguageCode): Observable<TranslationObject> {
-    const translation = this.translations[lang];
-    return of(translation);
+    switch (lang) {
+      case 'en':
+        return of(this.translations.en);
+      case 'ar':
+        return of(this.translations.ar);
+    }
   }
 }

@@ -85,8 +85,11 @@ export class WebRTCCommunicationService {
     channel.onerror = (ev: Event) => {
       if ('error' in ev) {
         const rtcErrorEvent = ev as RTCErrorEvent;
+        const error = rtcErrorEvent.error;
         const errorMsg =
-          rtcErrorEvent.error.message || rtcErrorEvent.error.toString() || 'Unknown RTCErrorEvent';
+          (error && typeof error.message === 'string' && error.message) ||
+          (typeof error === 'object' ? JSON.stringify(error) : String(error)) ||
+          'Unknown RTCErrorEvent';
         this.logger.error('setupDataChannel', `Data Channel Error with ${targetUser}: ${errorMsg}`);
       } else {
         this.logger.error(

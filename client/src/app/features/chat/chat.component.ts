@@ -899,7 +899,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   protected addEmoji(event: { emoji: { native: string } }): void {
-    if (event.emoji?.native) {
+    if (event.emoji.native) {
       this.message += event.emoji.native;
       this.isEmojiPickerVisible = false;
       this.emojiPickerTimeout = setTimeout(() => {
