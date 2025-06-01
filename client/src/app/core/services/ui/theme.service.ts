@@ -49,7 +49,7 @@ export class ThemeService implements IThemeService {
       // Use transfer state if available, otherwise localStorage
       let themePreference = storedTheme;
       if (this.transferState.hasKey(this.THEME_KEY)) {
-        themePreference = this.transferState.get(this.THEME_KEY, storedTheme || 'light');
+        themePreference = this.transferState.get(this.THEME_KEY, storedTheme ?? 'light');
         // Once used, remove from transfer state
         this.transferState.remove(this.THEME_KEY);
       }

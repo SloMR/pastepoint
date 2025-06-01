@@ -126,7 +126,7 @@ export class MetaService {
    *
    * @param isPrivateSession whether this is a private chat session
    */
-  public updateChatMetadata(isPrivateSession: boolean = false): void {
+  public updateChatMetadata(isPrivateSession = false): void {
     if (isPrivateSession) {
       // Private session - no indexing
       this.setTag('robots', 'noindex');
@@ -276,7 +276,7 @@ export class MetaService {
     const existingIcons = this.document.querySelectorAll(
       'link[rel="icon"], link[rel="shortcut icon"], link[rel="apple-touch-icon"]'
     );
-    existingIcons.forEach((icon) => icon.remove());
+    existingIcons.forEach((icon) => { icon.remove(); });
 
     // Add new icons
     if (icons.favicon) {
@@ -329,9 +329,9 @@ export class MetaService {
    * @param urls Array of URLs to preconnect to
    * @param crossorigin Whether to include crossorigin attribute
    */
-  public setPreconnect(urls: string[], crossorigin: boolean = false): void {
+  public setPreconnect(urls: string[], crossorigin = false): void {
     const existingLinks = this.document.querySelectorAll('link[rel="preconnect"]');
-    existingLinks.forEach((link) => link.remove());
+    existingLinks.forEach((link) => { link.remove(); });
 
     urls.forEach((url) => {
       const link = this.document.createElement('link');

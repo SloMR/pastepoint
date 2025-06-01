@@ -39,7 +39,7 @@ export class FileDownloadService extends FileTransferBaseService {
     }
 
     const fileDownload = userMap.get(fileId);
-    if (!fileDownload || !fileDownload.isAccepted) {
+    if (!fileDownload?.isAccepted) {
       this.logger.warn(
         'handleDataChunk',
         `Discarding chunk - transfer not active or not accepted for fileId=${fileId}`
@@ -97,7 +97,7 @@ export class FileDownloadService extends FileTransferBaseService {
    */
   public async cancelFileDownload(fromUser: string, fileId: string): Promise<void> {
     const userMap = await this.getIncomingFileTransfers(fromUser);
-    if (userMap && userMap.has(fileId)) {
+    if (userMap?.has(fileId)) {
       userMap.delete(fileId);
       const key = this.getOrCreateStatusKey(fromUser, fileId);
       await this.deleteFileTransferStatus(key);

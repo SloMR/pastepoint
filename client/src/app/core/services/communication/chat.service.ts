@@ -112,7 +112,7 @@ export class ChatService implements IChatService {
   private handleSystemMessage(message: string): void {
     if (message.includes('[SystemName]')) {
       const matchName = message.match(/\[SystemName]\s*(.*?)$/);
-      if (matchName && matchName[1]) {
+      if (matchName?.[1]) {
         const userName = matchName[1].trim();
         this.logger.info(
           'handleSystemMessage',

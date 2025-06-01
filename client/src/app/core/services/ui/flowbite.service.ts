@@ -11,7 +11,7 @@ export class FlowbiteService {
    * Dependency injection
    * ==========================================================
    */
-  constructor(@Inject(PLATFORM_ID) private platformId: any) {}
+  constructor(@Inject(PLATFORM_ID) private platformId: object) {}
 
   /**
    * ==========================================================
@@ -19,7 +19,7 @@ export class FlowbiteService {
    * Flowbite library loading and initialization
    * ==========================================================
    */
-  loadFlowbite(callback: (flowbite: any) => void) {
+  loadFlowbite(callback: (flowbite: unknown) => void) {
     if (!isPlatformBrowser(this.platformId)) return;
     import('flowbite').then((flowbite) => {
       callback(flowbite);

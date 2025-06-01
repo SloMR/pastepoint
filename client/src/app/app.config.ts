@@ -22,7 +22,7 @@ import { DatePipe } from '@angular/common';
 
 // Theme initialization function
 export function initializeTheme(themeService: ThemeService): () => void {
-  return () => themeService.initializeTheme();
+  return () => { themeService.initializeTheme(); };
 }
 
 export const appConfig: ApplicationConfig = {
@@ -63,7 +63,7 @@ export const appConfig: ApplicationConfig = {
     // Initialize theme on app startup using app initializer
     provideAppInitializer(() => {
       const themeService = inject(ThemeService);
-      return initializeTheme(themeService)();
+      initializeTheme(themeService)();
     }),
   ],
 };

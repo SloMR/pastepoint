@@ -66,7 +66,7 @@ export enum SignalMessageType {
 
 export interface SignalMessage {
   type: SignalMessageType;
-  data: any;
+  data: unknown;
   from: string;
   to: string;
   sequence?: number;
@@ -74,7 +74,7 @@ export interface SignalMessage {
 
 export interface DataChannelMessage {
   type: string;
-  payload: any;
+  payload: unknown;
 }
 
 // WebRTC file transfer message types
@@ -169,5 +169,5 @@ export interface MetaConfig {
  * Interface for structured data (JSON-LD)
  */
 export interface StructuredData {
-  [key: string]: any;
+  [key: string]: unknown;
 }

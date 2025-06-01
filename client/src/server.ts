@@ -62,7 +62,7 @@ export function app(): express.Express {
 
 function run(): void {
   const port = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 443;
-  const host = process.env['HOST'] || '127.0.0.1';
+  const host = process.env['HOST'] ?? '127.0.0.1';
 
   try {
     // Create the Express app
@@ -70,8 +70,8 @@ function run(): void {
 
     // Only use SSL directly in development mode
     if (!environment.production) {
-      const sslKeyPath = process.env['SSL_KEY_PATH'] || '../certs/key.pem';
-      const sslCertPath = process.env['SSL_CERT_PATH'] || '../certs/cert.pem';
+      const sslKeyPath = process.env['SSL_KEY_PATH'] ?? '../certs/key.pem';
+      const sslCertPath = process.env['SSL_CERT_PATH'] ?? '../certs/cert.pem';
 
       try {
         const httpsOptions = {

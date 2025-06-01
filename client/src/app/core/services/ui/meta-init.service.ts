@@ -3,7 +3,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { MetaService } from './meta.service';
-import { MetaConfig } from '../../../utils/constants';
+import { MetaConfig, StructuredData } from '../../../utils/constants';
 
 @Injectable({
   providedIn: 'root',
@@ -21,7 +21,7 @@ export class MetaInitService {
       // Listen for navigation events to update metadata
       this.router.events
         .pipe(filter((event) => event instanceof NavigationEnd))
-        .subscribe((event: any) => {
+        .subscribe((event: NavigationEnd) => {
           this.handleRouteChange(event.url);
         });
     }
@@ -139,7 +139,7 @@ export class MetaInitService {
    *
    * @returns StructuredData object for JSON-LD
    */
-  private getApplicationStructuredData(): any {
+  private getApplicationStructuredData(): StructuredData {
     return {
       '@context': 'https://schema.org',
       '@type': 'WebApplication',

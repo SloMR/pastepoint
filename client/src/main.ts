@@ -13,4 +13,4 @@ bootstrapApplication(AppComponent, appConfig)
     translate.setDefaultLang(languageToUse);
     translate.use(languageToUse);
   })
-  .catch((err) => console.error(err));
+  .catch((err) => { console.error(err); });

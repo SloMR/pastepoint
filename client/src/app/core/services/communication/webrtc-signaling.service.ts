@@ -70,7 +70,7 @@ export class WebRTCSignalingService {
             sequence: this.getNextSequence(targetUser),
           });
         })
-        .catch((error) => {
+        .catch((error: unknown) => {
           this.logger.error('initiateConnection', `Offer creation failed: ${error}`);
           this.toaster.error(
             this.translate.instant('CONNECTION_LOST'),
@@ -128,7 +128,7 @@ export class WebRTCSignalingService {
    * @param targetUser The user to disconnect from
    * @param force Whether to force close the connection
    */
-  public closePeerConnection(targetUser: string, force: boolean = false) {
+  public closePeerConnection(targetUser: string, force = false) {
     const peerConnection = this.peerConnections.get(targetUser);
     if (peerConnection) {
       peerConnection.close();
@@ -172,16 +172,16 @@ export class WebRTCSignalingService {
   // =============== Private Methods ===============
 
   /**
-   * Initializes the signal message handler subscription
+   * Initializes the signal message handler
    */
   private initializeSignalMessageHandler(): void {
-    this.wsService.signalMessages$.subscribe((message) => {
+    this.wsService.signalMessages$.subscribe((message: unknown) => {
       if (message) {
         this.logger.debug(
           'WebRTCConnectionService',
           `Received signal message: ${JSON.stringify(message)}`
         );
-        this.handleSignalMessage(message);
+        this.handleSignalMessage(message as SignalMessage);
       }
     });
   }
@@ -253,7 +253,7 @@ export class WebRTCSignalingService {
    * @param targetUser The user to handle disconnection for
    */
   private handleDisconnection(targetUser: string) {
-    const attempts = this.reconnectAttempts.get(targetUser) || 0;
+    const attempts = this.reconnectAttempts.get(targetUser) ?? 0;
     if (attempts < MAX_RECONNECT_ATTEMPTS) {
       this.reconnectAttempts.set(targetUser, attempts + 1);
       this.logger.warn(
@@ -318,7 +318,7 @@ export class WebRTCSignalingService {
     const peerConnection = this.createPeerConnection(targetUser);
 
     peerConnection
-      .setRemoteDescription(new RTCSessionDescription(message.data))
+      .setRemoteDescription(new RTCSessionDescription(message.data as RTCSessionDescriptionInit))
       .then(() => {
         return peerConnection.createAnswer();
       })
@@ -350,7 +350,8 @@ export class WebRTCSignalingService {
 
     if (!peerConnection) {
       this.logger.error('handleAnswer', `PeerConnection missing for ${targetUser}`);
-      return this.reconnect(targetUser);
+      this.reconnect(targetUser);
+      return;
     }
 
     if (peerConnection.signalingState !== RTC_SIGNALING_STATES.HAVE_LOCAL_OFFER) {
@@ -358,7 +359,8 @@ export class WebRTCSignalingService {
         'handleAnswer',
         `Invalid state for answer: ${peerConnection.signalingState}`
       );
-      return this.handleStateMismatch(targetUser);
+      this.handleStateMismatch(targetUser);
+      return;
     } else {
       this.logger.debug('handleAnswer', `Valid state for answer: ${peerConnection.signalingState}`);
     }
@@ -368,7 +370,7 @@ export class WebRTCSignalingService {
       return;
     }
 
-    const newDescription = new RTCSessionDescription(message.data);
+    const newDescription = new RTCSessionDescription(message.data as RTCSessionDescriptionInit);
     peerConnection
       .setRemoteDescription(newDescription)
       .then(() => {
@@ -382,16 +384,8 @@ export class WebRTCSignalingService {
         }
       })
       .catch((error) => {
-        this.logger.error('handleAnswer', `Answer handling failed: ${error}`);
-        if (error.toString().includes('InvalidStateError')) {
-          this.reconnect(targetUser);
-        } else {
-          this.logger.error('handleAnswer', `Answer handling failed: ${error}`);
-          this.toaster.error(
-            this.translate.instant('CONNECTION_LOST'),
-            this.translate.instant('ERROR')
-          );
-        }
+        this.logger.error('handleAnswer', `Error handling answer: ${error}`);
+        this.handleStateMismatch(targetUser);
       });
   }
 
@@ -405,29 +399,39 @@ export class WebRTCSignalingService {
       `Resetting connection due to state mismatch with ${targetUser}`
     );
     this.closePeerConnection(targetUser, true);
-    setTimeout(() => this.initiateConnection(targetUser), 500);
+    setTimeout(() => {
+      this.initiateConnection(targetUser);
+    }, 500);
   }
 
   /**
-   * Handles incoming candidate messages
+   * Handles incoming ICE candidate messages
    * @param message The candidate message to handle
    */
   private handleCandidate(message: SignalMessage): void {
     const targetUser = message.from;
-    const candidate = new RTCIceCandidate(message.data);
     const peerConnection = this.peerConnections.get(targetUser);
 
-    if (peerConnection?.remoteDescription?.type) {
+    if (!peerConnection) {
+      this.logger.warn(
+        'handleCandidate',
+        `No peer connection for ${targetUser}, ignoring candidate`
+      );
+      return;
+    }
+
+    const candidate = new RTCIceCandidate(message.data as RTCIceCandidateInit);
+
+    if (peerConnection.remoteDescription) {
       peerConnection.addIceCandidate(candidate).catch((error) => {
-        this.logger.error('handleCandidate', `Error adding received ICE candidate: ${error}`);
+        this.logger.error('handleCandidate', `Error adding ICE candidate: ${error}`);
       });
     } else {
-      const queue = this.candidateQueues.get(targetUser);
+      let queue = this.candidateQueues.get(targetUser);
       if (queue) {
-        queue.push(message.data);
+        queue.push(message.data as RTCIceCandidateInit);
       } else {
-        this.logger.warn('handleCandidate', `No candidate queue for ${targetUser}`);
-        this.candidateQueues.set(targetUser, [message.data]);
+        this.candidateQueues.set(targetUser, [message.data as RTCIceCandidateInit]);
       }
     }
   }
@@ -491,7 +495,7 @@ export class WebRTCSignalingService {
    */
   private isDuplicateMessage(targetUser: string, sequence?: number): boolean {
     if (!sequence) return false;
-    const lastSeq = this.lastSequences.get(targetUser) || 0;
+    const lastSeq = this.lastSequences.get(targetUser) ?? 0;
     if (sequence <= lastSeq) return true;
     this.lastSequences.set(targetUser, sequence);
     return false;
@@ -502,7 +506,7 @@ export class WebRTCSignalingService {
    * @param targetUser The user to get the sequence for
    */
   private getNextSequence(targetUser: string): number {
-    const current = this.lastSequences.get(targetUser) || 0;
+    const current = this.lastSequences.get(targetUser) ?? 0;
     const next = current + 1;
     this.lastSequences.set(targetUser, next);
     return next;

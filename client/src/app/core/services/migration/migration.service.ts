@@ -40,7 +40,7 @@ export class MigrationService implements IMigrationService {
    */
   public checkAndMigrateIfNeeded(
     currentVersion: string,
-    forceCleanForNewUsers: boolean = false
+    forceCleanForNewUsers = false
   ): boolean {
     if (!isPlatformBrowser(this.platformId)) return false;
 

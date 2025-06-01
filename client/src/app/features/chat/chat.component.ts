@@ -81,21 +81,21 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   protected readonly MB: number = MB;
-  message: string = '';
-  newRoomName: string = '';
-  SessionCode: string = '';
-  newSessionCode: string = '';
+  message = '';
+  newRoomName = '';
+  SessionCode = '';
+  newSessionCode = '';
 
   messages: ChatMessage[] = [];
   rooms: string[] = [];
   members: string[] = [];
 
-  currentRoom: string = 'main';
-  isDarkMode: boolean = false;
-  isMenuOpen: boolean = false;
-  isEmojiPickerVisible: boolean = false;
-  isDragging: boolean = false;
-  showSessionInfo: boolean = true;
+  currentRoom = 'main';
+  isDarkMode = false;
+  isMenuOpen = false;
+  isEmojiPickerVisible = false;
+  isDragging = false;
+  showSessionInfo = true;
 
   activeUploads: FileUpload[] = [];
   activeDownloads: FileDownload[] = [];
@@ -115,7 +115,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       !this.wsConnectionService.isConnected()
     ) {
       this.logger.info('visibilitychange', 'Page visible, reconnecting if needed');
-      this.connect(this.SessionCode);
+      void this.connect(this.SessionCode);
     }
   };
   private beforeUnloadHandler = () => {
@@ -129,8 +129,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   private subscriptions: Subscription[] = [];
-  private emojiPickerTimeout: any;
-  public isHoveringOverPicker: boolean = false;
+  private emojiPickerTimeout: ReturnType<typeof setTimeout> | null = null;
+  public isHoveringOverPicker = false;
 
   /**
    * ==========================================================
@@ -234,7 +234,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Listen to changes in the user's name
     this.subscriptions.push(
-      this.userService.user$.subscribe((username: any) => {
+      this.userService.user$.subscribe((username: unknown) => {
         if (username) {
           this.logger.info('ngOnInit', `Username is set to: ${username}`);
           this.initializeChat();
@@ -258,17 +258,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   ngOnDestroy(): void {
     this.unsubscribeAll();
     this.closeConnections();
-
-    if (isPlatformBrowser(this.platformId) && this.visibilityChangeListener) {
-      document.removeEventListener('visibilitychange', this.visibilityChangeListener);
-    }
-
-    if (isPlatformBrowser(this.platformId) && this.beforeUnloadHandler) {
-      window.removeEventListener('beforeunload', this.beforeUnloadHandler);
-    }
-
     this.clearMessages();
-    clearTimeout(this.emojiPickerTimeout);
+    if (this.emojiPickerTimeout) {
+      clearTimeout(this.emojiPickerTimeout);
+    }
 
     if (this.SessionCode) {
       this.clearSessionCode();
@@ -277,6 +270,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.heartbeatIntervalId) {
       clearInterval(this.heartbeatIntervalId);
       this.logger.debug('ngOnDestroy', 'Heartbeat monitor cleared');
+    }
+
+    if (isPlatformBrowser(this.platformId) && this.visibilityChangeListener) {
+      document.removeEventListener('visibilitychange', this.visibilityChangeListener);
+    }
+
+    if (isPlatformBrowser(this.platformId) && this.beforeUnloadHandler) {
+      window.removeEventListener('beforeunload', this.beforeUnloadHandler);
     }
   }
 
@@ -370,7 +371,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   onEnterKey(event: KeyboardEvent, messageForm: NgForm): void {
     if (!event.shiftKey) {
       event.preventDefault();
-      this.sendMessage(messageForm);
+      void this.sendMessage(messageForm);
     }
   }
 
@@ -469,7 +470,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.SessionCode) {
       this.connect(this.SessionCode);
     } else {
-      this.connect();
+      void this.connect();
     }
 
     document.addEventListener('visibilitychange', this.visibilityChangeListener);
@@ -534,11 +535,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     return this.wsConnectionService
       .connect(code)
       .then(() => {
-        this.logger.info('connect', `Connected to session: ${code || 'No code provided'}`);
+        this.logger.info('connect', `Connected to session: ${code ?? 'No code provided'}`);
         this.roomService.listRooms();
         this.chatService.getUsername();
       })
-      .catch((error) => {
+      .catch((error: unknown) => {
         this.logger.error('connect', `WebSocket connection failed: ${error}`);
         throw error;
       });
@@ -552,7 +553,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   async sendMessage(messageForm: NgForm): Promise<void> {
-    if (this.message && this.message.trim()) {
+    if (this.message?.trim()) {
       const tempMessage: ChatMessage = {
         from: this.userService.user,
         text: this.message,
@@ -604,7 +605,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       // Then send all file offers once per member
       for (const member of otherMembers) {
         await new Promise<void>((resolve) => {
-          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe(async (isOpen: any) => {
+          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe(async (isOpen: unknown) => {
             if (isOpen) {
               await this.fileTransferService.sendAllFileOffers(member);
               this.logger.debug('sendAttachments', `Sent ${filesToSend.length} files to ${member}`);
@@ -874,15 +875,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Inserts the selected emoji into the current message text.
    * ==========================================================
    */
-  protected addEmoji(event: any): void {
-    this.logger.info('addEmoji', `Emoji event received: ${event}`);
-    if (!event || !event.emoji || !event.emoji.native) {
-      console.warn('Invalid emoji event structure:', event);
-      return;
+  protected addEmoji(event: { emoji: { native: string } }): void {
+    if (event?.emoji?.native) {
+      this.message += event.emoji.native;
+      this.isEmojiPickerVisible = false;
+      this.emojiPickerTimeout = setTimeout(() => {
+        if (this.messageInput?.nativeElement) {
+          this.messageInput.nativeElement.focus();
+        }
+      }, 100);
     }
-
-    const chosenEmoji = event.emoji.native;
-    this.message = (this.message || '') + chosenEmoji;
   }
 
   /**
@@ -971,7 +973,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     // Then send all file offers once per member
     for (const member of otherMembers) {
       await new Promise<void>((resolve) => {
-        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe(async (isOpen: any) => {
+        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe(async (isOpen: unknown) => {
           if (isOpen) {
             await this.fileTransferService.sendAllFileOffers(member);
             this.logger.debug('sendAttachments', `Sent ${files.length} files to ${member}`);
