@@ -1,17 +1,19 @@
 import { TranslateLoader } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
-import { translations, LanguageCode } from './translations';
+import enTranslations from './localizations/en.json';
+import arTranslations from './localizations/ar.json';
 
+export type LanguageCode = 'en' | 'ar';
 type TranslationObject = Record<string, string>;
 
 export class InMemoryTranslateLoader implements TranslateLoader {
-  getTranslation(lang: string): Observable<TranslationObject> {
-    const languageCode = lang as LanguageCode;
-    const translation = translations[languageCode] || translations.en;
-    if (translation) {
-      return of(translation);
-    } else {
-      return of({});
-    }
+  private translations: Record<string, TranslationObject> = {
+    en: enTranslations,
+    ar: arTranslations,
+  };
+
+  getTranslation(lang: LanguageCode): Observable<TranslationObject> {
+    const translation = this.translations[lang] || this.translations['en'];
+    return of(translation);
   }
 }
