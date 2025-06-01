@@ -4,30 +4,38 @@ import { Observable, of } from 'rxjs';
 
 @Injectable()
 export class MockToastrService {
-  toasts: Array<{ type: string; message: string; title: string }> = [];
+  toasts: { type: string; message: string; title: string }[] = [];
   private _config: Partial<IndividualConfig> | undefined;
 
-  success(message: string, title?: string, config?: Partial<IndividualConfig>): Observable<any> {
+  success(
+    message: string,
+    title?: string,
+    config?: Partial<IndividualConfig>
+  ): Observable<unknown> {
     this._config = config;
-    this.toasts.push({ type: 'success', message, title: title || '' });
+    this.toasts.push({ type: 'success', message, title: title ?? '' });
     return of({});
   }
 
-  error(message: string, title?: string, config?: Partial<IndividualConfig>): Observable<any> {
+  error(message: string, title?: string, config?: Partial<IndividualConfig>): Observable<unknown> {
     this._config = config;
-    this.toasts.push({ type: 'error', message, title: title || '' });
+    this.toasts.push({ type: 'error', message, title: title ?? '' });
     return of({});
   }
 
-  info(message: string, title?: string, config?: Partial<IndividualConfig>): Observable<any> {
+  info(message: string, title?: string, config?: Partial<IndividualConfig>): Observable<unknown> {
     this._config = config;
-    this.toasts.push({ type: 'info', message, title: title || '' });
+    this.toasts.push({ type: 'info', message, title: title ?? '' });
     return of({});
   }
 
-  warning(message: string, title?: string, config?: Partial<IndividualConfig>): Observable<any> {
+  warning(
+    message: string,
+    title?: string,
+    config?: Partial<IndividualConfig>
+  ): Observable<unknown> {
     this._config = config;
-    this.toasts.push({ type: 'warning', message, title: title || '' });
+    this.toasts.push({ type: 'warning', message, title: title ?? '' });
     return of({});
   }
 

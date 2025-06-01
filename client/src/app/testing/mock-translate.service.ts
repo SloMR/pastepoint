@@ -32,22 +32,22 @@ export class MockTranslateService {
   private _interpolateParams: object | undefined;
   private _langs: string[] | undefined;
 
-  get(key: string | Array<string>, interpolateParams?: object): Observable<string | object> {
+  get(key: string | string[], interpolateParams?: object): Observable<string | object> {
     this._interpolateParams = interpolateParams;
     if (typeof key === 'string') {
-      return of(this.translations[this.currentLang]?.[key] || key);
+      return of(this.translations[this.currentLang][key] || key);
     }
     const result: Record<string, string> = {};
     key.forEach((k) => {
-      result[k] = this.translations[this.currentLang]?.[k] || k;
+      result[k] = this.translations[this.currentLang][k] || k;
     });
     return of(result);
   }
 
-  instant(key: string | string[], interpolateParams?: object): string | any {
+  instant(key: string | string[], interpolateParams?: object): string | unknown {
     this._interpolateParams = interpolateParams;
     if (typeof key === 'string') {
-      return this.translations[this.currentLang]?.[key] || key;
+      return this.translations[this.currentLang][key] || key;
     }
     const result: Record<string, string> = {};
     key.forEach((k) => {
@@ -64,7 +64,7 @@ export class MockTranslateService {
     this.defaultLang = lang;
   }
 
-  use(lang: string): Observable<any> {
+  use(lang: string): Observable<unknown> {
     this.currentLang = lang;
     return of({});
   }
@@ -77,7 +77,7 @@ export class MockTranslateService {
     return Object.keys(this.translations);
   }
 
-  getTranslation(lang: string): Observable<any> {
+  getTranslation(lang: string): Observable<unknown> {
     return of(this.translations[lang] || {});
   }
 

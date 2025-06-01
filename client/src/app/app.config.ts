@@ -12,6 +12,7 @@ import { provideClientHydration, withEventReplay } from '@angular/platform-brows
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { InMemoryTranslateLoader } from './core/i18n/translate-loader';
 import { ThemeService } from './core/services/ui/theme.service';
+import { LanguageService } from './core/services/ui/language.service';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -21,8 +22,23 @@ import { environment } from '../environments/environment';
 import { DatePipe } from '@angular/common';
 
 // Theme initialization function
-export function initializeTheme(themeService: ThemeService): () => void {
-  return () => themeService.initializeTheme();
+export function initializeTheme(themeService: ThemeService): () => Promise<void> {
+  return () => {
+    return new Promise((resolve) => {
+      themeService.initializeTheme();
+      setTimeout(resolve, 10);
+    });
+  };
+}
+
+// Language initialization function
+export function initializeLanguage(languageService: LanguageService): () => Promise<void> {
+  return () => {
+    return new Promise((resolve) => {
+      languageService.initializeLanguage();
+      setTimeout(resolve, 10);
+    });
+  };
 }
 
 export const appConfig: ApplicationConfig = {
@@ -63,7 +79,12 @@ export const appConfig: ApplicationConfig = {
     // Initialize theme on app startup using app initializer
     provideAppInitializer(() => {
       const themeService = inject(ThemeService);
-      return initializeTheme(themeService)();
+      void initializeTheme(themeService)();
+    }),
+    // Initialize language on app startup using app initializer
+    provideAppInitializer(() => {
+      const languageService = inject(LanguageService);
+      void initializeLanguage(languageService)();
     }),
   ],
 };

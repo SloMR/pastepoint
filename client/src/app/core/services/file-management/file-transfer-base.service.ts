@@ -7,6 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { FileDownload, FileUpload, FileTransferStatus } from '../../../utils/constants';
 import { BehaviorSubject } from 'rxjs';
 import { Mutex } from 'async-mutex';
+import { DataChannelMessage } from '../../../utils/constants';
 
 @Injectable({
   providedIn: 'root',
@@ -60,7 +61,7 @@ export class FileTransferBaseService {
   /**
    * Sends a message to a target user
    */
-  protected sendData(message: any, targetUser: string): void {
+  protected sendData(message: DataChannelMessage, targetUser: string): void {
     this.webrtcService.sendData(message, targetUser);
   }
 

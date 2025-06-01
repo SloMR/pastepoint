@@ -85,9 +85,10 @@ export class WebRTCCommunicationService {
     channel.onerror = (ev: Event) => {
       if ('error' in ev) {
         const rtcErrorEvent = ev as RTCErrorEvent;
+        const error = rtcErrorEvent.error;
         const errorMsg =
-          rtcErrorEvent.error?.message ||
-          rtcErrorEvent.error?.toString() ||
+          (error && typeof error.message === 'string' && error.message) ||
+          (typeof error === 'object' ? JSON.stringify(error) : String(error)) ||
           'Unknown RTCErrorEvent';
         this.logger.error('setupDataChannel', `Data Channel Error with ${targetUser}: ${errorMsg}`);
       } else {
@@ -166,7 +167,7 @@ export class WebRTCCommunicationService {
       if (!this.messageQueues.has(targetUser)) {
         this.messageQueues.set(targetUser, []);
       }
-      this.messageQueues.get(targetUser)!.push(data);
+      this.messageQueues.get(targetUser)?.push(data);
       return false;
     }
 
@@ -197,7 +198,7 @@ export class WebRTCCommunicationService {
    * @param targetUser The user to get the channel for
    */
   public getDataChannel(targetUser: string): RTCDataChannel | null {
-    return this.dataChannels.get(targetUser) || null;
+    return this.dataChannels.get(targetUser) ?? null;
   }
 
   /**
@@ -243,7 +244,7 @@ export class WebRTCCommunicationService {
    * @param data The received data
    * @param targetUser The user who sent the data
    */
-  private handleDataChannelMessage(data: any, targetUser: string): void {
+  private handleDataChannelMessage(data: unknown, targetUser: string): void {
     this.zone.run(() => {
       if (typeof data === 'string') {
         const message: DataChannelMessage = JSON.parse(data);
@@ -254,59 +255,74 @@ export class WebRTCCommunicationService {
             this.chatMessages$.next(chatMsg);
             break;
           }
-          case FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER:
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER: {
             this.logger.info('handleDataChannelMessage', `Received file offer from ${targetUser}`);
+            const fileOfferPayload = message.payload as {
+              fileId: string;
+              fileName: string;
+              fileSize: number;
+            };
             this.fileOffers$.next({
-              fileId: message.payload.fileId,
-              fileName: message.payload.fileName,
-              fileSize: message.payload.fileSize,
+              fileId: fileOfferPayload.fileId,
+              fileName: fileOfferPayload.fileName,
+              fileSize: fileOfferPayload.fileSize,
               fromUser: targetUser,
             });
             break;
-          case FILE_TRANSFER_MESSAGE_TYPES.FILE_ACCEPT:
+          }
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_ACCEPT: {
             this.logger.info(
               'handleDataChannelMessage',
               `Received file acceptance from ${targetUser}`
             );
+            const fileAcceptPayload = message.payload as { fileId: string };
             this.fileResponses$.next({
               accepted: true,
               fromUser: targetUser,
-              fileId: message.payload.fileId,
+              fileId: fileAcceptPayload.fileId,
             });
             break;
-          case FILE_TRANSFER_MESSAGE_TYPES.FILE_DECLINE:
+          }
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_DECLINE: {
             this.logger.info(
               'handleDataChannelMessage',
               `Received file decline from ${targetUser}`
             );
+            const fileDeclinePayload = message.payload as { fileId: string };
             this.fileResponses$.next({
               accepted: false,
               fromUser: targetUser,
-              fileId: message.payload.fileId,
+              fileId: fileDeclinePayload.fileId,
             });
             break;
-          case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_UPLOAD:
+          }
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_UPLOAD: {
             this.logger.info(
               'handleDataChannelMessage',
               `Received uploading file cancellation from ${targetUser}`
             );
+            const fileCancelUploadPayload = message.payload as { fileId: string };
             this.fileUploadCancelled$.next({
               fromUser: targetUser,
-              fileId: message.payload.fileId,
+              fileId: fileCancelUploadPayload.fileId,
             });
             break;
-          case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_DOWNLOAD:
+          }
+          case FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_DOWNLOAD: {
             this.logger.info(
               'handleDataChannelMessage',
               `Received downloading file cancellation from ${targetUser}`
             );
+            const fileCancelDownloadPayload = message.payload as { fileId: string };
             this.fileDownloadCancelled$.next({
               fromUser: targetUser,
-              fileId: message.payload.fileId,
+              fileId: fileCancelDownloadPayload.fileId,
             });
             break;
+          }
           case FILE_TRANSFER_MESSAGE_TYPES.FILE_CHUNK: {
-            const { fileId, chunkSize } = message.payload;
+            const fileChunkPayload = message.payload as { fileId: string; chunkSize: number };
+            const { fileId, chunkSize } = fileChunkPayload;
             this.logger.info(
               'handleDataChannelMessage',
               `Received chunk metadata from ${targetUser} (fileId=${fileId}, chunkSize=${chunkSize})`

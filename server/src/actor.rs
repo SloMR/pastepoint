@@ -2,6 +2,7 @@ use crate::{LeaveRoom, WsChatServer, WsChatSession};
 use actix::{prelude::Actor, Context};
 use actix_broker::BrokerSubscribe;
 use actix_web_actors::ws;
+use rand::{rng, Rng};
 use std::time::Instant;
 use uuid::Uuid;
 
@@ -18,7 +19,7 @@ impl Actor for WsChatSession {
     type Context = ws::WebsocketContext<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        self.id = rand::random::<usize>();
+        self.id = rng().random_range(0..usize::MAX);
         log::debug!(
             target: "Websocket",
             "Session started for {} with ID {}",

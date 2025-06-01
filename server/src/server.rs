@@ -3,6 +3,7 @@ use crate::{
     LeaveRoom,
 };
 use actix::prelude::*;
+use rand::{rng, Rng};
 use std::{
     collections::{hash_map::Entry::Vacant, HashMap},
     time::Duration,
@@ -25,7 +26,7 @@ impl WsChatServer {
         client: Client,
         name: String,
     ) -> usize {
-        let id = id.unwrap_or_else(rand::random::<usize>);
+        let id = id.unwrap_or_else(|| rng().random_range(0..usize::MAX));
 
         if let Some(room) = self.rooms.get_mut(session_id) {
             if let Some(existing_room) = room.get_mut(room_name) {

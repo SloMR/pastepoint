@@ -1,5 +1,5 @@
 import { BehaviorSubject, Subject } from 'rxjs';
-import { ChatMessage } from '../../utils/constants';
+import { ChatMessage, DataChannelMessage } from '../../utils/constants';
 
 export interface IWebRTCService {
   dataChannelOpen$: BehaviorSubject<boolean>;
@@ -21,6 +21,6 @@ export interface IWebRTCService {
   }>;
 
   initiateConnection(targetUser: string): void;
-  sendData(data: any, targetUser: string): void;
+  sendData(data: DataChannelMessage, targetUser: string): void;
   closeAllConnections(): void;
 }

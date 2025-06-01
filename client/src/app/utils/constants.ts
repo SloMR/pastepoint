@@ -6,6 +6,12 @@ export const CHUNK_SIZE = 256 * KB;
 export const MAX_BUFFERED_AMOUNT = 2 * MB;
 export const BUFFERED_AMOUNT_LOW_THRESHOLD = MB;
 
+// Local storage keys
+export const SESSION_CODE_KEY = 'session_code';
+export const LANGUAGE_PREFERENCE_KEY = 'language_preference';
+export const APP_VERSION_KEY = 'app_version';
+export const THEME_PREFERENCE_KEY = 'theme_preference';
+
 // Inactivity timeout constants
 export const IDLE_TIMEOUT = 12 * 60 * 60 * 1000; // 12 hours
 export const BACKGROUND_EXPIRY_THRESHOLD = 5 * 60 * 1000; // 5 minutes
@@ -66,7 +72,7 @@ export enum SignalMessageType {
 
 export interface SignalMessage {
   type: SignalMessageType;
-  data: any;
+  data: unknown;
   from: string;
   to: string;
   sequence?: number;
@@ -74,7 +80,7 @@ export interface SignalMessage {
 
 export interface DataChannelMessage {
   type: string;
-  payload: any;
+  payload: unknown;
 }
 
 // WebRTC file transfer message types
@@ -169,5 +175,5 @@ export interface MetaConfig {
  * Interface for structured data (JSON-LD)
  */
 export interface StructuredData {
-  [key: string]: any;
+  [key: string]: unknown;
 }

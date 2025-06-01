@@ -137,7 +137,7 @@ export class FileUploadService extends FileTransferBaseService {
    */
   public async cancelFileUpload(targetUser: string, fileId: string): Promise<void> {
     const userMap = await this.getFileTransfers(targetUser);
-    if (userMap && userMap.has(fileId)) {
+    if (userMap?.has(fileId)) {
       const fileTransfer = userMap.get(fileId);
       if (fileTransfer) {
         fileTransfer.isPaused = true;
@@ -182,7 +182,7 @@ export class FileUploadService extends FileTransferBaseService {
           );
           fileTransfer.isPaused = false;
           await this.setFileTransfers(targetUser, userMap);
-          this.sendNextChunk(fileTransfer).catch((error) => {
+          this.sendNextChunk(fileTransfer).catch((error: unknown) => {
             this.logger.error('resumePausedTransfer', `Error resuming file transfer: ${error}`);
           });
         }
@@ -266,7 +266,7 @@ export class FileUploadService extends FileTransferBaseService {
     try {
       while (fileTransfer.currentOffset < fileTransfer.file.size) {
         const userMap = await this.getFileTransfers(fileTransfer.targetUser);
-        if (!userMap || !userMap.has(fileTransfer.fileId)) {
+        if (!userMap?.has(fileTransfer.fileId)) {
           this.logger.warn(
             'sendNextChunk',
             `File transfer for user=${fileTransfer.targetUser}, fileId=${fileTransfer.fileId} does not exist anymore`
@@ -289,7 +289,7 @@ export class FileUploadService extends FileTransferBaseService {
           this.initiateConnection(fileTransfer.targetUser);
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
-          const errorCount = this.consecutiveErrorCounts.get(transferId) || 0;
+          const errorCount = this.consecutiveErrorCounts.get(transferId) ?? 0;
           if (errorCount > this.maxConsecutiveErrors) {
             break;
           }
@@ -416,7 +416,7 @@ export class FileUploadService extends FileTransferBaseService {
       return true;
     } catch (error) {
       const errorKey = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
-      const currentErrors = this.consecutiveErrorCounts.get(errorKey) || 0;
+      const currentErrors = this.consecutiveErrorCounts.get(errorKey) ?? 0;
       this.consecutiveErrorCounts.set(errorKey, currentErrors + 1);
 
       this.logger.error('processFileChunk', `Error sending chunk: ${error}`);

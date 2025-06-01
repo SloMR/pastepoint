@@ -6,7 +6,7 @@ import { NGXLogger } from 'ngx-logger';
 import { isPlatformBrowser } from '@angular/common';
 import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
-
+import { SESSION_CODE_KEY } from '../../../utils/constants';
 @Injectable({
   providedIn: 'root',
 })
@@ -25,7 +25,7 @@ export class WebSocketConnectionService implements OnDestroy {
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
   private maxReconnectDelay = 30000;
-  private reconnectTimer: any;
+  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private manualDisconnect = false;
   private isConnecting = false;
 
@@ -41,7 +41,7 @@ export class WebSocketConnectionService implements OnDestroy {
    */
   public messages$ = new BehaviorSubject<string>('');
   public systemMessages$ = new BehaviorSubject<string>('');
-  public signalMessages$ = new BehaviorSubject<any>(null);
+  public signalMessages$ = new BehaviorSubject<unknown>(null);
 
   /**
    * ==========================================================
@@ -73,7 +73,7 @@ export class WebSocketConnectionService implements OnDestroy {
       this.logger.info('pageHide', 'Page entering bfcache, closing WebSocket temporarily');
       if (this.isConnected()) {
         // Store the session code for later reconnection
-        this.sessionCode = this.sessionCode || this.getSessionCodeFromUrl();
+        this.sessionCode = this.sessionCode ?? this.getSessionCodeFromUrl();
         // Temporary disconnect without clearing session code
         this.temporaryDisconnect();
       }
@@ -84,7 +84,7 @@ export class WebSocketConnectionService implements OnDestroy {
       // Check if page was restored from bfcache
       if (this.sessionCode && !this.isConnected() && !this.isConnecting) {
         this.logger.info('pageShow', 'Page restored from bfcache, reconnecting WebSocket');
-        this.connect(this.sessionCode).catch((err) => {
+        this.connect(this.sessionCode).catch((err: unknown) => {
           this.logger.error('pageShow', `Failed to reconnect after bfcache: ${err}`);
           this.toaster.error(
             this.translate.instant('SESSION_RECONNECT_FAILED'),
@@ -146,7 +146,7 @@ export class WebSocketConnectionService implements OnDestroy {
       this.disconnect(true);
       return new Promise((resolve) => {
         setTimeout(() => {
-          this.establishConnection(code).then(resolve);
+          void this.establishConnection(code).then(resolve);
         }, 100);
       });
     }
@@ -257,7 +257,7 @@ export class WebSocketConnectionService implements OnDestroy {
         this.logger.info('scheduleReconnect', 'Already connected, skipping reconnect');
         return;
       } else {
-        this.connect(this.sessionCode).catch((error) => {
+        this.connect(this.sessionCode).catch((error: unknown) => {
           this.logger.error('scheduleReconnect', `Reconnect failed: ${error}`);
 
           if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -275,12 +275,12 @@ export class WebSocketConnectionService implements OnDestroy {
 
   private clearSessionCode(): void {
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.removeItem('SessionCode');
+      localStorage.removeItem(SESSION_CODE_KEY);
     }
     this.sessionCode = undefined;
   }
 
-  public disconnect(isManual: boolean = true): void {
+  public disconnect(isManual = true): void {
     if (isManual) {
       this.manualDisconnect = true;
       this.clearSessionCode();
@@ -314,7 +314,7 @@ export class WebSocketConnectionService implements OnDestroy {
     }
   }
 
-  public sendSignalMessage(message: any): void {
+  public sendSignalMessage(message: unknown): void {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       const signalMessage = `[SignalMessage] ${JSON.stringify(message)}`;
       this.socket.send(signalMessage);
@@ -352,8 +352,8 @@ export class WebSocketConnectionService implements OnDestroy {
   ngOnDestroy(): void {
     if (isPlatformBrowser(this.platformId)) {
       // Remove event listeners
-      window.removeEventListener('pagehide', this.pageHideListener || (() => {}));
-      window.removeEventListener('pageshow', this.pageShowListener || (() => {}));
+      window.removeEventListener('pagehide', this.pageHideListener ?? (() => {}));
+      window.removeEventListener('pageshow', this.pageShowListener ?? (() => {}));
 
       // Close WebSocket connection
       if (this.isConnected()) {

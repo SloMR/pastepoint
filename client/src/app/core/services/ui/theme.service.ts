@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { IThemeService } from '../../interfaces/theme.interface';
-
+import { THEME_PREFERENCE_KEY } from '../../../utils/constants';
 @Injectable({
   providedIn: 'root',
 })
@@ -19,7 +19,7 @@ export class ThemeService implements IThemeService {
    * Storage key for theme preference
    * ==========================================================
    */
-  private readonly THEME_KEY: StateKey<string> = makeStateKey<string>('themePreference');
+  private readonly THEME_KEY: StateKey<string> = makeStateKey<string>(THEME_PREFERENCE_KEY);
 
   /**
    * ==========================================================
@@ -49,7 +49,7 @@ export class ThemeService implements IThemeService {
       // Use transfer state if available, otherwise localStorage
       let themePreference = storedTheme;
       if (this.transferState.hasKey(this.THEME_KEY)) {
-        themePreference = this.transferState.get(this.THEME_KEY, storedTheme || 'light');
+        themePreference = this.transferState.get(this.THEME_KEY, storedTheme ?? 'light');
         // Once used, remove from transfer state
         this.transferState.remove(this.THEME_KEY);
       }
@@ -63,7 +63,7 @@ export class ThemeService implements IThemeService {
       this.applyTheme(isDarkMode ? 'dark' : 'light');
     } else {
       const themePreference = isDarkMode ? 'dark' : 'light';
-      localStorage.setItem(this.THEME_KEY, themePreference);
+      localStorage.setItem(THEME_PREFERENCE_KEY, themePreference);
       this.applyTheme(themePreference);
     }
   }
@@ -78,7 +78,7 @@ export class ThemeService implements IThemeService {
     if (!isPlatformBrowser(this.platformId)) {
       return 'light';
     }
-    return localStorage.getItem(this.THEME_KEY);
+    return localStorage.getItem(THEME_PREFERENCE_KEY);
   }
 
   private applyTheme(themePreference: string | null): void {

@@ -59,7 +59,7 @@ export class FileTransferService implements IFileTransferService {
     });
 
     this.webrtcService.bufferedAmountLow$.subscribe((targetUser) => {
-      this.fileUploadService.resumePausedTransfer(targetUser);
+      void this.fileUploadService.resumePausedTransfer(targetUser);
       this.logger.debug('FileTransferService', `Paused transfer resumed for ${targetUser}`);
     });
 
