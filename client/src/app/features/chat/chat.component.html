@@ -457,7 +457,7 @@
                       {{ transfer.file.name | slice: 0 : 15 }}
                     </span>
                     <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500">{{ transfer.progress }}%</span>
+                      <span class="text-xs text-secondary-500">{{ transfer.progress | number:'1.0-0' }}%</span>
                       <button
                         (click)="
                           $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
@@ -479,8 +479,8 @@
                   </div>
                   <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
                     <div
-                      class="rounded-full bg-primary-600 h-1.5"
-                      [style.width]="transfer.progress + '%'"
+                      class="rounded-full bg-primary-600 h-1.5 progress-bar"
+                      [style.width.%]="transfer.progress"
                     ></div>
                   </div>
                 </div>
@@ -492,7 +492,7 @@
                       {{ download.fileName | slice: 0 : 15 }}
                     </span>
                     <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500"> {{ download.progress }}% </span>
+                      <span class="text-xs text-secondary-500"> {{ download.progress | number:'1.0-0' }}% </span>
                       <button
                         (click)="
                           $event.stopPropagation();
@@ -516,8 +516,8 @@
                   </div>
                   <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
                     <div
-                      class="rounded-full bg-success-600 h-1.5"
-                      [style.width]="download.progress + '%'"
+                      class="rounded-full bg-success-600 h-1.5 progress-bar"
+                      [style.width.%]="download.progress"
                     ></div>
                   </div>
                 </div>
@@ -930,7 +930,7 @@
                       {{ transfer.file.name | slice: 0 : 15 }}
                     </span>
                     <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500">{{ transfer.progress }}%</span>
+                      <span class="text-xs text-secondary-500">{{ transfer.progress | number:'1.0-0' }}%</span>
                       <button
                         (click)="
                           $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
@@ -952,8 +952,8 @@
                   </div>
                   <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
                     <div
-                      class="rounded-full bg-primary-600 h-1.5"
-                      [style.width]="transfer.progress + '%'"
+                      class="rounded-full bg-primary-600 h-1.5 progress-bar"
+                      [style.width.%]="transfer.progress"
                     ></div>
                   </div>
                 </div>
@@ -965,7 +965,7 @@
                       {{ download.fileName | slice: 0 : 15 }}
                     </span>
                     <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500"> {{ download.progress }}% </span>
+                      <span class="text-xs text-secondary-500"> {{ download.progress | number:'1.0-0' }}% </span>
                       <button
                         (click)="
                           $event.stopPropagation();
@@ -989,8 +989,8 @@
                   </div>
                   <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
                     <div
-                      class="rounded-full bg-success-600 h-1.5"
-                      [style.width]="download.progress + '%'"
+                      class="rounded-full bg-success-600 h-1.5 progress-bar"
+                      [style.width.%]="download.progress"
                     ></div>
                   </div>
                 </div>
