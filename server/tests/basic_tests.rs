@@ -191,9 +191,10 @@ async fn test_join_leave_room() {
 #[actix_rt::test]
 async fn test_cors_origin_checking() {
     let session_manager = web::Data::new(SessionStore::default());
-    let config = web::Data::new(
-        ServerConfig::load(Some(false)).expect("Failed to load server configuration"),
-    );
+    let mut config_value =
+        ServerConfig::load(Some(false)).expect("Failed to load server configuration");
+    config_value.cors_allowed_origins = "https://pastepoint.com".to_string();
+    let config = web::Data::new(config_value);
     let config_for_test = config.clone();
     let allowed_domain = config_for_test.cors_allowed_origins.clone();
 
@@ -215,7 +216,7 @@ async fn test_cors_origin_checking() {
     .await;
 
     // Test allowed origin based on configuration
-    let origin = format!("https://{}", allowed_domain);
+    let origin = allowed_domain.clone();
     let req = test::TestRequest::get()
         .uri("/")
         .insert_header(("Origin", origin.clone()))
@@ -228,7 +229,10 @@ async fn test_cors_origin_checking() {
     );
 
     // Test allowed origin with www subdomain
-    let origin = format!("https://www.{}", allowed_domain);
+    let domain_only = allowed_domain
+        .trim_start_matches("https://")
+        .trim_start_matches("http://");
+    let origin = format!("https://www.{}", domain_only);
     let req = test::TestRequest::get()
         .uri("/")
         .insert_header(("Origin", origin.clone()))

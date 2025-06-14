@@ -30,6 +30,7 @@ log = "0.4.27"
 rand = "0.9.1"
 bytes = "1.10.1"
 config = "0.15.11"
+url = "2.5.4"
 
 [dev-dependencies]
 actix-test = "0.1.5"
