@@ -41,6 +41,7 @@ import {
   FileDownload,
   FileUpload,
   MB,
+  NAVIGATION_DELAY_MS,
   SESSION_CODE_KEY,
   THEME_PREFERENCE_KEY,
 } from '../../utils/constants';
@@ -777,7 +778,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       localStorage.setItem(SESSION_CODE_KEY, code);
       setTimeout(() => {
         window.location.href = `/private/${code}`;
-      }, 100);
+      }, NAVIGATION_DELAY_MS);
     }
   }
 
