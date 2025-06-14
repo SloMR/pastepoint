@@ -122,7 +122,7 @@ pastepoint/
   - Certificate checker service
   - Nginx reverse proxy
 - `scripts/generate-certs.sh`: Script to generate self-signed certificates
-- `scripts/prepare_prod.sh`: Script to update configurations for production
+- `scripts/configure-network.sh`: Script to configure the domain name for the local network (optional)
 - `nginx/nginx.conf`: Main Nginx configuration
 - `nginx/security_settings.conf`: Security and rate limiting settings
 - `nginx/security_headers.conf`: Security headers configuration
@@ -136,7 +136,7 @@ pastepoint/
 ### Prerequisites:
 
 - Docker and Docker Compose
-- Node.js (v22.4.0 as specified in `.nvmrc`)
+- Node.js (v22.14.0 as specified in `.nvmrc`)
 - Rust (stable, specified in `rust-toolchain`)
 
 #### Windows-Specific Requirements:
