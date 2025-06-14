@@ -43,3 +43,8 @@
 .dark-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #636e87;
 }
+
+/* Smooth width transition for progress bars */
+.progress-bar {
+  transition: width 0.3s ease-in-out;
+}
