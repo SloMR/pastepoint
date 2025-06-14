@@ -2,6 +2,7 @@ use actix_http::header::HeaderValue;
 use config::{Config, ConfigError, File};
 use serde::Deserialize;
 use std::env;
+use url::Url;
 
 // This function provides a default value for the log level.
 fn default_log_level() -> String {
@@ -52,10 +53,22 @@ impl ServerConfig {
     }
 
     pub fn check_origin(&self, origin: &HeaderValue) -> bool {
+        fn extract_host(input: &str) -> Option<String> {
+            Url::parse(input)
+                .or_else(|_| Url::parse(&format!("https://{}", input)))
+                .ok()
+                .and_then(|u| u.host_str().map(|s| s.to_ascii_lowercase()))
+        }
+
         if let Ok(origin_str) = origin.to_str() {
-            origin_str
-                .as_bytes()
-                .ends_with(self.cors_allowed_origins.as_bytes())
+            if let (Some(origin_host), Some(allowed_host)) = (
+                extract_host(origin_str),
+                extract_host(&self.cors_allowed_origins),
+            ) {
+                origin_host == allowed_host || origin_host.ends_with(&format!(".{}", allowed_host))
+            } else {
+                false
+            }
         } else {
             false
         }
