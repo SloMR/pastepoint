@@ -55,6 +55,7 @@ import { MigrationService } from '../../core/services/migration/migration.servic
 import { MetaService } from '../../core/services/ui/meta.service';
 import { LanguageService } from '../../core/services/ui/language.service';
 import { LanguageCode } from '../../core/i18n/translate-loader';
+import { Router } from '@angular/router';
 
 /**
  * ==========================================================
@@ -181,6 +182,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private logger: NGXLogger,
     private migrationService: MigrationService,
     private metaService: MetaService,
+    private router: Router,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
@@ -227,13 +229,20 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const sessionCode = params.get('code');
       const storedSessionCode = localStorage.getItem(SESSION_CODE_KEY);
 
-      if (sessionCode) {
-        this.SessionCode = sessionCode;
+      if (sessionCode && this.isValidSessionCode(sessionCode)) {
+        this.SessionCode = this.sanitizeSessionCode(sessionCode);
         this.metaService.updateChatMetadata(true);
-      } else if (storedSessionCode) {
-        this.SessionCode = storedSessionCode;
+      } else if (storedSessionCode && this.isValidSessionCode(storedSessionCode)) {
+        this.SessionCode = this.sanitizeSessionCode(storedSessionCode);
         this.metaService.updateChatMetadata(true);
       } else {
+        if (sessionCode && !this.isValidSessionCode(sessionCode)) {
+          this.logger.warn('ngOnInit', 'Invalid session code in URL, clearing');
+        }
+        if (storedSessionCode && !this.isValidSessionCode(storedSessionCode)) {
+          this.logger.warn('ngOnInit', 'Invalid session code in localStorage, clearing');
+          this.clearSessionCode();
+        }
         this.chatService.clearMessages();
         this.messages = [];
         this.metaService.updateChatMetadata(false);
@@ -290,7 +299,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       clearTimeout(this.emojiPickerTimeout);
     }
 
-    if (this.SessionCode) {
+    if (!this.isNavigatingIntentionally && this.SessionCode) {
       this.clearSessionCode();
     }
 
@@ -340,7 +349,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   closeConnections(): void {
     this.webrtcService.closeAllConnections();
-    this.wsConnectionService.disconnect(true);
+    this.wsConnectionService.disconnect(!this.isNavigatingIntentionally);
     this.logger.debug('closeConnections', 'All WebRTC connections closed');
   }
 
@@ -757,7 +766,28 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.logger.error('joinPrivateSession', 'Session code is required to join a session.');
       return;
     }
+
+    if (!this.isValidSessionCode(code)) {
+      this.logger.error('joinPrivateSession', 'Invalid session code format');
+      this.toaster.error(
+        this.translate.instant('INVALID_SESSION_CODE_FORMAT'),
+        this.translate.instant('ERROR')
+      );
+      return;
+    }
+
     this.openChatSession(code);
+  }
+
+  /**
+   * ==========================================================
+   * VALIDATE SESSION CODE
+   * Validates that the session code contains only allowed characters
+   * ==========================================================
+   */
+  private isValidSessionCode(code: string): boolean {
+    const sessionCodeRegex = /^[a-zA-Z0-9]+$/;
+    return sessionCodeRegex.test(code) && code.length === 10;
   }
 
   /**
@@ -767,6 +797,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   private openChatSession(code: string): void {
+    if (!this.isValidSessionCode(code)) {
+      this.logger.error('openChatSession', 'Invalid session code format, navigation aborted');
+      this.toaster.error(
+        this.translate.instant('INVALID_SESSION_CODE_FORMAT'),
+        this.translate.instant('ERROR')
+      );
+      return;
+    }
+
     if (this.SessionCode) {
       this.clearSessionCode();
       this.wsConnectionService.disconnect();
@@ -775,11 +814,24 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (isPlatformBrowser(this.platformId)) {
       this.logger.debug('openChatSession', `Opening chat session with code: ${code}`);
       this.isNavigatingIntentionally = true;
-      localStorage.setItem(SESSION_CODE_KEY, code);
+
+      const sanitizedCode = this.sanitizeSessionCode(code);
+      localStorage.setItem(SESSION_CODE_KEY, sanitizedCode);
+
       setTimeout(() => {
-        window.location.href = `/private/${code}`;
+        this.router.navigate(['/private', sanitizedCode]);
       }, NAVIGATION_DELAY_MS);
     }
+  }
+
+  /**
+   * ==========================================================
+   * SANITIZE SESSION CODE
+   * Removes any potentially dangerous characters from the session code
+   * ==========================================================
+   */
+  private sanitizeSessionCode(code: string): string {
+    return code.replace(/[^a-zA-Z0-9]/g, '');
   }
 
   /**

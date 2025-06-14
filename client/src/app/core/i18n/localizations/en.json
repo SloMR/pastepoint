@@ -56,5 +56,6 @@
   "DECLINED": "Declined",
   "ERROR": "Error",
   "SUCCESS": "Success",
-  "INFO": "Note"
+  "INFO": "Note",
+  "INVALID_SESSION_CODE_FORMAT": "Invalid session code format. Session codes can only contain letters, and numbers. The length must be 10 characters."
 }
