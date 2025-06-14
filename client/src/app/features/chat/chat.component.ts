@@ -115,6 +115,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private lastHeartbeat: number = Date.now();
   private readonly HEARTBEAT_INTERVAL_MS = 1000;
   private readonly HEARTBEAT_TIMEOUT_MS = 2000;
+  private isNavigatingIntentionally = false;
 
   appVersion: string = packageJson.version;
 
@@ -129,7 +130,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
   };
   private beforeUnloadHandler = () => {
-    this.clearSessionCode();
+    if (!this.isNavigatingIntentionally) {
+      this.clearSessionCode();
+    }
   };
 
   /**
@@ -769,8 +772,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (isPlatformBrowser(this.platformId)) {
+      this.logger.debug('openChatSession', `Opening chat session with code: ${code}`);
+      this.isNavigatingIntentionally = true;
       localStorage.setItem(SESSION_CODE_KEY, code);
-      window.open(`/private/${code}`, '_self');
+      setTimeout(() => {
+        window.location.href = `/private/${code}`;
+      }, 100);
     }
   }
 
