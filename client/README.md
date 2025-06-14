@@ -55,7 +55,7 @@ client/
 
 ### Prerequisites
 
-- **Node.js**: v22.4.0 (specified in `../.nvmrc`)
+- **Node.js**: v22.14.0 (specified in `../.nvmrc`)
 - **npm**: Latest version
 - **Angular CLI**: `npm install -g @angular/cli`
 
@@ -224,7 +224,7 @@ export const translations: Record<LanguageCode, TranslationData> = {
    # Use correct Node version
    nvm use
    # Or install the specified version
-   nvm install 22.4.0
+   nvm install 22.14.0
    ```
 
 2. **WebSocket Connection Issues**:
