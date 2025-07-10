@@ -45,10 +45,10 @@ export class MetaInitService {
 
     // Set app icons
     this.metaService.setIcons({
-      favicon: '/favicon-96x96.png',
-      faviconSvg: '/favicon.svg',
-      shortcut: '/favicon.ico',
-      apple: '/apple-touch-icon.png',
+      favicon: '/assets/favicon-96x96.png',
+      faviconSvg: '/assets/favicon.svg',
+      shortcut: '/assets/favicon.ico',
+      apple: '/assets/apple-touch-icon.png',
       manifest: '/site.webmanifest',
     });
 
