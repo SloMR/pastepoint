@@ -457,7 +457,9 @@
                       {{ transfer.file.name | slice: 0 : 15 }}
                     </span>
                     <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500">{{ transfer.progress | number:'1.0-0' }}%</span>
+                      <span class="text-xs text-secondary-500"
+                        >{{ transfer.progress | number: '1.0-0' }}%</span
+                      >
                       <button
                         (click)="
                           $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
@@ -492,7 +494,9 @@
                       {{ download.fileName | slice: 0 : 15 }}
                     </span>
                     <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500"> {{ download.progress | number:'1.0-0' }}% </span>
+                      <span class="text-xs text-secondary-500">
+                        {{ download.progress | number: '1.0-0' }}%
+                      </span>
                       <button
                         (click)="
                           $event.stopPropagation();
@@ -930,7 +934,9 @@
                       {{ transfer.file.name | slice: 0 : 15 }}
                     </span>
                     <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500">{{ transfer.progress | number:'1.0-0' }}%</span>
+                      <span class="text-xs text-secondary-500"
+                        >{{ transfer.progress | number: '1.0-0' }}%</span
+                      >
                       <button
                         (click)="
                           $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
@@ -965,7 +971,9 @@
                       {{ download.fileName | slice: 0 : 15 }}
                     </span>
                     <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500"> {{ download.progress | number:'1.0-0' }}% </span>
+                      <span class="text-xs text-secondary-500">
+                        {{ download.progress | number: '1.0-0' }}%
+                      </span>
                       <button
                         (click)="
                           $event.stopPropagation();
