@@ -72,19 +72,13 @@ export class WebRTCSignalingService {
         })
         .catch((error: unknown) => {
           this.logger.error('initiateConnection', `Offer creation failed: ${error}`);
-          this.toaster.error(
-            this.translate.instant('CONNECTION_LOST'),
-            this.translate.instant('ERROR')
-          );
+          this.toaster.error(this.translate.instant('CONNECTION_LOST'));
           this.reconnect(targetUser);
         })
         .finally(() => this.connectionLocks.delete(targetUser));
     } catch (error) {
       this.logger.error('initiateConnection', `Connection initiation failed: ${error}`);
-      this.toaster.error(
-        this.translate.instant('CONNECTION_LOST'),
-        this.translate.instant('ERROR')
-      );
+      this.toaster.error(this.translate.instant('CONNECTION_LOST'));
       this.connectionLocks.delete(targetUser);
     }
   }
@@ -273,10 +267,7 @@ export class WebRTCSignalingService {
         'handleDisconnection',
         `Max reconnection attempts reached for ${targetUser}. Could not reconnect.`
       );
-      this.toaster.warning(
-        this.translate.instant('CONNECTION_LOST'),
-        this.translate.instant('CONNECTION_LOST_DESC')
-      );
+      this.toaster.warning(this.translate.instant('CONNECTION_LOST_DESC'));
       this.closePeerConnection(targetUser, true);
     }
   }

@@ -86,10 +86,7 @@ export class WebSocketConnectionService implements OnDestroy {
         this.logger.info('pageShow', 'Page restored from bfcache, reconnecting WebSocket');
         this.connect(this.sessionCode).catch((err: unknown) => {
           this.logger.error('pageShow', `Failed to reconnect after bfcache: ${err}`);
-          this.toaster.error(
-            this.translate.instant('SESSION_RECONNECT_FAILED'),
-            this.translate.instant('ERROR')
-          );
+          this.toaster.error(this.translate.instant('SESSION_RECONNECT_FAILED'));
         });
       }
     };
@@ -214,10 +211,7 @@ export class WebSocketConnectionService implements OnDestroy {
               'connect',
               `WebSocket closed with code ${event.code}. Navigating to 404 after max reconnect attempts.`
             );
-            this.toaster.error(
-              this.translate.instant('SESSION_RECONNECT_FAILED'),
-              this.translate.instant('ERROR')
-            );
+            this.toaster.error(this.translate.instant('SESSION_RECONNECT_FAILED'));
             this.router.navigate(['/404']);
           }
         } else {
@@ -262,10 +256,7 @@ export class WebSocketConnectionService implements OnDestroy {
 
           if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             this.logger.warn('scheduleReconnect', 'Maximum reconnect attempts reached');
-            this.toaster.error(
-              this.translate.instant('SESSION_RECONNECT_FAILED'),
-              this.translate.instant('ERROR')
-            );
+            this.toaster.error(this.translate.instant('SESSION_RECONNECT_FAILED'));
             this.router.navigate(['/404']);
           }
         });

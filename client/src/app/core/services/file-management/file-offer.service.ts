@@ -113,9 +113,6 @@ export class FileOfferService extends FileTransferBaseService {
       },
     };
     this.sendData(message, fromUser);
-    this.toaster.info(
-      this.translate.instant('FILE_TRANSFER_DECLINED'),
-      this.translate.instant('DECLINED')
-    );
+    this.toaster.info(this.translate.instant('FILE_TRANSFER_DECLINED'));
   }
 }

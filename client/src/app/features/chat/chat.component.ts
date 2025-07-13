@@ -382,10 +382,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       // Detect suspension
       if (diff > this.HEARTBEAT_TIMEOUT_MS) {
         this.logger.warn('Heartbeat', `Suspension detected: last beat was ${diff}ms ago.`);
-        this.toaster.warning(
-          this.translate.instant('CONNECTION_LOST'),
-          this.translate.instant('AUTO_REFRESH_NOTICE')
-        );
+        this.toaster.warning(this.translate.instant('AUTO_REFRESH_NOTICE'));
 
         // Force page refresh to completely reset the app state if needed
         if (isPlatformBrowser(this.platformId)) {
@@ -605,6 +602,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   async sendMessage(messageForm: NgForm): Promise<void> {
     if (this.message.trim()) {
+      const otherMembers = this.members.filter((m) => m !== this.userService.user);
+      if (otherMembers.length === 0) {
+        this.toaster.warning(this.translate.instant('NO_MEMBERS_TO_SEND_MESSAGE'));
+        return;
+      }
+
       this.ngZone.run(() => {
         const tempMessage: ChatMessage = {
           from: this.userService.user,
@@ -615,7 +618,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.cdr.detectChanges();
       });
 
-      const otherMembers = this.members.filter((m) => m !== this.userService.user);
       otherMembers.forEach(async (member) => {
         await this.chatService.sendMessage(this.message, member);
       });
@@ -793,10 +795,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       },
       error: (err) => {
         this.logger.error('createPrivateSession', 'Failed to create new session code:', err);
-        this.toaster.error(
-          this.translate.instant('SESSION_CREATION_FAILED'),
-          this.translate.instant('ERROR')
-        );
+        this.toaster.error(this.translate.instant('SESSION_CREATION_FAILED'));
       },
     });
   }
@@ -820,10 +819,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (!this.isValidSessionCode(code)) {
       this.logger.error('joinPrivateSession', 'Invalid session code format');
-      this.toaster.error(
-        this.translate.instant('INVALID_SESSION_CODE_FORMAT'),
-        this.translate.instant('ERROR')
-      );
+      this.toaster.error(this.translate.instant('INVALID_SESSION_CODE_FORMAT'));
       return;
     }
 
@@ -862,10 +858,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private openChatSession(code: string): void {
     if (!this.isValidSessionCode(code)) {
       this.logger.error('openChatSession', 'Invalid session code format, navigation aborted');
-      this.toaster.error(
-        this.translate.instant('INVALID_SESSION_CODE_FORMAT'),
-        this.translate.instant('ERROR')
-      );
+      this.toaster.error(this.translate.instant('INVALID_SESSION_CODE_FORMAT'));
       return;
     }
 
@@ -916,10 +909,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       () => this.toaster.success(this.translate.instant('COPY_SESSION_SUCCESS')),
       (err) => {
         this.logger.error('copySessionCode', 'Failed to copy session code:', err);
-        this.toaster.error(
-          this.translate.instant('COPY_SESSION_FAILED'),
-          this.translate.instant('ERROR')
-        );
+        this.toaster.error(this.translate.instant('COPY_SESSION_FAILED'));
       }
     );
   }
@@ -1110,6 +1100,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   protected async handleDrop(event: DragEvent): Promise<void> {
     event.preventDefault();
+    const otherMembers = this.members.filter((m) => m !== this.userService.user);
+
+    if (otherMembers.length === 0) {
+      this.toaster.info(this.translate.instant('NO_USERS_FOR_UPLOAD'));
+      return;
+    }
+
     this.ngZone.run(() => {
       this.isDragging = false;
       this.cdr.detectChanges();
@@ -1119,14 +1116,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     const files = Array.from(event.dataTransfer.files);
     if (files.length === 0) return;
 
-    const otherMembers = this.members.filter((m) => m !== this.userService.user);
-    if (otherMembers.length === 0) {
-      this.toaster.info(
-        this.translate.instant('NO_USERS_FOR_UPLOAD'),
-        this.translate.instant('INFO')
-      );
-      return;
-    }
     // First prepare all files for all members
     for (const fileToSend of files) {
       for (const member of otherMembers) {

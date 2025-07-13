@@ -242,10 +242,7 @@ export class FileUploadService extends FileTransferBaseService {
 
     if (allResponded && allStatuses.length > 0) {
       this.logger.info('checkAllUsersResponded', 'All files have been completed/declined.');
-      this.toaster.success(
-        this.translate.instant('ALL_FILES_RESPONDED'),
-        this.translate.instant('SUCCESS')
-      );
+      this.toaster.success(this.translate.instant('ALL_FILES_RESPONDED'));
       await this.clearFileTransfers();
       await this.updateActiveUploads();
     }

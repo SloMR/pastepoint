@@ -134,10 +134,7 @@ export class FileDownloadService extends FileTransferBaseService {
     await this.updateIncomingFileOffers();
     await this.updateActiveDownloads();
 
-    this.toaster.info(
-      this.translate.instant('FILE_UPLOAD_CANCELLED'),
-      this.translate.instant('CANCELLED')
-    );
+    this.toaster.info(this.translate.instant('FILE_UPLOAD_CANCELLED'));
   }
 
   /**
@@ -160,9 +157,6 @@ export class FileDownloadService extends FileTransferBaseService {
     await this.updateIncomingFileOffers();
     await this.updateActiveDownloads();
 
-    this.toaster.info(
-      this.translate.instant('FILE_DOWNLOAD_CANCELLED'),
-      this.translate.instant('CANCELLED')
-    );
+    this.toaster.info(this.translate.instant('FILE_DOWNLOAD_CANCELLED'));
   }
 }
