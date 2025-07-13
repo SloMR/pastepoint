@@ -4,14 +4,16 @@
 -->
 <div
   [attr.dir]="isRTL ? 'rtl' : 'ltr'"
-  class="flex h-screen flex-col bg-[#F9FAFB] dark:bg-baseDark"
+  class="flex h-screen flex-col bg-pageBackground dark:bg-baseDark"
 >
   <!--
     ========== HEADER SECTION ==========
     Same style as your Chat header,
     including theme toggler & language switch.
   -->
-  <header class="border-b bg-[#F9FAFB] dark:border-secondDark dark:bg-baseDark border-[#EAECF0]">
+  <header
+    class="border-b bg-pageBackground border-borderLight dark:border-surfaceDark dark:bg-baseDark"
+  >
     <div class="mx-auto max-w-7xl pr-4 pl-16 sm:px-6 lg:px-8">
       <div class="flex h-20 items-center justify-between">
         <!--
@@ -37,7 +39,7 @@
           <!-- theme toggler -->
           <div
             (click)="toggleTheme()"
-            class="cursor-pointer text-black dark:bg-secondDark flex items-center gap-4 md:w-[56px] md:h-[56px] w-[44px] h-[44px] justify-center border border-[#e3e5e8] dark:border-[#374151] rounded-lg"
+            class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-black w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
           >
             <button
               [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
@@ -54,7 +56,7 @@
           <!-- language switcher -->
           <div
             (click)="switchLanguage(translate.currentLang === 'ar' ? 'en' : 'ar')"
-            class="cursor-pointer text-first dark:bg-secondDark flex items-center gap-4 md:w-[56px] md:h-[56px] w-[44px] h-[44px] justify-center border border-[#e3e5e8] dark:border-[#374151] rounded-lg"
+            class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-brand w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
           >
             {{ translate.currentLang | uppercase }}
           </div>
@@ -67,7 +69,7 @@
     ========== MAIN CONTENT AREA ==========
     Where we display the 404 message
   -->
-  <main class="flex flex-1 items-center justify-center bg-[#F9FAFB] dark:bg-baseDark">
+  <main class="flex flex-1 items-center justify-center bg-pageBackground dark:bg-baseDark">
     <div class="mx-auto max-w-md p-4 text-center">
       <img
         [src]="isDarkMode ? '/icons/404-dark.svg' : '/icons/404-light.svg'"
@@ -81,7 +83,7 @@
         <!-- Exclamation circle -->
         <div
           class="flex items-center justify-center rounded-md w-[28px] h-[28px]"
-          [ngClass]="isDarkMode ? 'bg-first' : 'bg-firstDark'"
+          [ngClass]="isDarkMode ? 'bg-brand' : 'bg-brandDark'"
         >
           <img
             [src]="isDarkMode ? '/icons/warning-dark.svg' : '/icons/warning-light.svg'"
@@ -95,7 +97,7 @@
       </p>
       <div class="flex w-full items-center justify-center">
         <button
-          class="flex items-center justify-center gap-2 rounded-md px-4 py-2 text-white font-expoArabicMedium bg-first hover:bg-first/80 dark:bg-firstDark dark:hover:bg-firstDark/80"
+          class="flex items-center justify-center gap-2 rounded-md px-4 py-2 text-white font-expoArabicMedium bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
           routerLink="/"
         >
           <img
@@ -111,9 +113,9 @@
 
   <!-- Footer -->
   <div
-    class="bg-white dark:bg-baseDark hidden md:flex h-[58px] text-center justify-between w-full items-center px-8 border-t dark:border-secondDark border-[#EAECF0]"
+    class="hidden w-full items-center justify-between border-t bg-white px-8 text-center h-[58px] border-borderLight dark:bg-baseDark dark:border-surfaceDark md:flex"
   >
-    <p class="text-xs font-expoArabicMedium text-brownBlack dark:text-[#9CA3AF]">
+    <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
       {{ 'COPYRIGHT_NOTICE' | translate }}
     </p>
     <div class="flex items-center gap-2">
@@ -123,9 +125,9 @@
           href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 text-first hover:underline dark:text-firstDark"
+          class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
         >
-          <p class="text-xs font-expoArabicMedium text-first">LinkedIn</p>
+          <p class="text-xs font-expoArabicMedium text-brand">LinkedIn</p>
           <img src="/icons/linkedin.svg" alt="User" class="h-4 w-4" />
         </a>
       </div>
@@ -135,14 +137,14 @@
           href="https://github.com/SloMR/pastepoint"
           target="_blank"
           rel="noopener noreferrer nofollow"
-          class="inline-flex items-center gap-2 text-first hover:underline dark:text-firstDark"
+          class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
         >
-          <p class="text-xs font-expoArabicMedium text-first">GitHub</p>
+          <p class="text-xs font-expoArabicMedium text-brand">GitHub</p>
           <img src="/icons/github.svg" alt="User" class="h-4 w-4" />
         </a>
       </div>
     </div>
-    <p class="text-xs font-expoArabicMedium text-brownBlack dark:text-[#9CA3AF]">
+    <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
       {{ 'VERSION' | translate }} {{ appVersion }}
     </p>
   </div>
