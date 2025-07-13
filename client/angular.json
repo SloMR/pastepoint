@@ -129,14 +129,16 @@
               "ssl": true,
               "sslKey": "../certs/key.pem",
               "sslCert": "../certs/cert.pem",
-              "port": 443
+              "port": 443,
+              "hmr": false
             },
             "docker": {
               "buildTarget": "client:build:docker",
               "ssl": true,
               "sslKey": "/etc/ssl/pastepoint/key.pem",
               "sslCert": "/etc/ssl/pastepoint/cert.pem",
-              "port": 443
+              "port": 443,
+              "hmr": false
             },
             "docker-dev": {
               "buildTarget": "client:build:docker-dev",
