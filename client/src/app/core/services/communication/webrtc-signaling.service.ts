@@ -11,10 +11,10 @@ import {
   SignalMessageType,
   SignalMessage,
 } from '../../../utils/constants';
-import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { WebRTCCommunicationService } from './webrtc-communication.service';
+import { HotToastService } from '@ngneat/hot-toast';
 
 @Injectable({
   providedIn: 'root',
@@ -30,7 +30,7 @@ export class WebRTCSignalingService {
   constructor(
     private wsService: WebSocketConnectionService,
     private userService: UserService,
-    private toaster: ToastrService,
+    private toaster: HotToastService,
     @Inject(TranslateService) private translate: TranslateService,
     private logger: NGXLogger,
     private communicationService: WebRTCCommunicationService

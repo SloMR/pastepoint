@@ -47,15 +47,3 @@ html {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
-
-.toast-container.toast-bottom-center .ngx-toastr {
-  font-size: 0.83rem !important;
-  margin: 0 auto !important;
-}
-
-.toast-container .ngx-toastr.toast-success,
-.toast-container .ngx-toastr.toast-error,
-.toast-container .ngx-toastr.toast-info,
-.toast-container .ngx-toastr.toast-warning {
-  background-size: 20px 20px !important;
-}

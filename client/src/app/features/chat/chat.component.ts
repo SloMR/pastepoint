@@ -48,7 +48,6 @@ import {
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session/session.service';
-import { ToastrService } from 'ngx-toastr';
 import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
 import { MigrationService } from '../../core/services/migration/migration.service';
@@ -56,6 +55,7 @@ import { MetaService } from '../../core/services/ui/meta.service';
 import { LanguageService } from '../../core/services/ui/language.service';
 import { LanguageCode } from '../../core/i18n/translate-loader';
 import { Router } from '@angular/router';
+import { HotToastService } from '@ngneat/hot-toast';
 
 /**
  * ==========================================================
@@ -179,7 +179,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private languageService: LanguageService,
     private cdr: ChangeDetectorRef,
     private ngZone: NgZone,
-    private toaster: ToastrService,
+    private toaster: HotToastService,
     private flowbiteService: FlowbiteService,
     @Inject(TranslateService) protected translate: TranslateService,
     private sessionService: SessionService,

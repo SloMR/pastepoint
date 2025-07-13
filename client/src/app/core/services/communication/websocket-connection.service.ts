@@ -4,9 +4,9 @@ import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
 import { NGXLogger } from 'ngx-logger';
 import { isPlatformBrowser } from '@angular/common';
-import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
 import { SESSION_CODE_KEY } from '../../../utils/constants';
+import { HotToastService } from '@ngneat/hot-toast';
 @Injectable({
   providedIn: 'root',
 })
@@ -52,7 +52,7 @@ export class WebSocketConnectionService implements OnDestroy {
   constructor(
     private router: Router,
     private logger: NGXLogger,
-    private toaster: ToastrService,
+    private toaster: HotToastService,
     @Inject(TranslateService) private translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {

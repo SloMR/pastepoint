@@ -8,9 +8,9 @@ import {
 } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { WebRTCService } from '../communication/webrtc.service';
-import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
+import { HotToastService } from '@ngneat/hot-toast';
 
 @Injectable({
   providedIn: 'root',
@@ -24,7 +24,7 @@ export class FileUploadService extends FileTransferBaseService {
   // =============== Constructor ===============
   constructor(
     webrtcService: WebRTCService,
-    toaster: ToastrService,
+    toaster: HotToastService,
     translate: TranslateService,
     logger: NGXLogger
   ) {
@@ -98,7 +98,7 @@ export class FileUploadService extends FileTransferBaseService {
     const fileTransfer = userMap.get(fileId);
     if (!fileTransfer) {
       this.logger.error('startSendingFile', `No fileId=${fileId} for ${targetUser}`);
-      this.toaster.error(this.translate.instant('NO_FILE_TO_SEND'), 'Error');
+      this.toaster.error(this.translate.instant('NO_FILE_TO_SEND'));
       return;
     }
     this.logger.info('startSendingFile', `Starting to send fileId=${fileId} to ${targetUser}`);
@@ -209,7 +209,7 @@ export class FileUploadService extends FileTransferBaseService {
     const fileTransfer = userMap.get(fileId);
     if (!fileTransfer) {
       this.logger.error('sendFileOffer', `No file with id=${fileId} to send to ${targetUser}`);
-      this.toaster.error(this.translate.instant('NO_FILE_TO_SEND'), 'Error');
+      this.toaster.error(this.translate.instant('NO_FILE_TO_SEND'));
       return;
     }
 
