@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { WebRTCService } from '../communication/webrtc.service';
 import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
@@ -36,7 +36,7 @@ export class FileTransferBaseService {
   constructor(
     protected webrtcService: WebRTCService,
     protected toaster: ToastrService,
-    public translate: TranslateService,
+    @Inject(TranslateService) protected translate: TranslateService,
     protected logger: NGXLogger
   ) {}
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { UserService } from '../user-management/user.service';
 import {
@@ -31,7 +31,7 @@ export class WebRTCSignalingService {
     private wsService: WebSocketConnectionService,
     private userService: UserService,
     private toaster: ToastrService,
-    public translate: TranslateService,
+    @Inject(TranslateService) private translate: TranslateService,
     private logger: NGXLogger,
     private communicationService: WebRTCCommunicationService
   ) {

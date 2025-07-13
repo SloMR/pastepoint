@@ -53,7 +53,7 @@ export class WebSocketConnectionService implements OnDestroy {
     private router: Router,
     private logger: NGXLogger,
     private toaster: ToastrService,
-    public translate: TranslateService,
+    @Inject(TranslateService) private translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {
     if (isPlatformBrowser(this.platformId)) {

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { WebSocketConnectionService } from '../communication/websocket-connection.service';
 import { NGXLogger } from 'ngx-logger';
@@ -26,7 +26,8 @@ export class RoomService implements IRoomService {
    */
   constructor(
     private wsService: WebSocketConnectionService,
-    private logger: NGXLogger
+    private logger: NGXLogger,
+    private ngZone: NgZone
   ) {
     this.wsService.systemMessages$.subscribe((message) => {
       this.handleSystemMessage(message);
@@ -64,7 +65,9 @@ export class RoomService implements IRoomService {
       const matchRooms = message.match(/\[SystemRooms]\s*(.*?)$/);
       if (matchRooms) {
         const rooms = matchRooms[1].split(',').map((room: string) => room.trim());
-        this.rooms$.next(rooms);
+        this.ngZone.run(() => {
+          this.rooms$.next(rooms);
+        });
       } else {
         this.logger.warn('handleSystemMessage', `No rooms found in message: ${message}`);
       }
@@ -72,7 +75,9 @@ export class RoomService implements IRoomService {
       const matchMembers = message.match(/\[SystemMembers]\s*(.*?)$/);
       if (matchMembers) {
         const members = matchMembers[1].split(',').map((member: string) => member.trim());
-        this.members$.next(members);
+        this.ngZone.run(() => {
+          this.members$.next(members);
+        });
       } else {
         this.logger.warn('handleSystemMessage', `No members found in message: ${message}`);
       }
@@ -80,7 +85,9 @@ export class RoomService implements IRoomService {
       const matchJoin = message.match(/^(.*?)\s*\[SystemJoin]\s*(.*?)$/);
       if (matchJoin) {
         this.logger.info('handleSystemMessage', `User joined room ${matchJoin[2]}`);
-        this.currentRoom = matchJoin[2];
+        this.ngZone.run(() => {
+          this.currentRoom = matchJoin[2];
+        });
       } else {
         this.logger.warn('handleSystemMessage', `No room to join found in message: ${message}`);
       }

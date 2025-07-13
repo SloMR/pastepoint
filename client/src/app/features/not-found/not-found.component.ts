@@ -24,7 +24,7 @@ export class NotFoundComponent implements OnInit {
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: object,
-    protected translate: TranslateService,
+    @Inject(TranslateService) protected translate: TranslateService,
     private cdr: ChangeDetectorRef,
     private themeService: ThemeService,
     private languageService: LanguageService,

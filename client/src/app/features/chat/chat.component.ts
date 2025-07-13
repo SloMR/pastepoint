@@ -1,5 +1,6 @@
 import {
   AfterViewInit,
+  ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   CUSTOM_ELEMENTS_SCHEMA,
@@ -21,7 +22,6 @@ import {
   NgIf,
   NgOptimizedImage,
   NgStyle,
-  SlicePipe,
   UpperCasePipe,
 } from '@angular/common';
 
@@ -71,7 +71,6 @@ import { Router } from '@angular/router';
     FormsModule,
     UpperCasePipe,
     DatePipe,
-    SlicePipe,
     DecimalPipe,
     PickerComponent,
     TranslateModule,
@@ -83,6 +82,7 @@ import { Router } from '@angular/router';
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css'],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   /**
@@ -176,7 +176,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngZone: NgZone,
     private toaster: ToastrService,
     private flowbiteService: FlowbiteService,
-    public translate: TranslateService,
+    @Inject(TranslateService) protected translate: TranslateService,
     private sessionService: SessionService,
     private route: ActivatedRoute,
     private logger: NGXLogger,
@@ -226,35 +226,40 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Check if route has a session code in URL but don't connect yet
     this.route.paramMap.subscribe((params) => {
-      const sessionCode = params.get('code');
-      const storedSessionCode = localStorage.getItem(SESSION_CODE_KEY);
+      this.ngZone.run(() => {
+        const sessionCode = params.get('code');
+        const storedSessionCode = localStorage.getItem(SESSION_CODE_KEY);
 
-      if (sessionCode && this.isValidSessionCode(sessionCode)) {
-        this.SessionCode = this.sanitizeSessionCode(sessionCode);
-        this.metaService.updateChatMetadata(true);
-      } else if (storedSessionCode && this.isValidSessionCode(storedSessionCode)) {
-        this.SessionCode = this.sanitizeSessionCode(storedSessionCode);
-        this.metaService.updateChatMetadata(true);
-      } else {
-        if (sessionCode && !this.isValidSessionCode(sessionCode)) {
-          this.logger.warn('ngOnInit', 'Invalid session code in URL, clearing');
+        if (sessionCode && this.isValidSessionCode(sessionCode)) {
+          this.SessionCode = this.sanitizeSessionCode(sessionCode);
+          this.metaService.updateChatMetadata(true);
+        } else if (storedSessionCode && this.isValidSessionCode(storedSessionCode)) {
+          this.SessionCode = this.sanitizeSessionCode(storedSessionCode);
+          this.metaService.updateChatMetadata(true);
+        } else {
+          if (sessionCode && !this.isValidSessionCode(sessionCode)) {
+            this.logger.warn('ngOnInit', 'Invalid session code in URL, clearing');
+          }
+          if (storedSessionCode && !this.isValidSessionCode(storedSessionCode)) {
+            this.logger.warn('ngOnInit', 'Invalid session code in localStorage, clearing');
+            this.clearSessionCode();
+          }
+          this.chatService.clearMessages();
+          this.messages = [];
+          this.metaService.updateChatMetadata(false);
         }
-        if (storedSessionCode && !this.isValidSessionCode(storedSessionCode)) {
-          this.logger.warn('ngOnInit', 'Invalid session code in localStorage, clearing');
-          this.clearSessionCode();
-        }
-        this.chatService.clearMessages();
-        this.messages = [];
-        this.metaService.updateChatMetadata(false);
-      }
+        this.cdr.detectChanges();
+      });
     });
 
     // Listen to changes in the user's name
     this.subscriptions.push(
       this.userService.user$.subscribe((username: unknown) => {
         if (username) {
-          this.logger.info('ngOnInit', `Username is set to: ${username}`);
-          this.initializeChat();
+          this.ngZone.run(() => {
+            this.logger.info('ngOnInit', `Username is set to: ${username}`);
+            this.initializeChat();
+          });
         }
       })
     );
@@ -394,10 +399,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   switchLanguage(language: string) {
-    const languageCode = language as LanguageCode;
-    this.languageService.setLanguagePreference(languageCode);
-    this.currentLanguage = languageCode;
-    this.cdr.detectChanges();
+    this.ngZone.run(() => {
+      const languageCode = language as LanguageCode;
+      this.languageService.setLanguagePreference(languageCode);
+      this.currentLanguage = languageCode;
+      this.cdr.detectChanges();
+    });
   }
 
   /**
@@ -425,27 +432,33 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     // Listen for new messages
     this.subscriptions.push(
       this.chatService.messages$.subscribe((messages: ChatMessage[]) => {
-        this.messages = [...messages];
-        this.cdr.detectChanges();
-        this.scrollToBottom();
+        this.ngZone.run(() => {
+          this.messages = [...messages];
+          this.cdr.detectChanges();
+          this.scrollToBottom();
+        });
       })
     );
 
     // Listen for available rooms
     this.subscriptions.push(
       this.roomService.rooms$.subscribe((rooms: string[]) => {
-        this.rooms = rooms;
-        this.cdr.detectChanges();
+        this.ngZone.run(() => {
+          this.rooms = rooms;
+          this.cdr.detectChanges();
+        });
       })
     );
 
     // Listen for current members in the room
     this.subscriptions.push(
       this.roomService.members$.subscribe((allMembers: string[]) => {
-        // Filter out the local user's own name
-        this.members = allMembers.filter((m) => m !== this.userService.user);
-        this.cdr.detectChanges();
-        this.initiateConnectionsWithMembers();
+        this.ngZone.run(() => {
+          // Filter out the local user's own name
+          this.members = allMembers.filter((m) => m !== this.userService.user);
+          this.cdr.detectChanges();
+          this.initiateConnectionsWithMembers();
+        });
       })
     );
 
@@ -518,10 +531,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   toggleTheme(): void {
-    this.isDarkMode = !this.isDarkMode;
-    this.themeService.setThemePreference(this.isDarkMode);
-    this.applyTheme(this.isDarkMode);
-    this.cdr.detectChanges();
+    this.ngZone.run(() => {
+      this.isDarkMode = !this.isDarkMode;
+      this.themeService.setThemePreference(this.isDarkMode);
+      this.applyTheme(this.isDarkMode);
+      this.cdr.detectChanges();
+    });
   }
 
   /**
@@ -583,21 +598,27 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   async sendMessage(messageForm: NgForm): Promise<void> {
     if (this.message.trim()) {
-      const tempMessage: ChatMessage = {
-        from: this.userService.user,
-        text: this.message,
-        timestamp: new Date(),
-      };
-      this.messages = [...this.messages, tempMessage];
+      this.ngZone.run(() => {
+        const tempMessage: ChatMessage = {
+          from: this.userService.user,
+          text: this.message,
+          timestamp: new Date(),
+        };
+        this.messages = [...this.messages, tempMessage];
+        this.cdr.detectChanges();
+      });
 
       const otherMembers = this.members.filter((m) => m !== this.userService.user);
       otherMembers.forEach(async (member) => {
         await this.chatService.sendMessage(this.message, member);
       });
 
-      this.message = '';
-      messageForm.resetForm({ message: '' });
-      this.scrollToBottom();
+      this.ngZone.run(() => {
+        this.message = '';
+        messageForm.resetForm({ message: '' });
+        this.cdr.detectChanges();
+        this.scrollToBottom();
+      });
     } else {
       this.toaster.warning(this.translate.instant('MESSAGE_REQUIRED'));
     }
@@ -707,9 +728,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   joinRoom(room: string): void {
     if (room !== this.currentRoom) {
-      this.roomService.joinRoom(room);
-      this.currentRoom = room;
-      this.isMenuOpen = false;
+      this.ngZone.run(() => {
+        this.roomService.joinRoom(room);
+        this.currentRoom = room;
+        this.isMenuOpen = false;
+        this.cdr.detectChanges();
+      });
     } else {
       this.toaster.warning(this.translate.instant('ALREADY_IN_ROOM'));
     }
@@ -724,7 +748,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   createRoom(): void {
     if (this.newRoomName.trim() && this.newRoomName !== this.currentRoom) {
       this.joinRoom(this.newRoomName.trim());
-      this.newRoomName = '';
+      this.ngZone.run(() => {
+        this.newRoomName = '';
+        this.cdr.detectChanges();
+      });
     } else {
       this.toaster.warning(this.translate.instant('ENTER_VALID_ROOM'));
     }
@@ -739,9 +766,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   createPrivateSession(): void {
     this.sessionService.createNewSessionCode().subscribe({
       next: (res) => {
-        this.showSessionInfo = true;
-        const code = res.code;
-        this.openChatSession(code);
+        this.ngZone.run(() => {
+          this.showSessionInfo = true;
+          const code = res.code;
+          this.openChatSession(code);
+          this.cdr.detectChanges();
+        });
       },
       error: (err) => {
         this.logger.error('createPrivateSession', 'Failed to create new session code:', err);
@@ -761,7 +791,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   joinPrivateSession(): void {
     const code = this.newSessionCode.trim();
-    this.showSessionInfo = true;
+    this.ngZone.run(() => {
+      this.showSessionInfo = true;
+      this.cdr.detectChanges();
+    });
     if (!code) {
       this.logger.error('joinPrivateSession', 'Session code is required to join a session.');
       return;
@@ -813,7 +846,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     if (isPlatformBrowser(this.platformId)) {
       this.logger.debug('openChatSession', `Opening chat session with code: ${code}`);
-      this.isNavigatingIntentionally = true;
+      this.ngZone.run(() => {
+        this.isNavigatingIntentionally = true;
+        this.cdr.detectChanges();
+      });
 
       const sanitizedCode = this.sanitizeSessionCode(code);
       localStorage.setItem(SESSION_CODE_KEY, sanitizedCode);
@@ -947,7 +983,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   protected handleEmojiIconMouseLeave(): void {
     setTimeout(() => {
       if (!this.isHoveringOverPicker) {
-        this.isEmojiPickerVisible = false;
+        this.ngZone.run(() => {
+          this.isEmojiPickerVisible = false;
+          this.cdr.detectChanges();
+        });
       }
     }, 150);
   }
@@ -960,13 +999,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   protected addEmoji(event: { emoji: { native: string } }): void {
     if (event.emoji.native) {
-      this.message += event.emoji.native;
-      this.isEmojiPickerVisible = false;
-      this.emojiPickerTimeout = setTimeout(() => {
-        if (this.messageInput?.nativeElement) {
-          this.messageInput.nativeElement.focus();
-        }
-      }, 100);
+      this.ngZone.run(() => {
+        this.message += event.emoji.native;
+        this.isEmojiPickerVisible = false;
+        this.cdr.detectChanges();
+        this.emojiPickerTimeout = setTimeout(() => {
+          if (this.messageInput?.nativeElement) {
+            this.messageInput.nativeElement.focus();
+          }
+        }, 100);
+      });
     }
   }
 
@@ -977,7 +1019,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   dismissSessionInfo(): void {
-    this.showSessionInfo = false;
+    this.ngZone.run(() => {
+      this.showSessionInfo = false;
+      this.cdr.detectChanges();
+    });
   }
 
   /**
@@ -988,7 +1033,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   protected handleDragEnter(): void {
     if (!this.isDragging) {
-      this.isDragging = true;
+      this.ngZone.run(() => {
+        this.isDragging = true;
+        this.cdr.detectChanges();
+      });
     }
   }
 
@@ -1004,7 +1052,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     const y = event.clientY;
 
     if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
-      this.isDragging = false;
+      this.ngZone.run(() => {
+        this.isDragging = false;
+        this.cdr.detectChanges();
+      });
     }
   }
 
@@ -1029,7 +1080,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   protected async handleDrop(event: DragEvent): Promise<void> {
     event.preventDefault();
-    this.isDragging = false;
+    this.ngZone.run(() => {
+      this.isDragging = false;
+      this.cdr.detectChanges();
+    });
     if (!event.dataTransfer?.files) return;
 
     const files = Array.from(event.dataTransfer.files);
