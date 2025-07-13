@@ -388,7 +388,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         if (isPlatformBrowser(this.platformId)) {
           setTimeout(() => {
             window.location.reload();
-          }, 1000);
+          }, 2000);
         }
       }
     }, this.HEARTBEAT_INTERVAL_MS);
@@ -586,6 +586,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.logger.info('connect', `Connected to session: ${code ?? 'No code provided'}`);
         this.roomService.listRooms();
         this.chatService.getUsername();
+        if (code) {
+          this.toaster.success(this.translate.instant('CONNECTED_TO_PRIVATE_SESSION'));
+        }
       })
       .catch((error: unknown) => {
         this.logger.error('connect', `WebSocket connection failed: ${error}`);
@@ -683,7 +686,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
                   `Sent ${filesToSend.length} files to ${member}`
                 );
               } else {
-                this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
+                this.logger.warn('sendAttachments', `Data channel not open for ${member}`);
               }
               resolve();
             };
@@ -751,10 +754,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.roomService.joinRoom(room);
         this.currentRoom = room;
         this.isMenuOpen = false;
+        this.toaster.success(this.translate.instant('ROOM_JOINED_SUCCESS', { roomName: room }));
         this.cdr.detectChanges();
       });
     } else {
-      this.toaster.warning(this.translate.instant('ALREADY_IN_ROOM'));
+      this.logger.debug('joinRoom', `User already in room: ${room}`);
     }
   }
 
@@ -835,6 +839,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   endSession(): void {
     this.clearSessionCode();
     this.wsConnectionService.disconnect();
+    this.toaster.success(this.translate.instant('SESSION_ENDED_SUCCESS'));
     this.router.navigate([`/`]);
   }
 
@@ -1135,7 +1140,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
               await this.fileTransferService.sendAllFileOffers(member);
               this.logger.debug('sendAttachments', `Sent ${files.length} files to ${member}`);
             } else {
-              this.toaster.warning(this.translate.instant('DATA_CHANNEL_CLOSED'));
+              this.logger.warn('handleDrop', `Data channel not open for ${member}`);
             }
             resolve();
           };

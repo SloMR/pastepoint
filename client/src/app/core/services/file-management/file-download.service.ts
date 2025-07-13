@@ -77,6 +77,8 @@ export class FileDownloadService extends FileTransferBaseService {
       anchor.click();
       document.body.removeChild(anchor);
 
+      this.toaster.success(this.translate.instant('FILE_DOWNLOAD_COMPLETED', { fileName }));
+
       userMap.delete(fileId);
       if (userMap.size === 0) {
         await this.deleteIncomingFileTransfers(fromUser);

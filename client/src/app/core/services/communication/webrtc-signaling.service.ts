@@ -257,6 +257,10 @@ export class WebRTCSignalingService {
         } seconds...`
       );
 
+      if (attempts === 0) {
+        this.toaster.info(this.translate.instant('RECONNECTING_TO_USER', { userName: targetUser }));
+      }
+
       setTimeout(() => {
         if (!this.peerConnections.has(targetUser)) {
           this.reconnect(targetUser);
@@ -267,7 +271,9 @@ export class WebRTCSignalingService {
         'handleDisconnection',
         `Max reconnection attempts reached for ${targetUser}. Could not reconnect.`
       );
-      this.toaster.warning(this.translate.instant('CONNECTION_LOST_DESC'));
+      this.toaster.error(
+        this.translate.instant('CANNOT_CONNECT_TO_USER', { userName: targetUser })
+      );
       this.closePeerConnection(targetUser, true);
     }
   }
@@ -328,6 +334,9 @@ export class WebRTCSignalingService {
       })
       .catch((error) => {
         this.logger.error('handleOffer', `Error handling offer: ${error}`);
+        this.toaster.warning(
+          this.translate.instant('CONNECTION_FAILED_WITH_USER', { userName: targetUser })
+        );
       });
   }
 
@@ -376,6 +385,9 @@ export class WebRTCSignalingService {
       })
       .catch((error) => {
         this.logger.error('handleAnswer', `Error handling answer: ${error}`);
+        this.toaster.warning(
+          this.translate.instant('CONNECTION_FAILED_WITH_USER', { userName: targetUser })
+        );
         this.handleStateMismatch(targetUser);
       });
   }
@@ -416,6 +428,12 @@ export class WebRTCSignalingService {
     if (peerConnection.remoteDescription) {
       peerConnection.addIceCandidate(candidate).catch((error) => {
         this.logger.error('handleCandidate', `Error adding ICE candidate: ${error}`);
+        const attempts = this.reconnectAttempts.get(targetUser) ?? 0;
+        if (attempts > 2) {
+          this.toaster.warning(
+            this.translate.instant('CONNECTION_UNSTABLE_WITH_USER', { userName: targetUser })
+          );
+        }
       });
     } else {
       let queue = this.candidateQueues.get(targetUser);

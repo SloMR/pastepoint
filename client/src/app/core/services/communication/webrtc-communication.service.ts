@@ -9,6 +9,8 @@ import {
   DataChannelMessage,
 } from '../../../utils/constants';
 import { NGXLogger } from 'ngx-logger';
+import { HotToastService } from '@ngneat/hot-toast';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root',
@@ -45,7 +47,9 @@ export class WebRTCCommunicationService {
 
   constructor(
     private zone: NgZone,
-    private logger: NGXLogger
+    private logger: NGXLogger,
+    private toaster: HotToastService,
+    private translate: TranslateService
   ) {}
 
   // =============== Public Methods ===============
@@ -91,10 +95,16 @@ export class WebRTCCommunicationService {
           (typeof error === 'object' ? JSON.stringify(error) : String(error)) ||
           'Unknown RTCErrorEvent';
         this.logger.error('setupDataChannel', `Data Channel Error with ${targetUser}: ${errorMsg}`);
+        this.toaster.warning(
+          this.translate.instant('CONNECTION_UNSTABLE_WITH_USER', { userName: targetUser })
+        );
       } else {
         this.logger.error(
           'setupDataChannel',
           `Data Channel Error with ${targetUser}: ${JSON.stringify(ev)}`
+        );
+        this.toaster.warning(
+          this.translate.instant('CONNECTION_UNSTABLE_WITH_USER', { userName: targetUser })
         );
       }
     };

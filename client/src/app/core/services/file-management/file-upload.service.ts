@@ -331,6 +331,10 @@ export class FileUploadService extends FileTransferBaseService {
           const key = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
           await this.setFileTransferStatus(key, 'completed');
 
+          this.toaster.success(
+            this.translate.instant('FILE_UPLOAD_COMPLETED', { fileName: fileTransfer.file.name })
+          );
+
           userMap.delete(fileTransfer.fileId);
           await this.setFileTransfers(fileTransfer.targetUser, userMap);
           await this.updateActiveUploads();
