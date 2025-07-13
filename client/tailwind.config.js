@@ -72,21 +72,33 @@ module.exports = {
           600: '#dc2626',
           700: '#b91c1c',
         },
+
+        first: '#3c54f0',
+        second: '#f0f4ff',
+        brownBlack: '#333333',
+        brownBlackDark: '#9ca3af',
+        danger: '#d93333',
+        firstDark: '#6366f1',
+        secondDark: '#1f2937',
+        baseDark: '#111827',
       },
       fontFamily: {
-        sans: ['Inter', 'sans-serif'], // Applied to all text through inheritance
+        sans: ['Inter', 'sans-serif'],
+        expoArabicBold: ['expo-arabic-bold', 'sans-serif'],
+        expoArabicMedium: ['expo-arabic-medium', 'sans-serif'],
+        expoArabicLight: ['expo-arabic-light', 'sans-serif'],
       },
       spacing: {
-        18: '4.5rem', // Not directly used in current HTML (available for custom spacing)
+        18: '4.5rem',
       },
       borderRadius: {
-        xl: '1rem', // Used for message bubbles (rounded-s-xl, rounded-e-xl)
+        xl: '1rem',
       },
       boxShadow: {
-        soft: '0 4px 24px -2px rgb(0 0 0 / 0.1)', // Not directly used (available for custom shadows)
+        soft: '0 4px 24px -2px rgb(0 0 0 / 0.1)',
       },
     },
   },
-  plugins: [require('flowbite/plugin')], // Used for interactive components (though not explicitly visible in current HTML)
-  darkMode: 'class', // Used throughout HTML with dark: prefixes
+  plugins: [require('flowbite/plugin')],
+  darkMode: 'class',
 };
