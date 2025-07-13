@@ -40,13 +40,13 @@
     "npm": false,
     "tsc": false
   },
-  "[dockerfile]": {
-    "editor.defaultFormatter": "ms-azuretools.vscode-docker"
-  },
   "[dotenv]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
   },
   "[ignore]": {
     "editor.defaultFormatter": "foxundermoon.shell-format"
+  },
+  "files.associations": {
+    "*.css": "tailwindcss"
   }
 }

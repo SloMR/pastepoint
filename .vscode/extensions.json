@@ -7,6 +7,7 @@
     "stylelint.vscode-stylelint",
     "angular.ng-template",
     "spmeesseman.vscode-taskexplorer",
-    "foxundermoon.shell-format"
+    "foxundermoon.shell-format",
+    "bradlc.vscode-tailwindcss"
   ]
 }
