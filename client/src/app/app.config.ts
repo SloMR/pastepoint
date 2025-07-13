@@ -62,6 +62,7 @@ export const appConfig: ApplicationConfig = {
     // Initialize translation module with in-memory loader
     importProvidersFrom(
       TranslateModule.forRoot({
+        defaultLanguage: 'en',
         loader: {
           provide: TranslateLoader,
           useClass: InMemoryTranslateLoader,

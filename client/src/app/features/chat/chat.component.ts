@@ -109,6 +109,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   isDragging = false;
   showSessionInfo = true;
 
+  isOpenCreateRoom = false;
+  isOpenJoinSessionPopup = false;
+  isOpenEndSessionPopup = false;
+  skipDrawerAnim = false;
+
   activeUploads: FileUpload[] = [];
   activeDownloads: FileDownload[] = [];
   incomingFiles: FileDownload[] = [];
@@ -403,6 +408,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const languageCode = language as LanguageCode;
       this.languageService.setLanguagePreference(languageCode);
       this.currentLanguage = languageCode;
+      this.skipDrawerAnim = true;
+      setTimeout(() => (this.skipDrawerAnim = false), 100);
       this.cdr.detectChanges();
     });
   }
@@ -626,6 +633,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
+   * TRACK MESSAGE
+   * Used to track the messages in the chat.
+   * ==========================================================
+   */
+  trackMessage(index: number, message: ChatMessage): string {
+    return message.text + index;
+  }
+
+  /**
+   * ==========================================================
    * SEND ATTACHMENTS
    * Triggers file sending to other users via FileTransferService.
    * Attempts to establish WebRTC connections if not already open.
@@ -750,6 +767,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.joinRoom(this.newRoomName.trim());
       this.ngZone.run(() => {
         this.newRoomName = '';
+        this.isOpenCreateRoom = false;
         this.cdr.detectChanges();
       });
     } else {
@@ -810,6 +828,18 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     this.openChatSession(code);
+  }
+
+  /**
+   * ==========================================================
+   * END SESSION
+   * Navigates to an existing session code entered by the user.
+   * ==========================================================
+   */
+  endSession(): void {
+    this.clearSessionCode();
+    this.wsConnectionService.disconnect();
+    this.router.navigate([`/`]);
   }
 
   /**
