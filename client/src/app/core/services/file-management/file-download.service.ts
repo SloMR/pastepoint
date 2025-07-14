@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { FILE_TRANSFER_MESSAGE_TYPES } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { WebRTCService } from '../communication/webrtc.service';
-import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
+import { HotToastService } from '@ngneat/hot-toast';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +13,7 @@ export class FileDownloadService extends FileTransferBaseService {
   // =============== Constructor ===============
   constructor(
     webrtcService: WebRTCService,
-    toaster: ToastrService,
+    toaster: HotToastService,
     translate: TranslateService,
     logger: NGXLogger
   ) {
@@ -77,6 +77,8 @@ export class FileDownloadService extends FileTransferBaseService {
       anchor.click();
       document.body.removeChild(anchor);
 
+      this.toaster.success(this.translate.instant('FILE_DOWNLOAD_COMPLETED', { fileName }));
+
       userMap.delete(fileId);
       if (userMap.size === 0) {
         await this.deleteIncomingFileTransfers(fromUser);
@@ -134,10 +136,7 @@ export class FileDownloadService extends FileTransferBaseService {
     await this.updateIncomingFileOffers();
     await this.updateActiveDownloads();
 
-    this.toaster.info(
-      this.translate.instant('FILE_UPLOAD_CANCELLED'),
-      this.translate.instant('CANCELLED')
-    );
+    this.toaster.info(this.translate.instant('FILE_UPLOAD_CANCELLED'));
   }
 
   /**
@@ -160,9 +159,6 @@ export class FileDownloadService extends FileTransferBaseService {
     await this.updateIncomingFileOffers();
     await this.updateActiveDownloads();
 
-    this.toaster.info(
-      this.translate.instant('FILE_DOWNLOAD_CANCELLED'),
-      this.translate.instant('CANCELLED')
-    );
+    this.toaster.info(this.translate.instant('FILE_DOWNLOAD_CANCELLED'));
   }
 }

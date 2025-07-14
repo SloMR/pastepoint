@@ -7,10 +7,10 @@ import {
   TranslateService,
   TranslateStore,
 } from '@ngx-translate/core';
-import { ToastrService } from 'ngx-toastr';
 import { MockToastrService } from './mock-toastr.service';
 import { MockTranslateService } from './mock-translate.service';
 import { of } from 'rxjs';
+import { HotToastService } from '@ngneat/hot-toast';
 
 // Mock translate loader - This is still used for TranslateModule configuration
 export class MockTranslateLoader implements TranslateLoader {
@@ -45,7 +45,7 @@ export const TestProviders = [
     },
   },
   {
-    provide: ToastrService,
+    provide: HotToastService,
     useClass: MockToastrService,
   },
   {

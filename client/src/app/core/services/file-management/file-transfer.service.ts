@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { WebRTCService } from '../communication/webrtc.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
@@ -15,7 +15,7 @@ export class FileTransferService implements IFileTransferService {
   // =============== Constructor ===============
   constructor(
     private webrtcService: WebRTCService,
-    public translate: TranslateService,
+    @Inject(TranslateService) private translate: TranslateService,
     private logger: NGXLogger,
     private fileUploadService: FileUploadService,
     private fileDownloadService: FileDownloadService,

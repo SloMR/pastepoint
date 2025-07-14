@@ -1,9 +1,12 @@
-use crate::{message::CleanupSession, ServerConfig, WsChatServer, WsChatSession, MAX_FRAME_SIZE};
+use crate::{
+    message::CleanupSession, ServerConfig, WsChatServer, WsChatSession, MAX_FRAME_SIZE,
+    SAFE_CHARSET,
+};
 use actix::SystemService;
 use actix_rt::{spawn, task, time};
 use actix_web::{web::Payload, Error, HttpRequest, HttpResponse};
 use actix_web_actors::ws as actix_actor_ws;
-use rand::{distr::Alphanumeric, rng, Rng};
+use rand::{rng, Rng};
 use std::{
     collections::{HashMap, HashSet},
     sync::{
@@ -248,10 +251,12 @@ impl SessionStore {
 
     /// Generates a random alphanumeric code.
     pub fn generate_random_code(length: usize) -> String {
-        rng()
-            .sample_iter(&Alphanumeric)
-            .take(length)
-            .map(char::from)
+        let mut rng = rng();
+        (0..length)
+            .map(|_| {
+                let idx = rng.random_range(0..SAFE_CHARSET.len());
+                SAFE_CHARSET[idx] as char
+            })
             .collect()
     }
 }

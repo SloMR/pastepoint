@@ -1,6 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { WebRTCService } from '../communication/webrtc.service';
-import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { v4 as uuidv4 } from 'uuid';
@@ -8,6 +7,7 @@ import { FileDownload, FileUpload, FileTransferStatus } from '../../../utils/con
 import { BehaviorSubject } from 'rxjs';
 import { Mutex } from 'async-mutex';
 import { DataChannelMessage } from '../../../utils/constants';
+import { HotToastService } from '@ngneat/hot-toast';
 
 @Injectable({
   providedIn: 'root',
@@ -35,8 +35,8 @@ export class FileTransferBaseService {
   // =============== Constructor ===============
   constructor(
     protected webrtcService: WebRTCService,
-    protected toaster: ToastrService,
-    public translate: TranslateService,
+    protected toaster: HotToastService,
+    @Inject(TranslateService) protected translate: TranslateService,
     protected logger: NGXLogger
   ) {}
 

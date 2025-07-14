@@ -1,1280 +1,697 @@
-<!--
-  ========== MAIN CONTAINER ==========
-  This wraps the entire application, handling RTL/LTR and overall layout.
--->
-<div
-  [attr.dir]="isRTL ? 'rtl' : 'ltr'"
-  class="flex h-screen flex-col bg-primary-100 dark:bg-secondary-800"
->
-  <!--
-    ========== HEADER SECTION ==========
-    Contains the top navigation bar, logo, theme toggler, and language switcher.
-  -->
-  <header
-    class="border-b shadow-sm no-geopattern border-primary-200 bg-primary-100 dark:border-secondary-700 dark:bg-secondary-800"
+<div class="flex h-screen" [attr.dir]="isRTL ? 'rtl' : 'ltr'">
+  <!-- Sidebar -->
+  <div
+    class="relative hidden h-screen flex-col items-start justify-start overflow-auto bg-surface w-[286px] min-w-[286px] no-scrollbar dark:bg-surfaceDark md:flex"
   >
-    <div class="mx-auto max-w-7xl pr-4 pl-16 sm:px-6 lg:px-8">
-      <div class="flex h-16 items-center justify-between">
-        <!--
-          LOGO & TITLE
-        -->
-        <div class="flex items-center">
-          <a routerLink="/" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'">
-            <img
-              [ngSrc]="isDarkMode ? 'pastepoint-light.svg' : 'pastepoint-dark.svg'"
-              alt="PastePoint Logo"
-              class="h-12 w-auto cursor-pointer"
-              width="755"
-              height="675"
-              loading="lazy"
-            />
-          </a>
-          <h1 class="text-lg font-bold text-secondary-900 dark:text-white">
-            {{ 'APP_TITLE' | translate }}
-          </h1>
-        </div>
-
-        <!--
-          THEME TOGGLER & LANGUAGE SWITCHER
-        -->
-        <div class="flex items-center gap-4">
-          <button
-            (click)="toggleTheme()"
-            class="rounded-lg p-2 text-secondary-600 hover:bg-secondary-100 dark:text-secondary-300 dark:hover:bg-secondary-700"
-            [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-            [attr.title]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-          >
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                *ngIf="!isDarkMode"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 5V3m0 18v-2M7.05 7.05 5.636 5.636m12.728 12.728L16.95 16.95M5 12H3m18 0h-2M7.05 16.95l-1.414 1.414M18.364 5.636 16.95 7.05M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"
-              />
-              <path
-                *ngIf="isDarkMode"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-              />
-            </svg>
-          </button>
-
-          <div class="flex gap-2">
-            <button
-              *ngFor="let lang of ['en', 'ar']"
-              (click)="switchLanguage(lang)"
-              class="rounded-md px-3 py-1 text-sm font-medium"
-              [class]="
-                lang === currentLanguage
-                  ? 'bg-primary-600 text-white'
-                  : 'text-secondary-600 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700'
-              "
-              [attr.aria-label]="'Switch language to ' + (lang | uppercase)"
-              [attr.title]="'Switch language to ' + (lang | uppercase)"
-            >
-              {{ lang | uppercase }}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <!--
-    ========== MAIN WRAPPER ==========
-    This sets up the main content area, including sidebars (responsive) and the chat/message area.
-  -->
-  <div class="mx-auto flex w-full max-w-7xl flex-1 overflow-hidden">
-    <!--
-      ========== MOBILE MENU BUTTON (BURGER ICON) ==========
-      Visible on small screens to open/close the sidebar.
-    -->
-    <div class="fixed top-4 left-4 z-50 no-geopattern md:hidden">
-      <button
-        (click)="isMenuOpen = !isMenuOpen"
-        class="rounded-lg border p-2 shadow-sm transition-colors border-primary-300 bg-primary-100 text-secondary-600 hover:bg-secondary-100 dark:border-secondary-700 dark:bg-secondary-800 dark:text-secondary-300 dark:hover:bg-secondary-700"
-        [attr.aria-label]="isMenuOpen ? 'Close menu' : 'Open menu'"
-        [attr.aria-expanded]="isMenuOpen"
-        [attr.title]="isMenuOpen ? 'Close menu' : 'Open menu'"
-      >
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 6h16M4 12h16M4 18h16"
+    <div class="h-[calc(100vh-80px)] overflow-auto flex flex-col justify-start items-start w-full">
+      <div class="flex w-full items-center justify-center py-8">
+        <a routerLink="/">
+          <img
+            [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
+            alt="PastePoint Logo"
+            class="h-12 w-auto cursor-pointer"
+            width="755"
+            height="675"
+            priority
           />
-        </svg>
-      </button>
-    </div>
+        </a>
+      </div>
 
-    <!--
-      ========== OVERLAY FOR MOBILE SIDEBAR ==========
-      Dark background overlay when menu is open on mobile; clicking closes the sidebar.
-    -->
-    <div
-      *ngIf="isMenuOpen"
-      class="fixed inset-0 z-40 bg-black/50 no-geopattern md:hidden"
-      (click)="isMenuOpen = false"
-    ></div>
-
-    <!--
-      ========== MOBILE SIDEBAR ==========
-      Renders as a sliding panel from the left on small screens.
-    -->
-    <aside
-      [class]="isMenuOpen ? 'translate-x-0' : '-translate-x-full'"
-      [style]="isMenuOpen ? 'z-index: 10001' : 'z-index: 10000'"
-      class="fixed top-0 left-0 z-50 h-full w-64 transform transition-transform duration-300 ease-in-out border-primary-300 bg-primary-100 dark:border-secondary-700 dark:bg-secondary-800 md:hidden"
-      [class.border-r]="!isRTL"
-      [class.border-l]="isRTL"
-    >
-      <!-- CLOSE BUTTON (MOBILE) -->
-      <div class="flex justify-end p-4">
+      <div class="mt-6 flex w-full flex-col items-start justify-start px-4">
         <button
-          (click)="isMenuOpen = false"
-          class="text-secondary-600 hover:text-secondary-800 dark:text-secondary-300 dark:hover:text-secondary-100"
-          aria-label="Close menu"
-          title="Close menu"
+          (click)="isOpenCreateRoom = true; isMenuOpen = false"
+          class="flex w-full items-center justify-center gap-2 rounded-lg p-2 text-white bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
         >
-          <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
+          <img src="/icons/white-plus.svg" alt="Home" class="h-6 w-6" />
+          <span class="text-base font-expoArabicMedium">{{ 'CREATE_NEW_ROOM' | translate }}</span>
         </button>
       </div>
 
-      <!-- SIDEBAR CONTENT (SCROLLABLE) -->
-      <div class="flex flex-col h-[calc(100%-4rem)] overflow-y-auto">
-        <!--
-          USER INFO SECTION
-        -->
-        <div class="border-b p-4 border-primary-300 dark:border-secondary-700">
-          <div class="flex items-center gap-3">
-            <div class="shrink-0">
-              <span
-                class="flex h-10 w-10 items-center justify-center rounded-full text-white bg-primary-500"
-              >
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-              </span>
-            </div>
-            <div class="truncate">
-              <p class="truncate text-sm font-medium text-secondary-900 dark:text-white">
-                {{ userService.user }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!--
-          ROOMS SECTION (LIST OF ROOMS, CREATE ROOM, PRIVATE SESSION, MEMBERS, TRANSFERS)
-        -->
-        <div class="flex-1 p-4 space-y-4">
-          <!-- ROOMS LIST -->
-          <div>
-            <h3
-              class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
-            >
-              {{ 'ROOMS' | translate }}
-            </h3>
-            <nav class="space-y-1">
-              <button
-                *ngFor="let room of rooms"
-                (click)="joinRoom(room); isMenuOpen = false"
-                class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm"
-                [class]="
-                  room === currentRoom
-                    ? 'bg-primary-200 dark:bg-primary-900 text-primary-700 dark:text-primary-100'
-                    : 'text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700'
-                "
-                [attr.aria-label]="'Join room ' + room"
-                [attr.title]="'Join room ' + room"
-              >
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-                <span class="truncate">{{ room }}</span>
-              </button>
-            </nav>
-          </div>
-
-          <!-- CREATE / JOIN ROOM -->
-          <div class="space-y-2">
-            <input
-              [(ngModel)]="newRoomName"
-              name="newRoomName"
-              type="text"
-              class="w-full rounded-md text-sm shadow-sm border-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:text-white"
-              placeholder="{{ 'NEW_ROOM' | translate }}"
+      <!-- Rooms -->
+      <div class="mt-8 flex w-full flex-col items-center justify-center">
+        <div class="flex w-full items-center justify-between px-4 py-2 text-content">
+          <div class="flex items-center justify-center gap-2">
+            <img
+              [src]="isDarkMode ? '/icons/home-white.svg' : '/icons/home.svg'"
+              alt="Home"
+              class=""
             />
-            <button
-              (click)="createRoom()"
-              class="w-full rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
-              aria-label="Create or join room"
-              title="Create or join room"
-            >
-              {{ 'JOIN_CREATE' | translate }}
-            </button>
-          </div>
-
-          <!-- PRIVATE SESSION SECTION -->
-          <div
-            class="rounded-md border bg-white p-4 shadow-sm space-y-3 border-primary-200 dark:bg-secondary-800 dark:border-secondary-700"
-          >
-            <h3
-              class="flex items-center gap-2 text-base font-semibold text-secondary-900 dark:text-white"
-            >
-              <svg
-                class="h-5 w-5 text-primary-600 dark:text-primary-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 11c1.306 0 2-.835 2-2V7c0-1.165.895-2 2-2
-           s2 .835 2 2v2c0 1.165.895 2 2 2s2-.835 2-2V7
-           c0-2.761-2.239-5-5-5S12 4.239 12 7v2c0 1.165.895 2 2 2z
-           M6 14v4c0 1.165.895 2 2 2h8c1.106 0 2-.895 2-2v-4H6z"
-                />
-              </svg>
-              {{ 'PRIVATE_SESSION' | translate }}
-            </h3>
-
-            <p class="text-sm text-secondary-600 dark:text-secondary-300">
-              {{ 'PRIVATE_SESSION_DESC' | translate }}
+            <p class="pt-2 text-base font-expoArabicMedium dark:text-white">
+              {{ 'ROOMS' | translate }}
             </p>
-
-            <div *ngIf="SessionCode.length > 0" class="relative flex items-center">
-              <input
-                [(ngModel)]="SessionCode"
-                name="SessionCode"
-                type="text"
-                class="w-full rounded-md pr-12 pl-10 text-sm shadow-sm border-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:text-white"
-                readonly
+          </div>
+          <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+            {{ rooms.length }} {{ 'ROOMS_COUNT' | translate }}
+          </p>
+        </div>
+        <div class="w-full overflow-auto max-h-[200px] scrollbar">
+          <div
+            *ngFor="let room of rooms"
+            class="mt-2 flex w-full items-center justify-end py-1"
+            (click)="joinRoom(room)"
+          >
+            <div
+              class="flex w-full cursor-pointer items-center justify-start gap-2"
+              [class]="
+                room === currentRoom
+                  ? 'text-brand dark:text-brandDark'
+                  : 'text-content/80 hover:text-content/60 dark:text-contentMuted dark:hover:text-contentMuted/80'
+              "
+              [ngClass]="isRTL ? 'pr-10' : 'pl-10'"
+              [attr.aria-label]="'Join room ' + room"
+              [attr.title]="'Join room ' + room"
+            >
+              <img
+                [src]="
+                  room === currentRoom ? '/icons/active-comment.svg' : '/icons/inactive-comment.svg'
+                "
+                alt="Home"
+                class=""
               />
-              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg
-                  class="w-4 h-4 text-gray-800 dark:text-white"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-width="2"
-                    d="M2.9917 4.9834V18.917M9.96265 4.9834V18.917M15.9378 4.9834V18.917m2.9875-13.9336V18.917"
-                  />
-                  <path
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    d="M5.47925 4.4834V19.417m1.9917-14.9336V19.417M21.4129 4.4834V19.417M13.4461 4.4834V19.417"
-                  />
-                </svg>
-              </div>
-
-              <!-- Copy Button -->
-              <button
-                type="button"
-                (click)="copySessionCode()"
-                class="absolute right-2 rounded-md transition-colors p-1.5 bg-secondary-200 hover:bg-secondary-300 dark:bg-secondary-600 dark:hover:bg-secondary-500"
-                aria-label="Copy session code"
-                title="Copy session code"
-              >
-                <svg
-                  class="w-4 h-4 text-gray-800 dark:text-white"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke="currentColor"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 8v3a1 1 0 0 1-1 1H5m11 4h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v1m4 3v10a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7.13a1 1 0 0 1 .24-.65L7.7 8.35A1 1 0 0 1 8.46 8H13a1 1 0 0 1 1 1Z"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <p
-              *ngIf="SessionCode.length > 0"
-              class="text-xs text-secondary-500 dark:text-secondary-300"
-            >
-              {{ 'PRIVATE_SESSION_HELP' | translate }}
-            </p>
-
-            <div class="space-y-2">
-              <div class="flex flex-col gap-2">
-                <button
-                  (click)="createPrivateSession()"
-                  class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
-                  aria-label="Create new private session"
-                  title="Create new private session"
-                >
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  {{ 'NEW_PRIVATE_SESSION' | translate }}
-                </button>
-
-                <div class="relative">
-                  <input
-                    [(ngModel)]="newSessionCode"
-                    name="newSessionCode"
-                    type="text"
-                    class="w-full rounded-md pl-10 text-sm shadow-sm border-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:text-white"
-                    placeholder="{{ 'SESSION_CODE' | translate }}"
-                  />
-                  <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <svg
-                      class="w-4 h-4 text-gray-800 dark:text-white"
-                      aria-hidden="true"
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-width="2"
-                        d="M2.9917 4.9834V18.917M9.96265 4.9834V18.917M15.9378 4.9834V18.917m2.9875-13.9336V18.917"
-                      />
-                      <path
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        d="M5.47925 4.4834V19.417m1.9917-14.9336V19.417M21.4129 4.4834V19.417M13.4461 4.4834V19.417"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                <button
-                  (click)="joinPrivateSession()"
-                  class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
-                  aria-label="Join private session"
-                  title="Join private session"
-                >
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M5 12h14M5 12l4-4m-4 4 4 4"
-                    />
-                  </svg>
-                  {{ 'JOIN_PRIVATE_SESSION' | translate }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- MEMBERS SECTION -->
-          <div>
-            <h3
-              class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
-            >
-              {{ 'MEMBERS' | translate }}
-            </h3>
-            <div class="space-y-1">
-              <div
-                *ngFor="let member of members"
-                class="flex items-center gap-2 px-3 py-2 text-sm text-secondary-700 dark:text-secondary-300"
-              >
-                <svg
-                  class="h-5 w-5 text-secondary-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                <span class="truncate">{{ member }}</span>
-              </div>
+              <p class="truncate pt-2 text-base font-expoArabicMedium">{{ room }}</p>
+              <p></p>
             </div>
           </div>
         </div>
-
-        <!--
-          TRANSFERS SECTION (ACTIVE UPLOADS / DOWNLOADS)
-        -->
-        <div class="border-t p-4 border-primary-300 space-y-4 dark:border-secondary-700">
-          <div
-            class="max-h-52 overflow-y-auto"
-            [ngClass]="{ 'dark-scrollbar': isDarkMode, 'light-scrollbar': !isDarkMode }"
-          >
-            <h3
-              class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
-            >
-              {{ 'TRANSFERS' | translate }}
-            </h3>
-            <div *ngIf="activeUploads.length > 0 || activeDownloads.length > 0">
-              <div class="space-y-3">
-                <!-- ACTIVE UPLOADS -->
-                <div *ngFor="let transfer of activeUploads" class="text-sm">
-                  <div class="mb-1 flex items-center justify-between">
-                    <span class="truncate text-secondary-700 dark:text-secondary-300">
-                      {{ transfer.file.name | slice: 0 : 15 }}
-                    </span>
-                    <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500"
-                        >{{ transfer.progress | number: '1.0-0' }}%</span
-                      >
-                      <button
-                        (click)="
-                          $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
-                        "
-                        class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
-                        aria-label="Cancel upload"
-                        title="Cancel upload"
-                      >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
-                    <div
-                      class="rounded-full bg-primary-600 h-1.5 progress-bar"
-                      [style.width.%]="transfer.progress"
-                    ></div>
-                  </div>
-                </div>
-
-                <!-- ACTIVE DOWNLOADS -->
-                <div *ngFor="let download of activeDownloads" class="text-sm">
-                  <div class="mb-1 flex items-center justify-between">
-                    <span class="truncate text-secondary-700 dark:text-secondary-300">
-                      {{ download.fileName | slice: 0 : 15 }}
-                    </span>
-                    <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500">
-                        {{ download.progress | number: '1.0-0' }}%
-                      </span>
-                      <button
-                        (click)="
-                          $event.stopPropagation();
-                          $event.preventDefault();
-                          cancelDownload(download)
-                        "
-                        class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
-                        aria-label="Cancel download"
-                        title="Cancel download"
-                      >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
-                    <div
-                      class="rounded-full bg-success-600 h-1.5 progress-bar"
-                      [style.width.%]="download.progress"
-                    ></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!--
-          === MOBILE-ONLY FOOTER ===
-          Hidden on medium+ (md:hidden => it won't show on desktop).
-        -->
-        <footer
-          class="mt-auto justify-items-center border-t p-4 border-primary-300 dark:border-secondary-700"
-        >
-          <p class="text-xs text-secondary-600 dark:text-secondary-300">
-            {{ 'COPYRIGHT_NOTICE' | translate }}
-          </p>
-          <div class="mt-2 flex items-center gap-3">
-            <!-- GitHub Icon & Link -->
-            <a
-              href="https://github.com/SloMR/pastepoint"
-              target="_blank"
-              rel="noopener noreferrer nofollow"
-              class="inline-flex items-center text-primary-600 hover:underline dark:text-primary-400"
-            >
-              <svg
-                class="h-4 w-4"
-                role="img"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                xmlns="http://www.w3.org/2000/svg"
-                [class]="isRTL ? 'ml-1' : 'mr-1'"
-              >
-                <path
-                  d="M12 .296c-6.63 0-12 5.373-12 12 0 5.303
-                  3.438 9.8 8.205 11.387.6.113.82-.258.82-.577
-                  0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61
-                  -.546-1.387-1.333-1.757-1.333-1.757-1.089-.745.084-.73.084-.73
-                  1.205.084 1.84 1.24 1.84 1.24 1.07 1.835 2.807 1.305
-                  3.492.997.108-.776.42-1.305.76-1.605-2.665-.303-5.467-1.332-5.467-5.93
-                  0-1.31.47-2.38 1.235-3.22-.123-.303-.54-1.524.117-3.176
-                  0 0 1.01-.323 3.3 1.23.96-.267 1.98-.399
-                  3-.404 1.02.005 2.04.137
-                  3 .404 2.28-1.553 3.29-1.23
-                  3.29-1.23.657 1.652.24 2.873.117 3.176
-                  .77.84 1.235 1.91 1.235 3.22 0 4.61-2.807
-                  5.625-5.48 5.92.43.37.81 1.096.81 2.21
-                  0 1.596-.015 2.877-.015 3.27
-                  0 .317.21.687.82.57A11.999 11.999
-                  0 0 0 24 12.296c0-6.627-5.373-12-12-12z"
-                />
-              </svg>
-              <p class="text-xs">GitHub</p>
-            </a>
-
-            <!-- LinkedIn Icon & Link -->
-            <a
-              href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center text-primary-600 hover:underline dark:text-primary-400"
-            >
-              <svg
-                class="h-4 w-4"
-                role="img"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                xmlns="http://www.w3.org/2000/svg"
-                [class]="isRTL ? 'ml-1' : 'mr-1'"
-              >
-                <path
-                  d="M20.452 20.452h-3.555v-5.568c0-1.328-.027
-                  -3.037-1.853-3.037-1.853 0-2.136 1.445-2.136
-                  2.94v5.665H9.353V9h3.413v1.561h.048c.476-.9
-                  1.637-1.853 3.368-1.853 3.595 0 4.26 2.367
-                  4.26 5.451v6.293zM5.337 7.433a2.062
-                  2.062 0 1 1 0-4.123 2.062
-                  2.062 0 0 1 0 4.123zM6.906
-                  20.452H3.77V9h3.136v11.452zM22.225 0H1.771C.792
-                  0 0 .774 0 1.73v20.541C0 23.228.792
-                  24 1.771 24h20.451C23.2 24 24 23.228
-                  24 22.271V1.73C24 .774 23.2 0 22.225
-                  0z"
-                />
-              </svg>
-              <p class="text-xs">LinkedIn</p>
-            </a>
-          </div>
-          <!-- Version Display -->
-          <p class="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
-            {{ 'VERSION' | translate }}
-            <span class="font-medium text-primary-600 dark:text-primary-400">{{ appVersion }}</span>
-          </p>
-        </footer>
       </div>
-    </aside>
 
-    <!--
-      ========== DESKTOP SIDEBAR ==========
-      Visible on medium+ screens, always shown (not collapsible by default).
-    -->
-    <aside class="hidden md:flex md:flex-shrink-0">
+      <div *ngIf="SessionCode.length > 0" class="flex w-full items-center gap-3 px-4 py-3">
+        <img
+          [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
+          alt="Home"
+          class="h-4 w-4"
+        />
+        <p class="truncate pt-1 text-base font-expoArabicMedium dark:text-white">
+          {{ 'CODE' | translate }}
+        </p>
+      </div>
+
+      <div *ngIf="SessionCode.length > 0" class="flex w-full items-center gap-3 px-4">
+        <div
+          class="flex items-center justify-start rounded-lg p-2 px-3 w-[150px] h-[44px] bg-inputBackground dark:bg-borderDark"
+        >
+          <p class="truncate text-base font-light font-expoArabic dark:text-contentMuted">
+            {{ SessionCode }}
+          </p>
+        </div>
+        <div
+          class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-2 text-white w-[90px] h-[44px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+          (click)="copySessionCode()"
+        >
+          <img src="/icons/copy.svg" alt="Home" class="h-4 w-4" />
+          <p class="truncate pt-1 text-base font-expoArabicMedium">{{ 'COPY' | translate }}</p>
+        </div>
+      </div>
       <div
-        class="flex w-64 flex-col border-primary-300 bg-primary-100 dark:border-secondary-700 dark:bg-secondary-800"
-        [class.border-r]="!isRTL"
-        [class.border-l]="isRTL"
+        *ngIf="SessionCode.length === 0"
+        class="flex w-full flex-col items-center justify-center"
       >
-        <!-- USER INFO SECTION (DESKTOP) -->
-        <div class="border-b p-4 no-geopattern border-primary-300 dark:border-secondary-700">
-          <div class="flex items-center gap-3">
-            <div class="shrink-0">
-              <span
-                class="flex h-10 w-10 items-center justify-center rounded-full text-white bg-primary-500"
-              >
-                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-              </span>
+        <!-- create private session -->
+        <div class="mt-8 flex w-full flex-col items-start justify-start px-4">
+          <button
+            (click)="createPrivateSession()"
+            class="flex w-full items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
+          >
+            <img src="/icons/blue-plus.svg" alt="Home" class="h-6 w-6" />
+            <span class="text-base font-expoArabicMedium">
+              {{ 'CREATE_PRIVATE_SESSION' | translate }}
+            </span>
+          </button>
+        </div>
+
+        <!-- join private session -->
+        <div class="mt-3 flex w-full flex-col items-start justify-start px-4">
+          <button
+            (click)="isOpenJoinSessionPopup = true; isMenuOpen = false"
+            class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
+          >
+            <span class="text-base font-expoArabicMedium">{{
+              'JOIN_PRIVATE_SESSION' | translate
+            }}</span>
+          </button>
+        </div>
+      </div>
+      <!-- members -->
+      <div class="mt-8 flex w-full flex-col items-center justify-center">
+        <div
+          class="flex w-full items-center justify-between px-4 py-2 text-content dark:text-white"
+        >
+          <div class="flex items-center justify-center gap-2">
+            <img
+              [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+              alt="Home"
+              class=""
+            />
+            <p class="pt-2 text-base font-expoArabicMedium">{{ 'MEMBERS' | translate }}</p>
+          </div>
+          <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+            {{ members.length }} {{ 'ONLINE_MEMBERS_COUNT' | translate }}
+          </p>
+        </div>
+        <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar">
+          <div *ngFor="let member of members">
+            <div
+              class="flex w-full cursor-pointer items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+            >
+              <div class="h-4 w-4 rounded-full bg-green-500"></div>
+              <p class="truncate text-base font-expoArabicMedium">{{ member }}</p>
+              <p></p>
             </div>
-            <div class="truncate">
-              <p class="truncate text-sm font-medium text-secondary-900 dark:text-white">
-                {{ userService.user }}
+          </div>
+          <div *ngIf="members.length === 0">
+            <div
+              class="flex w-full cursor-pointer items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+            >
+              <p class="truncate text-base font-expoArabicMedium">
+                {{ 'NO_MEMBERS_ONLINE' | translate }}
               </p>
             </div>
           </div>
         </div>
+      </div>
+    </div>
 
-        <!-- MAIN SIDEBAR CONTENT (DESKTOP) -->
+    <!-- exit button -->
+    <div
+      *ngIf="SessionCode.length > 0"
+      class="absolute bottom-4 flex w-full items-center justify-center"
+      (click)="isOpenEndSessionPopup = true; isMenuOpen = false"
+    >
+      <div class="flex w-full cursor-pointer items-center justify-center gap-2 px-3 py-3">
+        <img class="" alt="" src="/icons/cross-small.svg" />
+        <h6 class="text-base font-medium text-danger font-expoArabicMedium">
+          {{ 'END_SESSION' | translate }}
+        </h6>
+      </div>
+    </div>
+  </div>
+
+  <aside
+    class="fixed top-0 h-full transition-transform ease-in-out w-[286px] min-w-[286px] bg-surface z-[10000] dark:bg-surfaceDark md:hidden"
+    [style.left]="isRTL ? 'auto' : 0"
+    [style.right]="isRTL ? 0 : 'auto'"
+    [ngClass]="[
+      isMenuOpen ? 'translate-x-0' : isRTL ? 'translate-x-full' : '-translate-x-full',
+      skipDrawerAnim ? 'duration-0' : 'duration-300',
+    ]"
+  >
+    <div
+      class="relative flex h-screen w-full flex-col items-start justify-start overflow-auto no-scrollbar"
+    >
+      <div
+        class="h-[calc(100vh-80px)] overflow-auto flex flex-col justify-start items-start w-full"
+      >
         <div
-          class="flex-1 overflow-y-auto p-4 no-geopattern space-y-4"
-          [ngClass]="{ 'dark-scrollbar': isDarkMode, 'light-scrollbar': !isDarkMode }"
+          *ngIf="userService.user"
+          class="flex w-full items-center justify-between gap-2 px-4 py-8"
         >
-          <!-- ROOMS LIST (DESKTOP) -->
-          <div>
-            <h3
-              class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
+          <!-- avatar + name -->
+          <div class="flex items-center gap-2 overflow-hidden">
+            <img src="/icons/Group.svg" alt="User" class="h-10 w-10" />
+            <p class="truncate text-base font-expoArabicMedium text-content dark:text-white">
+              {{ userService.user }}
+            </p>
+          </div>
+
+          <!-- close icon -->
+          <img
+            [src]="isDarkMode ? '/icons/cross-close-white.svg' : '/icons/cross-close.svg'"
+            alt="Close"
+            class="h-4 w-4 shrink-0 cursor-pointer"
+            (click)="isMenuOpen = false"
+          />
+        </div>
+
+        <div class="mt-6 flex w-full flex-col items-start justify-start px-4">
+          <button
+            (click)="isOpenCreateRoom = true; isMenuOpen = false"
+            class="flex w-full items-center justify-center gap-2 rounded-lg p-2 text-white bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+          >
+            <img src="/icons/white-plus.svg" alt="Home" class="h-6 w-6" />
+            <span class="text-base font-expoArabicMedium">{{ 'CREATE_NEW_ROOM' | translate }}</span>
+          </button>
+        </div>
+
+        <!-- Rooms -->
+        <div class="mt-8 flex w-full flex-col items-center justify-center">
+          <div
+            class="flex w-full items-center justify-between px-4 py-2 text-content dark:text-white"
+          >
+            <div class="flex items-center justify-center gap-2">
+              <img
+                [src]="isDarkMode ? '/icons/home-white.svg' : '/icons/home.svg'"
+                alt="Home"
+                class=""
+              />
+              <p class="pt-2 text-base font-expoArabicMedium dark:text-white">
+                {{ 'ROOMS' | translate }}
+              </p>
+            </div>
+            <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+              {{ rooms.length }} {{ 'ROOMS_COUNT' | translate }}
+            </p>
+          </div>
+          <div class="w-full overflow-auto max-h-[200px] scrollbar">
+            <div
+              *ngFor="let room of rooms"
+              class="mt-2 flex w-full items-center justify-end py-1"
+              (click)="joinRoom(room); isMenuOpen = false"
             >
-              {{ 'ROOMS' | translate }}
-            </h3>
-            <nav class="space-y-1">
-              <button
-                *ngFor="let room of rooms"
-                (click)="joinRoom(room)"
-                class="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm"
+              <div
+                class="flex w-full cursor-pointer items-center justify-start gap-2"
+                [ngClass]="isRTL ? 'pr-10' : 'pl-10'"
                 [class]="
                   room === currentRoom
-                    ? 'bg-primary-200 dark:bg-primary-900 text-primary-700 dark:text-primary-100'
-                    : 'text-secondary-700 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700'
+                    ? 'text-brand dark:text-brandDark'
+                    : 'text-content/80 hover:text-content/60 dark:text-contentMuted dark:hover:text-contentMuted/80'
                 "
                 [attr.aria-label]="'Join room ' + room"
                 [attr.title]="'Join room ' + room"
               >
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
-                  />
-                </svg>
-                <span class="truncate">{{ room }}</span>
-              </button>
-            </nav>
-          </div>
-
-          <!-- CREATE / JOIN ROOM (DESKTOP) -->
-          <div class="space-y-2">
-            <input
-              [(ngModel)]="newRoomName"
-              name="newRoomName"
-              type="text"
-              class="w-full rounded-md text-sm shadow-sm border-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:text-white"
-              placeholder="{{ 'NEW_ROOM' | translate }}"
-            />
-            <button
-              (click)="createRoom()"
-              class="w-full rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
-              aria-label="Create or join room"
-              title="Create or join room"
-            >
-              {{ 'JOIN_CREATE' | translate }}
-            </button>
-          </div>
-
-          <!-- PRIVATE SESSION SECTION (DESKTOP) -->
-          <div
-            class="rounded-md border bg-white p-4 shadow-sm space-y-3 border-primary-200 dark:bg-secondary-800 dark:border-secondary-700"
-          >
-            <h3
-              class="flex items-center gap-2 text-base font-semibold text-secondary-900 dark:text-white"
-            >
-              <svg
-                class="h-5 w-5 text-primary-600 dark:text-primary-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M12 11c1.306 0 2-.835 2-2V7c0-1.165.895-2 2-2
-           s2 .835 2 2v2c0 1.165.895 2 2 2s2-.835 2-2V7
-           c0-2.761-2.239-5-5-5S12 4.239 12 7v2c0 1.165.895 2 2 2z
-           M6 14v4c0 1.165.895 2 2 2h8c1.106 0 2-.895 2-2v-4H6z"
+                <img
+                  [src]="
+                    room === currentRoom
+                      ? '/icons/active-comment.svg'
+                      : '/icons/inactive-comment.svg'
+                  "
+                  alt="Home"
+                  class=""
                 />
-              </svg>
-              {{ 'PRIVATE_SESSION' | translate }}
-            </h3>
-
-            <p class="text-sm text-secondary-600 dark:text-secondary-300">
-              {{ 'PRIVATE_SESSION_DESC' | translate }}
-            </p>
-
-            <div *ngIf="SessionCode.length > 0" class="relative flex items-center">
-              <input
-                [(ngModel)]="SessionCode"
-                name="SessionCode"
-                type="text"
-                class="w-full rounded-md pr-12 pl-10 text-sm shadow-sm border-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:text-white"
-                readonly
-              />
-              <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <svg
-                  class="w-4 h-4 text-gray-800 dark:text-white"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    stroke-width="2"
-                    d="M2.9917 4.9834V18.917M9.96265 4.9834V18.917M15.9378 4.9834V18.917m2.9875-13.9336V18.917"
-                  />
-                  <path
-                    stroke="currentColor"
-                    stroke-linecap="round"
-                    d="M5.47925 4.4834V19.417m1.9917-14.9336V19.417M21.4129 4.4834V19.417M13.4461 4.4834V19.417"
-                  />
-                </svg>
-              </div>
-
-              <!-- Copy Button -->
-              <button
-                type="button"
-                (click)="copySessionCode()"
-                class="absolute right-2 rounded-md transition-colors p-1.5 bg-secondary-200 hover:bg-secondary-300 dark:bg-secondary-600 dark:hover:bg-secondary-500"
-                aria-label="Copy session code"
-                title="Copy session code"
-              >
-                <svg
-                  class="w-4 h-4 text-gray-800 dark:text-white"
-                  aria-hidden="true"
-                  xmlns="http://www.w3.org/2000/svg"
-                  width="24"
-                  height="24"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke="currentColor"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M9 8v3a1 1 0 0 1-1 1H5m11 4h2a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-7a1 1 0 0 0-1 1v1m4 3v10a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-7.13a1 1 0 0 1 .24-.65L7.7 8.35A1 1 0 0 1 8.46 8H13a1 1 0 0 1 1 1Z"
-                  />
-                </svg>
-              </button>
-            </div>
-
-            <p
-              *ngIf="SessionCode.length > 0"
-              class="text-xs text-secondary-500 dark:text-secondary-300"
-            >
-              {{ 'PRIVATE_SESSION_HELP' | translate }}
-            </p>
-
-            <div class="space-y-2">
-              <div class="flex flex-col gap-2">
-                <button
-                  (click)="createPrivateSession()"
-                  class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
-                  aria-label="Create new private session"
-                  title="Create new private session"
-                >
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M12 4v16m8-8H4"
-                    />
-                  </svg>
-                  {{ 'NEW_PRIVATE_SESSION' | translate }}
-                </button>
-
-                <div class="relative">
-                  <input
-                    [(ngModel)]="newSessionCode"
-                    name="newSessionCode"
-                    type="text"
-                    class="w-full rounded-md pl-10 text-sm shadow-sm border-primary-300 dark:border-secondary-600 dark:bg-secondary-700 dark:text-white"
-                    placeholder="{{ 'SESSION_CODE' | translate }}"
-                  />
-                  <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                    <svg
-                      class="w-4 h-4 text-gray-800 dark:text-white"
-                      aria-hidden="true"
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        stroke-width="2"
-                        d="M2.9917 4.9834V18.917M9.96265 4.9834V18.917M15.9378 4.9834V18.917m2.9875-13.9336V18.917"
-                      />
-                      <path
-                        stroke="currentColor"
-                        stroke-linecap="round"
-                        d="M5.47925 4.4834V19.417m1.9917-14.9336V19.417M21.4129 4.4834V19.417M13.4461 4.4834V19.417"
-                      />
-                    </svg>
-                  </div>
-                </div>
-
-                <button
-                  (click)="joinPrivateSession()"
-                  class="flex w-full items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700"
-                  aria-label="Join private session"
-                  title="Join private session"
-                >
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M5 12h14M5 12l4-4m-4 4 4 4"
-                    />
-                  </svg>
-                  {{ 'JOIN_PRIVATE_SESSION' | translate }}
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- MEMBERS SECTION (DESKTOP) -->
-          <div>
-            <h3
-              class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
-            >
-              {{ 'MEMBERS' | translate }}
-            </h3>
-            <div class="space-y-1">
-              <div
-                *ngFor="let member of members"
-                class="flex items-center gap-2 px-3 py-2 text-sm text-secondary-700 dark:text-secondary-300"
-              >
-                <svg
-                  class="h-5 w-5 text-secondary-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-                  />
-                </svg>
-                <span class="truncate">{{ member }}</span>
+                <p class="truncate pt-2 text-base font-expoArabicMedium">{{ room }}</p>
+                <p></p>
               </div>
             </div>
           </div>
         </div>
 
-        <!--
-          TRANSFERS SECTION (DESKTOP)
-        -->
-        <div
-          class="border-t p-4 no-geopattern border-primary-300 space-y-4 dark:border-secondary-700"
-        >
-          <div
-            class="max-h-52 overflow-y-auto"
-            [ngClass]="{ 'dark-scrollbar': isDarkMode, 'light-scrollbar': !isDarkMode }"
-          >
-            <h3
-              class="mb-2 text-xs font-semibold uppercase tracking-wide text-secondary-500 dark:text-secondary-400"
-            >
-              {{ 'TRANSFERS' | translate }}
-            </h3>
-            <div *ngIf="activeUploads.length > 0 || activeDownloads.length > 0">
-              <div class="space-y-3">
-                <!-- ACTIVE UPLOADS (DESKTOP) -->
-                <div *ngFor="let transfer of activeUploads" class="text-sm">
-                  <div class="mb-1 flex items-center justify-between">
-                    <span class="truncate text-secondary-700 dark:text-secondary-300">
-                      {{ transfer.file.name | slice: 0 : 15 }}
-                    </span>
-                    <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500"
-                        >{{ transfer.progress | number: '1.0-0' }}%</span
-                      >
-                      <button
-                        (click)="
-                          $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
-                        "
-                        class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
-                        aria-label="Cancel upload"
-                        title="Cancel upload"
-                      >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
-                    <div
-                      class="rounded-full bg-primary-600 h-1.5 progress-bar"
-                      [style.width.%]="transfer.progress"
-                    ></div>
-                  </div>
-                </div>
+        <div *ngIf="SessionCode.length > 0">
+          <div class="flex w-full items-center gap-3 px-4 py-3">
+            <img
+              [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
+              alt="Home"
+              class="h-4 w-4"
+            />
+            <p class="truncate pt-1 text-base font-expoArabicMedium dark:text-white">
+              {{ 'CODE' | translate }}
+            </p>
+          </div>
 
-                <!-- ACTIVE DOWNLOADS (DESKTOP) -->
-                <div *ngFor="let download of activeDownloads" class="text-sm">
-                  <div class="mb-1 flex items-center justify-between">
-                    <span class="truncate text-secondary-700 dark:text-secondary-300">
-                      {{ download.fileName | slice: 0 : 15 }}
-                    </span>
-                    <div class="flex items-center gap-1">
-                      <span class="text-xs text-secondary-500">
-                        {{ download.progress | number: '1.0-0' }}%
-                      </span>
-                      <button
-                        (click)="
-                          $event.stopPropagation();
-                          $event.preventDefault();
-                          cancelDownload(download)
-                        "
-                        class="rounded-md text-danger-600 p-1.5 hover:bg-secondary-200 dark:text-danger-400 dark:hover:bg-secondary-600"
-                        aria-label="Cancel download"
-                        title="Cancel download"
-                      >
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            stroke-width="2"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="w-full rounded-full bg-secondary-200 h-1.5 dark:bg-secondary-700">
-                    <div
-                      class="rounded-full bg-success-600 h-1.5 progress-bar"
-                      [style.width.%]="download.progress"
-                    ></div>
-                  </div>
-                </div>
+          <div class="flex w-full items-center gap-3 px-4">
+            <div
+              class="flex items-center justify-start rounded-lg p-2 px-3 w-[150px] h-[44px] bg-inputBackground dark:bg-borderDark"
+            >
+              <p class="truncate text-base font-light font-expoArabic dark:text-contentMuted">
+                {{ SessionCode }}
+              </p>
+            </div>
+            <div
+              class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-2 text-white w-[90px] h-[44px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+              (click)="copySessionCode()"
+            >
+              <img src="/icons/copy.svg" alt="Home" class="h-4 w-4" />
+              <p class="truncate pt-1 text-base font-expoArabicMedium">{{ 'COPY' | translate }}</p>
+            </div>
+          </div>
+        </div>
+        <div
+          class="flex w-full flex-col items-center justify-center"
+          *ngIf="SessionCode.length === 0"
+        >
+          <!-- create private session -->
+          <div class="mt-8 flex w-full flex-col items-start justify-start px-4">
+            <button
+              (click)="createPrivateSession()"
+              class="flex w-full items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
+            >
+              <img src="/icons/blue-plus.svg" alt="Home" class="h-6 w-6" />
+              <span class="text-base font-expoArabicMedium">
+                {{ 'CREATE_PRIVATE_SESSION' | translate }}
+              </span>
+            </button>
+          </div>
+
+          <!-- join private session -->
+          <div class="mt-3 flex w-full flex-col items-start justify-start px-4">
+            <button
+              (click)="isOpenJoinSessionPopup = true; isMenuOpen = false"
+              class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
+            >
+              <span class="text-base font-expoArabicMedium">{{
+                'JOIN_PRIVATE_SESSION' | translate
+              }}</span>
+            </button>
+          </div>
+        </div>
+        <!-- members -->
+        <div class="mt-8 flex w-full flex-col items-center justify-center">
+          <div
+            class="flex w-full items-center justify-between px-4 py-2 text-content dark:text-white"
+          >
+            <div class="flex items-center justify-center gap-2">
+              <img
+                [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+                alt="Home"
+                class=""
+              />
+              <p class="pt-2 text-base font-expoArabicMedium dark:text-white">
+                {{ 'MEMBERS' | translate }}
+              </p>
+            </div>
+            <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+              {{ members.length }} {{ 'ONLINE_MEMBERS_COUNT' | translate }}
+            </p>
+          </div>
+          <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar">
+            <div *ngFor="let member of members">
+              <div
+                class="flex w-full cursor-pointer items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+              >
+                <div class="h-4 w-4 rounded-full bg-green-500"></div>
+                <p class="truncate text-base font-expoArabicMedium">{{ member }}</p>
+                <p></p>
+              </div>
+            </div>
+            <div *ngIf="members.length === 0">
+              <div
+                class="flex w-full cursor-pointer items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+              >
+                <p class="truncate text-base font-expoArabicMedium">
+                  {{ 'NO_MEMBERS_ONLINE' | translate }}
+                </p>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </aside>
 
-    <!--
-      ========== MAIN CHAT AREA ==========
-      This includes the message container where messages appear and the input form.
-    -->
-    <main
-      class="flex flex-1 flex-col overflow-hidden bg-primary-100 dark:bg-secondary-800"
+      <!-- exit button -->
+      <div *ngIf="SessionCode.length > 0">
+        <div
+          class="absolute bottom-4 flex w-full items-center justify-center"
+          (click)="isOpenEndSessionPopup = true; isMenuOpen = false"
+        >
+          <div class="flex w-full cursor-pointer items-center justify-center gap-2 px-3 py-3">
+            <img class="" alt="" src="/icons/cross-small.svg" />
+            <h6 class="text-base font-medium text-danger font-expoArabicMedium">
+              {{ 'END_SESSION' | translate }}
+            </h6>
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Mobile Menu Overlay -->
+
+  <div
+    *ngIf="isMenuOpen"
+    class="fixed inset-0 bg-black/30 z-[9999] dark:bg-white/30 md:hidden"
+    (click)="isMenuOpen = false"
+  ></div>
+
+  <!-- Main Content Area -->
+  <div class="flex-1 flex flex-col w-full md:max-w-[calc(100%-286px)] dark:bg-baseDark">
+    <!-- Header -->
+    <div
+      class="flex w-full items-center justify-between border-b px-4 h-[88px] border-borderLight dark:border-b-surfaceDark md:px-8"
+    >
+      <div class="flex w-full items-center justify-start py-8 md:hidden">
+        <a routerLink="/">
+          <img
+            [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
+            alt="PastePoint Logo"
+            class="h-8 w-auto cursor-pointer"
+            width="71"
+            height="25"
+            priority
+          />
+        </a>
+      </div>
+      <div class="flex items-center gap-2">
+        <div class="flex flex-row-reverse items-center gap-2 md:flex-row">
+          <!-- theme toggler -->
+          <div
+            (click)="toggleTheme()"
+            class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-black w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
+          >
+            <button
+              [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+              [attr.title]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+            >
+              <img
+                [src]="isDarkMode ? '/icons/brightness.svg' : '/icons/moon.svg'"
+                alt="Theme"
+                class="h-5 w-5"
+              />
+            </button>
+          </div>
+
+          <!-- language switcher -->
+          <ng-container *ngFor="let lang of ['en', 'ar']">
+            <div
+              *ngIf="lang !== currentLanguage"
+              (click)="switchLanguage(lang)"
+              class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-brand w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
+            >
+              {{ lang | uppercase }}
+            </div>
+          </ng-container>
+        </div>
+        <!-- Burger Menu Button -->
+        <div
+          (click)="isMenuOpen = !isMenuOpen"
+          class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-black w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark dark:text-white md:w-[56px] md:h-[56px] md:hidden"
+        >
+          <button
+            [attr.aria-label]="isMenuOpen ? 'Close menu' : 'Open menu'"
+            [attr.aria-expanded]="isMenuOpen"
+            [attr.title]="isMenuOpen ? 'Close menu' : 'Open menu'"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="21"
+              height="20"
+              viewBox="0 0 21 20"
+              fill="none"
+              class="h-5 w-5 text-black dark:text-white"
+            >
+              <g clip-path="url(#clip0_124_6043)">
+                <path d="M20.3848 8.75H0.384766V11.25H20.3848V8.75Z" fill="currentColor" />
+                <path d="M20.3848 2.91699H0.384766V5.41699H20.3848V2.91699Z" fill="currentColor" />
+                <path d="M20.3848 14.583H0.384766V17.083H20.3848V14.583Z" fill="currentColor" />
+              </g>
+              <defs>
+                <clipPath id="clip0_124_6043">
+                  <rect width="20" height="20" fill="white" transform="translate(0.384766)" />
+                </clipPath>
+              </defs>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- user info -->
+      <div *ngIf="userService.user" class="hidden items-center gap-2 md:flex">
+        <p class="text-base font-expoArabicMedium text-content dark:text-white">
+          {{ userService.user }}
+        </p>
+        <img src="/icons/Group.svg" alt="User" class="h-10 w-10" />
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div
+      class="flex-1 overflow-auto px-4 py-6 bg-contentArea dark:bg-baseDark md:p-8"
       (dragover)="handleDragOver($event)"
       (dragleave)="handleDragLeave($event)"
       (dragenter)="handleDragEnter()"
       (drop)="handleDrop($event)"
     >
-      <!-- MESSAGES CONTAINER -->
-      <div
-        #messageContainer
-        class="flex-1 overflow-y-auto p-4 space-y-4 bg-primary-150 dark:border-secondary-700 dark:bg-secondary-750"
-        [ngClass]="{ 'dark-scrollbar': isDarkMode, 'light-scrollbar': !isDarkMode }"
-      >
-        <!-- Session Information Banner -->
+      <div class="flex h-full w-full flex-col items-start justify-between">
+        <!-- info banner -->
         <div
           *ngIf="showSessionInfo"
-          class="mb-3 animate-fadeIn transition-all duration-300 ease-in-out"
+          class="relative mb-6 flex w-full items-center rounded-lg px-4 text-center bg-surface h-[72px] dark:bg-surfaceDark sm:mb-8 sm:px-8"
         >
-          <!-- Private Session Banner -->
-          <div
-            *ngIf="SessionCode.length > 0"
-            class="relative overflow-hidden rounded-md shadow-sm border border-primary-200 bg-gradient-to-r from-primary-50 to-primary-100 dark:from-primary-900/40 dark:to-primary-800/30 dark:border-primary-700 dark:text-primary-200"
-          >
-            <div
-              class="absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 rounded-full bg-primary-200/30 dark:bg-primary-700/20"
-            ></div>
-            <div
-              class="absolute bottom-0 left-0 w-12 h-12 -ml-6 -mb-6 rounded-full bg-primary-200/30 dark:bg-primary-700/20"
-            ></div>
-            <div class="relative flex items-center gap-2 px-3 py-2 z-10">
-              <div
-                class="flex-shrink-0 rounded-full bg-primary-100 p-1 shadow-inner dark:bg-primary-800"
-              >
-                <svg
-                  class="h-4 w-4 text-primary-600 dark:text-primary-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-                  />
-                </svg>
-              </div>
-              <div class="flex-1">
-                <p class="text-xs text-primary-700 dark:text-primary-300 font-medium">
-                  <span class="font-bold">{{ 'PRIVATE_SESSION_ACTIVE' | translate }}:</span>
-                  {{ 'PRIVATE_SESSION_INFO' | translate }}
-                </p>
-              </div>
-              <button
-                (click)="dismissSessionInfo()"
-                class="flex-shrink-0 rounded-full p-1 transition-colors duration-200 bg-primary-100 hover:bg-primary-200 dark:bg-primary-800 dark:hover:bg-primary-700"
-                aria-label="Dismiss session info"
-                title="Dismiss session info"
-              >
-                <svg
-                  class="h-3 w-3 text-primary-500 dark:text-primary-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- Local/Public Session Banner -->
-          <div
-            *ngIf="SessionCode.length === 0"
-            class="relative overflow-hidden rounded-md shadow-sm border border-secondary-200 bg-gradient-to-r from-secondary-50 to-secondary-100 dark:from-secondary-800/60 dark:to-secondary-700/40 dark:border-secondary-600 dark:text-secondary-200"
-          >
-            <div
-              class="absolute top-0 right-0 w-16 h-16 -mr-8 -mt-8 rounded-full bg-secondary-200/30 dark:bg-secondary-600/20"
-            ></div>
-            <div
-              class="absolute bottom-0 left-0 w-12 h-12 -ml-6 -mb-6 rounded-full bg-secondary-200/30 dark:bg-secondary-600/20"
-            ></div>
-            <div class="relative flex items-center gap-2 px-3 py-2 z-10">
-              <div
-                class="flex-shrink-0 rounded-full bg-secondary-100 p-1 shadow-inner dark:bg-secondary-700"
-              >
-                <svg
-                  class="h-4 w-4 text-secondary-600 dark:text-secondary-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"
-                  />
-                </svg>
-              </div>
-              <div class="flex-1">
-                <p class="text-xs text-secondary-700 dark:text-secondary-300 font-medium">
-                  <span class="font-bold">{{ 'PUBLIC_ROOM' | translate }}:</span>
-                  {{ 'PUBLIC_ROOM_INFO' | translate }}
-                </p>
-              </div>
-              <button
-                (click)="dismissSessionInfo()"
-                class="flex-shrink-0 rounded-full p-1 transition-colors duration-200 bg-secondary-100 hover:bg-secondary-200 dark:bg-secondary-700 dark:hover:bg-secondary-600"
-                aria-label="Dismiss session info"
-                title="Dismiss session info"
-              >
-                <svg
-                  class="h-3 w-3 text-secondary-500 dark:text-secondary-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-        <div
-          *ngFor="let msg of messages"
-          class="mb-3 flex items-end"
-          [class.justify-end]="isMyMessage(msg)"
-        >
-          <!-- USER AVATAR ICON -->
-          <div
-            class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full shadow-sm no-geopattern shadow-secondary-600 bg-secondary-300 dark:shadow-secondary-400 dark:bg-secondary-600"
-            [class.me-2]="!isMyMessage(msg)"
-            [class.ms-2]="isMyMessage(msg)"
-            [class.order-last]="isMyMessage(msg)"
-          >
-            <svg
-              class="h-5 w-5 text-secondary-500 dark:text-secondary-300"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+          <div class="flex items-center justify-start gap-2 w-[95%]">
+            <img src="/icons/information-circle.svg" alt="Info" class="h-4 w-4" />
+            <p
+              class="text-xs font-normal font-expoArabic text-content dark:text-contentMuted"
+              [ngClass]="isRTL ? 'text-right' : 'text-left'"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-              />
-            </svg>
-          </div>
-
-          <!-- MESSAGE BUBBLE -->
-          <div
-            class="p-3 text-sm shadow-sm no-geopattern min-w-[30%] max-w-[50%] shadow-secondary-600"
-            [class]="
-              isMyMessage(msg)
-                ? isRTL
-                  ? 'bg-primary-600 text-white dark:shadow-primary-500 rounded-tl-xl rounded-tr-xl rounded-br-xl'
-                  : 'bg-primary-600 text-white dark:shadow-primary-500 rounded-s-xl rounded-se-xl'
-                : isRTL
-                  ? 'bg-secondary-100 dark:bg-secondary-500 text-secondary-900 dark:text-white dark:shadow-secondary-400 rounded-tl-xl rounded-tr-xl rounded-bl-xl'
-                  : 'bg-secondary-100 dark:bg-secondary-500 text-secondary-900 dark:text-white dark:shadow-secondary-400 rounded-tl-xl rounded-tr-xl rounded-br-xl'
-            "
-          >
-            <p class="break-words">{{ msg.text }}</p>
-            <p class="mt-1 text-[10px]" [class]="isMyMessage(msg) ? 'text-right' : 'text-left'">
-              {{ msg.timestamp | date: 'shortTime' }}
+              {{
+                SessionCode.length > 0
+                  ? ('PRIVATE_SESSION_INFO' | translate)
+                  : ('PUBLIC_SESSION_INFO' | translate)
+              }}
             </p>
           </div>
+          <div
+            (click)="dismissSessionInfo()"
+            class="absolute top-5 flex cursor-pointer items-center justify-end gap-2"
+            [ngClass]="isRTL ? 'left-5' : 'right-5'"
+          >
+            <img src="/icons/cross-close.svg" alt="Info" class="h-3 w-3" />
+          </div>
+        </div>
+        <!-- Room Name -->
+        <div class="flex items-center justify-start gap-2 pb-4">
+          <img
+            *ngIf="SessionCode.length > 0"
+            [src]="isDarkMode ? '/icons/lock-white.svg' : '/icons/lock.svg'"
+            alt="Home"
+            class="h-5 w-5"
+          />
+          <p class="pt-1 text-2xl font-normal font-expoArabicMedium text-content dark:text-white">
+            {{
+              currentRoom == 'main'
+                ? SessionCode.length > 0
+                  ? ('PRIVATE_ROOM' | translate)
+                  : ('PUBLIC_ROOM' | translate)
+                : currentRoom
+            }}
+          </p>
         </div>
 
-        <!--
-          INCOMING FILES SECTION (PROMPTS TO ACCEPT/DECLINE FILES)
-        -->
-        <div *ngIf="incomingFiles.length > 0" class="space-y-2">
-          <div
-            *ngFor="let incomingFile of incomingFiles"
-            class="rounded-lg p-4 bg-secondary-100 dark:bg-secondary-700"
-          >
-            <div class="flex items-center justify-between">
-              <div>
-                <h4
-                  class="mb-1 text-sm font-medium no-geopattern text-secondary-900 dark:text-white"
-                >
-                  {{ incomingFile.fromUser }} {{ 'WANTS_TO_SEND_FILE' | translate }}
-                </h4>
-                <p class="text-xs no-geopattern text-secondary-600 dark:text-secondary-300">
-                  {{ incomingFile.fileName }} ({{ incomingFile.fileSize / MB | number: '1.2-2' }}
-                  MB)
-                </p>
+        <!-- messages -->
+        <div class="w-full flex-1 overflow-auto pt-5 max-h-[65%] no-scrollbar" #messageContainer>
+          <div class="flex w-full flex-col items-start justify-start gap-4">
+            <div *ngFor="let message of messages; trackBy: trackMessage" class="w-full">
+              <!-- Other User Message -->
+              <div *ngIf="!isMyMessage(message); else myMessage" class="flex justify-start">
+                <div class="flex items-start justify-start gap-3 min-w-[350px] max-w-[60%]">
+                  <img src="/icons/Group.svg" alt="User" class="h-8 w-8" />
+                  <div class="flex w-full flex-col gap-1">
+                    <span class="px-2 text-xs text-gray-700 font-expoArabic dark:text-gray-300">
+                      {{ message.from }}
+                    </span>
+                    <div
+                      class="relative w-full rounded-xl rounded-tl-none p-3 bg-brand min-h-[65px] dark:bg-brandDark"
+                      [class]="isRTL ? 'rounded-tr-none' : 'rounded-tl-none'"
+                    >
+                      <p class="text-white text-[18px] font-expoArabic">{{ message.text }}</p>
+                      <div
+                        class="absolute bottom-0 flex items-center justify-end gap-2"
+                        [ngClass]="!isRTL ? 'right-3' : 'left-3'"
+                      >
+                        <span class="text-xs leading-6 text-white font-expoArabic">
+                          {{ message.timestamp | date: 'shortTime' }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="flex gap-2">
-                <button
-                  (click)="acceptIncomingFile(incomingFile)"
-                  class="rounded-md text-white no-geopattern bg-success-600 p-1.5 hover:bg-success-700"
-                  aria-label="Accept file"
-                  title="Accept file"
-                >
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M5 13l4 4L19 7"
-                    />
-                  </svg>
-                </button>
-                <button
-                  (click)="declineIncomingFile(incomingFile)"
-                  class="rounded-md text-white no-geopattern bg-danger-600 p-1.5 hover:bg-danger-700"
-                  aria-label="Decline file"
-                  title="Decline file"
-                >
-                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
+
+              <!-- My Message (else block) -->
+              <ng-template #myMessage>
+                <div class="flex justify-end">
+                  <div class="flex items-start justify-end gap-3 min-w-[350px] max-w-[60%]">
+                    <div class="flex w-full flex-col items-end gap-1">
+                      <span
+                        class="px-2 text-end text-xs text-blue-500 font-expoArabic dark:text-blue-400"
+                      >
+                        {{ message.from }}
+                      </span>
+                      <div
+                        class="relative w-full rounded-xl rounded-tr-none p-3 bg-messageBackground min-h-[65px] dark:bg-surfaceDark"
+                      >
+                        <p class="text-[18px] font-expoArabic text-content dark:text-contentMuted">
+                          {{ message.text }}
+                        </p>
+                        <div
+                          class="absolute bottom-0 flex items-center justify-end gap-2"
+                          [ngClass]="!isRTL ? 'right-3' : 'left-3'"
+                        >
+                          <span
+                            class="text-xs leading-6 font-expoArabic text-content dark:text-contentMuted"
+                          >
+                            {{ message.timestamp | date: 'shortTime' }}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <img src="/icons/Group.svg" alt="User" class="h-8 w-8" />
+                  </div>
+                </div>
+              </ng-template>
+            </div>
+          </div>
+
+          <!--
+              INCOMING FILES SECTION (PROMPTS TO ACCEPT/DECLINE FILES)
+            -->
+          <div *ngIf="incomingFiles.length > 0" class="mt-4 w-full space-y-2">
+            <div
+              *ngFor="let incomingFile of incomingFiles"
+              class="rounded-lg p-4 bg-surface dark:bg-surfaceDark"
+            >
+              <div
+                class="flex w-full flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0"
+              >
+                <div class="flex items-start gap-2">
+                  <img src="/icons/file.svg" alt="File" class="h-4 w-4 mt-0.5" />
+                  <div>
+                    <p class="mb-1 text-sm font-expoArabic text-content dark:text-contentMuted">
+                      {{ incomingFile.fileName }} ({{
+                        incomingFile.fileSize / MB | number: '1.2-2'
+                      }}
+                      MB)
+                    </p>
+                    <p class="text-sm font-normal font-expoArabic text-content dark:text-white">
+                      {{ incomingFile.fromUser }} {{ 'WANTS_TO_SEND_FILE' | translate }}
+                    </p>
+                  </div>
+                </div>
+                <div class="flex w-full justify-end gap-2 sm:w-auto sm:justify-start">
+                  <button
+                    (click)="acceptIncomingFile(incomingFile)"
+                    class="flex items-center justify-center rounded-lg text-white w-[100px] h-[36px] bg-brand p-1.5 hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+                    aria-label="Accept file"
+                    title="Accept file"
+                  >
+                    <span class="text-base font-medium font-expoArabicMedium">{{
+                      'ACCEPT' | translate
+                    }}</span>
+                  </button>
+                  <button
+                    (click)="declineIncomingFile(incomingFile)"
+                    class="flex items-center justify-center rounded-lg border bg-transparent w-[100px] h-[36px] text-danger border-danger p-1.5 hover:bg-danger/80 hover:text-white"
+                    aria-label="Decline file"
+                    title="Decline file"
+                  >
+                    <span class="text-base font-medium font-expoArabicMedium">{{
+                      'CANCEL' | translate
+                    }}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!--
-        ========== MESSAGE INPUT FORM ==========
-        For composing and sending new messages (includes file attachments, emoji picker).
-      -->
-      <div
-        class="p-4 border-primary-300 bg-primary-150 dark:border-secondary-700 dark:bg-secondary-750"
-      >
+        <!-- message input -->
         <form
           #messageForm="ngForm"
           (submit)="sendMessage(messageForm); $event.preventDefault()"
-          class="flex items-center gap-3"
+          class="flex w-full"
         >
-          <!-- MAIN INPUT SECTION-->
           <div
-            class="relative flex flex-1 items-center transition-all duration-150 ease-in-out no-geopattern"
+            class="relative mt-6 mb-0 flex w-full items-center justify-end gap-2 rounded-xl p-4 pt-0 pb-0 h-[110px]"
+            [ngClass]="
+              message.length > 0
+                ? 'border border-inputBackground dark:border-textVeryMuted '
+                : 'bg-inputBackground dark:bg-borderDark'
+            "
           >
-            <!-- DRAG AND DROP OVERLAY -->
+            <!--  Drag and drop overlay -->
             <div
               *ngIf="isDragging"
               class="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed bg-black/50 text-white backdrop-blur-sm border-primary-300 dark:border-secondary-400"
             >
               <div class="flex flex-row items-center gap-2">
                 <svg
-                  class="h-4 w-4 text-blue-500"
+                  class="h-4 w-4 text-brand dark:text-brandDark"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -1289,40 +706,62 @@
                 <span class="text-xs font-medium">{{ 'DROP_FILES_HERE' | translate }}</span>
               </div>
             </div>
+            <div class="flex w-full flex-col">
+              <textarea
+                [(ngModel)]="message"
+                name="message"
+                rows="1"
+                class="w-full resize-none rounded-lg border-none bg-transparent px-0 py-2 font-medium outline-none font-expoArabicMedium text-content dark:text-contentMuted"
+                [placeholder]="(isDragging ? 'DROP_FILES_HERE' : 'TYPE_YOUR_MESSAGE') | translate"
+                (keydown.enter)="onEnterKey($any($event), messageForm)"
+              >
+              </textarea>
 
-            <!-- TEXTAREA FOR MESSAGE INPUT -->
-            <textarea
-              #messageInput
-              [(ngModel)]="message"
-              name="message"
-              rows="1"
-              class="h-full w-full resize-none rounded-lg border px-10 py-3 text-sm border-secondary-300 placeholder-gray-500 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-secondary-600 dark:bg-secondary-750 dark:placeholder-secondary-400 dark:text-white"
-              [placeholder]="(isDragging ? 'DROP_FILES_HERE' : 'TYPE_YOUR_MESSAGE') | translate"
-              (keydown.enter)="onEnterKey($any($event), messageForm)"
-            ></textarea>
-
-            <!-- EMOJI PICKER BUTTON-->
-            <button
-              type="button"
-              class="absolute top-1/2 left-3 -translate-y-1/2 transform text-gray-500 transition-colors duration-300 hover:textsecondary-700 dark:hover:text-secondary-300 hidden md:block"
-              (mouseenter)="isEmojiPickerVisible = true"
-              (mouseleave)="handleEmojiIconMouseLeave()"
-              aria-label="Open emoji picker"
-              title="Open emoji picker"
-            >
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              <div class="flex w-full items-center justify-between">
+                <div
+                  class="flex items-center gap-6 px-2"
+                  [ngClass]="isRTL ? 'flex-row-reverse' : 'flex-row'"
+                >
+                  <img
+                    [src]="isDarkMode ? '/icons/link.svg' : '/icons/link.svg'"
+                    alt="User"
+                    (click)="fileInput.click()"
+                    class="h-5 w-5 cursor-pointer"
+                  />
+                  <img
+                    [src]="isDarkMode ? '/icons/emoji.svg' : '/icons/emoji.svg'"
+                    alt="User"
+                    class="h-5 w-5 cursor-pointer"
+                    (mouseenter)="isEmojiPickerVisible = true"
+                    (mouseleave)="handleEmojiIconMouseLeave()"
+                    aria-label="Open emoji picker"
+                    title="Open emoji picker"
+                  />
+                </div>
+                <button
+                  class="flex items-center justify-center gap-2 rounded-lg p-2 text-white bg-brand min-w-[100px] h-[40px] dark:bg-brandDark md:min-w-[124px] md:h-[44px]"
+                  [ngClass]="isRTL ? 'flex-row-reverse' : 'flex-row'"
+                >
+                  <span class="text-base font-expoArabicMedium">{{ 'SEND' | translate }}</span>
+                  <img
+                    [src]="isDarkMode ? '/icons/send.svg' : '/icons/send.svg'"
+                    alt="User"
+                    class="h-5 w-5"
+                  />
+                </button>
+                <input
+                  type="file"
+                  #fileInput
+                  (change)="sendAttachments($event)"
+                  multiple
+                  class="hidden"
                 />
-              </svg>
-            </button>
-
+              </div>
+            </div>
             <!-- EMOJI PICKER POPUP -->
             <div
-              class="absolute bottom-full left-0 z-10 w-72 rounded-lg border shadow-lg transition-opacity duration-300 border-primary-300 bg-primary-100 dark:border-secondary-600 dark:bg-secondary-800"
+              class="absolute bottom-full z-10 w-72 rounded-lg border shadow-lg border-primary-300 bg-primary-100 dark:border-secondary-600 dark:bg-secondary-800"
+              [ngClass]="isRTL ? 'right-0' : 'left-0'"
               [ngStyle]="{
                 opacity: isEmojiPickerVisible ? '1' : '0',
                 pointerEvents: isEmojiPickerVisible ? 'auto' : 'none',
@@ -1338,140 +777,205 @@
                 title="Choose your emoji"
               ></emoji-mart>
             </div>
-
-            <!-- ATTACH FILE BUTTON -->
-            <button
-              type="button"
-              (click)="fileInput.click()"
-              class="absolute top-1/2 right-3 -translate-y-1/2 transform text-gray-500 transition-colors duration-300 hover:text-secondary-700 dark:hover:text-secondary-300"
-              aria-label="Attach file"
-              title="Attach file"
-            >
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                />
-              </svg>
-            </button>
-            <input
-              type="file"
-              #fileInput
-              (change)="sendAttachments($event)"
-              multiple
-              class="hidden"
-            />
           </div>
-
-          <!-- SEND MESSAGE BUTTON -->
-          <button
-            type="submit"
-            class="rounded-xl px-4 py-2 text-white transition-colors duration-300 bg-primary-600 hover:bg-primary-700"
-            aria-label="Send message"
-            title="Send message"
-          >
-            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                [attr.d]="isRTL ? 'M5 12h14M5 12l4-4m-4 4 4 4' : 'M19 12H5m14 0-4 4m4-4-4-4'"
-              />
-            </svg>
-          </button>
         </form>
       </div>
-    </main>
-  </div>
-  <!--
-  ========== FOOTER SECTION ==========
-  This is the newly added footer with GitHub/LinkedIn links and copyright.
--->
-  <footer
-    class="hidden border-t p-2 text-center border-primary-200 bg-primary-100 dark:border-secondary-700 dark:bg-secondary-800 md:block"
-  >
-    <div class="mx-auto max-w-7xl px-4 no-geopattern">
-      <p class="text-sm text-secondary-600 dark:text-secondary-300">
+    </div>
+
+    <!-- Footer -->
+    <div
+      class="hidden w-full items-center justify-between border-t bg-white px-8 text-center h-[58px] border-borderLight dark:bg-baseDark dark:border-surfaceDark md:flex"
+    >
+      <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
         {{ 'COPYRIGHT_NOTICE' | translate }}
       </p>
-      <div class="mt-2 flex items-center justify-center gap-6">
-        <!-- GitHub Icon & Link -->
-        <a
-          href="https://github.com/SloMR/pastepoint"
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-          class="inline-flex items-center text-primary-600 hover:underline dark:text-primary-400"
-        >
-          <svg
-            class="h-5 w-5"
-            role="img"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg"
-            [class]="isRTL ? 'ml-1' : 'mr-1'"
+      <div class="flex items-center gap-2">
+        <div class="flex items-center">
+          <!-- LinkedIn Icon & Link -->
+          <a
+            href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
           >
-            <path
-              d="M12 .296c-6.63 0-12 5.373-12 12 0 5.303
-              3.438 9.8 8.205 11.387.6.113.82-.258.82-.577
-              0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61
-              -.546-1.387-1.333-1.757-1.333-1.757-1.089-.745.084-.73.084-.73
-              1.205.084 1.84 1.24 1.84 1.24 1.07 1.835 2.807 1.305
-              3.492.997.108-.776.42-1.305.76-1.605-2.665-.303-5.467-1.332-5.467-5.93
-              0-1.31.47-2.38 1.235-3.22-.123-.303-.54-1.524.117-3.176
-              0 0 1.01-.323 3.3 1.23.96-.267 1.98-.399
-              3-.404 1.02.005 2.04.137
-              3 .404 2.28-1.553 3.29-1.23
-              3.29-1.23.657 1.652.24 2.873.117 3.176
-              .77.84 1.235 1.91 1.235 3.22 0 4.61-2.807
-              5.625-5.48 5.92.43.37.81 1.096.81 2.21
-              0 1.596-.015 2.877-.015 3.27
-              0 .317.21.687.82.57A11.999 11.999
-              0 0 0 24 12.296c0-6.627-5.373-12-12-12z"
-            />
-          </svg>
-          <p class="text-xs">GitHub</p>
-        </a>
-
-        <!-- LinkedIn Icon & Link -->
-        <a
-          href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center text-primary-600 hover:underline dark:text-primary-400"
-        >
-          <svg
-            class="h-5 w-5"
-            role="img"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg"
-            [class]="isRTL ? 'ml-1' : 'mr-1'"
+            <p class="text-xs font-expoArabicMedium text-brand">LinkedIn</p>
+            <img src="/icons/linkedin.svg" alt="User" class="h-4 w-4" />
+          </a>
+        </div>
+        <div class="flex items-center">
+          <!-- GitHub Icon & Link -->
+          <a
+            href="https://github.com/SloMR/pastepoint"
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
           >
-            <path
-              d="M20.452 20.452h-3.555v-5.568c0-1.328-.027
-              -3.037-1.853-3.037-1.853 0-2.136 1.445-2.136
-              2.94v5.665H9.353V9h3.413v1.561h.048c.476-.9
-              1.637-1.853 3.368-1.853 3.595 0 4.26 2.367
-              4.26 5.451v6.293zM5.337 7.433a2.062
-              2.062 0 1 1 0-4.123 2.062
-              2.062 0 0 1 0 4.123zM6.906
-              20.452H3.77V9h3.136v11.452zM22.225 0H1.771C.792
-              0 0 .774 0 1.73v20.541C0 23.228.792
-              24 1.771 24h20.451C23.2 24 24 23.228
-              24 22.271V1.73C24 .774 23.2 0 22.225
-              0z"
-            />
-          </svg>
-          <p class="text-xs">LinkedIn</p>
-        </a>
+            <p class="text-xs font-expoArabicMedium text-brand">GitHub</p>
+            <img src="/icons/github.svg" alt="User" class="h-4 w-4" />
+          </a>
+        </div>
       </div>
-      <!-- Version Display -->
-      <p class="mt-1 text-xs text-secondary-500 dark:text-secondary-400">
-        {{ 'VERSION' | translate }}
-        <span class="font-medium text-primary-600 dark:text-primary-400">{{ appVersion }}</span>
+      <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+        {{ 'VERSION' | translate }} {{ appVersion }}
       </p>
     </div>
-  </footer>
+
+    <!-- Popups -->
+    <!-- JOIN SESSION POPUP -->
+    <div
+      *ngIf="isOpenJoinSessionPopup"
+      [class]="
+        isOpenJoinSessionPopup ? 'opacity-100 animate-fade-in' : 'opacity-0 animate-fade-out'
+      "
+      class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"
+    >
+      <div
+        class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 h-[300px] dark:bg-baseDark sm:w-[550px] sm:rounded-b-2xl sm:px-8"
+      >
+        <div class="flex w-full flex-col gap-8 sm:gap-10">
+          <div class="flex items-center justify-between">
+            <h2
+              class="font-semibold text-[22px] font-expoArabic text-content leading-[100%] dark:text-white"
+            >
+              {{ 'JOIN_A_PRIVATE_SESSION' | translate }}
+            </h2>
+            <img
+              src="/icons/cross-close.svg"
+              alt="Close"
+              class="h-4 w-4 cursor-pointer"
+              (click)="isOpenJoinSessionPopup = false"
+            />
+          </div>
+          <div class="flex w-full flex-col gap-2">
+            <label
+              class="text-base font-expoArabicMedium text-textMuted leading-[100%] dark:text-contentMuted"
+              >{{ 'ENTER_SESSION_CODE' | translate }}</label
+            >
+            <input
+              type="text"
+              [(ngModel)]="newSessionCode"
+              class="w-full rounded-lg border p-2 px-4 text-base h-[50px] border-inputBackground font-expoArabicMedium text-textMuted leading-[100%] dark:border-surfaceDark dark:bg-surfaceDark dark:text-contentMuted"
+              placeholder="{{ 'SESSION_CODE_PLACEHOLDER' | translate }}"
+            />
+            <p
+              class="m-0 text-xs font-expoArabicMedium text-textMuted leading-[100%] dark:text-contentMuted"
+            >
+              {{ 'SESSION_CODE_DESCRIPTION' | translate }}
+            </p>
+          </div>
+          <div class="flex w-full items-center justify-between gap-4">
+            <button
+              (click)="joinPrivateSession()"
+              class="w-full rounded-lg text-base text-white h-[44px] bg-brand font-expoArabicMedium leading-[100%] hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+            >
+              {{ 'DONE' | translate }}
+            </button>
+            <button
+              (click)="isOpenJoinSessionPopup = false"
+              class="w-full rounded-lg border bg-white text-base h-[44px] text-brand border-brand font-expoArabicMedium leading-[100%] hover:bg-brand/10 dark:bg-baseDark dark:text-brandDark dark:border-brandDark dark:hover:bg-brandDark/10"
+            >
+              {{ 'CANCEL' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CREATE ROOM POPUP -->
+    <div
+      *ngIf="isOpenCreateRoom"
+      class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"
+    >
+      <div
+        class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 h-[300px] dark:bg-baseDark sm:w-[550px] sm:rounded-b-2xl sm:px-8"
+      >
+        <div class="flex w-full flex-col gap-8 sm:gap-10">
+          <div class="flex items-center justify-between">
+            <h2
+              class="font-semibold text-[22px] font-expoArabic text-content leading-[100%] dark:text-white"
+            >
+              {{ 'CREATE_A_NEW_ROOM' | translate }}
+            </h2>
+            <img
+              src="/icons/cross-close.svg"
+              alt="Close"
+              class="h-4 w-4 cursor-pointer"
+              (click)="isOpenCreateRoom = false"
+            />
+          </div>
+          <div class="flex w-full flex-col gap-2">
+            <label
+              class="text-base font-expoArabicMedium text-textMuted leading-[100%] dark:text-contentMuted"
+              >{{ 'ENTER_ROOM_NAME' | translate }}</label
+            >
+            <input
+              type="text"
+              [(ngModel)]="newRoomName"
+              class="w-full rounded-lg border p-2 px-4 text-base h-[50px] border-inputBackground font-expoArabicMedium text-textMuted leading-[100%] dark:border-surfaceDark dark:bg-surfaceDark dark:text-contentMuted"
+              placeholder="{{ 'ROOM_NAME_PLACEHOLDER' | translate }}"
+            />
+            <p
+              class="m-0 text-xs font-expoArabicMedium text-textMuted leading-[100%] dark:text-contentMuted"
+            >
+              {{ 'ROOM_NAME_DESCRIPTION' | translate }}
+            </p>
+          </div>
+          <div class="flex w-full items-center justify-between gap-4">
+            <button
+              (click)="createRoom()"
+              class="w-full rounded-lg text-base text-white h-[44px] bg-brand font-expoArabicMedium leading-[100%] hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+            >
+              {{ 'DONE' | translate }}
+            </button>
+            <button
+              (click)="isOpenCreateRoom = false"
+              class="w-full rounded-lg border bg-white text-base h-[44px] text-brand border-brand font-expoArabicMedium leading-[100%] hover:bg-brand/10 dark:bg-baseDark dark:text-brandDark dark:border-brandDark dark:hover:bg-brandDark/10"
+            >
+              {{ 'CANCEL' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- END SESSION POPUP -->
+    <div
+      *ngIf="isOpenEndSessionPopup"
+      class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"
+    >
+      <div
+        class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 dark:bg-baseDark sm:w-[500px] sm:rounded-b-2xl sm:px-8 sm:pb-8"
+      >
+        <div class="flex w-full flex-col gap-8 sm:gap-10">
+          <div class="flex items-start justify-between">
+            <h2
+              class="font-semibold text-[22px] font-expoArabic text-content leading-[150%] dark:text-white"
+            >
+              {{ 'END_SESSION_HEADER' | translate }}
+            </h2>
+            <img
+              src="/icons/cross-close.svg"
+              alt="Close"
+              class="h-4 w-4 cursor-pointer"
+              (click)="isOpenEndSessionPopup = false"
+            />
+          </div>
+          <div class="flex w-full items-center justify-between gap-4">
+            <button
+              (click)="endSession()"
+              class="w-full rounded-lg text-base text-white h-[44px] bg-danger font-expoArabicMedium leading-[100%] hover:bg-danger/80"
+            >
+              {{ 'END_THE_SESSION' | translate }}
+            </button>
+            <button
+              (click)="isOpenEndSessionPopup = false"
+              class="w-full rounded-lg border bg-white text-base h-[44px] text-danger border-danger font-expoArabicMedium leading-[100%] hover:bg-danger/10 dark:bg-baseDark"
+            >
+              {{ 'CANCEL' | translate }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

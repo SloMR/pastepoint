@@ -1,39 +1,31 @@
 import { Injectable } from '@angular/core';
-import { IndividualConfig } from 'ngx-toastr';
 import { Observable, of } from 'rxjs';
+import { ToastConfig } from '@ngneat/hot-toast';
 
 @Injectable()
 export class MockToastrService {
   toasts: { type: string; message: string; title: string }[] = [];
-  private _config: Partial<IndividualConfig> | undefined;
+  private _config: Partial<ToastConfig> | undefined;
 
-  success(
-    message: string,
-    title?: string,
-    config?: Partial<IndividualConfig>
-  ): Observable<unknown> {
+  success(message: string, title?: string, config?: Partial<ToastConfig>): Observable<unknown> {
     this._config = config;
     this.toasts.push({ type: 'success', message, title: title ?? '' });
     return of({});
   }
 
-  error(message: string, title?: string, config?: Partial<IndividualConfig>): Observable<unknown> {
+  error(message: string, title?: string, config?: Partial<ToastConfig>): Observable<unknown> {
     this._config = config;
     this.toasts.push({ type: 'error', message, title: title ?? '' });
     return of({});
   }
 
-  info(message: string, title?: string, config?: Partial<IndividualConfig>): Observable<unknown> {
+  info(message: string, title?: string, config?: Partial<ToastConfig>): Observable<unknown> {
     this._config = config;
     this.toasts.push({ type: 'info', message, title: title ?? '' });
     return of({});
   }
 
-  warning(
-    message: string,
-    title?: string,
-    config?: Partial<IndividualConfig>
-  ): Observable<unknown> {
+  warning(message: string, title?: string, config?: Partial<ToastConfig>): Observable<unknown> {
     this._config = config;
     this.toasts.push({ type: 'warning', message, title: title ?? '' });
     return of({});

@@ -1,10 +1,10 @@
 <!--
   ========== MAIN CONTAINER ==========
-  This wraps the entire 404 page, with the same design style as your chat component.
+  This wraps the entire 404 page
 -->
 <div
   [attr.dir]="isRTL ? 'rtl' : 'ltr'"
-  class="flex h-screen flex-col bg-primary-100 dark:bg-secondary-800"
+  class="flex h-screen flex-col bg-pageBackground dark:bg-baseDark"
 >
   <!--
     ========== HEADER SECTION ==========
@@ -12,17 +12,17 @@
     including theme toggler & language switch.
   -->
   <header
-    class="border-b shadow-sm no-geopattern border-primary-200 bg-primary-100 dark:border-secondary-700 dark:bg-secondary-800"
+    class="border-b bg-pageBackground border-borderLight dark:border-surfaceDark dark:bg-baseDark"
   >
     <div class="mx-auto max-w-7xl pr-4 pl-16 sm:px-6 lg:px-8">
-      <div class="flex h-16 items-center justify-between">
+      <div class="flex h-20 items-center justify-between">
         <!--
           LOGO & TITLE
         -->
         <div class="flex items-center">
           <a routerLink="/" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'">
             <img
-              [ngSrc]="isDarkMode ? 'pastepoint-light.svg' : 'pastepoint-dark.svg'"
+              [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
               alt="PastePoint Logo"
               class="h-12 w-auto cursor-pointer"
               width="755"
@@ -30,53 +30,35 @@
               loading="lazy"
             />
           </a>
-          <!-- Use your existing translation key for the app title -->
-          <h1 class="text-lg font-bold text-secondary-900 dark:text-white">
-            {{ 'APP_TITLE' | translate }}
-          </h1>
         </div>
 
         <!--
           THEME TOGGLER & LANGUAGE SWITCHER
         -->
-        <div class="flex items-center gap-4">
-          <button
+        <div class="flex flex-row-reverse items-center gap-2 md:flex-row">
+          <!-- theme toggler -->
+          <div
             (click)="toggleTheme()"
-            class="rounded-lg p-2 text-secondary-600 hover:bg-secondary-100 dark:text-secondary-300 dark:hover:bg-secondary-700"
+            class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-black w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
           >
-            <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                *ngIf="!isDarkMode"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 5V3m0 18v-2M7.05 7.05 5.636 5.636m12.728 12.728L16.95 16.95M5 12H3m18 0h-2M7.05 16.95l-1.414 1.414M18.364 5.636 16.95 7.05M16 12a4 4 0 1 1-8 0 4 4 0 0 1 8 0Z"
-              />
-              <path
-                *ngIf="isDarkMode"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M20.354 15.354A9 9 0 0 1 8.646 3.646
-                   9.003 9.003 0 0 0 12 21
-                   a9.003 9.003 0 0 0 8.354-5.646z"
-              />
-            </svg>
-          </button>
-
-          <div class="flex gap-2">
             <button
-              *ngFor="let lang of ['en', 'ar']"
-              (click)="switchLanguage(lang)"
-              class="rounded-md px-3 py-1 text-sm font-medium"
-              [class]="
-                lang === currentLanguage
-                  ? 'bg-primary-600 text-white'
-                  : 'text-secondary-600 dark:text-secondary-300 hover:bg-secondary-100 dark:hover:bg-secondary-700'
-              "
+              [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+              [attr.title]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
             >
-              {{ lang | uppercase }}
+              <img
+                [src]="isDarkMode ? '/icons/brightness.svg' : '/icons/moon.svg'"
+                alt="Theme"
+                class="h-5 w-5"
+              />
             </button>
+          </div>
+
+          <!-- language switcher -->
+          <div
+            (click)="switchLanguage(translate.currentLang === 'ar' ? 'en' : 'ar')"
+            class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-brand w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
+          >
+            {{ translate.currentLang | uppercase }}
           </div>
         </div>
       </div>
@@ -87,124 +69,83 @@
     ========== MAIN CONTENT AREA ==========
     Where we display the 404 message
   -->
-  <main class="flex flex-1 items-center justify-center bg-primary-100 dark:bg-secondary-800">
-    <div class="max-w-md p-4 text-center no-geopattern">
+  <main class="flex flex-1 items-center justify-center bg-pageBackground dark:bg-baseDark">
+    <div class="mx-auto max-w-md p-4 text-center">
+      <img
+        [src]="isDarkMode ? '/icons/404-dark.svg' : '/icons/404-light.svg'"
+        alt="404"
+        class="mx-auto mb-4"
+      />
       <!-- Heading with Icon -->
       <h2
-        class="mb-4 flex items-center justify-center gap-2 text-3xl font-bold text-secondary-900 dark:text-white"
+        class="mb-2 flex items-center justify-center gap-4 font-bold text-[28px] font-expoArabicMedium text-secondary-900 dark:text-white"
       >
         <!-- Exclamation circle -->
-        <svg
-          class="h-8 w-8 text-danger-600 dark:text-danger-400"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
+        <div
+          class="flex items-center justify-center rounded-md w-[28px] h-[28px]"
+          [ngClass]="isDarkMode ? 'bg-brand' : 'bg-brandDark'"
         >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 9v2m0 4h.01M5.07 19H18.93
-               a2 2 0 0 0 1.74-2.984l-6.93-12a2 2 0 0 0-3.48 0l-6.93 12
-               A2 2 0 0 0 5.07 19z"
+          <img
+            [src]="isDarkMode ? '/icons/warning-dark.svg' : '/icons/warning-light.svg'"
+            alt="warning"
           />
-        </svg>
+        </div>
         {{ 'PAGE_NOT_FOUND' | translate }}
       </h2>
-      <p class="mb-6 text-secondary-700 dark:text-secondary-300">
+      <p class="mb-6 text-secondary-700 font-expoArabicMedium dark:text-secondary-300">
         {{ 'INVALID_LINK_MESSAGE' | translate }}
       </p>
-      <a
-        routerLink="/"
-        class="inline-block rounded-md px-4 py-2 text-white bg-primary-600 hover:bg-primary-700"
-      >
-        {{ 'GO_BACK_HOME' | translate }}
-      </a>
+      <div class="flex w-full items-center justify-center">
+        <button
+          class="flex items-center justify-center gap-2 rounded-md px-4 py-2 text-white font-expoArabicMedium bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+          routerLink="/"
+        >
+          <img
+            src="/icons/back-arrow.svg"
+            alt="arrow-right"
+            [ngClass]="isRTL ? 'rotate-0' : 'rotate-180'"
+          />
+          {{ 'GO_BACK_HOME' | translate }}
+        </button>
+      </div>
     </div>
   </main>
-  <footer
-    class="border-t p-2 text-center border-primary-200 bg-primary-100 dark:border-secondary-700 dark:bg-secondary-800 md:block"
-  >
-    <div class="mx-auto max-w-7xl px-4 no-geopattern">
-      <p class="text-sm text-secondary-600 dark:text-secondary-300">
-        {{ 'COPYRIGHT_NOTICE' | translate }}
-      </p>
-      <div class="mt-2 flex items-center justify-center gap-6">
-        <!-- GitHub Icon & Link -->
-        <a
-          href="https://github.com/SloMR/pastepoint"
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-          class="inline-flex items-center text-primary-600 hover:underline dark:text-primary-400"
-        >
-          <svg
-            class="h-5 w-5"
-            role="img"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg"
-            [class]="isRTL ? 'ml-1' : 'mr-1'"
-          >
-            <path
-              d="M12 .296c-6.63 0-12 5.373-12 12 0 5.303
-              3.438 9.8 8.205 11.387.6.113.82-.258.82-.577
-              0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61
-              -.546-1.387-1.333-1.757-1.333-1.757-1.089-.745.084-.73.084-.73
-              1.205.084 1.84 1.24 1.84 1.24 1.07 1.835 2.807 1.305
-              3.492.997.108-.776.42-1.305.76-1.605-2.665-.303-5.467-1.332-5.467-5.93
-              0-1.31.47-2.38 1.235-3.22-.123-.303-.54-1.524.117-3.176
-              0 0 1.01-.323 3.3 1.23.96-.267 1.98-.399
-              3-.404 1.02.005 2.04.137
-              3 .404 2.28-1.553 3.29-1.23
-              3.29-1.23.657 1.652.24 2.873.117 3.176
-              .77.84 1.235 1.91 1.235 3.22 0 4.61-2.807
-              5.625-5.48 5.92.43.37.81 1.096.81 2.21
-              0 1.596-.015 2.877-.015 3.27
-              0 .317.21.687.82.57A11.999 11.999
-              0 0 0 24 12.296c0-6.627-5.373-12-12-12z"
-            />
-          </svg>
-          GitHub
-        </a>
 
+  <!-- Footer -->
+  <div
+    class="hidden w-full items-center justify-between border-t bg-white px-8 text-center h-[58px] border-borderLight dark:bg-baseDark dark:border-surfaceDark md:flex"
+  >
+    <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+      {{ 'COPYRIGHT_NOTICE' | translate }}
+    </p>
+    <div class="flex items-center gap-2">
+      <div class="flex items-center">
         <!-- LinkedIn Icon & Link -->
         <a
           href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
           target="_blank"
           rel="noopener noreferrer"
-          class="inline-flex items-center text-primary-600 hover:underline dark:text-primary-400"
+          class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
         >
-          <svg
-            class="h-5 w-5"
-            role="img"
-            viewBox="0 0 24 24"
-            fill="currentColor"
-            xmlns="http://www.w3.org/2000/svg"
-            [class]="isRTL ? 'ml-1' : 'mr-1'"
-          >
-            <path
-              d="M20.452 20.452h-3.555v-5.568c0-1.328-.027
-              -3.037-1.853-3.037-1.853 0-2.136 1.445-2.136
-              2.94v5.665H9.353V9h3.413v1.561h.048c.476-.9
-              1.637-1.853 3.368-1.853 3.595 0 4.26 2.367
-              4.26 5.451v6.293zM5.337 7.433a2.062
-              2.062 0 1 1 0-4.123 2.062
-              2.062 0 0 1 0 4.123zM6.906
-              20.452H3.77V9h3.136v11.452zM22.225 0H1.771C.792
-              0 0 .774 0 1.73v20.541C0 23.228.792
-              24 1.771 24h20.451C23.2 24 24 23.228
-              24 22.271V1.73C24 .774 23.2 0 22.225
-              0z"
-            />
-          </svg>
-          LinkedIn
+          <p class="text-xs font-expoArabicMedium text-brand">LinkedIn</p>
+          <img src="/icons/linkedin.svg" alt="User" class="h-4 w-4" />
         </a>
       </div>
-      <!-- Version Display -->
-      <p class="mt-3 text-xs text-secondary-500 dark:text-secondary-400">
-        {{ 'VERSION' | translate }}
-        <span class="font-medium text-primary-600 dark:text-primary-400">{{ appVersion }}</span>
-      </p>
+      <div class="flex items-center">
+        <!-- GitHub Icon & Link -->
+        <a
+          href="https://github.com/SloMR/pastepoint"
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+        >
+          <p class="text-xs font-expoArabicMedium text-brand">GitHub</p>
+          <img src="/icons/github.svg" alt="User" class="h-4 w-4" />
+        </a>
+      </div>
     </div>
-  </footer>
+    <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+      {{ 'VERSION' | translate }} {{ appVersion }}
+    </p>
+  </div>
 </div>

@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Inject, Injectable } from '@angular/core';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { UserService } from '../user-management/user.service';
 import {
@@ -11,10 +11,10 @@ import {
   SignalMessageType,
   SignalMessage,
 } from '../../../utils/constants';
-import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { WebRTCCommunicationService } from './webrtc-communication.service';
+import { HotToastService } from '@ngneat/hot-toast';
 
 @Injectable({
   providedIn: 'root',
@@ -30,8 +30,8 @@ export class WebRTCSignalingService {
   constructor(
     private wsService: WebSocketConnectionService,
     private userService: UserService,
-    private toaster: ToastrService,
-    public translate: TranslateService,
+    private toaster: HotToastService,
+    @Inject(TranslateService) private translate: TranslateService,
     private logger: NGXLogger,
     private communicationService: WebRTCCommunicationService
   ) {
@@ -72,19 +72,13 @@ export class WebRTCSignalingService {
         })
         .catch((error: unknown) => {
           this.logger.error('initiateConnection', `Offer creation failed: ${error}`);
-          this.toaster.error(
-            this.translate.instant('CONNECTION_LOST'),
-            this.translate.instant('ERROR')
-          );
+          this.toaster.error(this.translate.instant('CONNECTION_LOST'));
           this.reconnect(targetUser);
         })
         .finally(() => this.connectionLocks.delete(targetUser));
     } catch (error) {
       this.logger.error('initiateConnection', `Connection initiation failed: ${error}`);
-      this.toaster.error(
-        this.translate.instant('CONNECTION_LOST'),
-        this.translate.instant('ERROR')
-      );
+      this.toaster.error(this.translate.instant('CONNECTION_LOST'));
       this.connectionLocks.delete(targetUser);
     }
   }
@@ -263,6 +257,10 @@ export class WebRTCSignalingService {
         } seconds...`
       );
 
+      if (attempts === 0) {
+        this.toaster.info(this.translate.instant('RECONNECTING_TO_USER', { userName: targetUser }));
+      }
+
       setTimeout(() => {
         if (!this.peerConnections.has(targetUser)) {
           this.reconnect(targetUser);
@@ -273,9 +271,8 @@ export class WebRTCSignalingService {
         'handleDisconnection',
         `Max reconnection attempts reached for ${targetUser}. Could not reconnect.`
       );
-      this.toaster.warning(
-        this.translate.instant('CONNECTION_LOST'),
-        this.translate.instant('CONNECTION_LOST_DESC')
+      this.toaster.error(
+        this.translate.instant('CANNOT_CONNECT_TO_USER', { userName: targetUser })
       );
       this.closePeerConnection(targetUser, true);
     }
@@ -337,6 +334,9 @@ export class WebRTCSignalingService {
       })
       .catch((error) => {
         this.logger.error('handleOffer', `Error handling offer: ${error}`);
+        this.toaster.warning(
+          this.translate.instant('CONNECTION_FAILED_WITH_USER', { userName: targetUser })
+        );
       });
   }
 
@@ -385,6 +385,9 @@ export class WebRTCSignalingService {
       })
       .catch((error) => {
         this.logger.error('handleAnswer', `Error handling answer: ${error}`);
+        this.toaster.warning(
+          this.translate.instant('CONNECTION_FAILED_WITH_USER', { userName: targetUser })
+        );
         this.handleStateMismatch(targetUser);
       });
   }
@@ -425,6 +428,12 @@ export class WebRTCSignalingService {
     if (peerConnection.remoteDescription) {
       peerConnection.addIceCandidate(candidate).catch((error) => {
         this.logger.error('handleCandidate', `Error adding ICE candidate: ${error}`);
+        const attempts = this.reconnectAttempts.get(targetUser) ?? 0;
+        if (attempts > 2) {
+          this.toaster.warning(
+            this.translate.instant('CONNECTION_UNSTABLE_WITH_USER', { userName: targetUser })
+          );
+        }
       });
     } else {
       let queue = this.candidateQueues.get(targetUser);

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="client/public/pastepoint-light.svg" alt="PastePoint Logo" style="width: 250px; height: 250px"/>
+  <img src="client/public/assets/pastepoint-light.svg" alt="PastePoint Logo" style="width: 250px; height: 250px"/>
 
 <br>
 <br>

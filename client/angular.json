@@ -38,7 +38,7 @@
               "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.css",
               "node_modules/@ctrl/ngx-emoji-mart/picker.css",
-              "node_modules/ngx-toastr/toastr.css"
+              "node_modules/@ngneat/hot-toast/src/styles/styles.css"
             ],
             "scripts": [],
             "server": "src/main.server.ts",
@@ -129,14 +129,16 @@
               "ssl": true,
               "sslKey": "../certs/key.pem",
               "sslCert": "../certs/cert.pem",
-              "port": 443
+              "port": 443,
+              "hmr": false
             },
             "docker": {
               "buildTarget": "client:build:docker",
               "ssl": true,
               "sslKey": "/etc/ssl/pastepoint/key.pem",
               "sslCert": "/etc/ssl/pastepoint/cert.pem",
-              "port": 443
+              "port": 443,
+              "hmr": false
             },
             "docker-dev": {
               "buildTarget": "client:build:docker-dev",
@@ -166,7 +168,7 @@
               "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.css",
               "node_modules/@ctrl/ngx-emoji-mart/picker.css",
-              "node_modules/ngx-toastr/toastr.css"
+              "node_modules/@ngneat/hot-toast/src/styles/styles.css"
             ],
             "scripts": [],
             "karmaConfig": "karma.conf.cjs"

@@ -2,9 +2,9 @@ import { Injectable } from '@angular/core';
 import { FileDownload, FILE_TRANSFER_MESSAGE_TYPES } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { WebRTCService } from '../communication/webrtc.service';
-import { ToastrService } from 'ngx-toastr';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
+import { HotToastService } from '@ngneat/hot-toast';
 
 @Injectable({
   providedIn: 'root',
@@ -13,7 +13,7 @@ export class FileOfferService extends FileTransferBaseService {
   // =============== Constructor ===============
   constructor(
     webrtcService: WebRTCService,
-    toaster: ToastrService,
+    toaster: HotToastService,
     translate: TranslateService,
     logger: NGXLogger
   ) {
@@ -113,9 +113,6 @@ export class FileOfferService extends FileTransferBaseService {
       },
     };
     this.sendData(message, fromUser);
-    this.toaster.info(
-      this.translate.instant('FILE_TRANSFER_DECLINED'),
-      this.translate.instant('DECLINED')
-    );
+    this.toaster.info(this.translate.instant('FILE_TRANSFER_DECLINED'));
   }
 }

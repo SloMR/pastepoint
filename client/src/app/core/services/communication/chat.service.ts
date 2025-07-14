@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { WebRTCService } from './webrtc.service';
 import { UserService } from '../user-management/user.service';
@@ -30,7 +30,8 @@ export class ChatService implements IChatService {
     private wsService: WebSocketConnectionService,
     private webrtcService: WebRTCService,
     private userService: UserService,
-    private logger: NGXLogger
+    private logger: NGXLogger,
+    private ngZone: NgZone
   ) {
     this.webrtcService.chatMessages$.subscribe((message) => {
       this.handleUserMessage(message);
@@ -74,16 +75,11 @@ export class ChatService implements IChatService {
         payload: chatMsg,
       };
       this.webrtcService.sendData(dataChannelMsg, targetUser);
-
-      const alreadyExists = this.messages.find(
-        (m) => m.from === chatMsg.from && m.text === chatMsg.text
-      );
-      if (!alreadyExists) {
+      this.ngZone.run(() => {
         this.messages.push(chatMsg);
         this.messages$.next(this.messages);
-      } else {
-        this.logger.warn('sendMessage', `Message already exists: ${chatMsg.text}`);
-      }
+      });
+      this.logger.info('sendMessage', `Message sent to ${targetUser}: ${chatMsg.text}`);
     } else {
       this.logger.warn('sendMessage', 'Empty message content');
     }
@@ -94,8 +90,10 @@ export class ChatService implements IChatService {
   }
 
   public clearMessages(): void {
-    this.messages = [];
-    this.messages$.next(this.messages);
+    this.ngZone.run(() => {
+      this.messages = [];
+      this.messages$.next(this.messages);
+    });
   }
 
   /**
@@ -105,8 +103,10 @@ export class ChatService implements IChatService {
    * ==========================================================
    */
   private handleUserMessage(incoming: ChatMessage): void {
-    this.messages.push(incoming);
-    this.messages$.next(this.messages);
+    this.ngZone.run(() => {
+      this.messages.push(incoming);
+      this.messages$.next(this.messages);
+    });
   }
 
   private handleSystemMessage(message: string): void {

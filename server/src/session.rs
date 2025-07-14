@@ -9,16 +9,21 @@ use crate::{
 use actix::prelude::*;
 use actix_broker::BrokerIssue;
 use actix_web_actors::ws;
-use names::Generator;
+use fake::{
+    faker::name::{en::FirstName, en::LastName},
+    Fake,
+};
 use rand::{rng, Rng};
 use serde_json::Value;
 use std::time::{Duration, Instant};
 
 impl WsChatSession {
     pub fn new(session_id: &str, auto_join: bool, session_store: SessionStore) -> Self {
-        let mut generator = Generator::default();
         let id = rng().random_range(0..usize::MAX);
-        let name = generator.next().unwrap_or_else(|| "Anonymous".to_string());
+        let first_name = FirstName().fake::<String>();
+        let last_name = LastName().fake::<String>();
+        let name = format!("{} {}", first_name, last_name);
+
         WsChatSession {
             session_id: session_id.to_owned(),
             id,

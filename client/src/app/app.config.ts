@@ -16,10 +16,10 @@ import { LanguageService } from './core/services/ui/language.service';
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { provideToastr } from 'ngx-toastr';
 import { LoggerModule } from 'ngx-logger';
 import { environment } from '../environments/environment';
 import { DatePipe } from '@angular/common';
+import { provideHotToastConfig } from '@ngneat/hot-toast';
 
 // Theme initialization function
 export function initializeTheme(themeService: ThemeService): () => Promise<void> {
@@ -49,19 +49,22 @@ export const appConfig: ApplicationConfig = {
     provideRouter(routes, withPreloading(PreloadAllModules)),
     provideClientHydration(withEventReplay()),
     provideAnimations(),
-    // Initialize Toaster with default options
-    provideToastr({
-      closeButton: true,
-      timeOut: 2000,
-      positionClass: 'toast-bottom-center',
-      preventDuplicates: true,
-      tapToDismiss: true,
-      progressBar: true,
-      newestOnTop: true,
+    provideHotToastConfig({
+      position: 'top-center',
+      duration: 2000,
+      dismissible: true,
+      autoClose: true,
+      stacking: 'depth',
+      visibleToasts: 3,
+      reverseOrder: true,
+      style: {
+        borderRadius: '20px',
+      },
     }),
     // Initialize translation module with in-memory loader
     importProvidersFrom(
       TranslateModule.forRoot({
+        defaultLanguage: 'en',
         loader: {
           provide: TranslateLoader,
           useClass: InMemoryTranslateLoader,

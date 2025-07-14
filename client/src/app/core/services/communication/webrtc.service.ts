@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { ChatMessage, DataChannelMessage } from '../../../utils/constants';
-import { TranslateService } from '@ngx-translate/core';
 import { IWebRTCService } from '../../interfaces/webrtc.interface';
 import { WebRTCSignalingService } from './webrtc-signaling.service';
 import { WebRTCCommunicationService } from './webrtc-communication.service';
@@ -11,7 +10,6 @@ import { WebRTCCommunicationService } from './webrtc-communication.service';
 })
 export class WebRTCService implements IWebRTCService {
   constructor(
-    public translate: TranslateService,
     private signalingService: WebRTCSignalingService,
     private communicationService: WebRTCCommunicationService
   ) {}
