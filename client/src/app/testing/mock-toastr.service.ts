@@ -3,7 +3,7 @@ import { Observable, of } from 'rxjs';
 import { ToastConfig } from '@ngneat/hot-toast';
 
 @Injectable()
-export class MockToastrService {
+export class MockHotToastService {
   toasts: { type: string; message: string; title: string }[] = [];
   private _config: Partial<ToastConfig> | undefined;
 

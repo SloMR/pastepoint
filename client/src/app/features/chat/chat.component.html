@@ -1,9 +1,12 @@
+<!-- MARK: - Main Container -->
 <div class="flex h-screen" [attr.dir]="isRTL ? 'rtl' : 'ltr'">
-  <!-- Sidebar -->
+  <!-- MARK: - Desktop Sidebar -->
   <div
     class="relative hidden h-screen flex-col items-start justify-start overflow-auto bg-surface w-[286px] min-w-[286px] no-scrollbar dark:bg-surfaceDark md:flex"
   >
+    <!-- MARK: - Sidebar Content -->
     <div class="h-[calc(100vh-80px)] overflow-auto flex flex-col justify-start items-start w-full">
+      <!-- MARK: - Logo Section -->
       <div class="flex w-full items-center justify-center py-8">
         <a routerLink="/">
           <img
@@ -17,6 +20,7 @@
         </a>
       </div>
 
+      <!-- MARK: - Create New Room Button -->
       <div class="mt-6 flex w-full flex-col items-start justify-start px-4">
         <button
           (click)="isOpenCreateRoom = true; isMenuOpen = false"
@@ -27,7 +31,7 @@
         </button>
       </div>
 
-      <!-- Rooms -->
+      <!-- MARK: - Rooms Section -->
       <div class="mt-8 flex w-full flex-col items-center justify-center">
         <div class="flex w-full items-center justify-between px-4 py-2 text-content">
           <div class="flex items-center justify-center gap-2">
@@ -75,6 +79,7 @@
         </div>
       </div>
 
+      <!-- MARK: - Session Code Section -->
       <div *ngIf="SessionCode.length > 0" class="flex w-full items-center gap-3 px-4 py-3">
         <img
           [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
@@ -102,6 +107,8 @@
           <p class="truncate pt-1 text-base font-expoArabicMedium">{{ 'COPY' | translate }}</p>
         </div>
       </div>
+
+      <!-- MARK: - Private Session Controls -->
       <div
         *ngIf="SessionCode.length === 0"
         class="flex w-full flex-col items-center justify-center"
@@ -131,7 +138,8 @@
           </button>
         </div>
       </div>
-      <!-- members -->
+
+      <!-- MARK: - Members Section -->
       <div class="mt-8 flex w-full flex-col items-center justify-center">
         <div
           class="flex w-full items-center justify-between px-4 py-2 text-content dark:text-white"
@@ -169,9 +177,123 @@
           </div>
         </div>
       </div>
+
+      <!-- MARK: - File Transfer Section -->
+      <div
+        *ngIf="activeUploads.length > 0 || activeDownloads.length > 0"
+        class="mt-8 flex w-full flex-col items-center justify-center px-4"
+      >
+        <!-- Header -->
+        <div class="flex w-full items-center justify-between py-2 text-content dark:text-white">
+          <div class="flex items-center justify-center gap-2">
+            <img
+              [src]="isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'"
+              alt="File Transfer"
+            />
+            <p class="pt-2 text-base font-expoArabicMedium">
+              {{ 'FILE_TRANSFER' | translate }}
+            </p>
+          </div>
+          <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+            {{ activeUploads.length + activeDownloads.length }}
+            {{ 'ACTIVE_TRANSFERS_COUNT' | translate }}
+          </p>
+        </div>
+
+        <!-- Scrollable Transfers -->
+        <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar space-y-3">
+          <!-- Uploads -->
+          <div class="text-sm" *ngFor="let transfer of activeUploads">
+            <div class="mb-1 flex items-center justify-between">
+              <div class="flex items-center justify-start gap-2">
+                <img
+                  [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
+                  alt="Upload"
+                  class="h-4 w-4"
+                />
+                <span class="truncate font-expoArabicMedium text-content dark:text-white">
+                  {{ transfer.file.name | slice: 0 : 15 }}...
+                </span>
+              </div>
+              <div class="flex items-center justify-end gap-1">
+                <span class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted">
+                  {{ transfer.progress | number: '1.0-0' }}%
+                </span>
+                <button
+                  (click)="
+                    $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
+                  "
+                  class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                  aria-label="Cancel upload"
+                  title="Cancel upload"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark">
+              <div
+                class="rounded-full bg-brand h-1.5 dark:bg-brandDark"
+                [style.width.%]="transfer.progress"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Downloads -->
+          <div class="text-sm" *ngFor="let download of activeDownloads">
+            <div class="mb-1 flex items-center justify-between">
+              <div class="flex items-center justify-start gap-2">
+                <img
+                  [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
+                  alt="Download"
+                  class="h-4 w-4"
+                />
+                <span class="truncate font-expoArabicMedium text-content dark:text-white">
+                  {{ download.fileName | slice: 0 : 15 }}...
+                </span>
+              </div>
+              <div class="flex items-center justify-end gap-1">
+                <span class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted">
+                  {{ download.progress | number: '1.0-0' }}%
+                </span>
+                <button
+                  (click)="
+                    $event.stopPropagation(); $event.preventDefault(); cancelDownload(download)
+                  "
+                  class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                  aria-label="Cancel download"
+                  title="Cancel download"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark">
+              <div
+                class="rounded-full bg-brand h-1.5 dark:bg-brandDark"
+                [style.width.%]="download.progress"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- exit button -->
+    <!-- MARK: - Exit Button -->
     <div
       *ngIf="SessionCode.length > 0"
       class="absolute bottom-4 flex w-full items-center justify-center"
@@ -186,6 +308,7 @@
     </div>
   </div>
 
+  <!-- MARK: - Mobile Sidebar -->
   <aside
     class="fixed top-0 h-full transition-transform ease-in-out w-[286px] min-w-[286px] bg-surface z-[10000] dark:bg-surfaceDark md:hidden"
     [style.left]="isRTL ? 'auto' : 0"
@@ -198,9 +321,11 @@
     <div
       class="relative flex h-screen w-full flex-col items-start justify-start overflow-auto no-scrollbar"
     >
+      <!-- MARK: - Mobile Sidebar Content -->
       <div
         class="h-[calc(100vh-80px)] overflow-auto flex flex-col justify-start items-start w-full"
       >
+        <!-- MARK: - Mobile User Info -->
         <div
           *ngIf="userService.user"
           class="flex w-full items-center justify-between gap-2 px-4 py-8"
@@ -222,6 +347,7 @@
           />
         </div>
 
+        <!-- MARK: - Mobile Create Room Button -->
         <div class="mt-6 flex w-full flex-col items-start justify-start px-4">
           <button
             (click)="isOpenCreateRoom = true; isMenuOpen = false"
@@ -232,7 +358,7 @@
           </button>
         </div>
 
-        <!-- Rooms -->
+        <!-- MARK: - Mobile Rooms Section -->
         <div class="mt-8 flex w-full flex-col items-center justify-center">
           <div
             class="flex w-full items-center justify-between px-4 py-2 text-content dark:text-white"
@@ -284,6 +410,7 @@
           </div>
         </div>
 
+        <!-- MARK: - Mobile Session Code Section -->
         <div *ngIf="SessionCode.length > 0">
           <div class="flex w-full items-center gap-3 px-4 py-3">
             <img
@@ -313,6 +440,8 @@
             </div>
           </div>
         </div>
+
+        <!-- MARK: - Mobile Private Session Controls -->
         <div
           class="flex w-full flex-col items-center justify-center"
           *ngIf="SessionCode.length === 0"
@@ -342,7 +471,8 @@
             </button>
           </div>
         </div>
-        <!-- members -->
+
+        <!-- MARK: - Mobile Members Section -->
         <div class="mt-8 flex w-full flex-col items-center justify-center">
           <div
             class="flex w-full items-center justify-between px-4 py-2 text-content dark:text-white"
@@ -382,9 +512,127 @@
             </div>
           </div>
         </div>
+
+        <!-- MARK: - Mobile File Transfer Section -->
+        <div
+          *ngIf="activeUploads.length > 0 || activeDownloads.length > 0"
+          class="mt-8 flex w-full flex-col items-center justify-center px-4"
+        >
+          <!-- Header -->
+          <div class="flex w-full items-center justify-between py-2 text-content dark:text-white">
+            <div class="flex items-center justify-center gap-2">
+              <img
+                [src]="isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'"
+                alt="File Transfer"
+              />
+              <p class="pt-2 text-base font-expoArabicMedium">
+                {{ 'FILE_TRANSFER' | translate }}
+              </p>
+            </div>
+            <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+              {{ activeUploads.length + activeDownloads.length }}
+              {{ 'ACTIVE_TRANSFERS_COUNT' | translate }}
+            </p>
+          </div>
+
+          <!-- Scrollable Transfers -->
+          <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar space-y-3">
+            <!-- Uploads -->
+            <div class="text-sm" *ngFor="let transfer of activeUploads">
+              <div class="mb-1 flex items-center justify-between">
+                <div class="flex items-center justify-start gap-2">
+                  <img
+                    [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
+                    alt="Upload"
+                    class="h-4 w-4"
+                  />
+                  <span class="truncate font-expoArabicMedium text-content dark:text-white">
+                    {{ transfer.file.name | slice: 0 : 15 }}...
+                  </span>
+                </div>
+                <div class="flex items-center justify-end gap-1">
+                  <span
+                    class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted"
+                  >
+                    {{ transfer.progress | number: '1.0-0' }}%
+                  </span>
+                  <button
+                    (click)="
+                      $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
+                    "
+                    class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                    aria-label="Cancel upload"
+                    title="Cancel upload"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark">
+                <div
+                  class="rounded-full bg-brand h-1.5 dark:bg-brandDark"
+                  [style.width.%]="transfer.progress"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Downloads -->
+            <div class="text-sm" *ngFor="let download of activeDownloads">
+              <div class="mb-1 flex items-center justify-between">
+                <div class="flex items-center justify-start gap-2">
+                  <img
+                    [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
+                    alt="Download"
+                    class="h-4 w-4"
+                  />
+                  <span class="truncate font-expoArabicMedium text-content dark:text-white">
+                    {{ download.fileName | slice: 0 : 15 }}...
+                  </span>
+                </div>
+                <div class="flex items-center justify-end gap-1">
+                  <span
+                    class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted"
+                  >
+                    {{ download.progress | number: '1.0-0' }}%
+                  </span>
+                  <button
+                    (click)="
+                      $event.stopPropagation(); $event.preventDefault(); cancelDownload(download)
+                    "
+                    class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                    aria-label="Cancel download"
+                    title="Cancel download"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark">
+                <div
+                  class="rounded-full bg-brand h-1.5 dark:bg-brandDark"
+                  [style.width.%]="download.progress"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- exit button -->
+      <!-- MARK: - Mobile Exit Button -->
       <div *ngIf="SessionCode.length > 0">
         <div
           class="absolute bottom-4 flex w-full items-center justify-center"
@@ -401,17 +649,16 @@
     </div>
   </aside>
 
-  <!-- Mobile Menu Overlay -->
-
+  <!-- MARK: - Mobile Menu Overlay -->
   <div
     *ngIf="isMenuOpen"
     class="fixed inset-0 bg-black/30 z-[9999] dark:bg-white/30 md:hidden"
     (click)="isMenuOpen = false"
   ></div>
 
-  <!-- Main Content Area -->
+  <!-- MARK: - Main Content Area -->
   <div class="flex-1 flex flex-col w-full md:max-w-[calc(100%-286px)] dark:bg-baseDark">
-    <!-- Header -->
+    <!-- MARK: - Header -->
     <div
       class="flex w-full items-center justify-between border-b px-4 h-[88px] border-borderLight dark:border-b-surfaceDark md:px-8"
     >
@@ -499,7 +746,7 @@
       </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- MARK: - Main Content -->
     <div
       class="flex-1 overflow-auto px-4 py-6 bg-contentArea dark:bg-baseDark md:p-8"
       (dragover)="handleDragOver($event)"
@@ -508,7 +755,7 @@
       (drop)="handleDrop($event)"
     >
       <div class="flex h-full w-full flex-col items-start justify-between">
-        <!-- info banner -->
+        <!-- MARK: - Info Banner -->
         <div
           *ngIf="showSessionInfo"
           class="relative mb-6 flex w-full items-center rounded-lg px-4 text-center bg-surface h-[72px] dark:bg-surfaceDark sm:mb-8 sm:px-8"
@@ -534,7 +781,8 @@
             <img src="/icons/cross-close.svg" alt="Info" class="h-3 w-3" />
           </div>
         </div>
-        <!-- Room Name -->
+
+        <!-- MARK: - Room Name -->
         <div class="flex items-center justify-start gap-2 pb-4">
           <img
             *ngIf="SessionCode.length > 0"
@@ -553,11 +801,11 @@
           </p>
         </div>
 
-        <!-- messages -->
+        <!-- MARK: - Messages Container -->
         <div class="w-full flex-1 overflow-auto pt-5 max-h-[65%] no-scrollbar" #messageContainer>
           <div class="flex w-full flex-col items-start justify-start gap-4">
             <div *ngFor="let message of messages; trackBy: trackMessage" class="w-full">
-              <!-- Other User Message -->
+              <!-- MARK: - Other User Message -->
               <div *ngIf="!isMyMessage(message); else myMessage" class="flex justify-start">
                 <div class="flex items-start justify-start gap-3 min-w-[350px] max-w-[60%]">
                   <img src="/icons/Group.svg" alt="User" class="h-8 w-8" />
@@ -569,7 +817,23 @@
                       class="relative w-full rounded-xl rounded-tl-none p-3 bg-brand min-h-[65px] dark:bg-brandDark"
                       [class]="isRTL ? 'rounded-tr-none' : 'rounded-tl-none'"
                     >
-                      <p class="text-white text-[18px] font-expoArabic">{{ message.text }}</p>
+                      <p
+                        class="text-[18px] font-expoArabic text-content dark:text-white"
+                        *ngIf="message.type === ChatMessageType.TEXT"
+                      >
+                        {{ message.text }}
+                      </p>
+                      <p
+                        class="flex items-center gap-2 text-xs font-expoArabic text-content dark:text-white"
+                        *ngIf="message.type === ChatMessageType.ATTACHMENT"
+                      >
+                        <img
+                          [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
+                          alt="File"
+                          class="h-4 w-4"
+                        />
+                        {{ message.text | slice: 0 : 65 }}...
+                      </p>
                       <div
                         class="absolute bottom-0 flex items-center justify-end gap-2"
                         [ngClass]="!isRTL ? 'right-3' : 'left-3'"
@@ -583,7 +847,7 @@
                 </div>
               </div>
 
-              <!-- My Message (else block) -->
+              <!-- MARK: - My Message -->
               <ng-template #myMessage>
                 <div class="flex justify-end">
                   <div class="flex items-start justify-end gap-3 min-w-[350px] max-w-[60%]">
@@ -596,8 +860,22 @@
                       <div
                         class="relative w-full rounded-xl rounded-tr-none p-3 bg-messageBackground min-h-[65px] dark:bg-surfaceDark"
                       >
-                        <p class="text-[18px] font-expoArabic text-content dark:text-contentMuted">
+                        <p
+                          class="text-[18px] font-expoArabic text-content dark:text-contentMuted"
+                          *ngIf="message.type === ChatMessageType.TEXT"
+                        >
                           {{ message.text }}
+                        </p>
+                        <p
+                          class="flex items-center gap-2 text-xs font-expoArabic text-content dark:text-contentMuted"
+                          *ngIf="message.type === ChatMessageType.ATTACHMENT"
+                        >
+                          <img
+                            [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
+                            alt="File"
+                            class="h-4 w-4"
+                          />
+                          {{ message.text | slice: 0 : 65 }}...
                         </p>
                         <div
                           class="absolute bottom-0 flex items-center justify-end gap-2"
@@ -618,9 +896,7 @@
             </div>
           </div>
 
-          <!--
-              INCOMING FILES SECTION (PROMPTS TO ACCEPT/DECLINE FILES)
-            -->
+          <!-- MARK: - Incoming Files Section -->
           <div *ngIf="incomingFiles.length > 0" class="mt-4 w-full space-y-2">
             <div
               *ngFor="let incomingFile of incomingFiles"
@@ -670,7 +946,7 @@
           </div>
         </div>
 
-        <!-- message input -->
+        <!-- MARK: - Message Input -->
         <form
           #messageForm="ngForm"
           (submit)="sendMessage(messageForm); $event.preventDefault()"
@@ -684,7 +960,7 @@
                 : 'bg-inputBackground dark:bg-borderDark'
             "
           >
-            <!--  Drag and drop overlay -->
+            <!-- MARK: - Drag and Drop Overlay -->
             <div
               *ngIf="isDragging"
               class="absolute inset-0 z-10 flex items-center justify-center rounded-lg border-2 border-dashed bg-black/50 text-white backdrop-blur-sm border-primary-300 dark:border-secondary-400"
@@ -758,7 +1034,7 @@
                 />
               </div>
             </div>
-            <!-- EMOJI PICKER POPUP -->
+            <!-- MARK: - Emoji Picker -->
             <div
               class="absolute bottom-full z-10 w-72 rounded-lg border shadow-lg border-primary-300 bg-primary-100 dark:border-secondary-600 dark:bg-secondary-800"
               [ngClass]="isRTL ? 'right-0' : 'left-0'"
@@ -782,7 +1058,7 @@
       </div>
     </div>
 
-    <!-- Footer -->
+    <!-- MARK: - Footer -->
     <div
       class="hidden w-full items-center justify-between border-t bg-white px-8 text-center h-[58px] border-borderLight dark:bg-baseDark dark:border-surfaceDark md:flex"
     >
@@ -820,8 +1096,8 @@
       </p>
     </div>
 
-    <!-- Popups -->
-    <!-- JOIN SESSION POPUP -->
+    <!-- MARK: - Popups -->
+    <!-- MARK: - Join Session Popup -->
     <div
       *ngIf="isOpenJoinSessionPopup"
       [class]="
@@ -881,7 +1157,7 @@
       </div>
     </div>
 
-    <!-- CREATE ROOM POPUP -->
+    <!-- MARK: - Create Room Popup -->
     <div
       *ngIf="isOpenCreateRoom"
       class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"
@@ -938,7 +1214,7 @@
       </div>
     </div>
 
-    <!-- END SESSION POPUP -->
+    <!-- MARK: - End Session Popup -->
     <div
       *ngIf="isOpenEndSessionPopup"
       class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"

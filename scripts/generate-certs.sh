@@ -13,6 +13,6 @@ openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
     -addext "subjectAltName=DNS:localhost,DNS:localhost"
 
 # Set secure permissions
-chown root:root $CERT_DIR/key.pem
+chown "$USER":"$USER" $CERT_DIR/key.pem
 chmod 644 $CERT_DIR/key.pem
 chmod 644 $CERT_DIR/cert.pem

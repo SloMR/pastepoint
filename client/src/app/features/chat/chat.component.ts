@@ -22,6 +22,7 @@ import {
   NgIf,
   NgOptimizedImage,
   NgStyle,
+  SlicePipe,
   UpperCasePipe,
 } from '@angular/common';
 
@@ -38,6 +39,7 @@ import { FlowbiteService } from '../../core/services/ui/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
   ChatMessage,
+  ChatMessageType,
   FileDownload,
   FileUpload,
   MB,
@@ -78,6 +80,7 @@ import { HotToastService } from '@ngneat/hot-toast';
     NgOptimizedImage,
     RouterLink,
     NgClass,
+    SlicePipe,
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css'],
@@ -92,6 +95,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   protected readonly MB: number = MB;
+  protected readonly ChatMessageType = ChatMessageType;
   message = '';
   newRoomName = '';
   SessionCode = '';
@@ -615,6 +619,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         const tempMessage: ChatMessage = {
           from: this.userService.user,
           text: this.message,
+          type: ChatMessageType.TEXT,
           timestamp: new Date(),
         };
         this.messages = [...this.messages, tempMessage];
@@ -648,6 +653,37 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
+   * CREATE AND SEND FILE MESSAGES
+   * Creates chat messages for files being sent and sends them to all members
+   * ==========================================================
+   */
+  private async createAndSendFileMessages(files: File[], otherMembers: string[]): Promise<void> {
+    for (const file of files) {
+      const fileSizeInMB = (file.size / MB).toFixed(2);
+      const fileMessageText = `${this.translate.instant('FILE_SENT')}: ${file.name} (${fileSizeInMB} MB)`;
+
+      // Add file message to local messages immediately
+      this.ngZone.run(() => {
+        const fileMessage: ChatMessage = {
+          from: this.userService.user,
+          text: fileMessageText,
+          type: ChatMessageType.ATTACHMENT,
+          timestamp: new Date(),
+        };
+        this.messages = [...this.messages, fileMessage];
+        this.cdr.detectChanges();
+        this.scrollToBottom();
+      });
+
+      // Send file message to all other members
+      for (const member of otherMembers) {
+        await this.chatService.sendMessage(fileMessageText, member, ChatMessageType.ATTACHMENT);
+      }
+    }
+  }
+
+  /**
+   * ==========================================================
    * SEND ATTACHMENTS
    * Triggers file sending to other users via FileTransferService.
    * Attempts to establish WebRTC connections if not already open.
@@ -663,6 +699,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.toaster.warning(this.translate.instant('NO_USERS_FOR_UPLOAD'));
         return;
       }
+
+      // Create chat messages for each file being sent
+      await this.createAndSendFileMessages(filesToSend, otherMembers);
 
       // First prepare all files for all members
       for (const fileToSend of filesToSend) {
@@ -1120,6 +1159,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     const files = Array.from(event.dataTransfer.files);
     if (files.length === 0) return;
+
+    // Create chat messages for each file being sent
+    await this.createAndSendFileMessages(files, otherMembers);
 
     // First prepare all files for all members
     for (const fileToSend of files) {

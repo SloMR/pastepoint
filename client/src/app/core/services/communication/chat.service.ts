@@ -2,7 +2,7 @@ import { Injectable, NgZone } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { WebRTCService } from './webrtc.service';
 import { UserService } from '../user-management/user.service';
-import { ChatMessage, DATA_CHANNEL_MESSAGE_TYPES } from '../../../utils/constants';
+import { ChatMessage, ChatMessageType, DATA_CHANNEL_MESSAGE_TYPES } from '../../../utils/constants';
 import { IChatService } from '../../interfaces/chat.interface';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { NGXLogger } from 'ngx-logger';
@@ -62,11 +62,16 @@ export class ChatService implements IChatService {
    * Methods for sending messages and managing chat state
    * ==========================================================
    */
-  public async sendMessage(content: string, targetUser: string): Promise<void> {
+  public async sendMessage(
+    content: string,
+    targetUser: string,
+    messageType: ChatMessageType = ChatMessageType.TEXT
+  ): Promise<void> {
     if (content.trim()) {
       const chatMsg: ChatMessage = {
         from: this.user,
         text: content.trim(),
+        type: messageType,
         timestamp: new Date(),
       };
 
