@@ -1,5 +1,5 @@
 <div class="flex h-screen" [attr.dir]="isRTL ? 'rtl' : 'ltr'">
-  <!-- Sidebar -->
+  <!-- Desktop Sidebar -->
   <div
     class="relative hidden h-screen flex-col items-start justify-start overflow-auto bg-surface w-[286px] min-w-[286px] no-scrollbar dark:bg-surfaceDark md:flex"
   >
@@ -169,6 +169,120 @@
           </div>
         </div>
       </div>
+
+      <!-- file transfer -->
+      <div
+        *ngIf="activeUploads.length > 0 || activeDownloads.length > 0"
+        class="mt-8 flex w-full flex-col items-center justify-center px-4"
+      >
+        <!-- Header -->
+        <div class="flex w-full items-center justify-between py-2 text-content dark:text-white">
+          <div class="flex items-center justify-center gap-2">
+            <img
+              [src]="isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'"
+              alt="File Transfer"
+            />
+            <p class="pt-2 text-base font-expoArabicMedium">
+              {{ 'FILE_TRANSFER' | translate }}
+            </p>
+          </div>
+          <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+            {{ activeUploads.length + activeDownloads.length }}
+            {{ 'ACTIVE_TRANSFERS_COUNT' | translate }}
+          </p>
+        </div>
+
+        <!-- Scrollable Transfers -->
+        <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar space-y-3">
+          <!-- Uploads -->
+          <div class="text-sm" *ngFor="let transfer of activeUploads">
+            <div class="mb-1 flex items-center justify-between">
+              <div class="flex items-center gap-2 justify-start">
+                <img
+                  [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
+                  alt="Upload"
+                  class="h-4 w-4"
+                />
+                <span class="truncate font-expoArabicMedium text-content dark:text-white">
+                  {{ transfer.file.name | slice: 0 : 15 }}...
+                </span>
+              </div>
+              <div class="flex items-center gap-1 justify-end">
+                <span class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted">
+                  {{ transfer.progress | number: '1.0-0' }}%
+                </span>
+                <button
+                  (click)="
+                    $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
+                  "
+                  class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                  aria-label="Cancel upload"
+                  title="Cancel upload"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="w-full rounded-full bg-textMuted/20 dark:bg-borderDark h-1.5">
+              <div
+                class="rounded-full bg-brand dark:bg-brandDark h-1.5"
+                [style.width.%]="transfer.progress"
+              ></div>
+            </div>
+          </div>
+
+          <!-- Downloads -->
+          <div class="text-sm" *ngFor="let download of activeDownloads">
+            <div class="mb-1 flex items-center justify-between">
+              <div class="flex items-center gap-2 justify-start">
+                <img
+                  [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
+                  alt="Download"
+                  class="h-4 w-4"
+                />
+                <span class="truncate font-expoArabicMedium text-content dark:text-white">
+                  {{ download.fileName | slice: 0 : 15 }}...
+                </span>
+              </div>
+              <div class="flex items-center gap-1 justify-end">
+                <span class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted">
+                  {{ download.progress | number: '1.0-0' }}%
+                </span>
+                <button
+                  (click)="
+                    $event.stopPropagation(); $event.preventDefault(); cancelDownload(download)
+                  "
+                  class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                  aria-label="Cancel download"
+                  title="Cancel download"
+                >
+                  <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="w-full rounded-full bg-textMuted/20 dark:bg-borderDark h-1.5">
+              <div
+                class="rounded-full bg-brand dark:bg-brandDark h-1.5"
+                [style.width.%]="download.progress"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- exit button -->
@@ -186,6 +300,7 @@
     </div>
   </div>
 
+  <!-- Mobile Sidebar -->
   <aside
     class="fixed top-0 h-full transition-transform ease-in-out w-[286px] min-w-[286px] bg-surface z-[10000] dark:bg-surfaceDark md:hidden"
     [style.left]="isRTL ? 'auto' : 0"
@@ -382,6 +497,124 @@
             </div>
           </div>
         </div>
+
+        <!-- file transfer -->
+        <div
+          *ngIf="activeUploads.length > 0 || activeDownloads.length > 0"
+          class="mt-8 flex w-full flex-col items-center justify-center px-4"
+        >
+          <!-- Header -->
+          <div class="flex w-full items-center justify-between py-2 text-content dark:text-white">
+            <div class="flex items-center justify-center gap-2">
+              <img
+                [src]="isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'"
+                alt="File Transfer"
+              />
+              <p class="pt-2 text-base font-expoArabicMedium">
+                {{ 'FILE_TRANSFER' | translate }}
+              </p>
+            </div>
+            <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+              {{ activeUploads.length + activeDownloads.length }}
+              {{ 'ACTIVE_TRANSFERS_COUNT' | translate }}
+            </p>
+          </div>
+
+          <!-- Scrollable Transfers -->
+          <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar space-y-3">
+            <!-- Uploads -->
+            <div class="text-sm" *ngFor="let transfer of activeUploads">
+              <div class="mb-1 flex items-center justify-between">
+                <div class="flex items-center gap-2 justify-start">
+                  <img
+                    [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
+                    alt="Upload"
+                    class="h-4 w-4"
+                  />
+                  <span class="truncate font-expoArabicMedium text-content dark:text-white">
+                    {{ transfer.file.name | slice: 0 : 15 }}...
+                  </span>
+                </div>
+                <div class="flex items-center gap-1 justify-end">
+                  <span
+                    class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted"
+                  >
+                    {{ transfer.progress | number: '1.0-0' }}%
+                  </span>
+                  <button
+                    (click)="
+                      $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
+                    "
+                    class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                    aria-label="Cancel upload"
+                    title="Cancel upload"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="w-full rounded-full bg-textMuted/20 dark:bg-borderDark h-1.5">
+                <div
+                  class="rounded-full bg-brand dark:bg-brandDark h-1.5"
+                  [style.width.%]="transfer.progress"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Downloads -->
+            <div class="text-sm" *ngFor="let download of activeDownloads">
+              <div class="mb-1 flex items-center justify-between">
+                <div class="flex items-center gap-2 justify-start">
+                  <img
+                    [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
+                    alt="Download"
+                    class="h-4 w-4"
+                  />
+                  <span class="truncate font-expoArabicMedium text-content dark:text-white">
+                    {{ download.fileName | slice: 0 : 15 }}...
+                  </span>
+                </div>
+                <div class="flex items-center gap-1 justify-end">
+                  <span
+                    class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted"
+                  >
+                    {{ download.progress | number: '1.0-0' }}%
+                  </span>
+                  <button
+                    (click)="
+                      $event.stopPropagation(); $event.preventDefault(); cancelDownload(download)
+                    "
+                    class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                    aria-label="Cancel download"
+                    title="Cancel download"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div class="w-full rounded-full bg-textMuted/20 dark:bg-borderDark h-1.5">
+                <div
+                  class="rounded-full bg-brand dark:bg-brandDark h-1.5"
+                  [style.width.%]="download.progress"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- exit button -->
@@ -569,7 +802,23 @@
                       class="relative w-full rounded-xl rounded-tl-none p-3 bg-brand min-h-[65px] dark:bg-brandDark"
                       [class]="isRTL ? 'rounded-tr-none' : 'rounded-tl-none'"
                     >
-                      <p class="text-white text-[18px] font-expoArabic">{{ message.text }}</p>
+                      <p
+                        class="text-[18px] font-expoArabic text-content dark:text-white"
+                        *ngIf="message.type === ChatMessageType.TEXT"
+                      >
+                        {{ message.text }}
+                      </p>
+                      <p
+                        class="flex items-center gap-2 text-xs font-expoArabic text-content dark:text-white"
+                        *ngIf="message.type === ChatMessageType.ATTACHMENT"
+                      >
+                        <img
+                          [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
+                          alt="File"
+                          class="h-4 w-4"
+                        />
+                        {{ message.text | slice: 0 : 65 }}...
+                      </p>
                       <div
                         class="absolute bottom-0 flex items-center justify-end gap-2"
                         [ngClass]="!isRTL ? 'right-3' : 'left-3'"
@@ -596,8 +845,22 @@
                       <div
                         class="relative w-full rounded-xl rounded-tr-none p-3 bg-messageBackground min-h-[65px] dark:bg-surfaceDark"
                       >
-                        <p class="text-[18px] font-expoArabic text-content dark:text-contentMuted">
+                        <p
+                          class="text-[18px] font-expoArabic text-content dark:text-contentMuted"
+                          *ngIf="message.type === ChatMessageType.TEXT"
+                        >
                           {{ message.text }}
+                        </p>
+                        <p
+                          class="flex items-center gap-2 text-xs font-expoArabic text-content dark:text-contentMuted"
+                          *ngIf="message.type === ChatMessageType.ATTACHMENT"
+                        >
+                          <img
+                            [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
+                            alt="File"
+                            class="h-4 w-4"
+                          />
+                          {{ message.text | slice: 0 : 65 }}...
                         </p>
                         <div
                           class="absolute bottom-0 flex items-center justify-end gap-2"

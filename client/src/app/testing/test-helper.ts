@@ -7,7 +7,7 @@ import {
   TranslateService,
   TranslateStore,
 } from '@ngx-translate/core';
-import { MockToastrService } from './mock-toastr.service';
+import { MockHotToastService } from './mock-toastr.service';
 import { MockTranslateService } from './mock-translate.service';
 import { of } from 'rxjs';
 import { HotToastService } from '@ngneat/hot-toast';
@@ -46,7 +46,7 @@ export const TestProviders = [
   },
   {
     provide: HotToastService,
-    useClass: MockToastrService,
+    useClass: MockHotToastService,
   },
   {
     provide: TranslateService,
