@@ -50,6 +50,11 @@
   "END_SESSION_HEADER": "متأكد تبغى تنهي الجلسة؟",
   "END_THE_SESSION": "ايه، انهيها",
 
+  "_FILE_TRANSFER_SECTION": "==== FILE TRANSFER ====",
+  "FILE_TRANSFER": "نقل الملفات",
+  "ACTIVE_TRANSFERS_COUNT": "الملفات",
+  "FILE_SENT": "تم إرسال الملف",
+
   "_404_PAGE_SECTION": "==== 404 PAGE ====",
   "PAGE_NOT_FOUND": "الصفحة مو موجودة",
   "INVALID_LINK_MESSAGE": "الرابط أو الكود هذا مو شغال",

@@ -50,6 +50,11 @@
   "END_SESSION_HEADER": "Are you sure you want to end the session?",
   "END_THE_SESSION": "End Session",
 
+  "_FILE_TRANSFER_SECTION": "==== FILE TRANSFER ====",
+  "FILE_TRANSFER": "File Transfer",
+  "ACTIVE_TRANSFERS_COUNT": "Transfers",
+  "FILE_SENT": "File sent",
+
   "_404_PAGE_SECTION": "==== 404 PAGE ====",
   "PAGE_NOT_FOUND": "Page Not Found",
   "INVALID_LINK_MESSAGE": "The link or session code doesn’t seem to be valid.",
