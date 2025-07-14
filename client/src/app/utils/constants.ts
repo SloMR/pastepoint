@@ -101,9 +101,15 @@ export const DATA_CHANNEL_MESSAGE_TYPES = {
 };
 
 // Chat message interface
+export enum ChatMessageType {
+  TEXT = 'text',
+  ATTACHMENT = 'attachment',
+}
+
 export interface ChatMessage {
   from: string;
   text: string;
+  type: ChatMessageType;
   timestamp: Date;
 }
 
