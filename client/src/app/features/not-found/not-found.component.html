@@ -1,24 +1,15 @@
-<!--
-  ========== MAIN CONTAINER ==========
-  This wraps the entire 404 page
--->
+<!-- MARK: - Main Container -->
 <div
   [attr.dir]="isRTL ? 'rtl' : 'ltr'"
   class="flex h-screen flex-col bg-pageBackground dark:bg-baseDark"
 >
-  <!--
-    ========== HEADER SECTION ==========
-    Same style as your Chat header,
-    including theme toggler & language switch.
-  -->
+  <!-- MARK: - Header Section -->
   <header
     class="border-b bg-pageBackground border-borderLight dark:border-surfaceDark dark:bg-baseDark"
   >
     <div class="mx-auto max-w-7xl pr-4 pl-16 sm:px-6 lg:px-8">
       <div class="flex h-20 items-center justify-between">
-        <!--
-          LOGO & TITLE
-        -->
+        <!-- MARK: - Logo & Title -->
         <div class="flex items-center">
           <a routerLink="/" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'">
             <img
@@ -32,9 +23,7 @@
           </a>
         </div>
 
-        <!--
-          THEME TOGGLER & LANGUAGE SWITCHER
-        -->
+        <!-- MARK: - Theme Toggler & Language Switcher -->
         <div class="flex flex-row-reverse items-center gap-2 md:flex-row">
           <!-- theme toggler -->
           <div
@@ -65,18 +54,16 @@
     </div>
   </header>
 
-  <!--
-    ========== MAIN CONTENT AREA ==========
-    Where we display the 404 message
-  -->
+  <!-- MARK: - Main Content Area -->
   <main class="flex flex-1 items-center justify-center bg-pageBackground dark:bg-baseDark">
     <div class="mx-auto max-w-md p-4 text-center">
+      <!-- MARK: - 404 Image -->
       <img
         [src]="isDarkMode ? '/icons/404-dark.svg' : '/icons/404-light.svg'"
         alt="404"
         class="mx-auto mb-4"
       />
-      <!-- Heading with Icon -->
+      <!-- MARK: - Heading with Icon -->
       <h2
         class="mb-2 flex items-center justify-center gap-4 font-bold text-[28px] font-expoArabicMedium text-secondary-900 dark:text-white"
       >
@@ -92,9 +79,11 @@
         </div>
         {{ 'PAGE_NOT_FOUND' | translate }}
       </h2>
+      <!-- MARK: - Description -->
       <p class="mb-6 text-secondary-700 font-expoArabicMedium dark:text-secondary-300">
         {{ 'INVALID_LINK_MESSAGE' | translate }}
       </p>
+      <!-- MARK: - Go Back Button -->
       <div class="flex w-full items-center justify-center">
         <button
           class="flex items-center justify-center gap-2 rounded-md px-4 py-2 text-white font-expoArabicMedium bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
@@ -111,7 +100,7 @@
     </div>
   </main>
 
-  <!-- Footer -->
+  <!-- MARK: - Footer -->
   <div
     class="hidden w-full items-center justify-between border-t bg-white px-8 text-center h-[58px] border-borderLight dark:bg-baseDark dark:border-surfaceDark md:flex"
   >
