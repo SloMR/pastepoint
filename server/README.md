@@ -1,8 +1,8 @@
 # 🔧 PastePoint Server (Rust Backend)
 
-The PastePoint server is a high-performance Rust-based backend built with Actix Web, providing WebSocket-based file sharing and communication services for local networks.
+The PastePoint server is a high-performance Rust-based backend built with Actix Web, providing WebSocket-based file sharing and communication services for local networks. Features comprehensive session management, WebRTC signaling, and secure file transfer capabilities.
 
-[![Actix](https://img.shields.io/badge/Actix-4.7-blue)](https://actix.rs/)
+[![Actix](https://img.shields.io/badge/Actix-0.13.5-blue)](https://actix.rs/)
 [![OpenSSL](https://img.shields.io/badge/OpenSSL-0.10-yellow)](https://www.openssl.org/)
 [![Rust](https://img.shields.io/badge/Rust-Backend-orange)](https://www.rust-lang.org/)
 
@@ -13,6 +13,7 @@ The PastePoint server is a high-performance Rust-based backend built with Actix 
 - **Security**: [OpenSSL](https://www.openssl.org/) for TLS termination
 - **Serialization**: [Serde](https://serde.rs/) for JSON handling
 - **UUID**: UUID generation for session management
+- **Rate Limiting**: [Actix-governor](https://github.com/AaronErhardt/actix-governor) for request throttling
 - **Logging**: Built-in logging with configurable levels
 
 ## 📁 Project Structure
@@ -73,6 +74,7 @@ server/
 
 - `config/development.toml`: Development environment settings
 - `config/production.toml`: Production environment settings
+- `config/docker-dev.toml`: Docker development environment settings
 
 ## 🧪 Testing
 
@@ -80,6 +82,18 @@ server/
 
 ```bash
 cargo test
+```
+
+### Run specific test:
+
+```bash
+cargo test test_name
+```
+
+### Run tests with output:
+
+```bash
+cargo test -- --nocapture
 ```
 
 ## 🔧 Development Guide
@@ -90,11 +104,24 @@ cargo test
 - **Linting**: `cargo clippy`
 - **Security audit**: `cargo audit`
 
+### Development Commands
+
+```bash
+# Build for development
+cargo build
+
+# Build for production
+cargo build --release
+```
+
 ## 🔒 Security Features
 
 - **TLS/SSL**: Full SSL/TLS support with configurable certificates
+- **Rate Limiting**: Configurable request throttling with Actix-governor
 - **CORS**: Configurable Cross-Origin Resource Sharing
 - **Input Validation**: Comprehensive input validation and sanitization
+- **Session Management**: Secure UUID-based session handling
+- **WebSocket Security**: Secure WebSocket connections with proper authentication
 
 ## 🐛 Troubleshooting
 
@@ -116,9 +143,18 @@ cargo test
    ```
 
 3. **Permission Denied**:
+
    ```bash
    # Ensure proper permissions for SSL certificates
    sudo chown -R $USER:$USER /path/to/certs
+   ```
+
+4. **Build Issues**:
+   ```bash
+   # Clean build artifacts
+   cargo clean
+   # Rebuild
+   cargo build
    ```
 
 ## 🤝 Contributing

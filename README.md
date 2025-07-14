@@ -10,11 +10,11 @@
 
 # PastePoint
 
-PastePoint is a secure, feature-rich file-sharing service designed for local networks. It enables users to share files and communicate efficiently through peer-to-peer WebSocket connections. Built with a Rust-based backend using Actix Web and an Angular frontend with SSR support, PastePoint prioritizes security, performance, and usability.
+PastePoint is a secure, feature-rich file-sharing service designed for local networks. It enables users to share files and communicate efficiently through peer-to-peer WebRTC connections. Built with a Rust-based backend using Actix Web and an Angular frontend with SSR support, PastePoint prioritizes security, performance, and usability.
 
 ## ⚠️ Usage Disclaimer
 
-- [📜 Disclaimer](DISCLAIMER.md)
+- 📜 [Disclaimer](DISCLAIMER.md)
 
 ## 🌟 Features
 
@@ -22,22 +22,27 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 
 - **Local Network Communication**:
 
-  - Establish WebSocket-based local chat between computers on the same network.
-  - List available sessions, create new sessions, or join existing ones.
+  - Establish WebSocket-based local chat between computers on the same network
+  - List available sessions, create new sessions, or join existing ones
+  - Real-time messaging with emoji support and dark/light theme
 
 - **File Sharing**:
 
-  - Peer-to-peer WebSocket connections for sending files and text.
-  - File compression for efficient transfers.
-  - Optimized chunk-based file transfer with progress tracking.
+  - Peer-to-peer WebRTC connections for secure file transfers
+  - Drag & drop file upload with real-time progress tracking
+  - File offer system with accept/decline options
+  - Chunk-based file transfer with progress tracking and cancellation support
 
 - **Security**:
 
-  - SSL/TLS encryption for secure communication.
-  - Self-signed certificate generation included.
+  - End-to-end encryption for all file transfers via WebRTC
+  - SSL/TLS encryption for WebSocket signaling
+  - Self-signed certificate generation included
+  - Input validation and rate limiting
 
 - **Cross-Platform Compatibility**:
-  - Runs seamlessly on Linux, macOS, and Windows with Dockerized support.
+  - Runs seamlessly on Linux, macOS, and Windows with Dockerized support
+  - Responsive design for mobile and desktop
 
 ### **Developer Experience**
 
@@ -63,6 +68,7 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 - **Framework**: Actix Web with WebSocket support
 - **Security**: OpenSSL for TLS termination
 - **Utilities**: UUID generation, Serde serialization
+- **Rate Limiting**: Actix-governor for request throttling
 
 ### **Clients**
 
@@ -75,7 +81,9 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 - **Rendering**: Server-Side Rendering with Angular Universal
 - **State Management**: RxJS observables
 - **Styling**: Tailwind CSS with dark mode
-- **I18n**: ngx-translate integration
+- **I18n**: ngx-translate integration (English, Arabic) (WIP)
+- **WebRTC**: Native WebRTC API for file transfers
+- **Notifications**: Hot-toast for real-time feedback
 
 ### **Infrastructure**
 
@@ -106,13 +114,21 @@ pastepoint/
 
 #### Server (Rust):
 
-- [Server readme](server/README.md)
+- 📦 [Server readme](server/README.md)
 
 #### Clients:
 
 ##### Web (Angular):
 
-- [Web readme](client/README.md)
+- 🌐 [Web readme](client/README.md)
+
+##### iOS:
+
+- Work in progress
+
+##### Android:
+
+- Work in progress
 
 #### Deployment:
 
@@ -184,16 +200,6 @@ pastepoint/
      - Localhost: [https://localhost:9000](https://localhost:9000)
      - Local Network: `https://<your-local-ip>:9000`
 
-### Environment Variables:
-
-- `CERT_PATH`: Path to SSL certificates (default: `/etc/ssl/pastepoint`)
-- `SERVER_NAME`: Server name for SSL (default: `pastepoint.com www.pastepoint.com`)
-- `RUST_BUILD_MODE`: Rust build mode (default: `release`)
-- `NPM_BUILD_CONFIG`: npm build configuration (default: `docker`)
-- `SERVER_ENV`: Server environment (default: `production`)
-- `PORT`: SSR server port (default: `4000`)
-- `HOST`: SSR server host (default: `0.0.0.0`)
-
 ## 🤝 Contributing
 
 - [Contributing](CONTRIBUTING.md)
@@ -202,7 +208,7 @@ pastepoint/
 
 **Common Issues**:
 
-1. SSL Certificate Errors
+1. **SSL Certificate Errors**
    Run: `./scripts/generate-certs.sh`
 
 ## 🔒 Security Considerations
@@ -213,8 +219,7 @@ pastepoint/
   - Keep private keys secure and never commit them to version control
 
 - **Data Privacy**:
-
-  - All file transfers are encrypted end-to-end
+  - All file transfers are encrypted end-to-end via WebRTC
   - No data is stored permanently on servers
   - Session data is cleared on server restart or leaving the session
 
@@ -227,5 +232,5 @@ This project is licensed under the GPL-3.0 License. See the [LICENSE](LICENSE) f
 For issues or feature requests:
 
 - [🐙 GitHub Issues](https://github.com/SloMR/pastepoint/issues)
-- [📧 sulaimanromaih@gmail.com](mailto:sulaimanromaih@gmail.com).
+- [📧 sulaimanromaih@gmail.com](mailto:sulaimanromaih@gmail.com)
 - [🌐 LinkedIn](https://www.linkedin.com/in/sulaiman-alromaih-845700202/)

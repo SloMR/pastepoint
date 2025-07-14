@@ -1,6 +1,6 @@
 # 🌐 PastePoint Client (Angular Frontend)
 
-The PastePoint client is a modern Angular application with Server-Side Rendering (SSR) support, providing an intuitive interface for file sharing and communication on local networks.
+The PastePoint client is a modern Angular application with Server-Side Rendering (SSR) support, providing an intuitive interface for file sharing and communication on local networks. Features WebRTC file transfer capabilities, real-time chat, and comprehensive user experience enhancements.
 
 [![Angular](https://img.shields.io/badge/Angular-19-red)](https://angular.io/)
 [![Tailwind](https://img.shields.io/badge/Tailwind-3.4-blue)](https://tailwindcss.com/)
@@ -15,6 +15,8 @@ The PastePoint client is a modern Angular application with Server-Side Rendering
 - **Linting**: ESLint with Angular-specific rules
 - **Formatting**: Prettier with custom configuration
 - **Styling**: stylelint for CSS/SCSS validation
+- **WebRTC**: Native WebRTC API for peer-to-peer file transfers
+- **Notifications**: Hot-toast for real-time user feedback
 
 ## 📁 Project Structure
 
@@ -25,6 +27,11 @@ client/
 │   │   ├── 📁 core/
 │   │   │   ├── 📁 i18n/           # Internationalization
 │   │   │   ├── 📁 services/       # Core services
+│   │   │   │   ├── 📁 communication/    # WebRTC, WebSocket, Chat
+│   │   │   │   ├── 📁 file-management/  # File transfer services
+│   │   │   │   ├── 📁 ui/              # Theme, Language services
+│   │   │   │   ├── 📁 user-management/ # User services
+│   │   │   │   └── 📁 migration/       # App migration
 │   │   │   └── 📁 interfaces/     # TypeScript interfaces
 │   │   ├── 📁 features/           # Features such as chat, file sharing, etc.
 │   │   ├── 📁 utils/              # Utility functions
@@ -38,14 +45,18 @@ client/
 │   ├── server.ts                  # SSR server
 │   └── styles.css                 # Global styles
 ├── 📁 public/                     # Static assets
-│   ├── favicon.*                  # Favicon files
-│   ├── pastepoint-*.svg          # Logo files
-│   └── *.png                     # App icons
+│   ├── 📁 assets/                 # Assets
+│   │   ├── favicon.*              # Favicon files
+│   │   ├── pastepoint-*.svg       # Logo files
+│   │   └── *.png                  # App icons
+│   ├── 📁 fonts/                  # Custom fonts
+│   ├── 📁 icons/                  # SVG icons
+│   └── site.webmanifest           # Web app manifest
 ├── 📁 dist/                       # Build output
 ├── 📁 node_modules/               # Dependencies
 ├── package.json                   # Project dependencies
 ├── angular.json                   # Angular CLI config
-├── tailwind.config.js            # Tailwind CSS config
+├── tailwind.config.js             # Tailwind CSS config
 ├── tsconfig.json                  # TypeScript config
 ├── Dockerfile                     # Docker configuration
 └── README.md                      # Project documentation
@@ -171,24 +182,19 @@ Flowbite components are integrated for:
 ### Translation Files
 
 ```
-src/app/core/i18n/translations.ts
+src/app/core/i18n/localizations/
+├── en.json
+└── ar.json
 ```
 
 ### Usage
 
 ```typescript
-type TranslationData = Record<string, string>;
+// In components
+constructor(private translate: TranslateService) {}
 
-export type LanguageCode = 'en' | 'ar';
-
-export const translations: Record<LanguageCode, TranslationData> = {
-  en: {
-    INFO: 'Note',
-  },
-  ar: {
-    INFO: 'تنبيه',
-  },
-};
+// Get translation
+this.translate.instant('WELCOME');
 ```
 
 ## 🔧 Development Guide
