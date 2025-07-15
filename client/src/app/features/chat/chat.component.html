@@ -211,8 +211,8 @@
                   alt="Upload"
                   class="h-4 w-4"
                 />
-                <span class="truncate font-expoArabicMedium text-content dark:text-white">
-                  {{ transfer.file.name | slice: 0 : 15 }}...
+                <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                  {{ truncateFilename(transfer.file.name) }}
                 </span>
               </div>
               <div class="flex items-center justify-end gap-1">
@@ -255,8 +255,8 @@
                   alt="Download"
                   class="h-4 w-4"
                 />
-                <span class="truncate font-expoArabicMedium text-content dark:text-white">
-                  {{ download.fileName | slice: 0 : 15 }}...
+                <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                  {{ truncateFilename(download.fileName) }}
                 </span>
               </div>
               <div class="flex items-center justify-end gap-1">
@@ -546,8 +546,8 @@
                     alt="Upload"
                     class="h-4 w-4"
                   />
-                  <span class="truncate font-expoArabicMedium text-content dark:text-white">
-                    {{ transfer.file.name | slice: 0 : 15 }}...
+                  <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                    {{ truncateFilename(transfer.file.name) }}
                   </span>
                 </div>
                 <div class="flex items-center justify-end gap-1">
@@ -592,8 +592,8 @@
                     alt="Download"
                     class="h-4 w-4"
                   />
-                  <span class="truncate font-expoArabicMedium text-content dark:text-white">
-                    {{ download.fileName | slice: 0 : 15 }}...
+                  <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                    {{ truncateFilename(download.fileName) }}
                   </span>
                 </div>
                 <div class="flex items-center justify-end gap-1">
@@ -806,7 +806,11 @@
           <div class="flex w-full flex-col items-start justify-start gap-4">
             <div *ngFor="let message of messages; trackBy: trackMessage" class="w-full">
               <!-- MARK: - Other User Message -->
-              <div *ngIf="!isMyMessage(message); else myMessage" class="flex justify-start">
+              <div
+                *ngIf="!isMyMessage(message); else myMessage"
+                class="flex justify-start"
+                [ngClass]="isRTL ? 'animate-slide-in-right' : 'animate-slide-in-left'"
+              >
                 <div class="flex items-start justify-start gap-3 min-w-[350px] max-w-[60%]">
                   <img src="/icons/Group.svg" alt="User" class="h-8 w-8" />
                   <div class="flex w-full flex-col gap-1">
@@ -814,8 +818,8 @@
                       {{ message.from }}
                     </span>
                     <div
-                      class="relative w-full rounded-xl rounded-tl-none p-3 bg-brand min-h-[65px] dark:bg-brandDark"
-                      [class]="isRTL ? 'rounded-tr-none' : 'rounded-tl-none'"
+                      class="relative w-full rounded-xl p-3 bg-brand min-h-[65px] dark:bg-brandDark"
+                      [ngClass]="isRTL ? 'rounded-tr-none' : 'rounded-tl-none'"
                     >
                       <p
                         class="text-[18px] font-expoArabic text-content dark:text-white"
@@ -849,7 +853,10 @@
 
               <!-- MARK: - My Message -->
               <ng-template #myMessage>
-                <div class="flex justify-end">
+                <div
+                  class="flex justify-end"
+                  [ngClass]="isRTL ? 'animate-slide-in-left' : 'animate-slide-in-right'"
+                >
                   <div class="flex items-start justify-end gap-3 min-w-[350px] max-w-[60%]">
                     <div class="flex w-full flex-col items-end gap-1">
                       <span
@@ -858,7 +865,8 @@
                         {{ message.from }}
                       </span>
                       <div
-                        class="relative w-full rounded-xl rounded-tr-none p-3 bg-messageBackground min-h-[65px] dark:bg-surfaceDark"
+                        class="relative w-full rounded-xl p-3 bg-messageBackground min-h-[65px] dark:bg-surfaceDark"
+                        [ngClass]="isRTL ? 'rounded-tl-none' : 'rounded-tr-none'"
                       >
                         <p
                           class="text-[18px] font-expoArabic text-content dark:text-contentMuted"
@@ -904,6 +912,7 @@
             >
               <div
                 class="flex w-full flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0"
+                [ngClass]="isRTL ? 'animate-slide-in-right' : 'animate-slide-in-left'"
               >
                 <div class="flex items-start gap-2">
                   <img src="/icons/file.svg" alt="File" class="h-4 w-4 mt-0.5" />
