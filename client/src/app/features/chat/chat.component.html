@@ -211,8 +211,8 @@
                   alt="Upload"
                   class="h-4 w-4"
                 />
-                <span class="truncate font-expoArabicMedium text-content dark:text-white">
-                  {{ transfer.file.name | slice: 0 : 15 }}...
+                <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                  {{ truncateFilename(transfer.file.name) }}
                 </span>
               </div>
               <div class="flex items-center justify-end gap-1">
@@ -255,8 +255,8 @@
                   alt="Download"
                   class="h-4 w-4"
                 />
-                <span class="truncate font-expoArabicMedium text-content dark:text-white">
-                  {{ download.fileName | slice: 0 : 15 }}...
+                <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                  {{ truncateFilename(download.fileName) }}
                 </span>
               </div>
               <div class="flex items-center justify-end gap-1">
@@ -546,8 +546,8 @@
                     alt="Upload"
                     class="h-4 w-4"
                   />
-                  <span class="truncate font-expoArabicMedium text-content dark:text-white">
-                    {{ transfer.file.name | slice: 0 : 15 }}...
+                  <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                    {{ truncateFilename(transfer.file.name) }}
                   </span>
                 </div>
                 <div class="flex items-center justify-end gap-1">
@@ -592,8 +592,8 @@
                     alt="Download"
                     class="h-4 w-4"
                   />
-                  <span class="truncate font-expoArabicMedium text-content dark:text-white">
-                    {{ download.fileName | slice: 0 : 15 }}...
+                  <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                    {{ truncateFilename(download.fileName) }}
                   </span>
                 </div>
                 <div class="flex items-center justify-end gap-1">

@@ -653,6 +653,33 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
+   * TRUNCATE FILENAME
+   * Truncates a filename while preserving the file extension
+   * ==========================================================
+   */
+  protected truncateFilename(filename: string, maxLength: number = 30): string {
+    if (filename.length <= maxLength) {
+      return filename;
+    }
+
+    const lastDotIndex = filename.lastIndexOf('.');
+    if (lastDotIndex === -1) {
+      return filename.slice(0, maxLength) + '...';
+    }
+
+    const extension = filename.slice(lastDotIndex);
+    const baseName = filename.slice(0, lastDotIndex);
+    const availableLength = maxLength - extension.length - 3;
+
+    if (availableLength <= 0) {
+      return filename.slice(0, maxLength) + '...';
+    }
+
+    return baseName.slice(0, availableLength) + '...' + extension;
+  }
+
+  /**
+   * ==========================================================
    * CREATE AND SEND FILE MESSAGES
    * Creates chat messages for files being sent and sends them to all members
    * ==========================================================
@@ -660,7 +687,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private async createAndSendFileMessages(files: File[], otherMembers: string[]): Promise<void> {
     for (const file of files) {
       const fileSizeInMB = (file.size / MB).toFixed(2);
-      const fileMessageText = `${this.translate.instant('FILE_SENT')}: ${file.name} (${fileSizeInMB} MB)`;
+      const truncatedFilename = this.truncateFilename(file.name);
+      const fileMessageText = `${this.translate.instant('FILE_SENT')}: (${truncatedFilename}) (${fileSizeInMB} MB)`;
 
       // Add file message to local messages immediately
       this.ngZone.run(() => {
