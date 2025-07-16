@@ -44,6 +44,7 @@ export class WebRTCCommunicationService {
     string, // fromUser
     { fileId: string; chunkSize: number }
   >();
+  private connectionTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(
     private zone: NgZone,
@@ -63,9 +64,39 @@ export class WebRTCCommunicationService {
     channel.binaryType = 'arraybuffer';
     this.dataChannels.set(targetUser, channel);
 
+    // Clear any existing timeout
+    const existingTimeout = this.connectionTimeouts.get(targetUser);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    // Set a timeout for connection establishment (30 seconds)
+    const timeout = setTimeout(() => {
+      if (channel.readyState === 'connecting') {
+        this.logger.warn(
+          'setupDataChannel',
+          `Connection timeout for ${targetUser}, closing channel`
+        );
+        channel.close();
+        this.dataChannels.delete(targetUser);
+        this.connectionTimeouts.delete(targetUser);
+        this.toaster.warning(
+          this.translate.instant('CONNECTION_TIMEOUT_WITH_USER', { userName: targetUser })
+        );
+      }
+    }, 30000);
+    this.connectionTimeouts.set(targetUser, timeout);
+
     channel.onopen = () => {
       this.logger.info('setupDataChannel', `Data channel with ${targetUser} is open`);
       this.dataChannelOpen$.next(true);
+
+      // Clear the timeout since connection is established
+      const connectionTimeout = this.connectionTimeouts.get(targetUser);
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+        this.connectionTimeouts.delete(targetUser);
+      }
 
       const queuedMessages = this.messageQueues.get(targetUser);
       if (queuedMessages && queuedMessages.length > 0) {
@@ -113,6 +144,13 @@ export class WebRTCCommunicationService {
       this.logger.info('setupDataChannel', `Data channel with ${targetUser} is closed`);
       this.dataChannelOpen$.next(false);
       this.dataChannels.delete(targetUser);
+
+      // Clear any connection timeout
+      const connectionTimeout = this.connectionTimeouts.get(targetUser);
+      if (connectionTimeout) {
+        clearTimeout(connectionTimeout);
+        this.connectionTimeouts.delete(targetUser);
+      }
     };
 
     channel.bufferedAmountLowThreshold = BUFFERED_AMOUNT_LOW_THRESHOLD;
@@ -221,6 +259,15 @@ export class WebRTCCommunicationService {
   }
 
   /**
+   * Checks if a data channel is connecting or connected
+   * @param targetUser The user to check connection for
+   */
+  public isConnectedOrConnecting(targetUser: string): boolean {
+    const channel = this.dataChannels.get(targetUser);
+    return channel?.readyState === 'open' || channel?.readyState === 'connecting';
+  }
+
+  /**
    * Closes all data channel connections
    */
   public closeAllConnections(): void {
@@ -229,6 +276,12 @@ export class WebRTCCommunicationService {
     });
     this.dataChannels.clear();
     this.messageQueues.clear();
+
+    // Clear all connection timeouts
+    this.connectionTimeouts.forEach((timeout) => {
+      clearTimeout(timeout);
+    });
+    this.connectionTimeouts.clear();
   }
 
   /**
@@ -237,6 +290,13 @@ export class WebRTCCommunicationService {
    */
   public deleteDataChannel(targetUser: string): void {
     this.dataChannels.delete(targetUser);
+
+    // Clear any connection timeout
+    const connectionTimeout = this.connectionTimeouts.get(targetUser);
+    if (connectionTimeout) {
+      clearTimeout(connectionTimeout);
+      this.connectionTimeouts.delete(targetUser);
+    }
   }
 
   /**
