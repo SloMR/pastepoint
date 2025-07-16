@@ -58,6 +58,7 @@ import { LanguageService } from '../../core/services/ui/language.service';
 import { LanguageCode } from '../../core/i18n/translate-loader';
 import { Router } from '@angular/router';
 import { HotToastService } from '@ngneat/hot-toast';
+import * as QRCode from 'qrcode';
 
 /**
  * ==========================================================
@@ -116,6 +117,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   isOpenCreateRoom = false;
   isOpenJoinSessionPopup = false;
   isOpenEndSessionPopup = false;
+  isOpenQRCodePopup = false;
+  isGeneratingQRCode = false;
   skipDrawerAnim = false;
 
   activeUploads: FileUpload[] = [];
@@ -164,6 +167,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   @ViewChild('messageContainer') messageContainer!: ElementRef;
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
+  @ViewChild('qrCodeContainer', { static: false }) qrCodeContainer!: ElementRef;
 
   /**
    * ==========================================================
@@ -831,6 +835,79 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
+   * OPEN CREATE ROOM POPUP
+   * Opens the create room popup with proper DOM timing.
+   * ==========================================================
+   */
+  openCreateRoomPopup(): void {
+    this.isOpenCreateRoom = true;
+    this.cdr.detectChanges();
+    requestAnimationFrame(() => {
+      const input = document.querySelector(
+        'input[ng-reflect-model="newRoomName"]'
+      ) as HTMLInputElement;
+      input?.focus();
+    });
+  }
+
+  /**
+   * ==========================================================
+   * OPEN JOIN SESSION POPUP
+   * Opens the join session popup with proper DOM timing.
+   * ==========================================================
+   */
+  openJoinSessionPopup(): void {
+    this.isOpenJoinSessionPopup = true;
+    this.cdr.detectChanges();
+    requestAnimationFrame(() => {
+      const input = document.querySelector(
+        'input[ng-reflect-model="newSessionCode"]'
+      ) as HTMLInputElement;
+      input?.focus();
+    });
+  }
+
+  /**
+   * ==========================================================
+   * OPEN END SESSION POPUP
+   * Opens the end session popup with proper DOM timing.
+   * ==========================================================
+   */
+  openEndSessionPopup(): void {
+    this.isOpenEndSessionPopup = true;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * ==========================================================
+   * CLOSE POPUP
+   * Closes any popup with proper DOM timing.
+   * ==========================================================
+   */
+  closePopup(popupType: 'create' | 'join' | 'end' | 'qr'): void {
+    requestAnimationFrame(() => {
+      switch (popupType) {
+        case 'create':
+          this.isOpenCreateRoom = false;
+          this.newRoomName = '';
+          break;
+        case 'join':
+          this.isOpenJoinSessionPopup = false;
+          this.newSessionCode = '';
+          break;
+        case 'end':
+          this.isOpenEndSessionPopup = false;
+          break;
+        case 'qr':
+          this.isOpenQRCodePopup = false;
+          break;
+      }
+      this.cdr.detectChanges();
+    });
+  }
+
+  /**
+   * ==========================================================
    * CREATE ROOM
    * Creates or joins a new room based on the room name input.
    * ==========================================================
@@ -840,8 +917,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.joinRoom(this.newRoomName.trim());
       this.ngZone.run(() => {
         this.newRoomName = '';
-        this.isOpenCreateRoom = false;
-        this.cdr.detectChanges();
+        requestAnimationFrame(() => {
+          this.isOpenCreateRoom = false;
+          this.cdr.detectChanges();
+        });
       });
     } else {
       this.toaster.warning(this.translate.instant('ENTER_VALID_ROOM'));
@@ -894,7 +973,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    this.openChatSession(code);
+    requestAnimationFrame(() => {
+      this.isOpenJoinSessionPopup = false;
+      this.newSessionCode = '';
+      this.cdr.detectChanges();
+      this.openChatSession(code);
+    });
   }
 
   /**
@@ -904,10 +988,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   endSession(): void {
-    this.clearSessionCode();
-    this.wsConnectionService.disconnect();
-    this.toaster.success(this.translate.instant('SESSION_ENDED_SUCCESS'));
-    this.router.navigate([`/`]);
+    requestAnimationFrame(() => {
+      this.isOpenEndSessionPopup = false;
+      this.cdr.detectChanges();
+      this.clearSessionCode();
+      this.wsConnectionService.disconnect();
+      this.toaster.success(this.translate.instant('SESSION_ENDED_SUCCESS'));
+      this.router.navigate([`/`]);
+    });
   }
 
   /**
@@ -984,6 +1072,82 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.toaster.error(this.translate.instant('COPY_SESSION_FAILED'));
       }
     );
+  }
+
+  /**
+   * ==========================================================
+   * GET SESSION URL
+   * Returns the full URL for the current session.
+   * ==========================================================
+   */
+  private getSessionUrl(): string {
+    if (!this.SessionCode) {
+      return '';
+    }
+
+    const sessionUrl = `${window.location.origin}/private/${this.SessionCode}`;
+    return sessionUrl;
+  }
+
+  /**
+   * ==========================================================
+   * GENERATE QR CODE
+   * Generates a QR code for the current session URL.
+   * ==========================================================
+   */
+  private async generateQRCode(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    if (!this.SessionCode || !this.qrCodeContainer) {
+      return;
+    }
+
+    try {
+      this.isGeneratingQRCode = true;
+      this.cdr.detectChanges();
+
+      const sessionUrl = this.getSessionUrl();
+      const qrCodeElement = this.qrCodeContainer.nativeElement;
+      const isMobile = window.innerWidth < 640;
+      while (qrCodeElement.firstChild) {
+        qrCodeElement.removeChild(qrCodeElement.firstChild);
+      }
+
+      const canvas = document.createElement('canvas');
+      await QRCode.toCanvas(canvas, sessionUrl, {
+        width: isMobile ? 180 : 220,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF',
+        },
+      });
+
+      qrCodeElement.appendChild(canvas);
+      this.logger.info('generateQRCode', 'QR code generated successfully');
+    } catch (error) {
+      this.logger.error('generateQRCode', 'Failed to generate QR code:', error);
+      this.toaster.error(this.translate.instant('QR_CODE_GENERATION_FAILED'));
+    } finally {
+      this.isGeneratingQRCode = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * ==========================================================
+   * OPEN QR CODE POPUP
+   * Opens the QR code popup and generates the QR code.
+   * ==========================================================
+   */
+  async openQRCodePopup(): Promise<void> {
+    this.isOpenQRCodePopup = true;
+    this.cdr.detectChanges();
+    requestAnimationFrame(() => {
+      this.generateQRCode();
+    });
   }
 
   /**

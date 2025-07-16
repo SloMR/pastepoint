@@ -59,6 +59,18 @@ export class WebRTCSignalingService {
       const dataChannel = peerConnection.createDataChannel('data', DATA_CHANNEL_OPTIONS);
       this.communicationService.setupDataChannel(dataChannel, targetUser);
 
+      // Remove connection lock when data channel opens successfully
+      dataChannel.onopen = () => {
+        this.connectionLocks.delete(targetUser);
+      };
+      // Remove connection lock on error or close
+      dataChannel.onerror = () => {
+        this.connectionLocks.delete(targetUser);
+      };
+      dataChannel.onclose = () => {
+        this.connectionLocks.delete(targetUser);
+      };
+
       peerConnection
         .createOffer(OFFER_OPTIONS)
         .then((offer) => peerConnection.setLocalDescription(offer))
@@ -73,9 +85,9 @@ export class WebRTCSignalingService {
         .catch((error: unknown) => {
           this.logger.error('initiateConnection', `Offer creation failed: ${error}`);
           this.toaster.error(this.translate.instant('CONNECTION_LOST'));
+          this.connectionLocks.delete(targetUser);
           this.reconnect(targetUser);
-        })
-        .finally(() => this.connectionLocks.delete(targetUser));
+        });
     } catch (error) {
       this.logger.error('initiateConnection', `Connection initiation failed: ${error}`);
       this.toaster.error(this.translate.instant('CONNECTION_LOST'));

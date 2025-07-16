@@ -95,7 +95,7 @@ export class WebRTCService implements IWebRTCService {
    * @param targetUser The user to send the message to
    */
   public sendData(message: DataChannelMessage, targetUser: string): void {
-    if (!this.communicationService.isConnected(targetUser)) {
+    if (!this.communicationService.isConnectedOrConnecting(targetUser)) {
       this.signalingService.initiateConnection(targetUser);
     }
     this.communicationService.sendData(message, targetUser);
@@ -107,7 +107,7 @@ export class WebRTCService implements IWebRTCService {
    * @param targetUser The user to send the data to
    */
   public sendRawData(data: ArrayBuffer, targetUser: string): boolean {
-    if (!this.communicationService.isConnected(targetUser)) {
+    if (!this.communicationService.isConnectedOrConnecting(targetUser)) {
       this.signalingService.initiateConnection(targetUser);
     }
     return this.communicationService.sendRawData(data, targetUser);
