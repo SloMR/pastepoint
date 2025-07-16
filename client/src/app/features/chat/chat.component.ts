@@ -58,6 +58,7 @@ import { LanguageService } from '../../core/services/ui/language.service';
 import { LanguageCode } from '../../core/i18n/translate-loader';
 import { Router } from '@angular/router';
 import { HotToastService } from '@ngneat/hot-toast';
+import * as QRCode from 'qrcode';
 
 /**
  * ==========================================================
@@ -116,6 +117,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   isOpenCreateRoom = false;
   isOpenJoinSessionPopup = false;
   isOpenEndSessionPopup = false;
+  isOpenQRCodePopup = false;
+  isGeneratingQRCode = false;
   skipDrawerAnim = false;
 
   activeUploads: FileUpload[] = [];
@@ -164,6 +167,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   @ViewChild('messageContainer') messageContainer!: ElementRef;
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
+  @ViewChild('qrCodeContainer', { static: false }) qrCodeContainer!: ElementRef;
 
   /**
    * ==========================================================
@@ -984,6 +988,82 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.toaster.error(this.translate.instant('COPY_SESSION_FAILED'));
       }
     );
+  }
+
+  /**
+   * ==========================================================
+   * GET SESSION URL
+   * Returns the full URL for the current session.
+   * ==========================================================
+   */
+  private getSessionUrl(): string {
+    if (!this.SessionCode) {
+      return '';
+    }
+
+    const sessionUrl = `${window.location.origin}/private/${this.SessionCode}`;
+    return sessionUrl;
+  }
+
+  /**
+   * ==========================================================
+   * GENERATE QR CODE
+   * Generates a QR code for the current session URL.
+   * ==========================================================
+   */
+  private async generateQRCode(): Promise<void> {
+    if (!isPlatformBrowser(this.platformId)) {
+      return;
+    }
+
+    if (!this.SessionCode || !this.qrCodeContainer) {
+      return;
+    }
+
+    try {
+      this.isGeneratingQRCode = true;
+      this.cdr.detectChanges();
+
+      const sessionUrl = this.getSessionUrl();
+      const qrCodeElement = this.qrCodeContainer.nativeElement;
+      const isMobile = window.innerWidth < 640;
+      qrCodeElement.innerHTML = '';
+
+      const canvas = document.createElement('canvas');
+      await QRCode.toCanvas(canvas, sessionUrl, {
+        width: isMobile ? 180 : 220,
+        margin: 1,
+        color: {
+          dark: '#000000',
+          light: '#FFFFFF',
+        },
+      });
+
+      qrCodeElement.appendChild(canvas);
+      this.logger.info('generateQRCode', 'QR code generated successfully');
+    } catch (error) {
+      this.logger.error('generateQRCode', 'Failed to generate QR code:', error);
+      this.toaster.error(this.translate.instant('QR_CODE_GENERATION_FAILED'));
+    } finally {
+      this.isGeneratingQRCode = false;
+      this.cdr.detectChanges();
+    }
+  }
+
+  /**
+   * ==========================================================
+   * OPEN QR CODE POPUP
+   * Opens the QR code popup and generates the QR code.
+   * ==========================================================
+   */
+  async openQRCodePopup(): Promise<void> {
+    this.isOpenQRCodePopup = true;
+    this.cdr.detectChanges();
+
+    // Wait for the DOM to update before generating QR code
+    setTimeout(() => {
+      this.generateQRCode();
+    }, 100);
   }
 
   /**

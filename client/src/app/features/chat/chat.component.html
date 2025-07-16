@@ -104,7 +104,12 @@
           (click)="copySessionCode()"
         >
           <img src="/icons/copy.svg" alt="Home" class="h-4 w-4" />
-          <p class="truncate pt-1 text-base font-expoArabicMedium">{{ 'COPY' | translate }}</p>
+        </div>
+        <div
+          class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-2 text-white w-[90px] h-[44px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+          (click)="openQRCodePopup()"
+        >
+          <img src="/icons/qrcode.svg" alt="Home" class="h-4 w-4" />
         </div>
       </div>
 
@@ -411,7 +416,7 @@
         </div>
 
         <!-- MARK: - Mobile Session Code Section -->
-        <div *ngIf="SessionCode.length > 0">
+        <ng-container *ngIf="SessionCode.length > 0">
           <div class="flex w-full items-center gap-3 px-4 py-3">
             <img
               [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
@@ -423,23 +428,35 @@
             </p>
           </div>
 
-          <div class="flex w-full items-center gap-3 px-4">
+          <!-- Session Code Display -->
+          <div class="flex w-full justify-center px-5">
             <div
-              class="flex items-center justify-start rounded-lg p-2 px-3 w-[150px] h-[44px] bg-inputBackground dark:bg-borderDark"
+              class="w-full rounded-lg p-2 px-3 text-center bg-inputBackground dark:bg-borderDark"
             >
               <p class="truncate text-base font-light font-expoArabic dark:text-contentMuted">
                 {{ SessionCode }}
               </p>
             </div>
-            <div
-              class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-2 text-white w-[90px] h-[44px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
-              (click)="copySessionCode()"
-            >
-              <img src="/icons/copy.svg" alt="Home" class="h-4 w-4" />
-              <p class="truncate pt-1 text-base font-expoArabicMedium">{{ 'COPY' | translate }}</p>
+          </div>
+
+          <!-- Buttons Row -->
+          <div class="mt-4 flex w-full justify-center px-4">
+            <div class="flex gap-3">
+              <div
+                class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-white w-[48px] h-[48px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+                (click)="copySessionCode()"
+              >
+                <img src="/icons/copy.svg" alt="Copy" class="h-6 w-6" />
+              </div>
+              <div
+                class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-white w-[48px] h-[48px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+                (click)="openQRCodePopup()"
+              >
+                <img src="/icons/qrcode.svg" alt="QR Code" class="h-6 w-6" />
+              </div>
             </div>
           </div>
-        </div>
+        </ng-container>
 
         <!-- MARK: - Mobile Private Session Controls -->
         <div
@@ -1258,6 +1275,69 @@
             >
               {{ 'CANCEL' | translate }}
             </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MARK: - QR Code Popup -->
+    <div
+      *ngIf="isOpenQRCodePopup"
+      class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"
+      (click)="isOpenQRCodePopup = false"
+    >
+      <div
+        class="w-full rounded-2xl rounded-b-none bg-white px-6 py-6 animate-slide-up dark:bg-baseDark sm:w-[320px] sm:rounded-b-2xl sm:px-6 sm:pb-6"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="flex w-full flex-col gap-4">
+          <!-- Close button -->
+          <div class="flex w-full" [ngClass]="isRTL ? 'justify-start' : 'justify-end'">
+            <button
+              (click)="isOpenQRCodePopup = false"
+              class="flex items-center justify-center rounded-full p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+              aria-label="Close QR Code"
+              title="Close QR Code"
+            >
+              <img src="/icons/cross-close.svg" alt="Close" class="h-4 w-4" />
+            </button>
+          </div>
+
+          <!-- QR Code Container -->
+          <div class="flex w-full items-center justify-center">
+            <div
+              class="flex items-center justify-center rounded-xl border-2 bg-white p-4 shadow-sm border-borderLight dark:border-borderDark dark:bg-white"
+            >
+              <div #qrCodeContainer class="flex items-center justify-center">
+                <!-- Loading spinner -->
+                <div
+                  *ngIf="isGeneratingQRCode"
+                  class="flex items-center justify-center w-[180px] h-[180px]"
+                >
+                  <svg
+                    aria-hidden="true"
+                    class="h-14 w-14 animate-spin text-gray-200 fill-brand dark:text-gray-600"
+                    viewBox="0 0 100 101"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
+                      fill="currentColor"
+                    />
+                    <path
+                      d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
+                      fill="currentFill"
+                    />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="flex w-full items-center justify-center">
+            <p class="text-xs font-expoArabicMedium text-content dark:text-contentMuted">
+              {{ 'SCAN_QR_CODE_TO_JOIN_THE_SESSION' | translate }}
+            </p>
           </div>
         </div>
       </div>
