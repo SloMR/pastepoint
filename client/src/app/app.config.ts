@@ -59,6 +59,7 @@ export const appConfig: ApplicationConfig = {
       reverseOrder: true,
       style: {
         borderRadius: '20px',
+        zIndex: 99999,
       },
     }),
     // Initialize translation module with in-memory loader

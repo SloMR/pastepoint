@@ -50,6 +50,10 @@
   "END_SESSION_HEADER": "متأكد تبغى تنهي الجلسة؟",
   "END_THE_SESSION": "ايه، انهيها",
 
+  "_QR_CODE_SECTION": "==== QR CODE ====",
+  "QR_CODE_GENERATION_FAILED": "ما قدرت أسوي الكود. حاول مرة ثانية",
+  "SCAN_QR_CODE_TO_JOIN_THE_SESSION": "امسح الكود على جهاز آخر للانضمام",
+
   "_FILE_TRANSFER_SECTION": "==== FILE TRANSFER ====",
   "FILE_TRANSFER": "نقل الملفات",
   "ACTIVE_TRANSFERS_COUNT": "الملفات",

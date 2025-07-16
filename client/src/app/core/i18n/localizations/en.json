@@ -50,6 +50,10 @@
   "END_SESSION_HEADER": "Are you sure you want to end the session?",
   "END_THE_SESSION": "End Session",
 
+  "_QR_CODE_SECTION": "==== QR CODE ====",
+  "QR_CODE_GENERATION_FAILED": "Couldn't generate QR code. Try again.",
+  "SCAN_QR_CODE_TO_JOIN_THE_SESSION": "Scan the QR code on another device to join the session",
+
   "_FILE_TRANSFER_SECTION": "==== FILE TRANSFER ====",
   "FILE_TRANSFER": "File Transfer",
   "ACTIVE_TRANSFERS_COUNT": "Transfers",
