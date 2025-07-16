@@ -835,6 +835,79 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
+   * OPEN CREATE ROOM POPUP
+   * Opens the create room popup with proper DOM timing.
+   * ==========================================================
+   */
+  openCreateRoomPopup(): void {
+    this.isOpenCreateRoom = true;
+    this.cdr.detectChanges();
+    requestAnimationFrame(() => {
+      const input = document.querySelector(
+        'input[ng-reflect-model="newRoomName"]'
+      ) as HTMLInputElement;
+      input?.focus();
+    });
+  }
+
+  /**
+   * ==========================================================
+   * OPEN JOIN SESSION POPUP
+   * Opens the join session popup with proper DOM timing.
+   * ==========================================================
+   */
+  openJoinSessionPopup(): void {
+    this.isOpenJoinSessionPopup = true;
+    this.cdr.detectChanges();
+    requestAnimationFrame(() => {
+      const input = document.querySelector(
+        'input[ng-reflect-model="newSessionCode"]'
+      ) as HTMLInputElement;
+      input?.focus();
+    });
+  }
+
+  /**
+   * ==========================================================
+   * OPEN END SESSION POPUP
+   * Opens the end session popup with proper DOM timing.
+   * ==========================================================
+   */
+  openEndSessionPopup(): void {
+    this.isOpenEndSessionPopup = true;
+    this.cdr.detectChanges();
+  }
+
+  /**
+   * ==========================================================
+   * CLOSE POPUP
+   * Closes any popup with proper DOM timing.
+   * ==========================================================
+   */
+  closePopup(popupType: 'create' | 'join' | 'end' | 'qr'): void {
+    requestAnimationFrame(() => {
+      switch (popupType) {
+        case 'create':
+          this.isOpenCreateRoom = false;
+          this.newRoomName = '';
+          break;
+        case 'join':
+          this.isOpenJoinSessionPopup = false;
+          this.newSessionCode = '';
+          break;
+        case 'end':
+          this.isOpenEndSessionPopup = false;
+          break;
+        case 'qr':
+          this.isOpenQRCodePopup = false;
+          break;
+      }
+      this.cdr.detectChanges();
+    });
+  }
+
+  /**
+   * ==========================================================
    * CREATE ROOM
    * Creates or joins a new room based on the room name input.
    * ==========================================================
@@ -844,8 +917,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.joinRoom(this.newRoomName.trim());
       this.ngZone.run(() => {
         this.newRoomName = '';
-        this.isOpenCreateRoom = false;
-        this.cdr.detectChanges();
+        requestAnimationFrame(() => {
+          this.isOpenCreateRoom = false;
+          this.cdr.detectChanges();
+        });
       });
     } else {
       this.toaster.warning(this.translate.instant('ENTER_VALID_ROOM'));
@@ -898,7 +973,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    this.openChatSession(code);
+    requestAnimationFrame(() => {
+      this.isOpenJoinSessionPopup = false;
+      this.newSessionCode = '';
+      this.cdr.detectChanges();
+      this.openChatSession(code);
+    });
   }
 
   /**
@@ -908,10 +988,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   endSession(): void {
-    this.clearSessionCode();
-    this.wsConnectionService.disconnect();
-    this.toaster.success(this.translate.instant('SESSION_ENDED_SUCCESS'));
-    this.router.navigate([`/`]);
+    requestAnimationFrame(() => {
+      this.isOpenEndSessionPopup = false;
+      this.cdr.detectChanges();
+      this.clearSessionCode();
+      this.wsConnectionService.disconnect();
+      this.toaster.success(this.translate.instant('SESSION_ENDED_SUCCESS'));
+      this.router.navigate([`/`]);
+    });
   }
 
   /**
@@ -1027,7 +1111,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const sessionUrl = this.getSessionUrl();
       const qrCodeElement = this.qrCodeContainer.nativeElement;
       const isMobile = window.innerWidth < 640;
-      qrCodeElement.innerHTML = '';
+      while (qrCodeElement.firstChild) {
+        qrCodeElement.removeChild(qrCodeElement.firstChild);
+      }
 
       const canvas = document.createElement('canvas');
       await QRCode.toCanvas(canvas, sessionUrl, {
@@ -1059,11 +1145,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   async openQRCodePopup(): Promise<void> {
     this.isOpenQRCodePopup = true;
     this.cdr.detectChanges();
-
-    // Wait for the DOM to update before generating QR code
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       this.generateQRCode();
-    }, 100);
+    });
   }
 
   /**

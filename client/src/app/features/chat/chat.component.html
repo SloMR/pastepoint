@@ -134,7 +134,7 @@
         <!-- join private session -->
         <div class="mt-3 flex w-full flex-col items-start justify-start px-4">
           <button
-            (click)="isOpenJoinSessionPopup = true; isMenuOpen = false"
+            (click)="openJoinSessionPopup()"
             class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
           >
             <span class="text-base font-expoArabicMedium">{{
@@ -302,7 +302,7 @@
     <div
       *ngIf="SessionCode.length > 0"
       class="absolute bottom-4 flex w-full items-center justify-center"
-      (click)="isOpenEndSessionPopup = true; isMenuOpen = false"
+      (click)="openEndSessionPopup()"
     >
       <div class="flex w-full cursor-pointer items-center justify-center gap-2 px-3 py-3">
         <img class="" alt="" src="/icons/cross-small.svg" />
@@ -353,7 +353,7 @@
         <!-- MARK: - Mobile Create Room Button -->
         <div class="mt-6 flex w-full flex-col items-start justify-start px-4">
           <button
-            (click)="isOpenCreateRoom = true; isMenuOpen = false"
+            (click)="openCreateRoomPopup()"
             class="flex w-full items-center justify-center gap-2 rounded-lg p-2 text-white bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
           >
             <img src="/icons/white-plus.svg" alt="Home" class="h-6 w-6" />
@@ -477,7 +477,7 @@
           <!-- join private session -->
           <div class="mt-3 flex w-full flex-col items-start justify-start px-4">
             <button
-              (click)="isOpenJoinSessionPopup = true; isMenuOpen = false"
+              (click)="openJoinSessionPopup()"
               class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
             >
               <span class="text-base font-expoArabicMedium">{{
@@ -652,10 +652,7 @@
         *ngIf="SessionCode.length > 0"
         class="w-full flex-shrink-0 border-t border-borderLight dark:border-surfaceDark"
       >
-        <div
-          class="flex w-full items-center justify-center py-4"
-          (click)="isOpenEndSessionPopup = true; isMenuOpen = false"
-        >
+        <div class="flex w-full items-center justify-center py-4" (click)="openEndSessionPopup()">
           <div class="flex w-full cursor-pointer items-center justify-center gap-2 px-3 py-3">
             <img class="" alt="" src="/icons/cross-small.svg" />
             <h6 class="text-base font-medium text-danger font-expoArabicMedium">
@@ -1131,9 +1128,10 @@
         isOpenJoinSessionPopup ? 'opacity-100 animate-fade-in' : 'opacity-0 animate-fade-out'
       "
       class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"
+      (click)="closePopup('join')"
     >
       <div
-        class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 h-[300px] dark:bg-baseDark sm:w-[550px] sm:rounded-b-2xl sm:px-8"
+        class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 h-[300px] animate-slide-up dark:bg-baseDark sm:w-[550px] sm:rounded-b-2xl sm:px-8"
       >
         <div class="flex w-full flex-col gap-8 sm:gap-10">
           <div class="flex items-center justify-between">
@@ -1146,7 +1144,7 @@
               src="/icons/cross-close.svg"
               alt="Close"
               class="h-4 w-4 cursor-pointer"
-              (click)="isOpenJoinSessionPopup = false"
+              (click)="closePopup('join')"
             />
           </div>
           <div class="flex w-full flex-col gap-2">
@@ -1174,7 +1172,7 @@
               {{ 'DONE' | translate }}
             </button>
             <button
-              (click)="isOpenJoinSessionPopup = false"
+              (click)="closePopup('join')"
               class="w-full rounded-lg border bg-white text-base h-[44px] text-brand border-brand font-expoArabicMedium leading-[100%] hover:bg-brand/10 dark:bg-baseDark dark:text-brandDark dark:border-brandDark dark:hover:bg-brandDark/10"
             >
               {{ 'CANCEL' | translate }}
@@ -1188,9 +1186,10 @@
     <div
       *ngIf="isOpenCreateRoom"
       class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"
+      (click)="closePopup('create')"
     >
       <div
-        class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 h-[300px] dark:bg-baseDark sm:w-[550px] sm:rounded-b-2xl sm:px-8"
+        class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 h-[300px] animate-slide-up dark:bg-baseDark sm:w-[550px] sm:rounded-b-2xl sm:px-8"
       >
         <div class="flex w-full flex-col gap-8 sm:gap-10">
           <div class="flex items-center justify-between">
@@ -1203,7 +1202,7 @@
               src="/icons/cross-close.svg"
               alt="Close"
               class="h-4 w-4 cursor-pointer"
-              (click)="isOpenCreateRoom = false"
+              (click)="closePopup('create')"
             />
           </div>
           <div class="flex w-full flex-col gap-2">
@@ -1231,7 +1230,7 @@
               {{ 'DONE' | translate }}
             </button>
             <button
-              (click)="isOpenCreateRoom = false"
+              (click)="closePopup('create')"
               class="w-full rounded-lg border bg-white text-base h-[44px] text-brand border-brand font-expoArabicMedium leading-[100%] hover:bg-brand/10 dark:bg-baseDark dark:text-brandDark dark:border-brandDark dark:hover:bg-brandDark/10"
             >
               {{ 'CANCEL' | translate }}
@@ -1245,9 +1244,10 @@
     <div
       *ngIf="isOpenEndSessionPopup"
       class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"
+      (click)="closePopup('end')"
     >
       <div
-        class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 dark:bg-baseDark sm:w-[500px] sm:rounded-b-2xl sm:px-8 sm:pb-8"
+        class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 animate-slide-up dark:bg-baseDark sm:w-[500px] sm:rounded-b-2xl sm:px-8 sm:pb-8"
       >
         <div class="flex w-full flex-col gap-8 sm:gap-10">
           <div class="flex items-start justify-between">
@@ -1260,7 +1260,7 @@
               src="/icons/cross-close.svg"
               alt="Close"
               class="h-4 w-4 cursor-pointer"
-              (click)="isOpenEndSessionPopup = false"
+              (click)="closePopup('end')"
             />
           </div>
           <div class="flex w-full items-center justify-between gap-4">
@@ -1271,7 +1271,7 @@
               {{ 'END_THE_SESSION' | translate }}
             </button>
             <button
-              (click)="isOpenEndSessionPopup = false"
+              (click)="closePopup('end')"
               class="w-full rounded-lg border bg-white text-base h-[44px] text-danger border-danger font-expoArabicMedium leading-[100%] hover:bg-danger/10 dark:bg-baseDark"
             >
               {{ 'CANCEL' | translate }}
@@ -1285,7 +1285,7 @@
     <div
       *ngIf="isOpenQRCodePopup"
       class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"
-      (click)="isOpenQRCodePopup = false"
+      (click)="closePopup('qr')"
     >
       <div
         class="w-full rounded-2xl rounded-b-none bg-white px-6 py-6 animate-slide-up dark:bg-baseDark sm:w-[320px] sm:rounded-b-2xl sm:px-6 sm:pb-6"
@@ -1295,7 +1295,7 @@
           <!-- Close button -->
           <div class="flex w-full" [ngClass]="isRTL ? 'justify-start' : 'justify-end'">
             <button
-              (click)="isOpenQRCodePopup = false"
+              (click)="closePopup('qr')"
               class="flex items-center justify-center rounded-full p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
               aria-label="Close QR Code"
               title="Close QR Code"
