@@ -216,7 +216,7 @@
                   alt="Upload"
                   class="h-4 w-4"
                 />
-                <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
                   {{ truncateFilename(transfer.file.name) }}
                 </span>
               </div>
@@ -260,7 +260,7 @@
                   alt="Download"
                   class="h-4 w-4"
                 />
-                <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
                   {{ truncateFilename(download.fileName) }}
                 </span>
               </div>
@@ -323,12 +323,10 @@
       skipDrawerAnim ? 'duration-0' : 'duration-300',
     ]"
   >
-    <div
-      class="relative flex h-screen w-full flex-col items-start justify-start overflow-auto no-scrollbar"
-    >
+    <div class="relative flex h-full w-full flex-col items-start justify-start">
       <!-- MARK: - Mobile Sidebar Content -->
       <div
-        class="h-[calc(100vh-80px)] overflow-auto flex flex-col justify-start items-start w-full"
+        class="flex w-full flex-1 flex-col items-start justify-start overflow-y-auto overflow-x-hidden pb-20"
       >
         <!-- MARK: - Mobile User Info -->
         <div
@@ -563,7 +561,7 @@
                     alt="Upload"
                     class="h-4 w-4"
                   />
-                  <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                  <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
                     {{ truncateFilename(transfer.file.name) }}
                   </span>
                 </div>
@@ -609,7 +607,7 @@
                     alt="Download"
                     class="h-4 w-4"
                   />
-                  <span class="text-xs truncate font-expoArabicMedium text-content dark:text-white">
+                  <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
                     {{ truncateFilename(download.fileName) }}
                   </span>
                 </div>
@@ -650,9 +648,12 @@
       </div>
 
       <!-- MARK: - Mobile Exit Button -->
-      <div *ngIf="SessionCode.length > 0">
+      <div
+        *ngIf="SessionCode.length > 0"
+        class="w-full flex-shrink-0 border-t border-borderLight dark:border-surfaceDark"
+      >
         <div
-          class="absolute bottom-4 flex w-full items-center justify-center"
+          class="flex w-full items-center justify-center py-4"
           (click)="isOpenEndSessionPopup = true; isMenuOpen = false"
         >
           <div class="flex w-full cursor-pointer items-center justify-center gap-2 px-3 py-3">
