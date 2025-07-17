@@ -64,13 +64,17 @@ export class WebRTCCommunicationService {
     channel.binaryType = 'arraybuffer';
     this.dataChannels.set(targetUser, channel);
 
+    this.logger.info(
+      'setupDataChannel',
+      `Setting up data channel with ${targetUser}, initial state: ${channel.readyState}`
+    );
+
     // Clear any existing timeout
     const existingTimeout = this.connectionTimeouts.get(targetUser);
     if (existingTimeout) {
       clearTimeout(existingTimeout);
     }
 
-    // Set a timeout for connection establishment (30 seconds)
     const timeout = setTimeout(() => {
       if (channel.readyState === 'connecting') {
         this.logger.warn(
@@ -80,9 +84,12 @@ export class WebRTCCommunicationService {
         channel.close();
         this.dataChannels.delete(targetUser);
         this.connectionTimeouts.delete(targetUser);
-        this.toaster.warning(
-          this.translate.instant('CONNECTION_TIMEOUT_WITH_USER', { userName: targetUser })
-        );
+        this.messageQueues.delete(targetUser);
+        this.zone.run(() => {
+          this.toaster.warning(
+            this.translate.instant('CONNECTION_TIMEOUT_WITH_USER', { userName: targetUser })
+          );
+        });
       }
     }, 30000);
     this.connectionTimeouts.set(targetUser, timeout);
@@ -100,6 +107,10 @@ export class WebRTCCommunicationService {
 
       const queuedMessages = this.messageQueues.get(targetUser);
       if (queuedMessages && queuedMessages.length > 0) {
+        this.logger.info(
+          'setupDataChannel',
+          `Sending ${queuedMessages.length} queued messages to ${targetUser}`
+        );
         queuedMessages.forEach((msg) => {
           if (typeof msg === 'object' && !(msg instanceof ArrayBuffer)) {
             channel.send(JSON.stringify(msg));
@@ -175,16 +186,8 @@ export class WebRTCCommunicationService {
         `Data channel with ${targetUser} is connecting. Message will be queued.`
       );
 
-      if (!this.messageQueues.has(targetUser)) {
-        this.messageQueues.set(targetUser, []);
-      }
-
-      const queue = this.messageQueues.get(targetUser);
-      if (queue) {
-        queue.push(message);
-      } else {
-        this.logger.warn('sendData', `Message queue missing for ${targetUser}`);
-      }
+      this.ensureMessageQueue(targetUser);
+      this.messageQueues.get(targetUser)?.push(message);
     } else {
       this.logger.error('sendData', `Data channel with ${targetUser} is not open`);
 
@@ -192,16 +195,8 @@ export class WebRTCCommunicationService {
         this.dataChannels.delete(targetUser);
       }
 
-      if (!this.messageQueues.has(targetUser)) {
-        this.messageQueues.set(targetUser, []);
-      }
-
-      const queue = this.messageQueues.get(targetUser);
-      if (queue) {
-        queue.push(message);
-      } else {
-        this.logger.warn('sendData', `Message queue missing for ${targetUser}`);
-      }
+      this.ensureMessageQueue(targetUser);
+      this.messageQueues.get(targetUser)?.push(message);
     }
   }
 
@@ -212,9 +207,7 @@ export class WebRTCCommunicationService {
    */
   public sendRawData(data: ArrayBuffer, targetUser: string): boolean {
     if (!this.isDataChannelReadyToSend(targetUser)) {
-      if (!this.messageQueues.has(targetUser)) {
-        this.messageQueues.set(targetUser, []);
-      }
+      this.ensureMessageQueue(targetUser);
       this.messageQueues.get(targetUser)?.push(data);
       return false;
     }
@@ -226,16 +219,8 @@ export class WebRTCCommunicationService {
     } catch (error) {
       this.logger.error('sendRawData', `Error sending raw data: ${error}`);
 
-      if (!this.messageQueues.has(targetUser)) {
-        this.messageQueues.set(targetUser, []);
-      }
-
-      const queue = this.messageQueues.get(targetUser);
-      if (queue) {
-        queue.push(data);
-      } else {
-        this.logger.warn('sendRawData', `Message queue missing for ${targetUser}`);
-      }
+      this.ensureMessageQueue(targetUser);
+      this.messageQueues.get(targetUser)?.push(data);
 
       return false;
     }
@@ -440,6 +425,16 @@ export class WebRTCCommunicationService {
   }
 
   // =============== Helper Methods ===============
+
+  /**
+   * Ensures a message queue exists for the target user
+   * @param targetUser The user to ensure the queue for
+   */
+  private ensureMessageQueue(targetUser: string): void {
+    if (!this.messageQueues.has(targetUser)) {
+      this.messageQueues.set(targetUser, []);
+    }
+  }
 
   /**
    * Checks if a data channel is ready to send data
