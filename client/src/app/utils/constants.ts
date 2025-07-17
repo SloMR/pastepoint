@@ -77,6 +77,7 @@ export enum SignalMessageType {
   OFFER = 'offer',
   ANSWER = 'answer',
   CANDIDATE = 'candidate',
+  CONNECTION_REQUEST = 'connection_request',
 }
 
 export interface SignalMessage {
