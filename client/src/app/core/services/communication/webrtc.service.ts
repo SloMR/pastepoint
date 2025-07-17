@@ -4,6 +4,7 @@ import { ChatMessage, DataChannelMessage } from '../../../utils/constants';
 import { IWebRTCService } from '../../interfaces/webrtc.interface';
 import { WebRTCSignalingService } from './webrtc-signaling.service';
 import { WebRTCCommunicationService } from './webrtc-communication.service';
+import { NGXLogger } from 'ngx-logger';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +12,8 @@ import { WebRTCCommunicationService } from './webrtc-communication.service';
 export class WebRTCService implements IWebRTCService {
   constructor(
     private signalingService: WebRTCSignalingService,
-    private communicationService: WebRTCCommunicationService
+    private communicationService: WebRTCCommunicationService,
+    private logger: NGXLogger
   ) {}
 
   // =============== Public Properties ===============
@@ -95,9 +97,23 @@ export class WebRTCService implements IWebRTCService {
    * @param targetUser The user to send the message to
    */
   public sendData(message: DataChannelMessage, targetUser: string): void {
-    if (!this.communicationService.isConnectedOrConnecting(targetUser)) {
+    const isConnectedOrConnecting = this.communicationService.isConnectedOrConnecting(targetUser);
+    const dataChannel = this.communicationService.getDataChannel(targetUser);
+    const peerConnection = this.signalingService.getPeerConnection(targetUser);
+
+    if (peerConnection && !dataChannel) {
+      this.logger.warn(
+        'sendData',
+        `State mismatch for ${targetUser}: peer connection exists but no data channel`
+      );
+
+      this.signalingService.closePeerConnection(targetUser, true);
+      this.signalingService.initiateConnection(targetUser);
+    } else if (!isConnectedOrConnecting) {
+      this.logger.info('sendData', `Initiating connection to ${targetUser}`);
       this.signalingService.initiateConnection(targetUser);
     }
+
     this.communicationService.sendData(message, targetUser);
   }
 
