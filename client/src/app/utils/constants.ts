@@ -50,6 +50,14 @@ export const ICE_SERVERS = [
   { urls: 'stun:stun.iptel.org' },
 ];
 
+export const RTC_CONFIGURATION = {
+  iceServers: ICE_SERVERS,
+  iceTransportPolicy: 'all' as RTCIceTransportPolicy,
+  bundlePolicy: 'max-bundle' as RTCBundlePolicy,
+  rtcpMuxPolicy: 'require' as RTCRtcpMuxPolicy,
+  iceCandidatePoolSize: 10,
+};
+
 // WebRTC data channel constants
 export const DATA_CHANNEL_OPTIONS = {
   ordered: true,

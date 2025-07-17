@@ -201,7 +201,7 @@ export class WebRTCSignalingService {
       iceServers: ICE_SERVERS,
     };
 
-    const peerConnection = new RTCPeerConnection(configuration);
+    const peerConnection = new RTCPeerConnection(RTC_CONFIGURATION);
 
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
