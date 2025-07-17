@@ -39,7 +39,7 @@
     "@ngx-translate/http-loader": "^16.0.1",
     "@types/qrcode": "^1.5.5",
     "async-mutex": "^0.5.0",
-    "compression": "^1.8.0",
+    "compression": "^1.8.1",
     "express": "^4.21.2",
     "flowbite": "^3.1.2",
     "ngx-logger": "^5.0.12",
