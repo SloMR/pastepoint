@@ -2,7 +2,6 @@ import { Inject, Injectable } from '@angular/core';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { UserService } from '../user-management/user.service';
 import {
-  ICE_SERVERS,
   MAX_RECONNECT_ATTEMPTS,
   RECONNECT_DELAY,
   OFFER_OPTIONS,
@@ -10,6 +9,9 @@ import {
   RTC_SIGNALING_STATES,
   SignalMessageType,
   SignalMessage,
+  RTC_CONFIGURATION,
+  ICE_GATHERING_TIMEOUT,
+  CONNECTION_REQUEST_TIMEOUT,
 } from '../../../utils/constants';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
@@ -26,6 +28,7 @@ export class WebRTCSignalingService {
   private connectionLocks = new Set<string>();
   private lastSequences = new Map<string, number>();
   private candidateQueues = new Map<string, RTCIceCandidateInit[]>();
+  private connectionRequests = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(
     private wsService: WebSocketConnectionService,
@@ -45,25 +48,92 @@ export class WebRTCSignalingService {
    * @param targetUser The user to connect with
    */
   public initiateConnection(targetUser: string): void {
-    if (this.peerConnections.has(targetUser) || this.connectionLocks.has(targetUser)) {
-      this.logger.warn('initiateConnection', `PeerConnection with ${targetUser} already exists.`);
+    if (targetUser === this.userService.user) {
+      this.logger.warn(
+        'initiateConnection',
+        `Preventing self-connection attempt to: "${targetUser}"`
+      );
       return;
+    }
+
+    if (this.connectionLocks.has(targetUser)) {
+      this.logger.debug('initiateConnection', `Connection already in progress for ${targetUser}`);
+      return;
+    }
+
+    const existingPeerConnection = this.peerConnections.get(targetUser);
+    if (existingPeerConnection) {
+      const connectionState = existingPeerConnection.connectionState;
+      const iceState = existingPeerConnection.iceConnectionState;
+
+      if (connectionState === 'connected' || connectionState === 'connecting') {
+        this.logger.debug(
+          'initiateConnection',
+          `PeerConnection with ${targetUser} is ${connectionState}`
+        );
+        return;
+      }
+
+      if (
+        connectionState === 'failed' ||
+        connectionState === 'disconnected' ||
+        iceState === 'failed' ||
+        iceState === 'disconnected'
+      ) {
+        this.logger.debug('initiateConnection', `Cleaning up failed connection with ${targetUser}`);
+        this.closePeerConnection(targetUser, true);
+      } else {
+        this.logger.warn(
+          'initiateConnection',
+          `PeerConnection with ${targetUser} exists in state ${connectionState}/${iceState}`
+        );
+        return;
+      }
+    }
+
+    if (!this.shouldInitiateConnection(targetUser)) {
+      this.logger.debug(
+        'initiateConnection',
+        `Requesting ${targetUser} to initiate connection (role: callee)`
+      );
+      this.sendConnectionRequest(targetUser);
+      return;
+    }
+
+    // Clear any existing connection request timeout since we're initiating
+    const requestTimeout = this.connectionRequests.get(targetUser);
+    if (requestTimeout) {
+      clearTimeout(requestTimeout);
+      this.connectionRequests.delete(targetUser);
+      this.logger.debug(
+        'initiateConnection',
+        `Cleared connection request timeout for ${targetUser}`
+      );
     }
 
     this.connectionLocks.add(targetUser);
 
-    this.logger.info('initiateConnection', `Initiating connection with ${targetUser}`);
+    this.logger.info(
+      'initiateConnection',
+      `Initiating connection with ${targetUser} (role: caller)`
+    );
     const peerConnection = this.createPeerConnection(targetUser);
 
     try {
+      if (!peerConnection) {
+        this.logger.error(
+          'initiateConnection',
+          `Failed to create peer connection for ${targetUser}`
+        );
+        throw new Error(`Failed to create peer connection for ${targetUser}`);
+      }
+
       const dataChannel = peerConnection.createDataChannel('data', DATA_CHANNEL_OPTIONS);
       this.communicationService.setupDataChannel(dataChannel, targetUser);
 
-      // Remove connection lock when data channel opens successfully
       dataChannel.onopen = () => {
         this.connectionLocks.delete(targetUser);
       };
-      // Remove connection lock on error or close
       dataChannel.onerror = () => {
         this.connectionLocks.delete(targetUser);
       };
@@ -88,7 +158,7 @@ export class WebRTCSignalingService {
           this.connectionLocks.delete(targetUser);
           this.reconnect(targetUser);
         });
-    } catch (error) {
+    } catch (error: unknown) {
       this.logger.error('initiateConnection', `Connection initiation failed: ${error}`);
       this.toaster.error(this.translate.instant('CONNECTION_LOST'));
       this.connectionLocks.delete(targetUser);
@@ -140,6 +210,14 @@ export class WebRTCSignalingService {
       peerConnection.close();
       this.peerConnections.delete(targetUser);
     }
+
+    // Clear connection request timeout
+    const requestTimeout = this.connectionRequests.get(targetUser);
+    if (requestTimeout) {
+      clearTimeout(requestTimeout);
+      this.connectionRequests.delete(targetUser);
+    }
+
     if (force) {
       this.candidateQueues.delete(targetUser);
       this.communicationService.deleteDataChannel(targetUser);
@@ -157,6 +235,12 @@ export class WebRTCSignalingService {
     this.peerConnections.clear();
     this.reconnectAttempts.clear();
     this.candidateQueues.clear();
+
+    // Clear all connection request timeouts
+    this.connectionRequests.forEach((timeout) => {
+      clearTimeout(timeout);
+    });
+    this.connectionRequests.clear();
   }
 
   /**
@@ -196,15 +280,24 @@ export class WebRTCSignalingService {
    * Creates a new peer connection for the target user
    * @param targetUser The user to create the connection for
    */
-  private createPeerConnection(targetUser: string): RTCPeerConnection {
-    const configuration = {
-      iceServers: ICE_SERVERS,
-    };
+  private createPeerConnection(targetUser: string): RTCPeerConnection | undefined {
+    if (this.userService.user === targetUser) {
+      this.logger.warn('createPeerConnection', `Skipping connection creation with self`);
+      return;
+    }
 
-    const peerConnection = new RTCPeerConnection(configuration);
+    const peerConnection = new RTCPeerConnection(RTC_CONFIGURATION);
+
+    let iceGatheringTimeout: ReturnType<typeof setTimeout> | null = null;
+    let iceGatheringComplete = false;
 
     peerConnection.onicecandidate = (event) => {
       if (event.candidate) {
+        if (iceGatheringTimeout) {
+          clearTimeout(iceGatheringTimeout);
+          iceGatheringTimeout = null;
+        }
+
         const message: SignalMessage = {
           type: SignalMessageType.CANDIDATE,
           data: event.candidate,
@@ -212,8 +305,21 @@ export class WebRTCSignalingService {
           to: targetUser,
         };
         this.wsService.sendSignalMessage(message);
+      } else {
+        iceGatheringComplete = true;
+        if (iceGatheringTimeout) {
+          clearTimeout(iceGatheringTimeout);
+          iceGatheringTimeout = null;
+        }
+        this.logger.info('createPeerConnection', `ICE gathering complete for ${targetUser}`);
       }
     };
+
+    iceGatheringTimeout = setTimeout(() => {
+      if (!iceGatheringComplete) {
+        this.logger.warn('createPeerConnection', `ICE gathering timeout for ${targetUser}`);
+      }
+    }, ICE_GATHERING_TIMEOUT);
 
     peerConnection.ondatachannel = (event) => {
       const dataChannel = event.channel;
@@ -221,30 +327,41 @@ export class WebRTCSignalingService {
     };
 
     peerConnection.onconnectionstatechange = () => {
-      if (
-        peerConnection.connectionState === 'failed' ||
-        peerConnection.connectionState === 'disconnected'
-      ) {
+      const state = peerConnection.connectionState;
+
+      if (state === 'connected') {
+        // Clear ICE gathering timeout when connection is established
+        if (iceGatheringTimeout) {
+          clearTimeout(iceGatheringTimeout);
+          iceGatheringTimeout = null;
+        }
+        this.logger.info('createPeerConnection', `Successfully connected to ${targetUser}`);
+      } else if (state === 'failed' || state === 'disconnected') {
+        // Clear timeout on failure
+        if (iceGatheringTimeout) {
+          clearTimeout(iceGatheringTimeout);
+          iceGatheringTimeout = null;
+        }
         this.handleDisconnection(targetUser);
-      } else {
-        this.logger.info(
-          'createPeerConnection',
-          `Connection state with ${targetUser}: ${peerConnection.connectionState}`
-        );
       }
     };
 
     peerConnection.oniceconnectionstatechange = () => {
-      if (
-        peerConnection.iceConnectionState === 'disconnected' ||
-        peerConnection.iceConnectionState === 'failed'
-      ) {
+      const iceState = peerConnection.iceConnectionState;
+
+      if (iceState === 'connected' || iceState === 'completed') {
+        // Clear ICE gathering timeout when ICE connection is established
+        if (iceGatheringTimeout) {
+          clearTimeout(iceGatheringTimeout);
+          iceGatheringTimeout = null;
+        }
+      } else if (iceState === 'disconnected' || iceState === 'failed') {
+        // Clear timeout on failure
+        if (iceGatheringTimeout) {
+          clearTimeout(iceGatheringTimeout);
+          iceGatheringTimeout = null;
+        }
         this.handleDisconnection(targetUser);
-      } else {
-        this.logger.info(
-          'createPeerConnection',
-          `ICE connection state with ${targetUser}: ${peerConnection.iceConnectionState}`
-        );
       }
     };
 
@@ -262,11 +379,15 @@ export class WebRTCSignalingService {
     const attempts = this.reconnectAttempts.get(targetUser) ?? 0;
     if (attempts < MAX_RECONNECT_ATTEMPTS) {
       this.reconnectAttempts.set(targetUser, attempts + 1);
+
+      // Use exponential backoff (starts at 2s, max 10s)
+      const baseDelay = RECONNECT_DELAY;
+      const maxDelay = 10000;
+      const delay = Math.min(baseDelay * Math.pow(1.5, attempts), maxDelay);
+
       this.logger.warn(
         'handleDisconnection',
-        `Attempt ${attempts + 1}: Reconnecting to ${targetUser} in ${
-          RECONNECT_DELAY / 1000
-        } seconds...`
+        `Attempt ${attempts + 1}: Reconnecting to ${targetUser} in ${delay / 1000} seconds...`
       );
 
       if (attempts === 0) {
@@ -275,9 +396,18 @@ export class WebRTCSignalingService {
 
       setTimeout(() => {
         if (!this.peerConnections.has(targetUser)) {
+          this.logger.debug(
+            'handleDisconnection',
+            `Attempting reconnection ${attempts + 1} to ${targetUser}`
+          );
           this.reconnect(targetUser);
+        } else {
+          this.logger.debug(
+            'handleDisconnection',
+            `Connection already exists for ${targetUser}, skipping reconnect`
+          );
         }
-      }, RECONNECT_DELAY);
+      }, delay);
     } else {
       this.logger.error(
         'handleDisconnection',
@@ -313,18 +443,85 @@ export class WebRTCSignalingService {
       case SignalMessageType.CANDIDATE:
         this.handleCandidate(message);
         break;
+      case SignalMessageType.CONNECTION_REQUEST:
+        this.handleConnectionRequest(message);
+        break;
       default:
         this.logger.error('handleSignalMessage', `Unknown signal message type: ${message.type}`);
     }
   }
 
   /**
-   * Handles incoming offer messages
+   * Handles incoming connection request messages
+   * @param message The connection request message to handle
+   */
+  private handleConnectionRequest(message: SignalMessage): void {
+    const targetUser = message.from;
+    this.logger.info('handleConnectionRequest', `Received connection request from ${targetUser}`);
+
+    // If we're the designated caller, initiate the connection
+    if (this.shouldInitiateConnection(targetUser)) {
+      this.logger.debug(
+        'handleConnectionRequest',
+        `Initiating connection as requested by ${targetUser}`
+      );
+      this.initiateConnection(targetUser);
+    } else {
+      this.logger.warn(
+        'handleConnectionRequest',
+        `Received connection request from ${targetUser} but we're not the designated caller`
+      );
+      this.sendConnectionRequest(targetUser);
+    }
+  }
+
+  /**
+   * Handles incoming offer messages with collision detection
    * @param message The offer message to handle
    */
   private handleOffer(message: SignalMessage): void {
     const targetUser = message.from;
+
+    if (this.userService.user === targetUser) {
+      this.logger.warn('handleOffer', `Skipping offer from self`);
+      return;
+    }
+
+    const requestTimeout = this.connectionRequests.get(targetUser);
+    if (requestTimeout) {
+      clearTimeout(requestTimeout);
+      this.connectionRequests.delete(targetUser);
+      this.logger.debug('handleOffer', `Cleared connection request timeout for ${targetUser}`);
+    }
+
+    // Check if we're already trying to initiate a connection (collision detection)
+    if (this.connectionLocks.has(targetUser)) {
+      this.logger.warn('handleOffer', `Collision detected with ${targetUser}, resolving by role`);
+
+      // If we should be the caller, ignore this offer and let our offer proceed
+      if (this.shouldInitiateConnection(targetUser)) {
+        this.logger.debug(
+          'handleOffer',
+          `Ignoring offer from ${targetUser} (we are the designated caller)`
+        );
+        return;
+      } else {
+        // If we should be the callee, cancel our initiation and handle this offer
+        this.logger.debug(
+          'handleOffer',
+          `Canceling our initiation for ${targetUser} (we are the designated callee)`
+        );
+        this.closePeerConnection(targetUser, false);
+        this.connectionLocks.delete(targetUser);
+      }
+    }
+
     const peerConnection = this.createPeerConnection(targetUser);
+
+    if (!peerConnection) {
+      this.logger.error('handleOffer', `PeerConnection missing for ${targetUser}`);
+      return;
+    }
 
     peerConnection
       .setRemoteDescription(new RTCSessionDescription(message.data as RTCSessionDescriptionInit))
@@ -438,16 +635,28 @@ export class WebRTCSignalingService {
     const candidate = new RTCIceCandidate(message.data as RTCIceCandidateInit);
 
     if (peerConnection.remoteDescription) {
-      peerConnection.addIceCandidate(candidate).catch((error) => {
-        this.logger.error('handleCandidate', `Error adding ICE candidate: ${error}`);
-        const attempts = this.reconnectAttempts.get(targetUser) ?? 0;
-        if (attempts > 2) {
-          this.toaster.warning(
-            this.translate.instant('CONNECTION_UNSTABLE_WITH_USER', { userName: targetUser })
+      peerConnection
+        .addIceCandidate(candidate)
+        .then(() => {
+          this.logger.debug(
+            'handleCandidate',
+            `Successfully added ICE candidate from ${targetUser}`
           );
-        }
-      });
+        })
+        .catch((error) => {
+          this.logger.error('handleCandidate', `Error adding ICE candidate: ${error}`);
+          const attempts = this.reconnectAttempts.get(targetUser) ?? 0;
+          if (attempts > 2) {
+            this.toaster.warning(
+              this.translate.instant('CONNECTION_UNSTABLE_WITH_USER', { userName: targetUser })
+            );
+          }
+        });
     } else {
+      this.logger.debug(
+        'handleCandidate',
+        `Queueing ICE candidate from ${targetUser} (no remote description yet)`
+      );
       let queue = this.candidateQueues.get(targetUser);
       if (queue) {
         queue.push(message.data as RTCIceCandidateInit);
@@ -468,13 +677,27 @@ export class WebRTCSignalingService {
     if (queue && peerConnection) {
       queue.forEach((candidateInit: RTCIceCandidateInit) => {
         const candidate = new RTCIceCandidate(candidateInit);
-        peerConnection.addIceCandidate(candidate).catch((error) => {
-          this.logger.error('processCandidateQueue', `Error adding queued ICE candidate ${error}`);
-        });
+        peerConnection
+          .addIceCandidate(candidate)
+          .then(() => {
+            this.logger.info(
+              'processCandidateQueue',
+              `Successfully added queued candidate from ${targetUser}`
+            );
+          })
+          .catch((error) => {
+            this.logger.error(
+              'processCandidateQueue',
+              `Error adding queued ICE candidate: ${error}`
+            );
+          });
       });
       queue.length = 0;
     } else {
-      this.logger.warn('processCandidateQueue', `No candidate queue for ${targetUser}`);
+      this.logger.debug(
+        'processCandidateQueue',
+        `No candidate queue or peer connection for ${targetUser}`
+      );
     }
   }
 
@@ -507,6 +730,105 @@ export class WebRTCSignalingService {
     });
   }
 
+  /**
+   * Sends a connection request to the target user
+   * @param targetUser The user to send the request to
+   */
+  private sendConnectionRequest(targetUser: string): void {
+    const existingTimeout = this.connectionRequests.get(targetUser);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    const message: SignalMessage = {
+      type: SignalMessageType.CONNECTION_REQUEST,
+      data: null,
+      from: this.userService.user,
+      to: targetUser,
+      sequence: this.getNextSequence(targetUser),
+    };
+    this.wsService.sendSignalMessage(message);
+    this.logger.info('sendConnectionRequest', `Sent connection request to ${targetUser}`);
+
+    const timeout = setTimeout(() => {
+      this.logger.warn('sendConnectionRequest', `Connection request timeout for ${targetUser}`);
+      this.connectionRequests.delete(targetUser);
+
+      // Fallback: try to initiate connection ourselves if no response
+      if (!this.peerConnections.has(targetUser)) {
+        this.logger.debug(
+          'sendConnectionRequest',
+          `Fallback: initiating connection with ${targetUser} after timeout`
+        );
+        this.forceInitiateConnection(targetUser);
+      }
+    }, CONNECTION_REQUEST_TIMEOUT);
+
+    this.connectionRequests.set(targetUser, timeout);
+  }
+
+  /**
+   * Forces connection initiation (bypasses role checking)
+   * @param targetUser The user to connect with
+   */
+  private forceInitiateConnection(targetUser: string): void {
+    this.logger.info('forceInitiateConnection', `Forcing connection initiation with ${targetUser}`);
+
+    if (this.userService.user === targetUser) {
+      this.logger.warn('forceInitiateConnection', `Skipping connection initiation with self`);
+      return;
+    }
+
+    const existingTimeout = this.connectionRequests.get(targetUser);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+      this.connectionRequests.delete(targetUser);
+    }
+
+    // Temporarily bypass role checking and initiate connection
+    this.connectionLocks.add(targetUser);
+    const peerConnection = this.createPeerConnection(targetUser);
+
+    if (!peerConnection) {
+      this.logger.error('forceInitiateConnection', `PeerConnection missing for ${targetUser}`);
+      return;
+    }
+
+    try {
+      const dataChannel = peerConnection.createDataChannel('data', DATA_CHANNEL_OPTIONS);
+      this.communicationService.setupDataChannel(dataChannel, targetUser);
+
+      dataChannel.onopen = () => {
+        this.connectionLocks.delete(targetUser);
+      };
+      dataChannel.onerror = () => {
+        this.connectionLocks.delete(targetUser);
+      };
+      dataChannel.onclose = () => {
+        this.connectionLocks.delete(targetUser);
+      };
+
+      peerConnection
+        .createOffer(OFFER_OPTIONS)
+        .then((offer) => peerConnection.setLocalDescription(offer))
+        .then(() => {
+          this.sendSignalMessage({
+            type: SignalMessageType.OFFER,
+            data: peerConnection.localDescription,
+            to: targetUser,
+            sequence: this.getNextSequence(targetUser),
+          });
+        })
+        .catch((error: unknown) => {
+          this.logger.error('forceInitiateConnection', `Offer creation failed: ${error}`);
+          this.connectionLocks.delete(targetUser);
+        });
+    } catch (error: unknown) {
+      this.logger.error('forceInitiateConnection', `Connection initiation failed: ${error}`);
+      this.connectionLocks.delete(targetUser);
+    }
+  }
+
   // =============== Helper Methods ===============
 
   /**
@@ -531,5 +853,22 @@ export class WebRTCSignalingService {
     const next = current + 1;
     this.lastSequences.set(targetUser, next);
     return next;
+  }
+
+  /**
+   * Determines if the current user should initiate the connection.
+   * This prevents race conditions when both users try to initiate simultaneously.
+   * @param targetUser The user to compare with.
+   * @returns true if the current user should initiate, false if the target user should.
+   */
+  private shouldInitiateConnection(targetUser: string): boolean {
+    const currentUserId = this.userService.user;
+    const targetUserId = targetUser;
+
+    // The user with the "smaller" ID (lexicographically) will always be the caller
+    // ex: if currentUserId is "Austin Bob" and targetUserId is "Bob Austin",
+    // currentUserId will be the caller because "Austin Bob" is lexicographically smaller than "Bob Austin".
+    // This ensures consistent behavior across both clients
+    return currentUserId.localeCompare(targetUserId) < 0;
   }
 }

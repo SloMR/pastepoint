@@ -20,6 +20,8 @@ export const BACKGROUND_EXPIRY_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 // WebRTC constants
 export const MAX_RECONNECT_ATTEMPTS = 5;
 export const RECONNECT_DELAY = 2000;
+export const ICE_GATHERING_TIMEOUT = 30000;
+export const CONNECTION_REQUEST_TIMEOUT = 15000;
 
 export const OFFER_OPTIONS = {
   offerToReceiveAudio: false,
@@ -50,6 +52,14 @@ export const ICE_SERVERS = [
   { urls: 'stun:stun.iptel.org' },
 ];
 
+export const RTC_CONFIGURATION = {
+  iceServers: ICE_SERVERS,
+  iceTransportPolicy: 'all' as RTCIceTransportPolicy,
+  bundlePolicy: 'max-bundle' as RTCBundlePolicy,
+  rtcpMuxPolicy: 'require' as RTCRtcpMuxPolicy,
+  iceCandidatePoolSize: 10,
+};
+
 // WebRTC data channel constants
 export const DATA_CHANNEL_OPTIONS = {
   ordered: true,
@@ -69,6 +79,7 @@ export enum SignalMessageType {
   OFFER = 'offer',
   ANSWER = 'answer',
   CANDIDATE = 'candidate',
+  CONNECTION_REQUEST = 'connection_request',
 }
 
 export interface SignalMessage {

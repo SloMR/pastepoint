@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import { FileDownload, FILE_TRANSFER_MESSAGE_TYPES } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { WebRTCService } from '../communication/webrtc.service';
@@ -15,9 +15,10 @@ export class FileOfferService extends FileTransferBaseService {
     webrtcService: WebRTCService,
     toaster: HotToastService,
     translate: TranslateService,
-    logger: NGXLogger
+    logger: NGXLogger,
+    ngZone: NgZone
   ) {
-    super(webrtcService, toaster, translate, logger);
+    super(webrtcService, toaster, translate, logger, ngZone);
   }
 
   // =============== File Offer Methods ===============
