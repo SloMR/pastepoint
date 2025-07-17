@@ -10,6 +10,8 @@ import {
   SignalMessageType,
   SignalMessage,
   RTC_CONFIGURATION,
+  ICE_GATHERING_TIMEOUT,
+  CONNECTION_REQUEST_TIMEOUT,
 } from '../../../utils/constants';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
@@ -317,7 +319,7 @@ export class WebRTCSignalingService {
       if (!iceGatheringComplete) {
         this.logger.warn('createPeerConnection', `ICE gathering timeout for ${targetUser}`);
       }
-    }, 30000);
+    }, ICE_GATHERING_TIMEOUT);
 
     peerConnection.ondatachannel = (event) => {
       const dataChannel = event.channel;
@@ -760,7 +762,7 @@ export class WebRTCSignalingService {
         );
         this.forceInitiateConnection(targetUser);
       }
-    }, 15000);
+    }, CONNECTION_REQUEST_TIMEOUT);
 
     this.connectionRequests.set(targetUser, timeout);
   }
@@ -864,7 +866,9 @@ export class WebRTCSignalingService {
     const targetUserId = targetUser;
 
     // The user with the "smaller" ID (lexicographically) will always be the caller
-    // ex: if currentUserId is "Austin Bob" and targetUserId is "Bob Austin", currentUserId will be the caller
+    // ex: if currentUserId is "Austin Bob" and targetUserId is "Bob Austin",
+    // currentUserId will be the caller because "Austin Bob" is lexicographically smaller than "Bob Austin".
+    // This ensures consistent behavior across both clients
     return currentUserId.localeCompare(targetUserId) < 0;
   }
 }

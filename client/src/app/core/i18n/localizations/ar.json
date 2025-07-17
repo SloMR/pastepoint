@@ -100,6 +100,5 @@
   "COPY_SESSION_SUCCESS": "تم نسخ الكود بنجاح",
   "NO_FILES_SELECTED": "لم تقم بتحديد ملفات",
   "ENTER_VALID_ROOM": "اكتب اسم غرفة صحيح",
-  "CONNECTION_TIMEOUT_WITH_USER": "الاتصال مع {{userName}} غير مستقر. يرجى التحقق من اتصالك بالإنترنت.",
-  "FILE_TRANSFER_TIMEOUT": "الاتصال مع {{userName}} غير مستقر. يرجى التحقق من اتصالك بالإنترنت."
+  "CONNECTION_TIMEOUT_WITH_USER": "الاتصال مع {{userName}} غير مستقر. يرجى التحقق من اتصالك بالإنترنت."
 }

@@ -20,6 +20,8 @@ export const BACKGROUND_EXPIRY_THRESHOLD = 5 * 60 * 1000; // 5 minutes
 // WebRTC constants
 export const MAX_RECONNECT_ATTEMPTS = 5;
 export const RECONNECT_DELAY = 2000;
+export const ICE_GATHERING_TIMEOUT = 30000;
+export const CONNECTION_REQUEST_TIMEOUT = 15000;
 
 export const OFFER_OPTIONS = {
   offerToReceiveAudio: false,
