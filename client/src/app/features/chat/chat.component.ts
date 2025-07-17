@@ -33,7 +33,6 @@ import { FileTransferService } from '../../core/services/file-management/file-tr
 import { WebRTCService } from '../../core/services/communication/webrtc.service';
 import { WebSocketConnectionService } from '../../core/services/communication/websocket-connection.service';
 import { UserService } from '../../core/services/user-management/user.service';
-import { take } from 'rxjs/operators';
 import { FormsModule, NgForm } from '@angular/forms';
 import { FlowbiteService } from '../../core/services/ui/flowbite.service';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
@@ -618,13 +617,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       }
 
       this.ngZone.run(() => {
-        const tempMessage: ChatMessage = {
+        const newMessage: ChatMessage = {
           from: this.userService.user,
           text: this.message,
           type: ChatMessageType.TEXT,
           timestamp: new Date(),
         };
-        this.messages = [...this.messages, tempMessage];
+        this.messages = [...this.messages, newMessage];
         this.cdr.detectChanges();
       });
 
@@ -737,7 +736,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       for (const fileToSend of filesToSend) {
         for (const member of otherMembers) {
           await this.fileTransferService.prepareFileForSending(fileToSend, member);
-          if (!this.webrtcService.isConnected(member)) {
+          if (!this.webrtcService.isConnectedOrConnecting(member)) {
+            this.logger.info(
+              'sendAttachments',
+              `Initiating connection to ${member} for file transfer`
+            );
             this.webrtcService.initiateConnection(member);
           }
         }
@@ -745,24 +748,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       // Then send all file offers once per member
       for (const member of otherMembers) {
-        await new Promise<void>((resolve) => {
-          this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: unknown) => {
-            const handle = async () => {
-              if (typeof isOpen === 'boolean' && isOpen) {
-                await this.fileTransferService.sendAllFileOffers(member);
-                this.logger.debug(
-                  'sendAttachments',
-                  `Sent ${filesToSend.length} files to ${member}`
-                );
-              } else {
-                this.logger.warn('sendAttachments', `Data channel not open for ${member}`);
-              }
-              resolve();
-            };
+        const connectionReady = await this.waitForFileTransferConnection(member);
 
-            void handle();
-          });
-        });
+        if (connectionReady) {
+          await this.fileTransferService.sendAllFileOffers(member);
+          this.logger.debug('sendAttachments', `Sent ${filesToSend.length} files to ${member}`);
+        }
       }
 
       input.value = '';
@@ -1175,6 +1166,33 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
+   * WAIT FOR FILE TRANSFER CONNECTION
+   * Waits for WebRTC connection to be ready for file transfer with retry logic
+   * ==========================================================
+   */
+  private async waitForFileTransferConnection(member: string): Promise<boolean> {
+    const maxRetries = 50; // 5 seconds total (50 * 100ms)
+    let retryCount = 0;
+
+    while (retryCount < maxRetries) {
+      if (this.webrtcService.isReadyForFileTransfer(member)) {
+        return true;
+      }
+
+      if (!this.webrtcService.isConnectedOrConnecting(member)) {
+        this.webrtcService.initiateConnection(member);
+      }
+
+      retryCount++;
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+
+    this.toaster.warning(this.translate.instant('FILE_TRANSFER_TIMEOUT', { userName: member }));
+    return false;
+  }
+
+  /**
+   * ==========================================================
    * INITIATE CONNECTIONS WITH ROOM MEMBERS
    * Attempts to open a WebRTC connection with each peer.
    * ==========================================================
@@ -1196,9 +1214,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    otherMembers.forEach((member) => {
-      this.webrtcService.initiateConnection(member);
-    });
+    setTimeout(() => {
+      otherMembers.forEach((member) => {
+        this.webrtcService.initiateConnection(member);
+      });
+    }, 1000);
   }
 
   /**
@@ -1357,7 +1377,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     for (const fileToSend of files) {
       for (const member of otherMembers) {
         await this.fileTransferService.prepareFileForSending(fileToSend, member);
-        if (!this.webrtcService.isConnected(member)) {
+        if (!this.webrtcService.isConnectedOrConnecting(member)) {
+          this.logger.info('handleDrop', `Initiating connection to ${member} for file transfer`);
           this.webrtcService.initiateConnection(member);
         }
       }
@@ -1365,21 +1386,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
     // Then send all file offers once per member
     for (const member of otherMembers) {
-      await new Promise<void>((resolve) => {
-        this.webrtcService.dataChannelOpen$.pipe(take(1)).subscribe((isOpen: unknown) => {
-          const handle = async () => {
-            if (typeof isOpen === 'boolean' && isOpen) {
-              await this.fileTransferService.sendAllFileOffers(member);
-              this.logger.debug('sendAttachments', `Sent ${files.length} files to ${member}`);
-            } else {
-              this.logger.warn('handleDrop', `Data channel not open for ${member}`);
-            }
-            resolve();
-          };
+      const connectionReady = await this.waitForFileTransferConnection(member);
 
-          void handle();
-        });
-      });
+      if (connectionReady) {
+        await this.fileTransferService.sendAllFileOffers(member);
+        this.logger.debug('handleDrop', `Sent ${files.length} files to ${member}`);
+      }
     }
   }
 }

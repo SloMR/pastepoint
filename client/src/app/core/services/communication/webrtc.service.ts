@@ -130,6 +130,22 @@ export class WebRTCService implements IWebRTCService {
   }
 
   /**
+   * Checks if there is an active or connecting connection with a target user
+   * @param targetUser The user to check connection with
+   */
+  public isConnectedOrConnecting(targetUser: string): boolean {
+    return this.communicationService.isConnectedOrConnecting(targetUser);
+  }
+
+  /**
+   * Checks if the connection is ready for file transfers
+   * @param targetUser The user to check connection for
+   */
+  public isReadyForFileTransfer(targetUser: string): boolean {
+    return this.communicationService.isConnected(targetUser);
+  }
+
+  /**
    * Closes all connections
    */
   public closeAllConnections(): void {
