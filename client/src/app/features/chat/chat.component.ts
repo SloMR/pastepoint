@@ -1012,8 +1012,23 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     if (this.SessionCode) {
+      // Close all WebRTC connections
+      this.webrtcService.closeAllConnections();
+
+      // Clear all state
       this.clearSessionCode();
+      this.clearMessages();
+      this.members = [];
+      this.rooms = [];
+      this.activeUploads = [];
+      this.activeDownloads = [];
+      this.incomingFiles = [];
+
+      // Disconnect WebSocket
       this.wsConnectionService.disconnect();
+
+      // Reset room to default
+      this.currentRoom = 'main';
     }
 
     if (isPlatformBrowser(this.platformId)) {
@@ -1027,7 +1042,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       localStorage.setItem(SESSION_CODE_KEY, sanitizedCode);
 
       setTimeout(() => {
-        this.router.navigate(['/private', sanitizedCode]);
+        window.open(`/private/${sanitizedCode}`, '_self');
       }, NAVIGATION_DELAY_MS);
     }
   }
