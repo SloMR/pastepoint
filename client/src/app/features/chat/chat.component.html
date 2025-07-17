@@ -837,20 +837,16 @@
                       [ngClass]="isRTL ? 'rounded-tr-none' : 'rounded-tl-none'"
                     >
                       <p
-                        class="text-[18px] font-expoArabic text-content dark:text-white"
+                        class="text-[18px] font-expoArabic text-white"
                         *ngIf="message.type === ChatMessageType.TEXT"
                       >
                         {{ message.text }}
                       </p>
                       <p
-                        class="flex items-center gap-2 text-xs font-expoArabic text-content dark:text-white"
+                        class="flex items-center gap-2 text-xs font-expoArabic text-white"
                         *ngIf="message.type === ChatMessageType.ATTACHMENT"
                       >
-                        <img
-                          [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
-                          alt="File"
-                          class="h-4 w-4"
-                        />
+                        <img src="/icons/file-white.svg" alt="File" class="h-4 w-4" />
                         {{ message.text | slice: 0 : 65 }}...
                       </p>
                       <div
@@ -1128,7 +1124,6 @@
         isOpenJoinSessionPopup ? 'opacity-100 animate-fade-in' : 'opacity-0 animate-fade-out'
       "
       class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"
-      (click)="closePopup('join')"
     >
       <div
         class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 h-[300px] animate-slide-up dark:bg-baseDark sm:w-[550px] sm:rounded-b-2xl sm:px-8"
@@ -1186,7 +1181,6 @@
     <div
       *ngIf="isOpenCreateRoom"
       class="fixed inset-0 grid place-items-end bg-black/30 z-[10000] dark:bg-white/30 sm:place-content-center"
-      (click)="closePopup('create')"
     >
       <div
         class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 h-[300px] animate-slide-up dark:bg-baseDark sm:w-[550px] sm:rounded-b-2xl sm:px-8"

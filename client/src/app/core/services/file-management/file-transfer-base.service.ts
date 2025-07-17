@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@angular/core';
+import { Inject, Injectable, NgZone } from '@angular/core';
 import { WebRTCService } from '../communication/webrtc.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
@@ -37,7 +37,8 @@ export class FileTransferBaseService {
     protected webrtcService: WebRTCService,
     protected toaster: HotToastService,
     @Inject(TranslateService) protected translate: TranslateService,
-    protected logger: NGXLogger
+    protected logger: NGXLogger,
+    protected ngZone: NgZone
   ) {}
 
   // =============== Utility Methods ===============
@@ -102,7 +103,9 @@ export class FileTransferBaseService {
     });
 
     await FileTransferBaseService.activeUploadsMutex.runExclusive(() => {
-      FileTransferBaseService.activeUploads$.next(allUploads);
+      this.ngZone.run(() => {
+        FileTransferBaseService.activeUploads$.next(allUploads);
+      });
     });
 
     this.logger.debug('updateActiveUploads', `Updated active uploads, count: ${allUploads.length}`);
@@ -125,7 +128,9 @@ export class FileTransferBaseService {
     });
 
     await FileTransferBaseService.activeDownloadsMutex.runExclusive(() => {
-      FileTransferBaseService.activeDownloads$.next(allDownloads);
+      this.ngZone.run(() => {
+        FileTransferBaseService.activeDownloads$.next(allDownloads);
+      });
     });
 
     this.logger.debug(
@@ -151,7 +156,9 @@ export class FileTransferBaseService {
     });
 
     await FileTransferBaseService.incomingFileOffersMutex.runExclusive(() => {
-      FileTransferBaseService.incomingFileOffers$.next(allOffers);
+      this.ngZone.run(() => {
+        FileTransferBaseService.incomingFileOffers$.next(allOffers);
+      });
     });
 
     this.logger.debug(

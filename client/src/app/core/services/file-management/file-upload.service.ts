@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
 import {
   FileUpload,
   CHUNK_SIZE,
@@ -26,9 +26,10 @@ export class FileUploadService extends FileTransferBaseService {
     webrtcService: WebRTCService,
     toaster: HotToastService,
     translate: TranslateService,
-    logger: NGXLogger
+    logger: NGXLogger,
+    ngZone: NgZone
   ) {
-    super(webrtcService, toaster, translate, logger);
+    super(webrtcService, toaster, translate, logger, ngZone);
   }
 
   // =============== Public File Management Methods ===============

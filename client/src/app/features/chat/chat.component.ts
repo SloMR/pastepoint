@@ -385,8 +385,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       // Simulate heartbeat update
       this.lastHeartbeat = now;
-      this.logger.debug('Heartbeat', `Last heartbeat: ${this.lastHeartbeat}`);
-
       // Detect suspension
       if (diff > this.HEARTBEAT_TIMEOUT_MS) {
         this.logger.warn('Heartbeat', `Suspension detected: last beat was ${diff}ms ago.`);
@@ -692,7 +690,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     for (const file of files) {
       const fileSizeInMB = (file.size / MB).toFixed(2);
       const truncatedFilename = this.truncateFilename(file.name);
-      const fileMessageText = `${this.translate.instant('FILE_SENT')}: (${truncatedFilename}) (${fileSizeInMB} MB)`;
+      const fileMessageText = `${this.translate.instant('FILE_SENT')}: ${truncatedFilename} (${fileSizeInMB} MB)`;
 
       // Add file message to local messages immediately
       this.ngZone.run(() => {
