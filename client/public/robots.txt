@@ -1,8 +1,11 @@
 # robots.txt file for PastePoint
 User-agent: *
 Allow: /
+Allow: /privacy
+
+# Disallow all private routes
 Disallow: /private
-Disallow: /private/*/
+Disallow: /private/*
 Disallow: /404
 Disallow: /ws/
 Disallow: /create-session
