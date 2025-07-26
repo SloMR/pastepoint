@@ -203,6 +203,8 @@ export interface MetaConfig {
     title?: string;
     description?: string;
     image?: string;
+    site?: string;
+    creator?: string;
   };
 }
 
