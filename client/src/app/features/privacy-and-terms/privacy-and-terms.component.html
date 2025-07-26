@@ -55,12 +55,12 @@
   </header>
 
   <!-- MARK: - Main Content Area -->
-  <main class="flex-1 overflow-y-auto bg-pageBackground p-4 dark:bg-baseDark md:p-8 scrollbar">
+  <main class="flex-1 overflow-y-auto p-4 bg-pageBackground scrollbar dark:bg-baseDark md:p-8">
     <div
       class="mx-auto max-w-4xl text-left text-content dark:text-contentMuted"
       [ngClass]="isRTL ? 'text-right' : 'text-left'"
     >
-      <h1 class="flex items-center gap-2 mb-4 text-3xl font-bold text-text-primary dark:text-white">
+      <h1 class="mb-4 flex items-center gap-2 text-3xl font-bold text-text-primary dark:text-white">
         <img
           src="/icons/privacy-and-terms.svg"
           alt="Privacy and Terms"
@@ -80,7 +80,7 @@
           <h2 class="mb-3 text-2xl font-bold text-text-primary dark:text-white">
             {{ 'DISCLAIMER_TITLE' | translate }}
           </h2>
-          <div class="space-y-4 text-base">
+          <div class="text-base space-y-4">
             <p>{{ 'DISCLAIMER_INTRO' | translate }}</p>
             <p>{{ 'DISCLAIMER_NO_GUARANTEES' | translate }}</p>
             <p>{{ 'DISCLAIMER_NO_LIABILITY' | translate }}</p>
@@ -100,10 +100,10 @@
         </section>
 
         <section>
-          <h2 class="mb-3 mt-8 text-2xl font-bold text-text-primary dark:text-white">
+          <h2 class="mt-8 mb-3 text-2xl font-bold text-text-primary dark:text-white">
             {{ 'PRIVACY_TITLE' | translate }}
           </h2>
-          <div class="space-y-4 text-base">
+          <div class="text-base space-y-4">
             <p>{{ 'PRIVACY_INTRO' | translate }}</p>
             <p>{{ 'PRIVACY_NO_RETENTION' | translate }}</p>
             <p>{{ 'PRIVACY_ENCRYPTION' | translate }}</p>
@@ -114,10 +114,10 @@
         </section>
 
         <section>
-          <h2 class="mb-3 mt-8 text-2xl font-bold text-text-primary dark:text-white">
+          <h2 class="mt-8 mb-3 text-2xl font-bold text-text-primary dark:text-white">
             {{ 'TERMS_TITLE' | translate }}
           </h2>
-          <div class="space-y-4 text-base">
+          <div class="text-base space-y-4">
             <p>{{ 'TERMS_AGREEMENT' | translate }}</p>
             <p>{{ 'TERMS_INTENDED_USE' | translate }}</p>
             <p>
@@ -136,7 +136,7 @@
           </div>
         </section>
 
-        <p class="mt-8 italic text-sm">{{ 'LEGAL_NOTICE' | translate }}</p>
+        <p class="mt-8 text-sm italic">{{ 'LEGAL_NOTICE' | translate }}</p>
       </div>
 
       <!-- MARK: - Go Back Button -->
@@ -158,7 +158,7 @@
 
   <!-- MARK: - Footer -->
   <div
-    class="w-full border-t dark:bg-baseDark dark:border-surfaceDark flex flex-col items-center gap-2 px-4 py-4 md:flex-row md:justify-between md:items-center md:h-[58px] md:px-8 md:py-0"
+    class="flex w-full flex-col items-center gap-2 border-t px-4 py-4 dark:bg-baseDark dark:border-surfaceDark md:h-[58px] md:flex-row md:items-center md:justify-between md:px-8 md:py-0"
   >
     <!-- ©2025 -->
     <p class="order-1 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
@@ -172,7 +172,7 @@
         href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
         target="_blank"
         rel="noopener noreferrer"
-        class="inline-flex items-center gap-2 hover:underline text-brand dark:text-brandDark"
+        class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
       >
         <span class="text-xs font-expoArabicMedium">LinkedIn</span>
         <img
@@ -190,7 +190,7 @@
         href="https://github.com/SloMR/pastepoint"
         target="_blank"
         rel="noopener noreferrer nofollow"
-        class="inline-flex items-center gap-2 hover:underline text-brand dark:text-brandDark"
+        class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
       >
         <span class="text-xs font-expoArabicMedium">GitHub</span>
         <img

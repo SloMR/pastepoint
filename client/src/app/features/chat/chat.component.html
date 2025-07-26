@@ -786,7 +786,7 @@
 
       <!-- MARK: - Footer Mobile -->
       <div
-        class="w-full border-t dark:bg-baseDark dark:border-surfaceDark flex flex-col items-center gap-2 px-4 py-4 md:flex-row md:justify-between md:items-center md:h-[58px] md:px-8 md:py-0"
+        class="flex w-full flex-col items-center gap-2 border-t px-4 py-4 dark:bg-baseDark dark:border-surfaceDark md:h-[58px] md:flex-row md:items-center md:justify-between md:px-8 md:py-0"
       >
         <!-- ©2025 Mobile -->
         <p class="order-1 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
@@ -800,7 +800,7 @@
             href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center gap-2 hover:underline text-brand dark:text-brandDark"
+            class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
           >
             <span class="text-xs font-expoArabicMedium">LinkedIn</span>
             <img
@@ -818,7 +818,7 @@
             href="https://github.com/SloMR/pastepoint"
             target="_blank"
             rel="noopener noreferrer nofollow"
-            class="inline-flex items-center gap-2 hover:underline text-brand dark:text-brandDark"
+            class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
           >
             <span class="text-xs font-expoArabicMedium">GitHub</span>
             <img
@@ -833,7 +833,7 @@
         </div>
 
         <!-- Version & Privacy Mobile -->
-        <div class="flex items-center gap-2 order-3">
+        <div class="order-3 flex items-center gap-2">
           <a
             href="/privacy"
             target="_self"
@@ -1064,13 +1064,13 @@
                       [ngClass]="isRTL ? 'rounded-tr-none' : 'rounded-tl-none'"
                     >
                       <p
-                        class="text-[18px] font-expoArabic text-white"
+                        class="text-white text-[18px] font-expoArabic"
                         *ngIf="message.type === ChatMessageType.TEXT"
                       >
                         {{ message.text }}
                       </p>
                       <p
-                        class="flex items-center gap-2 text-xs font-expoArabic text-white"
+                        class="flex items-center gap-2 text-xs text-white font-expoArabic"
                         *ngIf="message.type === ChatMessageType.ATTACHMENT"
                       >
                         <img
