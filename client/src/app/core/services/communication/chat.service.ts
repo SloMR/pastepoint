@@ -62,6 +62,13 @@ export class ChatService implements IChatService {
    * Methods for sending messages and managing chat state
    * ==========================================================
    */
+
+  /**
+   * Sends message data only to target user without adding to local messages
+   * @param content Message content
+   * @param targetUser Target user to send to
+   * @param messageType Type of message (default: TEXT)
+   */
   public async sendMessage(
     content: string,
     targetUser: string,
@@ -80,13 +87,34 @@ export class ChatService implements IChatService {
         payload: chatMsg,
       };
       this.webrtcService.sendData(dataChannelMsg, targetUser);
+      this.logger.info('sendMessage', `Message sent to ${targetUser}: ${chatMsg.text}`);
+    } else {
+      this.logger.warn('sendMessage', 'Empty message content');
+    }
+  }
+
+  /**
+   * Adds a message to local chat only (UI display)
+   * @param content Message content
+   * @param messageType Type of message (default: TEXT)
+   */
+  public addMessageToLocal(
+    content: string,
+    messageType: ChatMessageType = ChatMessageType.TEXT
+  ): void {
+    if (content.trim()) {
+      const chatMsg: ChatMessage = {
+        from: this.user,
+        text: content.trim(),
+        type: messageType,
+        timestamp: new Date(),
+      };
+
       this.ngZone.run(() => {
         this.messages.push(chatMsg);
         this.messages$.next(this.messages);
       });
-      this.logger.info('sendMessage', `Message sent to ${targetUser}: ${chatMsg.text}`);
-    } else {
-      this.logger.warn('sendMessage', 'Empty message content');
+      this.logger.info('addMessageToLocal', `Message added to local chat: ${chatMsg.text}`);
     }
   }
 

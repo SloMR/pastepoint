@@ -2,7 +2,7 @@ import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { NGXLogger } from 'ngx-logger';
 import { IMigrationService } from '../../interfaces/migration.interface';
-import { APP_VERSION_KEY } from '../../../utils/constants';
+import { APP_VERSION_KEY, THEME_PREFERENCE_KEY, SESSION_CODE_KEY } from '../../../utils/constants';
 
 @Injectable({
   providedIn: 'root',
@@ -88,16 +88,24 @@ export class MigrationService implements IMigrationService {
   }
 
   /**
-   * Clears all localStorage items except the version key
+   * Clears all localStorage items except the version key, theme preference, and session code
    */
   private clearLocalStorage(): void {
     if (!isPlatformBrowser(this.platformId)) return;
 
     const versionValue = localStorage.getItem(APP_VERSION_KEY);
+    const themeValue = localStorage.getItem(THEME_PREFERENCE_KEY);
+    const sessionValue = localStorage.getItem(SESSION_CODE_KEY);
     localStorage.clear();
 
     if (versionValue) {
       localStorage.setItem(APP_VERSION_KEY, versionValue);
+    }
+    if (themeValue) {
+      localStorage.setItem(THEME_PREFERENCE_KEY, themeValue);
+    }
+    if (sessionValue) {
+      localStorage.setItem(SESSION_CODE_KEY, sessionValue);
     }
     this.logger.debug('MigrationService', 'localStorage cleared');
   }

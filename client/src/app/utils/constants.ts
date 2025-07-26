@@ -50,6 +50,23 @@ export const ICE_SERVERS = [
   { urls: 'stun:stun.services.mozilla.com' },
   { urls: 'stun:stun.stunprotocol.org:3478' },
   { urls: 'stun:stun.iptel.org' },
+
+  // Open Relay Project TURN servers
+  {
+    urls: 'turn:openrelay.metered.ca:80',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turn:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
+  {
+    urls: 'turns:openrelay.metered.ca:443',
+    username: 'openrelayproject',
+    credential: 'openrelayproject',
+  },
 ];
 
 export const RTC_CONFIGURATION = {
@@ -186,6 +203,8 @@ export interface MetaConfig {
     title?: string;
     description?: string;
     image?: string;
+    site?: string;
+    creator?: string;
   };
 }
 
