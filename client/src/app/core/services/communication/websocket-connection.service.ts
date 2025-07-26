@@ -225,7 +225,7 @@ export class WebSocketConnectionService implements OnDestroy {
       this.socket.onerror = (error) => {
         this.logger.error('connect', 'WebSocket error: ' + error);
         this.isConnecting = false;
-        if (this.reconnectAttempts === 0) {
+        if (this.reconnectAttempts === 0 && !this.manualDisconnect) {
           this.toaster.error(this.translate.instant('SERVER_CONNECTION_FAILED'));
         }
         reject(error);
@@ -259,8 +259,10 @@ export class WebSocketConnectionService implements OnDestroy {
 
           if (this.reconnectAttempts >= this.maxReconnectAttempts) {
             this.logger.warn('scheduleReconnect', 'Maximum reconnect attempts reached');
-            this.toaster.error(this.translate.instant('SERVER_CONNECTION_LOST_PERMANENTLY'));
-            this.router.navigate(['/404']);
+            if (!this.manualDisconnect) {
+              this.toaster.error(this.translate.instant('SERVER_CONNECTION_LOST_PERMANENTLY'));
+              this.router.navigate(['/404']);
+            }
           } else {
             if (this.reconnectAttempts % 3 === 1) {
               this.toaster.info(this.translate.instant('RECONNECTING_TO_SERVER'));

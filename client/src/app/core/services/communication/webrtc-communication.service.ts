@@ -86,8 +86,9 @@ export class WebRTCCommunicationService {
         this.connectionTimeouts.delete(targetUser);
         this.messageQueues.delete(targetUser);
         this.zone.run(() => {
-          this.toaster.warning(
-            this.translate.instant('CONNECTION_TIMEOUT_WITH_USER', { userName: targetUser })
+          this.logger.warn(
+            'setupDataChannel',
+            `Connection timeout for ${targetUser}, closing channel`
           );
         });
       }
@@ -137,16 +138,10 @@ export class WebRTCCommunicationService {
           (typeof error === 'object' ? JSON.stringify(error) : String(error)) ||
           'Unknown RTCErrorEvent';
         this.logger.error('setupDataChannel', `Data Channel Error with ${targetUser}: ${errorMsg}`);
-        this.toaster.warning(
-          this.translate.instant('CONNECTION_UNSTABLE_WITH_USER', { userName: targetUser })
-        );
       } else {
         this.logger.error(
           'setupDataChannel',
           `Data Channel Error with ${targetUser}: ${JSON.stringify(ev)}`
-        );
-        this.toaster.warning(
-          this.translate.instant('CONNECTION_UNSTABLE_WITH_USER', { userName: targetUser })
         );
       }
     };

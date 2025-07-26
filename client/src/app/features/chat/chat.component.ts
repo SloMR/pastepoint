@@ -1179,8 +1179,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       await new Promise((resolve) => setTimeout(resolve, 100));
     }
 
-    this.toaster.warning(
-      this.translate.instant('CONNECTION_TIMEOUT_WITH_USER', { userName: member })
+    this.logger.warn(
+      'waitForFileTransferConnection',
+      `File transfer connection timeout with user: ${member} after ${retryCount} retries`
     );
     return false;
   }

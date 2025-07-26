@@ -391,7 +391,7 @@ export class WebRTCSignalingService {
       );
 
       if (attempts === 0) {
-        this.toaster.info(this.translate.instant('RECONNECTING_TO_USER', { userName: targetUser }));
+        this.logger.info('handleDisconnection', `Starting reconnection attempts to ${targetUser}`);
       }
 
       setTimeout(() => {
@@ -413,9 +413,11 @@ export class WebRTCSignalingService {
         'handleDisconnection',
         `Max reconnection attempts reached for ${targetUser}. Could not reconnect.`
       );
-      this.toaster.error(
-        this.translate.instant('CANNOT_CONNECT_TO_USER', { userName: targetUser })
-      );
+      if (this.wsService.isConnected()) {
+        this.toaster.error(
+          this.translate.instant('CANNOT_CONNECT_TO_USER', { userName: targetUser })
+        );
+      }
       this.closePeerConnection(targetUser, true);
     }
   }
@@ -543,9 +545,11 @@ export class WebRTCSignalingService {
       })
       .catch((error) => {
         this.logger.error('handleOffer', `Error handling offer: ${error}`);
-        this.toaster.warning(
-          this.translate.instant('CONNECTION_FAILED_WITH_USER', { userName: targetUser })
-        );
+        if (this.wsService.isConnected()) {
+          this.toaster.warning(
+            this.translate.instant('CONNECTION_FAILED_WITH_USER', { userName: targetUser })
+          );
+        }
       });
   }
 
@@ -594,9 +598,11 @@ export class WebRTCSignalingService {
       })
       .catch((error) => {
         this.logger.error('handleAnswer', `Error handling answer: ${error}`);
-        this.toaster.warning(
-          this.translate.instant('CONNECTION_FAILED_WITH_USER', { userName: targetUser })
-        );
+        if (this.wsService.isConnected()) {
+          this.toaster.warning(
+            this.translate.instant('CONNECTION_FAILED_WITH_USER', { userName: targetUser })
+          );
+        }
         this.handleStateMismatch(targetUser);
       });
   }
@@ -647,8 +653,9 @@ export class WebRTCSignalingService {
           this.logger.error('handleCandidate', `Error adding ICE candidate: ${error}`);
           const attempts = this.reconnectAttempts.get(targetUser) ?? 0;
           if (attempts > 2) {
-            this.toaster.warning(
-              this.translate.instant('CONNECTION_UNSTABLE_WITH_USER', { userName: targetUser })
+            this.logger.warn(
+              'handleCandidate',
+              `ICE candidate errors for ${targetUser}, attempts: ${attempts}`
             );
           }
         });
