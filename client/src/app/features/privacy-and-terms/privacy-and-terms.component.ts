@@ -36,7 +36,7 @@ export class PrivacyAndTermsComponent implements OnInit {
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) {
-      this.metaService.updateNotFoundMetadata();
+      this.metaService.updatePrivacyAndTermsMetadata();
       return;
     }
 
