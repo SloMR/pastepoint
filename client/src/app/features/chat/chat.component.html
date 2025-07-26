@@ -13,8 +13,8 @@
             [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
             alt="PastePoint Logo"
             class="h-12 w-auto cursor-pointer"
-            width="755"
-            height="675"
+            width="136"
+            height="48"
             priority
           />
         </a>
@@ -26,7 +26,14 @@
           (click)="isOpenCreateRoom = true; isMenuOpen = false"
           class="flex w-full items-center justify-center gap-2 rounded-lg p-2 text-white bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
         >
-          <img src="/icons/white-plus.svg" alt="Home" class="h-6 w-6" />
+          <img
+            src="/icons/white-plus.svg"
+            alt="Create New Room"
+            class="h-6 w-6"
+            loading="lazy"
+            width="24"
+            height="24"
+          />
           <span class="text-base font-expoArabicMedium">{{ 'CREATE_NEW_ROOM' | translate }}</span>
         </button>
       </div>
@@ -37,8 +44,11 @@
           <div class="flex items-center justify-center gap-2">
             <img
               [src]="isDarkMode ? '/icons/home-white.svg' : '/icons/home.svg'"
-              alt="Home"
+              alt="Rooms"
               class=""
+              loading="lazy"
+              width="16"
+              height="16"
             />
             <p class="pt-2 text-base font-expoArabicMedium dark:text-white">
               {{ 'ROOMS' | translate }}
@@ -69,8 +79,11 @@
                 [src]="
                   room === currentRoom ? '/icons/active-comment.svg' : '/icons/inactive-comment.svg'
                 "
-                alt="Home"
+                alt="Join Room"
                 class=""
+                loading="lazy"
+                width="20"
+                height="20"
               />
               <p class="truncate pt-2 text-base font-expoArabicMedium">{{ room }}</p>
               <p></p>
@@ -83,8 +96,11 @@
       <div *ngIf="SessionCode.length > 0" class="flex w-full items-center gap-3 px-4 py-3">
         <img
           [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
-          alt="Home"
+          alt="Session Code"
           class="h-4 w-4"
+          loading="lazy"
+          width="16"
+          height="16"
         />
         <p class="truncate pt-1 text-base font-expoArabicMedium dark:text-white">
           {{ 'CODE' | translate }}
@@ -103,13 +119,27 @@
           class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-2 text-white w-[90px] h-[44px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
           (click)="copySessionCode()"
         >
-          <img src="/icons/copy.svg" alt="Home" class="h-4 w-4" />
+          <img
+            src="/icons/copy.svg"
+            alt="Copy"
+            class="h-4 w-4"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
         </div>
         <div
           class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-2 text-white w-[90px] h-[44px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
           (click)="openQRCodePopup()"
         >
-          <img src="/icons/qrcode.svg" alt="Home" class="h-4 w-4" />
+          <img
+            src="/icons/qrcode.svg"
+            alt="QR Code"
+            class="h-4 w-4"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
         </div>
       </div>
 
@@ -124,7 +154,14 @@
             (click)="createPrivateSession()"
             class="flex w-full items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
           >
-            <img src="/icons/blue-plus.svg" alt="Home" class="h-6 w-6" />
+            <img
+              src="/icons/blue-plus.svg"
+              alt="Create Private Session"
+              class="h-6 w-6"
+              loading="lazy"
+              width="24"
+              height="24"
+            />
             <span class="text-base font-expoArabicMedium">
               {{ 'CREATE_PRIVATE_SESSION' | translate }}
             </span>
@@ -152,8 +189,11 @@
           <div class="flex items-center justify-center gap-2">
             <img
               [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
-              alt="Home"
+              alt="Members"
               class=""
+              loading="lazy"
+              width="16"
+              height="16"
             />
             <p class="pt-2 text-base font-expoArabicMedium">{{ 'MEMBERS' | translate }}</p>
           </div>
@@ -193,7 +233,10 @@
           <div class="flex items-center justify-center gap-2">
             <img
               [src]="isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'"
-              alt="File Transfer"
+              alt="Active Transfers"
+              loading="lazy"
+              width="16"
+              height="16"
             />
             <p class="pt-2 text-base font-expoArabicMedium">
               {{ 'FILE_TRANSFER' | translate }}
@@ -213,8 +256,11 @@
               <div class="flex items-center justify-start gap-2">
                 <img
                   [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
-                  alt="Upload"
+                  alt="Uploading"
                   class="h-4 w-4"
+                  loading="lazy"
+                  width="16"
+                  height="16"
                 />
                 <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
                   {{ truncateFilename(transfer.file.name) }}
@@ -257,8 +303,11 @@
               <div class="flex items-center justify-start gap-2">
                 <img
                   [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
-                  alt="Download"
+                  alt="Downloading"
                   class="h-4 w-4"
+                  loading="lazy"
+                  width="16"
+                  height="16"
                 />
                 <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
                   {{ truncateFilename(download.fileName) }}
@@ -305,7 +354,14 @@
       (click)="openEndSessionPopup()"
     >
       <div class="flex w-full cursor-pointer items-center justify-center gap-2 px-3 py-3">
-        <img class="" alt="" src="/icons/cross-small.svg" />
+        <img
+          class=""
+          alt="End Session"
+          src="/icons/cross-small.svg"
+          loading="lazy"
+          width="16"
+          height="16"
+        />
         <h6 class="text-base font-medium text-danger font-expoArabicMedium">
           {{ 'END_SESSION' | translate }}
         </h6>
@@ -335,7 +391,14 @@
         >
           <!-- avatar + name -->
           <div class="flex items-center gap-2 overflow-hidden">
-            <img src="/icons/Group.svg" alt="User" class="h-10 w-10" />
+            <img
+              src="/icons/Group.svg"
+              alt="User"
+              class="h-10 w-10"
+              loading="lazy"
+              width="40"
+              height="40"
+            />
             <p class="truncate text-base font-expoArabicMedium text-content dark:text-white">
               {{ userService.user }}
             </p>
@@ -347,6 +410,9 @@
             alt="Close"
             class="h-4 w-4 shrink-0 cursor-pointer"
             (click)="isMenuOpen = false"
+            loading="lazy"
+            width="16"
+            height="16"
           />
         </div>
 
@@ -356,7 +422,14 @@
             (click)="openCreateRoomPopup()"
             class="flex w-full items-center justify-center gap-2 rounded-lg p-2 text-white bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
           >
-            <img src="/icons/white-plus.svg" alt="Home" class="h-6 w-6" />
+            <img
+              src="/icons/white-plus.svg"
+              alt="Create New Room"
+              class="h-6 w-6"
+              loading="lazy"
+              width="24"
+              height="24"
+            />
             <span class="text-base font-expoArabicMedium">{{ 'CREATE_NEW_ROOM' | translate }}</span>
           </button>
         </div>
@@ -369,8 +442,11 @@
             <div class="flex items-center justify-center gap-2">
               <img
                 [src]="isDarkMode ? '/icons/home-white.svg' : '/icons/home.svg'"
-                alt="Home"
+                alt="Rooms"
                 class=""
+                loading="lazy"
+                width="16"
+                height="16"
               />
               <p class="pt-2 text-base font-expoArabicMedium dark:text-white">
                 {{ 'ROOMS' | translate }}
@@ -405,6 +481,9 @@
                   "
                   alt="Home"
                   class=""
+                  loading="lazy"
+                  width="20"
+                  height="20"
                 />
                 <p class="truncate pt-2 text-base font-expoArabicMedium">{{ room }}</p>
                 <p></p>
@@ -418,8 +497,11 @@
           <div class="flex w-full items-center gap-3 px-4 py-3">
             <img
               [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
-              alt="Home"
+              alt="Session Code"
               class="h-4 w-4"
+              loading="lazy"
+              width="16"
+              height="16"
             />
             <p class="truncate pt-1 text-base font-expoArabicMedium dark:text-white">
               {{ 'CODE' | translate }}
@@ -444,13 +526,27 @@
                 class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-white w-[48px] h-[48px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
                 (click)="copySessionCode()"
               >
-                <img src="/icons/copy.svg" alt="Copy" class="h-6 w-6" />
+                <img
+                  src="/icons/copy.svg"
+                  alt="Copy"
+                  class="h-6 w-6"
+                  loading="lazy"
+                  width="24"
+                  height="24"
+                />
               </div>
               <div
                 class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-white w-[48px] h-[48px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
                 (click)="openQRCodePopup()"
               >
-                <img src="/icons/qrcode.svg" alt="QR Code" class="h-6 w-6" />
+                <img
+                  src="/icons/qrcode.svg"
+                  alt="QR Code"
+                  class="h-6 w-6"
+                  loading="lazy"
+                  width="24"
+                  height="24"
+                />
               </div>
             </div>
           </div>
@@ -467,7 +563,14 @@
               (click)="createPrivateSession()"
               class="flex w-full items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
             >
-              <img src="/icons/blue-plus.svg" alt="Home" class="h-6 w-6" />
+              <img
+                src="/icons/blue-plus.svg"
+                alt="Create Private Session"
+                class="h-6 w-6"
+                loading="lazy"
+                width="24"
+                height="24"
+              />
               <span class="text-base font-expoArabicMedium">
                 {{ 'CREATE_PRIVATE_SESSION' | translate }}
               </span>
@@ -495,8 +598,11 @@
             <div class="flex items-center justify-center gap-2">
               <img
                 [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
-                alt="Home"
+                alt="Members"
                 class=""
+                loading="lazy"
+                width="16"
+                height="16"
               />
               <p class="pt-2 text-base font-expoArabicMedium dark:text-white">
                 {{ 'MEMBERS' | translate }}
@@ -538,7 +644,10 @@
             <div class="flex items-center justify-center gap-2">
               <img
                 [src]="isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'"
-                alt="File Transfer"
+                alt="Active Transfers"
+                loading="lazy"
+                width="16"
+                height="16"
               />
               <p class="pt-2 text-base font-expoArabicMedium">
                 {{ 'FILE_TRANSFER' | translate }}
@@ -558,8 +667,11 @@
                 <div class="flex items-center justify-start gap-2">
                   <img
                     [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
-                    alt="Upload"
+                    alt="Uploading"
                     class="h-4 w-4"
+                    loading="lazy"
+                    width="16"
+                    height="16"
                   />
                   <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
                     {{ truncateFilename(transfer.file.name) }}
@@ -604,8 +716,11 @@
                 <div class="flex items-center justify-start gap-2">
                   <img
                     [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
-                    alt="Download"
+                    alt="Downloading"
                     class="h-4 w-4"
+                    loading="lazy"
+                    width="16"
+                    height="16"
                   />
                   <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
                     {{ truncateFilename(download.fileName) }}
@@ -654,7 +769,14 @@
       >
         <div class="flex w-full items-center justify-center py-4" (click)="openEndSessionPopup()">
           <div class="flex w-full cursor-pointer items-center justify-center gap-2 px-3 py-3">
-            <img class="" alt="" src="/icons/cross-small.svg" />
+            <img
+              class=""
+              alt="End Session"
+              src="/icons/cross-small.svg"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
             <h6 class="text-base font-medium text-danger font-expoArabicMedium">
               {{ 'END_SESSION' | translate }}
             </h6>
@@ -683,8 +805,8 @@
             [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
             alt="PastePoint Logo"
             class="h-8 w-auto cursor-pointer"
-            width="71"
-            height="25"
+            width="91"
+            height="32"
             priority
           />
         </a>
@@ -704,6 +826,9 @@
                 [src]="isDarkMode ? '/icons/brightness.svg' : '/icons/moon.svg'"
                 alt="Theme"
                 class="h-5 w-5"
+                loading="lazy"
+                width="20"
+                height="20"
               />
             </button>
           </div>
@@ -757,7 +882,14 @@
         <p class="text-base font-expoArabicMedium text-content dark:text-white">
           {{ userService.user }}
         </p>
-        <img src="/icons/Group.svg" alt="User" class="h-10 w-10" />
+        <img
+          src="/icons/Group.svg"
+          alt="User"
+          class="h-10 w-10"
+          loading="lazy"
+          width="40"
+          height="40"
+        />
       </div>
     </div>
 
@@ -776,7 +908,14 @@
           class="relative mb-6 flex w-full items-center rounded-lg px-4 text-center bg-surface h-[72px] dark:bg-surfaceDark sm:mb-8 sm:px-8"
         >
           <div class="flex items-center justify-start gap-2 w-[95%]">
-            <img src="/icons/information-circle.svg" alt="Info" class="h-4 w-4" />
+            <img
+              src="/icons/information-circle.svg"
+              alt="Info"
+              class="h-4 w-4"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
             <p
               class="text-xs font-normal font-expoArabic text-content dark:text-contentMuted"
               [ngClass]="isRTL ? 'text-right' : 'text-left'"
@@ -793,7 +932,14 @@
             class="absolute top-5 flex cursor-pointer items-center justify-end gap-2"
             [ngClass]="isRTL ? 'left-5' : 'right-5'"
           >
-            <img src="/icons/cross-close.svg" alt="Info" class="h-3 w-3" />
+            <img
+              src="/icons/cross-close.svg"
+              alt="Close"
+              class="h-3 w-3"
+              loading="lazy"
+              width="12"
+              height="12"
+            />
           </div>
         </div>
 
@@ -802,7 +948,7 @@
           <img
             *ngIf="SessionCode.length > 0"
             [src]="isDarkMode ? '/icons/lock-white.svg' : '/icons/lock.svg'"
-            alt="Home"
+            alt="Lock"
             class="h-5 w-5"
           />
           <p class="pt-1 text-2xl font-normal font-expoArabicMedium text-content dark:text-white">
@@ -827,7 +973,14 @@
                 [ngClass]="isRTL ? 'animate-slide-in-right' : 'animate-slide-in-left'"
               >
                 <div class="flex items-start justify-start gap-3 min-w-[350px] max-w-[60%]">
-                  <img src="/icons/Group.svg" alt="User" class="h-8 w-8" />
+                  <img
+                    src="/icons/Group.svg"
+                    alt="User"
+                    class="h-8 w-8"
+                    loading="lazy"
+                    width="32"
+                    height="32"
+                  />
                   <div class="flex w-full flex-col gap-1">
                     <span class="px-2 text-xs text-gray-700 font-expoArabic dark:text-gray-300">
                       {{ message.from }}
@@ -846,7 +999,14 @@
                         class="flex items-center gap-2 text-xs font-expoArabic text-white"
                         *ngIf="message.type === ChatMessageType.ATTACHMENT"
                       >
-                        <img src="/icons/file-white.svg" alt="File" class="h-4 w-4" />
+                        <img
+                          src="/icons/file-white.svg"
+                          alt="File"
+                          class="h-4 w-4"
+                          loading="lazy"
+                          width="16"
+                          height="16"
+                        />
                         {{ message.text | slice: 0 : 65 }}...
                       </p>
                       <div
@@ -893,6 +1053,9 @@
                             [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
                             alt="File"
                             class="h-4 w-4"
+                            loading="lazy"
+                            width="16"
+                            height="16"
                           />
                           {{ message.text | slice: 0 : 65 }}...
                         </p>
@@ -908,7 +1071,14 @@
                         </div>
                       </div>
                     </div>
-                    <img src="/icons/Group.svg" alt="User" class="h-8 w-8" />
+                    <img
+                      src="/icons/Group.svg"
+                      alt="User"
+                      class="h-8 w-8"
+                      loading="lazy"
+                      width="32"
+                      height="32"
+                    />
                   </div>
                 </div>
               </ng-template>
@@ -926,7 +1096,14 @@
                 [ngClass]="isRTL ? 'animate-slide-in-right' : 'animate-slide-in-left'"
               >
                 <div class="flex items-start gap-2">
-                  <img src="/icons/file.svg" alt="File" class="h-4 w-4 mt-0.5" />
+                  <img
+                    src="/icons/file.svg"
+                    alt="File"
+                    class="h-4 w-4 mt-0.5"
+                    loading="lazy"
+                    width="16"
+                    height="16"
+                  />
                   <div>
                     <p class="mb-1 text-sm font-expoArabic text-content dark:text-contentMuted">
                       {{ incomingFile.fileName }} ({{
@@ -1020,18 +1197,24 @@
                 >
                   <img
                     [src]="isDarkMode ? '/icons/link.svg' : '/icons/link.svg'"
-                    alt="User"
+                    alt="Attach Files"
                     (click)="fileInput.click()"
                     class="h-5 w-5 cursor-pointer"
+                    loading="lazy"
+                    width="20"
+                    height="20"
                   />
                   <img
                     [src]="isDarkMode ? '/icons/emoji.svg' : '/icons/emoji.svg'"
-                    alt="User"
+                    alt="Emoji"
                     class="h-5 w-5 cursor-pointer"
                     (mouseenter)="isEmojiPickerVisible = true"
                     (mouseleave)="handleEmojiIconMouseLeave()"
                     aria-label="Open emoji picker"
                     title="Open emoji picker"
+                    loading="lazy"
+                    width="20"
+                    height="20"
                   />
                 </div>
                 <button
@@ -1041,8 +1224,11 @@
                   <span class="text-base font-expoArabicMedium">{{ 'SEND' | translate }}</span>
                   <img
                     [src]="isDarkMode ? '/icons/send.svg' : '/icons/send.svg'"
-                    alt="User"
+                    alt="Send"
                     class="h-5 w-5"
+                    loading="lazy"
+                    width="20"
+                    height="20"
                   />
                 </button>
                 <input
@@ -1095,7 +1281,14 @@
             class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
           >
             <p class="text-xs font-expoArabicMedium text-brand">LinkedIn</p>
-            <img src="/icons/linkedin.svg" alt="User" class="h-4 w-4" />
+            <img
+              src="/icons/linkedin.svg"
+              alt="LinkedIn"
+              class="h-4 w-4"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
           </a>
         </div>
         <div class="flex items-center">
@@ -1107,7 +1300,14 @@
             class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
           >
             <p class="text-xs font-expoArabicMedium text-brand">GitHub</p>
-            <img src="/icons/github.svg" alt="User" class="h-4 w-4" />
+            <img
+              src="/icons/github.svg"
+              alt="GitHub"
+              class="h-4 w-4"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
           </a>
         </div>
       </div>
@@ -1142,6 +1342,9 @@
               alt="Close"
               class="h-4 w-4 cursor-pointer"
               (click)="closePopup('join')"
+              loading="lazy"
+              width="16"
+              height="16"
             />
           </div>
           <div class="flex w-full flex-col gap-2">
@@ -1201,6 +1404,9 @@
               alt="Close"
               class="h-4 w-4 cursor-pointer"
               (click)="closePopup('create')"
+              loading="lazy"
+              width="16"
+              height="16"
             />
           </div>
           <div class="flex w-full flex-col gap-2">
@@ -1260,6 +1466,9 @@
               alt="Close"
               class="h-4 w-4 cursor-pointer"
               (click)="closePopup('end')"
+              loading="lazy"
+              width="16"
+              height="16"
             />
           </div>
           <div class="flex w-full items-center justify-between gap-4">
@@ -1299,7 +1508,14 @@
               aria-label="Close QR Code"
               title="Close QR Code"
             >
-              <img src="/icons/cross-close.svg" alt="Close" class="h-4 w-4" />
+              <img
+                src="/icons/cross-close.svg"
+                alt="Close"
+                class="h-4 w-4"
+                loading="lazy"
+                width="16"
+                height="16"
+              />
             </button>
           </div>
 
