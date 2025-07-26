@@ -5,7 +5,8 @@ export interface IChatService {
   messages$: BehaviorSubject<ChatMessage[]>;
   user: string;
 
-  sendMessage(content: string, targetUser: string, messageType: ChatMessageType): void;
+  sendMessage(content: string, targetUser: string, messageType: ChatMessageType): Promise<void>;
+  addMessageToLocal(content: string, messageType: ChatMessageType): void;
   getUsername(): void;
   clearMessages(): void;
 }

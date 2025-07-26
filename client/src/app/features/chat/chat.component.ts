@@ -616,19 +616,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         return;
       }
 
-      this.ngZone.run(() => {
-        const newMessage: ChatMessage = {
-          from: this.userService.user,
-          text: this.message,
-          type: ChatMessageType.TEXT,
-          timestamp: new Date(),
-        };
-        this.messages = [...this.messages, newMessage];
-        this.cdr.detectChanges();
-      });
-
+      this.chatService.addMessageToLocal(this.message, ChatMessageType.TEXT);
       otherMembers.forEach(async (member) => {
-        await this.chatService.sendMessage(this.message, member);
+        await this.chatService.sendMessage(this.message, member, ChatMessageType.TEXT);
       });
 
       this.ngZone.run(() => {
@@ -691,20 +681,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const truncatedFilename = this.truncateFilename(file.name);
       const fileMessageText = `${this.translate.instant('FILE_SENT')}: ${truncatedFilename} (${fileSizeInMB} MB)`;
 
-      // Add file message to local messages immediately
-      this.ngZone.run(() => {
-        const fileMessage: ChatMessage = {
-          from: this.userService.user,
-          text: fileMessageText,
-          type: ChatMessageType.ATTACHMENT,
-          timestamp: new Date(),
-        };
-        this.messages = [...this.messages, fileMessage];
-        this.cdr.detectChanges();
-        this.scrollToBottom();
-      });
-
-      // Send file message to all other members
+      this.chatService.addMessageToLocal(fileMessageText, ChatMessageType.ATTACHMENT);
       for (const member of otherMembers) {
         await this.chatService.sendMessage(fileMessageText, member, ChatMessageType.ATTACHMENT);
       }
