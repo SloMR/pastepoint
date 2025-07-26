@@ -100,5 +100,7 @@
   "COPY_SESSION_SUCCESS": "Code copied successfully.",
   "NO_FILES_SELECTED": "No files selected",
   "ENTER_VALID_ROOM": "Enter a valid room name",
-  "CONNECTION_TIMEOUT_WITH_USER": "Connection with {{userName}} is unstable. Please check your internet connection."
+  "CONNECTION_TIMEOUT_WITH_USER": "Connection with {{userName}} is unstable. Please check your internet connection.",
+  "FAILED_TO_SEND_MESSAGE": "Failed to send message to {{member}}.",
+  "FAILED_TO_SEND_FILE_MESSAGE": "Failed to send file to {{member}}."
 }

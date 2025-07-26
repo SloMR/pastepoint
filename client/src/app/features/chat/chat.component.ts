@@ -616,15 +616,28 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         return;
       }
 
-      this.chatService.addMessageToLocal(this.message, ChatMessageType.TEXT);
-      otherMembers.forEach(async (member) => {
+      const messageText = this.message;
+      let hasSuccessfulSend = false;
+
+      // Wait for all send operations to complete
+      const sendPromises = otherMembers.map(async (member) => {
         try {
-          await this.chatService.sendMessage(this.message, member, ChatMessageType.TEXT);
+          await this.chatService.sendMessage(messageText, member, ChatMessageType.TEXT);
+          hasSuccessfulSend = true;
+          return { member, success: true };
         } catch (error) {
           this.logger.error('sendMessage', `Failed to send message to ${member}: ${error}`);
           this.toaster.error(this.translate.instant('FAILED_TO_SEND_MESSAGE', { member }));
+          return { member, success: false };
         }
       });
+
+      await Promise.all(sendPromises);
+
+      // Only add to local chat if at least one send was successful
+      if (hasSuccessfulSend) {
+        this.chatService.addMessageToLocal(messageText, ChatMessageType.TEXT);
+      }
 
       this.ngZone.run(() => {
         this.message = '';
@@ -686,17 +699,29 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const truncatedFilename = this.truncateFilename(file.name);
       const fileMessageText = `${this.translate.instant('FILE_SENT')}: ${truncatedFilename} (${fileSizeInMB} MB)`;
 
-      this.chatService.addMessageToLocal(fileMessageText, ChatMessageType.ATTACHMENT);
-      for (const member of otherMembers) {
+      let hasSuccessfulSend = false;
+
+      // Wait for all send operations to complete for this file
+      const sendPromises = otherMembers.map(async (member) => {
         try {
           await this.chatService.sendMessage(fileMessageText, member, ChatMessageType.ATTACHMENT);
+          hasSuccessfulSend = true;
+          return { member, success: true };
         } catch (error) {
           this.logger.error(
             'createAndSendFileMessages',
             `Failed to send file message to ${member}: ${error}`
           );
           this.toaster.error(this.translate.instant('FAILED_TO_SEND_FILE_MESSAGE', { member }));
+          return { member, success: false };
         }
+      });
+
+      await Promise.all(sendPromises);
+
+      // Only add to local chat if at least one send was successful
+      if (hasSuccessfulSend) {
+        this.chatService.addMessageToLocal(fileMessageText, ChatMessageType.ATTACHMENT);
       }
     }
   }
