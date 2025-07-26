@@ -783,6 +783,80 @@
           </div>
         </div>
       </div>
+
+      <!-- MARK: - Footer Mobile -->
+      <div
+        class="w-full border-t dark:bg-baseDark dark:border-surfaceDark flex flex-col items-center gap-2 px-4 py-4 md:flex-row md:justify-between md:items-center md:h-[58px] md:px-8 md:py-0"
+      >
+        <!-- ©2025 Mobile -->
+        <p class="order-1 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+          {{ 'COPYRIGHT_NOTICE' | translate }}
+        </p>
+
+        <!-- Social links Mobile -->
+        <div class="order-2 flex items-center gap-4">
+          <!-- LinkedIn Mobile -->
+          <a
+            href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 hover:underline text-brand dark:text-brandDark"
+          >
+            <span class="text-xs font-expoArabicMedium">LinkedIn</span>
+            <img
+              src="/icons/linkedin.svg"
+              alt="LinkedIn"
+              class="h-4 w-4"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
+          </a>
+
+          <!-- GitHub Mobile -->
+          <a
+            href="https://github.com/SloMR/pastepoint"
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            class="inline-flex items-center gap-2 hover:underline text-brand dark:text-brandDark"
+          >
+            <span class="text-xs font-expoArabicMedium">GitHub</span>
+            <img
+              src="/icons/github.svg"
+              alt="GitHub"
+              class="h-4 w-4"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
+          </a>
+        </div>
+
+        <!-- Version & Privacy Mobile -->
+        <div class="flex items-center gap-2 order-3">
+          <a
+            href="/privacy"
+            target="_self"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+          >
+            <p class="text-xs font-expoArabicMedium text-brand">
+              {{ 'PRIVACY_AND_TERMS' | translate }}
+            </p>
+            <img
+              src="/icons/privacy-and-terms.svg"
+              alt="Privacy and Terms"
+              class="h-4 w-4"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
+          </a>
+          <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+            {{ 'VERSION' | translate }} {{ appVersion }}
+          </p>
+        </div>
+      </div>
     </div>
   </aside>
 
@@ -1311,9 +1385,29 @@
           </a>
         </div>
       </div>
-      <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
-        {{ 'VERSION' | translate }} {{ appVersion }}
-      </p>
+      <div class="flex items-center gap-4">
+        <a
+          href="/privacy"
+          target="_self"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+        >
+          <p class="text-xs font-expoArabicMedium text-brand">
+            {{ 'PRIVACY_AND_TERMS' | translate }}
+          </p>
+          <img
+            src="/icons/privacy-and-terms.svg"
+            alt="Privacy and Terms"
+            class="h-4 w-4"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+        </a>
+        <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+          {{ 'VERSION' | translate }} {{ appVersion }}
+        </p>
+      </div>
     </div>
 
     <!-- MARK: - Popups -->

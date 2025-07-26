@@ -111,39 +111,73 @@
 
   <!-- MARK: - Footer -->
   <div
-    class="hidden w-full items-center justify-between border-t bg-white px-8 text-center h-[58px] border-borderLight dark:bg-baseDark dark:border-surfaceDark md:flex"
+    class="w-full border-t dark:bg-baseDark dark:border-surfaceDark flex flex-col items-center gap-2 px-4 py-4 md:flex-row md:justify-between md:items-center md:h-[58px] md:px-8 md:py-0"
   >
-    <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+    <!-- ©2025 -->
+    <p class="order-1 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
       {{ 'COPYRIGHT_NOTICE' | translate }}
     </p>
-    <div class="flex items-center gap-2">
-      <div class="flex items-center">
-        <!-- LinkedIn Icon & Link -->
-        <a
-          href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
-        >
-          <p class="text-xs font-expoArabicMedium text-brand">LinkedIn</p>
-          <img src="/icons/linkedin.svg" alt="User" class="h-4 w-4" />
-        </a>
-      </div>
-      <div class="flex items-center">
-        <!-- GitHub Icon & Link -->
-        <a
-          href="https://github.com/SloMR/pastepoint"
-          target="_blank"
-          rel="noopener noreferrer nofollow"
-          class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
-        >
-          <p class="text-xs font-expoArabicMedium text-brand">GitHub</p>
-          <img src="/icons/github.svg" alt="User" class="h-4 w-4" />
-        </a>
-      </div>
+
+    <!-- Social links -->
+    <div class="order-2 flex items-center gap-4">
+      <!-- LinkedIn -->
+      <a
+        href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-2 hover:underline text-brand dark:text-brandDark"
+      >
+        <span class="text-xs font-expoArabicMedium">LinkedIn</span>
+        <img
+          src="/icons/linkedin.svg"
+          alt="LinkedIn"
+          class="h-4 w-4"
+          loading="lazy"
+          width="16"
+          height="16"
+        />
+      </a>
+
+      <!-- GitHub -->
+      <a
+        href="https://github.com/SloMR/pastepoint"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        class="inline-flex items-center gap-2 hover:underline text-brand dark:text-brandDark"
+      >
+        <span class="text-xs font-expoArabicMedium">GitHub</span>
+        <img
+          src="/icons/github.svg"
+          alt="GitHub"
+          class="h-4 w-4"
+          loading="lazy"
+          width="16"
+          height="16"
+        />
+      </a>
     </div>
-    <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
-      {{ 'VERSION' | translate }} {{ appVersion }}
-    </p>
+
+    <!-- Version & Privacy -->
+    <div class="flex items-center gap-4 order-3">
+      <a
+        routerLink="/privacy"
+        class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+      >
+        <p class="text-xs font-expoArabicMedium text-brand">
+          {{ 'PRIVACY_AND_TERMS' | translate }}
+        </p>
+        <img
+          src="/icons/privacy-and-terms.svg"
+          alt="Privacy and Terms"
+          class="h-4 w-4"
+          loading="lazy"
+          width="16"
+          height="16"
+        />
+      </a>
+      <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+        {{ 'VERSION' | translate }} {{ appVersion }}
+      </p>
+    </div>
   </div>
 </div>
