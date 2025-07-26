@@ -220,6 +220,37 @@ export class MetaService {
     });
   }
 
+  /**
+   * Update metadata for Privacy and Terms component
+   */
+  public updatePrivacyAndTermsMetadata(): void {
+    this.update({
+      title: 'Privacy and Terms – Secure File Sharing & Encrypted Chat App',
+      description:
+        'Privacy policy and terms of service for PastePoint secure file sharing platform.',
+      robots: 'index, follow',
+      canonical: 'https://pastepoint.com/privacy',
+      og: {
+        title: 'Privacy and Terms – Secure File Sharing & Encrypted Chat App',
+        description:
+          'Privacy policy and terms of service for PastePoint secure file sharing platform.',
+        type: 'website',
+        url: 'https://pastepoint.com/privacy',
+        image: 'https://pastepoint.com/icons/pastepoint-light.svg',
+        siteName: 'PastePoint',
+      },
+      twitter: {
+        card: 'summary_large_image',
+        site: '@pastepoint',
+        creator: '@pastepoint',
+        title: 'Privacy and Terms – Secure File Sharing & Encrypted Chat App',
+        description:
+          'Privacy policy and terms of service for PastePoint secure file sharing platform.',
+        image: 'https://pastepoint.com/icons/pastepoint-light.svg',
+      },
+    });
+  }
+
   //=============================================================================
   // INDIVIDUAL META ELEMENT SETTERS
   // Methods for updating specific meta elements

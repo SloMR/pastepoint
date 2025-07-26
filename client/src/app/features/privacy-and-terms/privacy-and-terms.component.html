@@ -55,42 +55,92 @@
   </header>
 
   <!-- MARK: - Main Content Area -->
-  <main class="flex flex-1 items-center justify-center bg-pageBackground dark:bg-baseDark">
-    <div class="mx-auto max-w-md p-4 text-center">
-      <!-- MARK: - 404 Image -->
-      <img
-        [src]="isDarkMode ? '/icons/404-dark.svg' : '/icons/404-light.svg'"
-        alt="404"
-        class="mx-auto mb-4"
-        loading="lazy"
-        width="400"
-        height="300"
-      />
-      <!-- MARK: - Heading with Icon -->
-      <h2
-        class="mb-2 flex items-center justify-center gap-4 font-bold text-[28px] font-expoArabicMedium text-secondary-900 dark:text-white"
-      >
-        <!-- Exclamation circle -->
-        <div
-          class="flex items-center justify-center rounded-md w-[28px] h-[28px]"
-          [ngClass]="isDarkMode ? 'bg-brand' : 'bg-brandDark'"
-        >
-          <img
-            [src]="isDarkMode ? '/icons/warning-dark.svg' : '/icons/warning-light.svg'"
-            alt="warning"
-            loading="lazy"
-            width="28"
-            height="28"
-          />
-        </div>
-        {{ 'PAGE_NOT_FOUND' | translate }}
-      </h2>
-      <!-- MARK: - Description -->
-      <p class="mb-6 text-secondary-700 font-expoArabicMedium dark:text-secondary-300">
-        {{ 'INVALID_LINK_MESSAGE' | translate }}
+  <main class="flex-1 overflow-y-auto p-4 bg-pageBackground scrollbar dark:bg-baseDark md:p-8">
+    <div
+      class="mx-auto max-w-4xl text-left text-content dark:text-contentMuted"
+      [ngClass]="isRTL ? 'text-right' : 'text-left'"
+    >
+      <h1 class="mb-4 flex items-center gap-2 text-3xl font-bold text-text-primary dark:text-white">
+        <img
+          src="/icons/privacy-and-terms.svg"
+          alt="Privacy and Terms"
+          class="h-10 w-10"
+          loading="lazy"
+          width="40"
+          height="40"
+        />
+        {{ 'PRIVACY_AND_TERMS' | translate }}
+      </h1>
+      <p class="mb-8 text-sm text-text-secondary dark:text-textMuted">
+        {{ 'LAST_UPDATED' | translate }}
       </p>
+
+      <div class="space-y-6">
+        <section>
+          <h2 class="mb-3 text-2xl font-bold text-text-primary dark:text-white">
+            {{ 'DISCLAIMER_TITLE' | translate }}
+          </h2>
+          <div class="text-base space-y-4">
+            <p>{{ 'DISCLAIMER_INTRO' | translate }}</p>
+            <p>{{ 'DISCLAIMER_NO_GUARANTEES' | translate }}</p>
+            <p>{{ 'DISCLAIMER_NO_LIABILITY' | translate }}</p>
+            <p>{{ 'DISCLAIMER_USER_RESPONSIBILITY' | translate }}</p>
+            <p>{{ 'DISCLAIMER_NO_STORAGE' | translate }}</p>
+            <p>
+              {{ 'DISCLAIMER_FULL_REFERENCE' | translate }}
+              <a
+                href="https://github.com/SloMR/pastepoint/blob/main/DISCLAIMER.md"
+                target="_blank"
+                class="text-brand hover:underline"
+                >{{ 'DISCLAIMER_LINK_TEXT' | translate }}</a
+              >
+              {{ 'DISCLAIMER_LINK' | translate }}
+            </p>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="mt-8 mb-3 text-2xl font-bold text-text-primary dark:text-white">
+            {{ 'PRIVACY_TITLE' | translate }}
+          </h2>
+          <div class="text-base space-y-4">
+            <p>{{ 'PRIVACY_INTRO' | translate }}</p>
+            <p>{{ 'PRIVACY_NO_RETENTION' | translate }}</p>
+            <p>{{ 'PRIVACY_ENCRYPTION' | translate }}</p>
+            <p>{{ 'PRIVACY_COLLECTION' | translate }}</p>
+            <p>{{ 'PRIVACY_THIRD_PARTIES' | translate }}</p>
+            <p>{{ 'PRIVACY_CHANGES' | translate }}</p>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="mt-8 mb-3 text-2xl font-bold text-text-primary dark:text-white">
+            {{ 'TERMS_TITLE' | translate }}
+          </h2>
+          <div class="text-base space-y-4">
+            <p>{{ 'TERMS_AGREEMENT' | translate }}</p>
+            <p>{{ 'TERMS_INTENDED_USE' | translate }}</p>
+            <p>
+              {{ 'TERMS_LICENSE' | translate }}
+              <a
+                href="https://github.com/SloMR/pastepoint/blob/main/LICENSE"
+                target="_blank"
+                class="text-brand hover:underline"
+                >{{ 'TERMS_LICENSE_LINK_TEXT' | translate }}</a
+              >
+              {{ 'TERMS_LICENSE_LINK' | translate }}
+            </p>
+            <p>{{ 'TERMS_PROHIBITED' | translate }}</p>
+            <p>{{ 'TERMS_TERMINATION' | translate }}</p>
+            <p>{{ 'TERMS_GOVERNING_LAW' | translate }}</p>
+          </div>
+        </section>
+
+        <p class="mt-8 text-sm italic">{{ 'LEGAL_NOTICE' | translate }}</p>
+      </div>
+
       <!-- MARK: - Go Back Button -->
-      <div class="flex w-full items-center justify-center">
+      <div class="mt-8 flex items-center justify-center">
         <button
           class="flex items-center justify-center gap-2 rounded-md px-4 py-2 text-white font-expoArabicMedium bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
           routerLink="/"
@@ -99,9 +149,6 @@
             src="/icons/back-arrow.svg"
             alt="arrow-right"
             [ngClass]="isRTL ? 'rotate-0' : 'rotate-180'"
-            loading="lazy"
-            width="16"
-            height="16"
           />
           {{ 'GO_BACK_HOME' | translate }}
         </button>
@@ -156,28 +203,9 @@
         />
       </a>
     </div>
-
     <!-- Version & Privacy -->
-    <div class="order-3 flex items-center gap-4">
-      <a
-        routerLink="/privacy"
-        class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
-      >
-        <p class="text-xs font-expoArabicMedium text-brand">
-          {{ 'PRIVACY_AND_TERMS' | translate }}
-        </p>
-        <img
-          src="/icons/privacy-and-terms.svg"
-          alt="Privacy and Terms"
-          class="h-4 w-4"
-          loading="lazy"
-          width="16"
-          height="16"
-        />
-      </a>
-      <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
-        {{ 'VERSION' | translate }} {{ appVersion }}
-      </p>
-    </div>
+    <p class="order-3 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+      {{ 'VERSION' | translate }} {{ appVersion }}
+    </p>
   </div>
 </div>
