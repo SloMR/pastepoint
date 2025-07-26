@@ -618,7 +618,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       this.chatService.addMessageToLocal(this.message, ChatMessageType.TEXT);
       otherMembers.forEach(async (member) => {
-        await this.chatService.sendMessage(this.message, member, ChatMessageType.TEXT);
+        try {
+          await this.chatService.sendMessage(this.message, member, ChatMessageType.TEXT);
+        } catch (error) {
+          this.logger.error('sendMessage', `Failed to send message to ${member}: ${error}`);
+          this.toaster.error(this.translate.instant('FAILED_TO_SEND_MESSAGE', { member }));
+        }
       });
 
       this.ngZone.run(() => {
@@ -683,7 +688,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       this.chatService.addMessageToLocal(fileMessageText, ChatMessageType.ATTACHMENT);
       for (const member of otherMembers) {
-        await this.chatService.sendMessage(fileMessageText, member, ChatMessageType.ATTACHMENT);
+        try {
+          await this.chatService.sendMessage(fileMessageText, member, ChatMessageType.ATTACHMENT);
+        } catch (error) {
+          this.logger.error(
+            'createAndSendFileMessages',
+            `Failed to send file message to ${member}: ${error}`
+          );
+          this.toaster.error(this.translate.instant('FAILED_TO_SEND_FILE_MESSAGE', { member }));
+        }
       }
     }
   }
