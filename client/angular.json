@@ -35,7 +35,6 @@
               }
             ],
             "styles": [
-              "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.css",
               "node_modules/@ctrl/ngx-emoji-mart/picker.css",
               "node_modules/@ngneat/hot-toast/src/styles/styles.css"
@@ -165,7 +164,6 @@
               }
             ],
             "styles": [
-              "@angular/material/prebuilt-themes/azure-blue.css",
               "src/styles.css",
               "node_modules/@ctrl/ngx-emoji-mart/picker.css",
               "node_modules/@ngneat/hot-toast/src/styles/styles.css"
