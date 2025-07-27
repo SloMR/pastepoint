@@ -4,18 +4,17 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./features/chat/chat.component').then((m) => m.ChatComponent),
-    data: { preload: true },
+    data: { preload: 'critical' },
   },
   {
     path: 'private/:code',
     loadComponent: () => import('./features/chat/chat.component').then((m) => m.ChatComponent),
-    data: { preload: true },
+    data: { preload: 'critical' },
   },
   {
     path: '404',
     loadComponent: () =>
       import('./features/not-found/not-found.component').then((m) => m.NotFoundComponent),
-    data: { preload: true },
   },
   {
     path: 'privacy',
@@ -23,7 +22,6 @@ export const routes: Routes = [
       import('./features/privacy-and-terms/privacy-and-terms.component').then(
         (m) => m.PrivacyAndTermsComponent
       ),
-    data: { preload: true },
   },
   { path: '**', redirectTo: '404' },
 ];

@@ -61,7 +61,11 @@
                   "maximumError": "4kB"
                 }
               ],
-              "optimization": true,
+              "optimization": {
+                "scripts": true,
+                "styles": true,
+                "fonts": true
+              },
               "outputHashing": "media",
               "sourceMap": false,
               "namedChunks": false,
@@ -92,7 +96,11 @@
                   "maximumError": "4kB"
                 }
               ],
-              "optimization": true,
+              "optimization": {
+                "scripts": true,
+                "styles": true,
+                "fonts": true
+              },
               "outputHashing": "media",
               "sourceMap": false,
               "aot": true,

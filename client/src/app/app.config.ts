@@ -5,9 +5,10 @@ import {
   provideAppInitializer,
   provideZoneChangeDetection,
 } from '@angular/core';
-import { provideRouter, PreloadAllModules, withPreloading } from '@angular/router';
+import { provideRouter, withPreloading } from '@angular/router';
 
 import { routes } from './app.routes';
+import { SelectivePreloadingStrategy } from './core/services/ui/selective-preloading.strategy';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { InMemoryTranslateLoader } from './core/i18n/translate-loader';
@@ -43,7 +44,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideHttpClient(withFetch()),
     provideZoneChangeDetection({ eventCoalescing: true, runCoalescing: true }),
-    provideRouter(routes, withPreloading(PreloadAllModules)),
+    provideRouter(routes, withPreloading(SelectivePreloadingStrategy)),
     provideClientHydration(withEventReplay()),
     provideHotToastConfig({
       position: 'top-center',
