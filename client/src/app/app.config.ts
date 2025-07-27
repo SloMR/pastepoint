@@ -5,17 +5,16 @@ import {
   provideAppInitializer,
   provideZoneChangeDetection,
 } from '@angular/core';
-import { provideRouter, PreloadAllModules, withPreloading } from '@angular/router';
+import { provideRouter, withPreloading } from '@angular/router';
 
 import { routes } from './app.routes';
+import { SelectivePreloadingStrategy } from './core/services/ui/selective-preloading.strategy';
 import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
 import { TranslateLoader, TranslateModule } from '@ngx-translate/core';
 import { InMemoryTranslateLoader } from './core/i18n/translate-loader';
 import { ThemeService } from './core/services/ui/theme.service';
 import { LanguageService } from './core/services/ui/language.service';
 import { provideHttpClient, withFetch } from '@angular/common/http';
-import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { provideAnimations } from '@angular/platform-browser/animations';
 import { LoggerModule } from 'ngx-logger';
 import { environment } from '../environments/environment';
 import { DatePipe } from '@angular/common';
@@ -44,11 +43,9 @@ export function initializeLanguage(languageService: LanguageService): () => Prom
 export const appConfig: ApplicationConfig = {
   providers: [
     provideHttpClient(withFetch()),
-    provideAnimationsAsync(),
     provideZoneChangeDetection({ eventCoalescing: true, runCoalescing: true }),
-    provideRouter(routes, withPreloading(PreloadAllModules)),
+    provideRouter(routes, withPreloading(SelectivePreloadingStrategy)),
     provideClientHydration(withEventReplay()),
-    provideAnimations(),
     provideHotToastConfig({
       position: 'top-center',
       duration: 2000,

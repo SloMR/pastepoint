@@ -4,16 +4,19 @@
 
 @font-face {
   font-family: expo-arabic-bold;
+  font-display: swap;
   src: url('/fonts/expo-arabic-bold.ttf');
 }
 
 @font-face {
   font-family: expo-arabic-medium;
+  font-display: swap;
   src: url('/fonts/expo-arabic-medium.ttf');
 }
 
 @font-face {
   font-family: expo-arabic-light;
+  font-display: swap;
   src: url('/fonts/expo-arabic-light.ttf');
 }
 
