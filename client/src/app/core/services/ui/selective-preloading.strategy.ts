@@ -19,7 +19,6 @@ export class SelectivePreloadingStrategy implements PreloadingStrategy {
   preload(route: Route, fn: () => Observable<unknown>): Observable<unknown> {
     // Only preload routes that are explicitly marked as critical
     if (route.data && route.data['preload'] === 'critical') {
-      console.log('Preloading route:', route.path);
       return fn();
     }
 
