@@ -147,7 +147,7 @@ export class MetaService {
             'PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies.',
           type: 'website',
           url: 'https://pastepoint.com/',
-          image: 'https://pastepoint.com/icons/pastepoint-light.svg',
+          image: 'https://pastepoint.com/assets/pastepoint-banner.png',
           siteName: 'PastePoint',
         },
         twitter: {
@@ -157,7 +157,7 @@ export class MetaService {
           title: 'Private Session – Secure File Sharing & Encrypted Chat App',
           description:
             'PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies.',
-          image: 'https://pastepoint.com/icons/pastepoint-light.svg',
+          image: 'https://pastepoint.com/assets/pastepoint-banner.png',
         },
       });
     } else {
@@ -176,7 +176,7 @@ export class MetaService {
           description:
             'PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies.',
           type: 'website',
-          image: 'https://pastepoint.com/icons/pastepoint-light.svg',
+          image: 'https://pastepoint.com/assets/pastepoint-banner.png',
           siteName: 'PastePoint',
         },
         twitter: {
@@ -186,7 +186,7 @@ export class MetaService {
           title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
           description:
             'PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies.',
-          image: 'https://pastepoint.com/icons/pastepoint-light.svg',
+          image: 'https://pastepoint.com/assets/pastepoint-banner.png',
         },
       });
     }
@@ -206,7 +206,7 @@ export class MetaService {
         description: 'The page you are looking for could not be found.',
         type: 'website',
         url: 'https://pastepoint.com/404',
-        image: 'https://pastepoint.com/icons/pastepoint-light.svg',
+        image: 'https://pastepoint.com/assets/pastepoint-banner.png',
         siteName: 'PastePoint',
       },
       twitter: {
@@ -215,7 +215,7 @@ export class MetaService {
         creator: '@pastepoint',
         title: 'Page Not Found – Secure File Sharing & Encrypted Chat App',
         description: 'The page you are looking for could not be found.',
-        image: 'https://pastepoint.com/icons/pastepoint-light.svg',
+        image: 'https://pastepoint.com/assets/pastepoint-banner.png',
       },
     });
   }
@@ -236,7 +236,7 @@ export class MetaService {
           'Privacy policy and terms of service for PastePoint secure file sharing platform.',
         type: 'website',
         url: 'https://pastepoint.com/privacy',
-        image: 'https://pastepoint.com/icons/pastepoint-light.svg',
+        image: 'https://pastepoint.com/assets/pastepoint-banner.png',
         siteName: 'PastePoint',
       },
       twitter: {
@@ -246,7 +246,7 @@ export class MetaService {
         title: 'Privacy and Terms – Secure File Sharing & Encrypted Chat App',
         description:
           'Privacy policy and terms of service for PastePoint secure file sharing platform.',
-        image: 'https://pastepoint.com/icons/pastepoint-light.svg',
+        image: 'https://pastepoint.com/assets/pastepoint-banner.png',
       },
     });
   }
