@@ -140,10 +140,16 @@ pastepoint/
 - `scripts/generate-certs.sh`: Script to generate self-signed certificates
 - `scripts/configure-network.sh`: Script to configure the domain name for the local network (optional)
 - `nginx/nginx.conf`: Main Nginx configuration
-- `nginx/security_settings.conf`: Security and rate limiting settings
-- `nginx/security_headers.conf`: Security headers configuration
-- `nginx/locations.conf`: Location block configurations including SEO routes
 - `nginx/ssl.conf`: SSL/TLS settings
+- `nginx/locations.conf`: Location block configurations including SEO routes
+- `nginx/security/`: Security-related configurations
+  - `security_settings.conf`: Security and rate limiting settings
+  - `security_headers.conf`: Security headers configuration
+- `nginx/includes/`: Reusable configuration snippets
+  - `common_proxy_ssr.conf`: SSR proxy settings
+  - `common_proxy_ws.conf`: WebSocket proxy settings
+  - `common_cache_busting.conf`: No-cache headers
+  - `common_rate_limiting.conf`: Rate limiting status codes
 
 ## 🔧 Development Guide
 
