@@ -53,10 +53,8 @@ impl Handler<LeaveRoom> for WsChatServer {
 
                 self.broadcast_room_list(&msg.0);
 
-                if let Some(session_rooms) = self.rooms.get(&msg.0) {
-                    for room_name in session_rooms.keys() {
-                        self.broadcast_room_members(&msg.0, room_name);
-                    }
+                if self.rooms.contains_key(&msg.0) {
+                    self.broadcast_room_members(&msg.0, &msg.1);
                 }
 
                 log::debug!(
