@@ -7,7 +7,6 @@ use crate::{
     SessionStore,
 };
 use actix::prelude::*;
-use actix_broker::BrokerIssue;
 use actix_web_actors::ws;
 use fake::{
     faker::name::{en::FirstName, en::LastName},
@@ -50,7 +49,11 @@ impl WsChatSession {
         let name = self.name.clone();
         let leave_msg = LeaveRoom(self.session_id.clone(), self.room.clone(), self.id);
 
-        self.issue_system_sync(leave_msg, ctx);
+        WsChatServer::from_registry()
+            .send(leave_msg)
+            .into_actor(self)
+            .then(|_result, _act, _ctx| fut::ready(()))
+            .wait(ctx);
 
         let join_msg = JoinRoom(
             self.session_id.clone(),
@@ -177,7 +180,7 @@ impl WsChatSession {
 
     fn handle_user_disconnect(&self) {
         let leave_msg = LeaveRoom(self.session_id.clone(), self.room.clone(), self.id);
-        self.issue_system_async(leave_msg);
+        WsChatServer::from_registry().do_send(leave_msg);
         log::debug!(target: "Websocket", "User {} disconnected", self.name);
     }
 

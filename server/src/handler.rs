@@ -52,7 +52,12 @@ impl Handler<LeaveRoom> for WsChatServer {
                 }
 
                 self.broadcast_room_list(&msg.0);
-                self.broadcast_room_members(&msg.0, &msg.1);
+
+                if let Some(session_rooms) = self.rooms.get(&msg.0) {
+                    for room_name in session_rooms.keys() {
+                        self.broadcast_room_members(&msg.0, room_name);
+                    }
+                }
 
                 log::debug!(
                     target: "Websocket",
@@ -112,7 +117,13 @@ impl Handler<RelaySignalMessage> for WsChatServer {
             for room in rooms.values() {
                 for client in room.values() {
                     if client.name == to {
-                        client.recipient.do_send(message.clone());
+                        if client.recipient.try_send(message.clone()).is_err() {
+                            log::debug!(
+                                target: "Websocket",
+                                "Failed to relay signal to '{}', client may have disconnected",
+                                to
+                            );
+                        }
                         return;
                     }
                 }

@@ -1,5 +1,5 @@
 use crate::{LeaveRoom, WsChatServer, WsChatSession};
-use actix::{prelude::Actor, Context};
+use actix::{prelude::Actor, Context, SystemService};
 use actix_broker::BrokerSubscribe;
 use actix_web_actors::ws;
 use rand::{rng, Rng};
@@ -44,6 +44,17 @@ impl Actor for WsChatSession {
             self.id,
             self.room
         );
+
+        if !self.room.is_empty() {
+            let leave_msg = LeaveRoom(self.session_id.clone(), self.room.clone(), self.id);
+            WsChatServer::from_registry().do_send(leave_msg);
+            log::debug!(
+                target: "Websocket",
+                "Sent LeaveRoom message for user {} leaving room {}",
+                self.name,
+                self.room
+            );
+        }
 
         if let Ok(uuid) = Uuid::parse_str(&self.session_id) {
             log::debug!(target: "Websocket","Removing client {} from session", uuid);

@@ -1,7 +1,4 @@
-use crate::{
-    message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer},
-    LeaveRoom,
-};
+use crate::message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer};
 use actix::prelude::*;
 use rand::{rng, Rng};
 use std::{
@@ -150,9 +147,17 @@ impl WsChatServer {
                 let member_message = format!("[SystemMembers] {}", member_list.join(", "));
 
                 for client_metadata in room.values() {
-                    client_metadata
+                    if client_metadata
                         .recipient
-                        .do_send(ChatMessage(member_message.clone()));
+                        .try_send(ChatMessage(member_message.clone()))
+                        .is_err()
+                    {
+                        log::debug!(
+                            target: "Websocket",
+                            "Failed to send member list to client {}, client may have disconnected",
+                            client_metadata.name
+                        );
+                    }
                 }
             }
         }
@@ -173,22 +178,6 @@ impl WsChatServer {
             }
         }
         self.broadcast_room_list(session_id);
-    }
-
-    pub fn handle_leave_room(&mut self, msg: LeaveRoom) {
-        if let Some(rooms) = self.rooms.get_mut(&msg.0) {
-            if let Some(room) = rooms.get_mut(&msg.1) {
-                room.remove(&msg.2);
-
-                if room.is_empty() && msg.1 != "main" {
-                    rooms.remove(&msg.1);
-                }
-
-                self.remove_empty_rooms(&msg.0);
-                self.broadcast_room_list(&msg.0);
-                self.broadcast_room_members(&msg.0, &msg.1);
-            }
-        }
     }
 
     pub fn start_cleanup_interval(&self, ctx: &mut Context<Self>) {
