@@ -1060,17 +1060,17 @@
                       {{ message.from }}
                     </span>
                     <div
-                      class="flex flex-col w-full rounded-xl p-3 bg-brand min-h-[65px] dark:bg-brandDark"
+                      class="flex w-full flex-col rounded-xl p-3 bg-brand min-h-[65px] dark:bg-brandDark"
                       [ngClass]="isRTL ? 'rounded-tr-none' : 'rounded-tl-none'"
                     >
-                      <div class="flex-1 mb-2">
+                      <div class="mb-2 flex-1">
                         <p
-                          class="text-white text-[18px] font-expoArabic break-all whitespace-pre-wrap"
+                          class="whitespace-pre-wrap break-all text-white text-[18px] font-expoArabic"
                           *ngIf="message.type === ChatMessageType.TEXT"
                           [innerHTML]="convertUrlsToLinks(message.text, isDarkMode, false)"
                         ></p>
                         <p
-                          class="flex items-center gap-2 text-xs text-white font-expoArabic break-all"
+                          class="flex items-center gap-2 break-all text-xs text-white font-expoArabic"
                           *ngIf="message.type === ChatMessageType.ATTACHMENT"
                         >
                           <img
@@ -1111,17 +1111,17 @@
                         {{ message.from }}
                       </span>
                       <div
-                        class="flex flex-col w-full rounded-xl p-3 bg-messageBackground min-h-[65px] dark:bg-surfaceDark my-2"
+                        class="my-2 flex w-full flex-col rounded-xl p-3 bg-messageBackground min-h-[65px] dark:bg-surfaceDark"
                         [ngClass]="isRTL ? 'rounded-tl-none' : 'rounded-tr-none'"
                       >
-                        <div class="flex-1 mb-2">
+                        <div class="mb-2 flex-1">
                           <p
-                            class="text-[18px] font-expoArabic text-content dark:text-contentMuted break-all whitespace-pre-wrap"
+                            class="whitespace-pre-wrap break-all text-[18px] font-expoArabic text-content dark:text-contentMuted"
                             *ngIf="message.type === ChatMessageType.TEXT"
                             [innerHTML]="convertUrlsToLinks(message.text, isDarkMode, true)"
                           ></p>
                           <p
-                            class="flex items-center gap-2 text-xs font-expoArabic text-content dark:text-contentMuted break-all"
+                            class="flex items-center gap-2 break-all text-xs font-expoArabic text-content dark:text-contentMuted"
                             *ngIf="message.type === ChatMessageType.ATTACHMENT"
                           >
                             <img
@@ -1261,7 +1261,7 @@
                 [(ngModel)]="message"
                 name="message"
                 rows="1"
-                class="w-full resize-none rounded-lg border-none bg-transparent px-0 py-2 font-medium outline-none font-expoArabicMedium text-content dark:text-contentMuted min-h-[40px] max-h-[120px] overflow-hidden"
+                class="w-full resize-none overflow-hidden rounded-lg border-none bg-transparent px-0 py-2 font-medium outline-none font-expoArabicMedium text-content min-h-[40px] max-h-[120px] dark:text-contentMuted"
                 [placeholder]="(isDragging ? 'DROP_FILES_HERE' : 'TYPE_YOUR_MESSAGE') | translate"
                 (keydown.enter)="onEnterKey($any($event), messageForm)"
                 (input)="autoResizeTextarea()"

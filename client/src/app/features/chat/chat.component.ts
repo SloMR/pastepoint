@@ -25,7 +25,7 @@ import {
   SlicePipe,
   UpperCasePipe,
 } from '@angular/common';
-import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import { DomSanitizer } from '@angular/platform-browser';
 import Autolinker from 'autolinker';
 
 import { ThemeService } from '../../core/services/ui/theme.service';
@@ -60,6 +60,7 @@ import { LanguageCode } from '../../core/i18n/translate-loader';
 import { Router } from '@angular/router';
 import { HotToastService } from '@ngneat/hot-toast';
 import * as QRCode from 'qrcode';
+import { SecurityContext } from '@angular/core';
 
 /**
  * ==========================================================
@@ -708,10 +709,21 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     text: string,
     isDarkMode: boolean,
     isMyMessage: boolean = false
-  ): SafeHtml {
-    if (!text) return this.sanitizer.bypassSecurityTrustHtml('');
+  ): string {
+    if (!text) return this.sanitizer.sanitize(SecurityContext.HTML, '') || '';
 
-    let processedText = text.replace(/\n/g, '<br>');
+    const escapeHtml = (unsafe: string): string => {
+      return unsafe
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
+    let processedText = escapeHtml(text);
+    processedText = processedText.replace(/\n/g, '<br>');
+
     let linkClasses = '';
     if (isMyMessage) {
       if (isDarkMode) {
@@ -731,9 +743,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       hashtag: false,
       newWindow: true,
       className: linkClasses,
+      stripPrefix: false,
+      sanitizeHtml: false,
     });
 
-    return this.sanitizer.bypassSecurityTrustHtml(textWithLinks);
+    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, textWithLinks);
+    return sanitizedHtml || '';
   }
 
   /**
