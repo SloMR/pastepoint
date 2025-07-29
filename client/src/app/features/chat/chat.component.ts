@@ -25,6 +25,8 @@ import {
   SlicePipe,
   UpperCasePipe,
 } from '@angular/common';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
+import Autolinker from 'autolinker';
 
 import { ThemeService } from '../../core/services/ui/theme.service';
 import { ChatService } from '../../core/services/communication/chat.service';
@@ -195,6 +197,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private migrationService: MigrationService,
     private metaService: MetaService,
     private router: Router,
+    private sanitizer: DomSanitizer,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
@@ -658,6 +661,44 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   trackMessage(index: number, message: ChatMessage): string {
     return message.text + index;
+  }
+
+  /**
+   * ==========================================================
+   * CONVERT URLS TO LINKS
+   * Detects URLs in message text and converts them to clickable links
+   * ==========================================================
+   */
+  protected convertUrlsToLinks(
+    text: string,
+    isDarkMode: boolean,
+    isMyMessage: boolean = false
+  ): SafeHtml {
+    if (!text) return this.sanitizer.bypassSecurityTrustHtml('');
+
+    let processedText = text.replace(/\n/g, '<br>');
+    let linkClasses = '';
+    if (isMyMessage) {
+      if (isDarkMode) {
+        linkClasses = 'text-blue-400 hover:text-blue-800 underline break-all';
+      } else {
+        linkClasses = 'text-blue-600 hover:text-blue-400 underline break-all';
+      }
+    } else {
+      linkClasses = 'text-blue-200 hover:text-blue-500 underline break-all';
+    }
+
+    const textWithLinks = Autolinker.link(processedText, {
+      urls: true,
+      email: false,
+      phone: false,
+      mention: false,
+      hashtag: false,
+      newWindow: true,
+      className: linkClasses,
+    });
+
+    return this.sanitizer.bypassSecurityTrustHtml(textWithLinks);
   }
 
   /**

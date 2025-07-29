@@ -1060,32 +1060,33 @@
                       {{ message.from }}
                     </span>
                     <div
-                      class="relative w-full rounded-xl p-3 bg-brand min-h-[65px] dark:bg-brandDark"
+                      class="flex flex-col w-full rounded-xl p-3 bg-brand min-h-[65px] dark:bg-brandDark"
                       [ngClass]="isRTL ? 'rounded-tr-none' : 'rounded-tl-none'"
                     >
-                      <p
-                        class="text-white text-[18px] font-expoArabic"
-                        *ngIf="message.type === ChatMessageType.TEXT"
-                      >
-                        {{ message.text }}
-                      </p>
-                      <p
-                        class="flex items-center gap-2 text-xs text-white font-expoArabic"
-                        *ngIf="message.type === ChatMessageType.ATTACHMENT"
-                      >
-                        <img
-                          src="/icons/file-white.svg"
-                          alt="File"
-                          class="h-4 w-4"
-                          loading="lazy"
-                          width="16"
-                          height="16"
-                        />
-                        {{ message.text | slice: 0 : 65 }}...
-                      </p>
+                      <div class="flex-1 mb-2">
+                        <p
+                          class="text-white text-[18px] font-expoArabic break-all whitespace-pre-wrap"
+                          *ngIf="message.type === ChatMessageType.TEXT"
+                          [innerHTML]="convertUrlsToLinks(message.text, isDarkMode, false)"
+                        ></p>
+                        <p
+                          class="flex items-center gap-2 text-xs text-white font-expoArabic break-all"
+                          *ngIf="message.type === ChatMessageType.ATTACHMENT"
+                        >
+                          <img
+                            src="/icons/file-white.svg"
+                            alt="File"
+                            class="h-4 w-4"
+                            loading="lazy"
+                            width="16"
+                            height="16"
+                          />
+                          {{ message.text | slice: 0 : 65 }}...
+                        </p>
+                      </div>
                       <div
-                        class="absolute bottom-0 flex items-center justify-end gap-2"
-                        [ngClass]="!isRTL ? 'right-3' : 'left-3'"
+                        class="flex items-center gap-2"
+                        [ngClass]="!isRTL ? 'justify-end' : 'justify-start'"
                       >
                         <span class="text-xs leading-6 text-white font-expoArabic">
                           {{ message.timestamp | date: 'shortTime' }}
@@ -1110,32 +1111,33 @@
                         {{ message.from }}
                       </span>
                       <div
-                        class="relative w-full rounded-xl p-3 bg-messageBackground min-h-[65px] dark:bg-surfaceDark"
+                        class="flex flex-col w-full rounded-xl p-3 bg-messageBackground min-h-[65px] dark:bg-surfaceDark my-2"
                         [ngClass]="isRTL ? 'rounded-tl-none' : 'rounded-tr-none'"
                       >
-                        <p
-                          class="text-[18px] font-expoArabic text-content dark:text-contentMuted"
-                          *ngIf="message.type === ChatMessageType.TEXT"
-                        >
-                          {{ message.text }}
-                        </p>
-                        <p
-                          class="flex items-center gap-2 text-xs font-expoArabic text-content dark:text-contentMuted"
-                          *ngIf="message.type === ChatMessageType.ATTACHMENT"
-                        >
-                          <img
-                            [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
-                            alt="File"
-                            class="h-4 w-4"
-                            loading="lazy"
-                            width="16"
-                            height="16"
-                          />
-                          {{ message.text | slice: 0 : 65 }}...
-                        </p>
+                        <div class="flex-1 mb-2">
+                          <p
+                            class="text-[18px] font-expoArabic text-content dark:text-contentMuted break-all whitespace-pre-wrap"
+                            *ngIf="message.type === ChatMessageType.TEXT"
+                            [innerHTML]="convertUrlsToLinks(message.text, isDarkMode, true)"
+                          ></p>
+                          <p
+                            class="flex items-center gap-2 text-xs font-expoArabic text-content dark:text-contentMuted break-all"
+                            *ngIf="message.type === ChatMessageType.ATTACHMENT"
+                          >
+                            <img
+                              [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
+                              alt="File"
+                              class="h-4 w-4"
+                              loading="lazy"
+                              width="16"
+                              height="16"
+                            />
+                            {{ message.text | slice: 0 : 65 }}...
+                          </p>
+                        </div>
                         <div
-                          class="absolute bottom-0 flex items-center justify-end gap-2"
-                          [ngClass]="!isRTL ? 'right-3' : 'left-3'"
+                          class="flex items-center gap-2"
+                          [ngClass]="!isRTL ? 'justify-end' : 'justify-start'"
                         >
                           <span
                             class="text-xs leading-6 font-expoArabic text-content dark:text-contentMuted"
