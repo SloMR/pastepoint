@@ -25,6 +25,8 @@ import {
   SlicePipe,
   UpperCasePipe,
 } from '@angular/common';
+import { DomSanitizer } from '@angular/platform-browser';
+import Autolinker from 'autolinker';
 
 import { ThemeService } from '../../core/services/ui/theme.service';
 import { ChatService } from '../../core/services/communication/chat.service';
@@ -58,6 +60,7 @@ import { LanguageCode } from '../../core/i18n/translate-loader';
 import { Router } from '@angular/router';
 import { HotToastService } from '@ngneat/hot-toast';
 import * as QRCode from 'qrcode';
+import { SecurityContext } from '@angular/core';
 
 /**
  * ==========================================================
@@ -166,6 +169,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   @ViewChild('messageContainer') messageContainer!: ElementRef;
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
+  @ViewChild('messageTextarea', { static: false }) messageTextarea!: ElementRef;
   @ViewChild('qrCodeContainer', { static: false }) qrCodeContainer!: ElementRef;
 
   /**
@@ -195,6 +199,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private migrationService: MigrationService,
     private metaService: MetaService,
     private router: Router,
+    private sanitizer: DomSanitizer,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
@@ -432,6 +437,33 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
+   * AUTO RESIZE TEXTAREA
+   * Automatically adjusts textarea height based on content
+   * with a maximum height limit
+   * ==========================================================
+   */
+  protected autoResizeTextarea(): void {
+    if (!isPlatformBrowser(this.platformId) || !this.messageTextarea?.nativeElement) {
+      return;
+    }
+
+    const textarea = this.messageTextarea.nativeElement;
+    const maxHeight = 120;
+    const minHeight = 40;
+
+    textarea.style.height = 'auto';
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+    textarea.style.height = newHeight + 'px';
+
+    if (textarea.scrollHeight > maxHeight) {
+      textarea.style.overflowY = 'auto';
+    } else {
+      textarea.style.overflowY = 'hidden';
+    }
+  }
+
+  /**
+   * ==========================================================
    * INITIALIZE CHAT
    * Subscribes to relevant observables and updates local
    * properties to reflect chat state (messages, rooms, etc.).
@@ -531,6 +563,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.messageInput?.nativeElement) {
       this.messageInput.nativeElement.focus();
     }
+
+    requestAnimationFrame(() => {
+      this.autoResizeTextarea();
+    });
   }
 
   /**
@@ -644,6 +680,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         messageForm.resetForm({ message: '' });
         this.cdr.detectChanges();
         this.scrollToBottom();
+        requestAnimationFrame(() => {
+          this.autoResizeTextarea();
+        });
       });
     } else {
       this.toaster.warning(this.translate.instant('MESSAGE_REQUIRED'));
@@ -658,6 +697,58 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   trackMessage(index: number, message: ChatMessage): string {
     return message.text + index;
+  }
+
+  /**
+   * ==========================================================
+   * CONVERT URLS TO LINKS
+   * Detects URLs in message text and converts them to clickable links
+   * ==========================================================
+   */
+  protected convertUrlsToLinks(
+    text: string,
+    isDarkMode: boolean,
+    isMyMessage: boolean = false
+  ): string {
+    if (!text) return this.sanitizer.sanitize(SecurityContext.HTML, '') || '';
+
+    const escapeHtml = (unsafe: string): string => {
+      return unsafe
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
+    let processedText = escapeHtml(text);
+    processedText = processedText.replace(/\n/g, '<br>');
+
+    let linkClasses = '';
+    if (isMyMessage) {
+      if (isDarkMode) {
+        linkClasses = 'text-blue-400 hover:text-blue-800 underline break-all';
+      } else {
+        linkClasses = 'text-blue-600 hover:text-blue-400 underline break-all';
+      }
+    } else {
+      linkClasses = 'text-blue-200 hover:text-blue-500 underline break-all';
+    }
+
+    const textWithLinks = Autolinker.link(processedText, {
+      urls: true,
+      email: false,
+      phone: false,
+      mention: false,
+      hashtag: false,
+      newWindow: true,
+      className: linkClasses,
+      stripPrefix: false,
+      sanitizeHtml: false,
+    });
+
+    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, textWithLinks);
+    return sanitizedHtml || '';
   }
 
   /**
