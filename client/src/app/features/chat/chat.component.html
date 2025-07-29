@@ -1226,7 +1226,7 @@
           class="flex w-full"
         >
           <div
-            class="relative mt-6 mb-0 flex w-full items-center justify-end gap-2 rounded-xl p-4 pt-0 pb-0 h-[110px]"
+            class="relative mt-6 mb-0 flex w-full items-center justify-end gap-2 rounded-xl p-4 pt-0 pb-0 min-h-[110px]"
             [ngClass]="
               message.length > 0
                 ? 'border border-inputBackground dark:border-textVeryMuted '
@@ -1255,14 +1255,17 @@
                 <span class="text-xs font-medium">{{ 'DROP_FILES_HERE' | translate }}</span>
               </div>
             </div>
-            <div class="flex w-full flex-col">
+            <div class="flex w-full flex-col items-stretch">
               <textarea
+                #messageTextarea
                 [(ngModel)]="message"
                 name="message"
                 rows="1"
-                class="w-full resize-none rounded-lg border-none bg-transparent px-0 py-2 font-medium outline-none font-expoArabicMedium text-content dark:text-contentMuted"
+                class="w-full resize-none rounded-lg border-none bg-transparent px-0 py-2 font-medium outline-none font-expoArabicMedium text-content dark:text-contentMuted min-h-[40px] max-h-[120px] overflow-hidden"
                 [placeholder]="(isDragging ? 'DROP_FILES_HERE' : 'TYPE_YOUR_MESSAGE') | translate"
                 (keydown.enter)="onEnterKey($any($event), messageForm)"
+                (input)="autoResizeTextarea()"
+                (ngModelChange)="autoResizeTextarea()"
               >
               </textarea>
 

@@ -168,6 +168,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   @ViewChild('messageContainer') messageContainer!: ElementRef;
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
+  @ViewChild('messageTextarea', { static: false }) messageTextarea!: ElementRef;
   @ViewChild('qrCodeContainer', { static: false }) qrCodeContainer!: ElementRef;
 
   /**
@@ -435,6 +436,33 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
+   * AUTO RESIZE TEXTAREA
+   * Automatically adjusts textarea height based on content
+   * with a maximum height limit
+   * ==========================================================
+   */
+  protected autoResizeTextarea(): void {
+    if (!isPlatformBrowser(this.platformId) || !this.messageTextarea?.nativeElement) {
+      return;
+    }
+
+    const textarea = this.messageTextarea.nativeElement;
+    const maxHeight = 120;
+    const minHeight = 40;
+
+    textarea.style.height = 'auto';
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight);
+    textarea.style.height = newHeight + 'px';
+
+    if (textarea.scrollHeight > maxHeight) {
+      textarea.style.overflowY = 'auto';
+    } else {
+      textarea.style.overflowY = 'hidden';
+    }
+  }
+
+  /**
+   * ==========================================================
    * INITIALIZE CHAT
    * Subscribes to relevant observables and updates local
    * properties to reflect chat state (messages, rooms, etc.).
@@ -534,6 +562,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.messageInput?.nativeElement) {
       this.messageInput.nativeElement.focus();
     }
+
+    requestAnimationFrame(() => {
+      this.autoResizeTextarea();
+    });
   }
 
   /**
@@ -647,6 +679,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         messageForm.resetForm({ message: '' });
         this.cdr.detectChanges();
         this.scrollToBottom();
+        requestAnimationFrame(() => {
+          this.autoResizeTextarea();
+        });
       });
     } else {
       this.toaster.warning(this.translate.instant('MESSAGE_REQUIRED'));
