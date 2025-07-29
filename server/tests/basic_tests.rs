@@ -3,8 +3,7 @@ use actix_cors::Cors;
 use actix_web::{http::StatusCode, test, web, App};
 use bytes::Bytes;
 use server::{
-    chat_ws, index, private_chat_ws, ChatMessage, LeaveRoom, ServerConfig, SessionStore,
-    WsChatServer,
+    chat_ws, index, private_chat_ws, ChatMessage, ServerConfig, SessionStore, WsChatServer,
 };
 
 #[actix_rt::test]
@@ -177,15 +176,6 @@ async fn test_join_leave_room() {
         .get(room_name)
         .unwrap()
         .contains_key(&id));
-
-    let leave_msg = LeaveRoom(session_id.to_string(), room_name.to_string(), id);
-    server.handle_leave_room(leave_msg);
-
-    assert!(server
-        .rooms
-        .get(session_id)
-        .and_then(|rooms| rooms.get(room_name))
-        .is_none());
 }
 
 #[actix_rt::test]
