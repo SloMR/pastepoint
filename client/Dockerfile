@@ -59,7 +59,6 @@ COPY --from=builder /usr/src/app/dist/client/browser/sitemap.xml /usr/share/ngin
 
 # Copy nginx config files
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf.template
-COPY nginx/ssl.conf /etc/nginx/ssl.conf
 COPY nginx/locations.conf /etc/nginx/locations.conf
 COPY nginx/security/ /etc/nginx/security/
 COPY nginx/includes/ /etc/nginx/includes/
