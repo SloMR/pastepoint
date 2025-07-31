@@ -60,7 +60,9 @@
       class="mx-auto max-w-4xl text-left text-content dark:text-contentMuted"
       [ngClass]="isRTL ? 'text-right' : 'text-left'"
     >
-      <h1 class="mb-4 flex items-center gap-2 text-3xl font-bold text-text-primary dark:text-white">
+      <h1
+        class="mb-4 flex items-center gap-2 text-3xl font-expoArabicBold text-text-primary dark:text-white"
+      >
         <img
           src="/icons/privacy-and-terms.svg"
           alt="Privacy and Terms"
@@ -71,16 +73,16 @@
         />
         {{ 'PRIVACY_AND_TERMS' | translate }}
       </h1>
-      <p class="mb-8 text-sm text-text-secondary dark:text-textMuted">
+      <p class="mb-8 text-sm font-expoArabicMedium text-text-secondary dark:text-textMuted">
         {{ 'LAST_UPDATED' | translate }}
       </p>
 
       <div class="space-y-6">
         <section>
-          <h2 class="mb-3 text-2xl font-bold text-text-primary dark:text-white">
+          <h2 class="mb-3 text-2xl font-expoArabicBold text-text-primary dark:text-white">
             {{ 'DISCLAIMER_TITLE' | translate }}
           </h2>
-          <div class="text-base space-y-4">
+          <div class="text-base space-y-4 font-expoArabicLight">
             <p>{{ 'DISCLAIMER_INTRO' | translate }}</p>
             <p>{{ 'DISCLAIMER_NO_GUARANTEES' | translate }}</p>
             <p>{{ 'DISCLAIMER_NO_LIABILITY' | translate }}</p>
@@ -100,10 +102,10 @@
         </section>
 
         <section>
-          <h2 class="mt-8 mb-3 text-2xl font-bold text-text-primary dark:text-white">
+          <h2 class="mt-8 mb-3 text-2xl font-expoArabicBold text-text-primary dark:text-white">
             {{ 'PRIVACY_TITLE' | translate }}
           </h2>
-          <div class="text-base space-y-4">
+          <div class="text-base space-y-4 font-expoArabicLight">
             <p>{{ 'PRIVACY_INTRO' | translate }}</p>
             <p>{{ 'PRIVACY_NO_RETENTION' | translate }}</p>
             <p>{{ 'PRIVACY_ENCRYPTION' | translate }}</p>
@@ -114,10 +116,10 @@
         </section>
 
         <section>
-          <h2 class="mt-8 mb-3 text-2xl font-bold text-text-primary dark:text-white">
+          <h2 class="mt-8 mb-3 text-2xl font-expoArabicBold text-text-primary dark:text-white">
             {{ 'TERMS_TITLE' | translate }}
           </h2>
-          <div class="text-base space-y-4">
+          <div class="text-base space-y-4 font-expoArabicLight">
             <p>{{ 'TERMS_AGREEMENT' | translate }}</p>
             <p>{{ 'TERMS_INTENDED_USE' | translate }}</p>
             <p>
@@ -136,7 +138,7 @@
           </div>
         </section>
 
-        <p class="mt-8 text-sm italic">{{ 'LEGAL_NOTICE' | translate }}</p>
+        <p class="mt-8 text-sm italic font-expoArabicLight">{{ 'LEGAL_NOTICE' | translate }}</p>
       </div>
 
       <!-- MARK: - Go Back Button -->
@@ -160,28 +162,22 @@
   <div
     class="flex w-full flex-col items-center gap-2 border-t px-4 py-4 dark:bg-baseDark dark:border-surfaceDark md:h-[58px] md:flex-row md:items-center md:justify-between md:px-8 md:py-0"
   >
-    <!-- ©2025 -->
-    <p class="order-1 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
-      {{ 'COPYRIGHT_NOTICE' | translate }}
-    </p>
-
     <!-- Social links -->
-    <div class="order-2 flex items-center gap-4">
+    <div class="order-1 flex items-center gap-4 md:order-2">
       <!-- LinkedIn -->
       <a
         href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
         target="_blank"
-        rel="noopener noreferrer"
-        class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+        rel="noopener noreferrer nofollow"
+        class="inline-flex items-center gap-2 hover:opacity-75"
       >
-        <span class="text-xs font-expoArabicMedium">LinkedIn</span>
         <img
           src="/icons/linkedin.svg"
           alt="LinkedIn"
-          class="h-4 w-4"
+          class="h-6 w-6"
           loading="lazy"
-          width="16"
-          height="16"
+          width="24"
+          height="24"
         />
       </a>
 
@@ -190,22 +186,64 @@
         href="https://github.com/SloMR/pastepoint"
         target="_blank"
         rel="noopener noreferrer nofollow"
-        class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+        class="inline-flex items-center gap-2 hover:opacity-75"
       >
-        <span class="text-xs font-expoArabicMedium">GitHub</span>
         <img
           src="/icons/github.svg"
           alt="GitHub"
-          class="h-4 w-4"
+          class="h-6 w-6"
           loading="lazy"
-          width="16"
-          height="16"
+          width="24"
+          height="24"
+        />
+      </a>
+
+      <!-- X -->
+      <a
+        href="https://x.com/PastePoint"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        class="inline-flex items-center gap-2 hover:opacity-75"
+      >
+        <img
+          src="/icons/x-icon.svg"
+          alt="X"
+          class="h-6 w-6"
+          loading="lazy"
+          width="24"
+          height="24"
+        />
+      </a>
+
+      <!-- Instagram -->
+      <a
+        href="https://www.instagram.com/paste_point/"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        class="inline-flex items-center gap-2 hover:opacity-75"
+      >
+        <img
+          src="/icons/instagram-icon.svg"
+          alt="Instagram"
+          class="h-6 w-6"
+          loading="lazy"
+          width="24"
+          height="24"
         />
       </a>
     </div>
     <!-- Version & Privacy -->
-    <p class="order-3 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+    <p
+      class="order-2 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted md:order-3"
+    >
       {{ 'VERSION' | translate }} {{ appVersion }}
+    </p>
+
+    <!-- ©2025 -->
+    <p
+      class="order-3 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted md:order-1"
+    >
+      {{ 'COPYRIGHT_NOTICE' | translate }}
     </p>
   </div>
 </div>
