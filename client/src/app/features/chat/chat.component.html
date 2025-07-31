@@ -788,13 +788,8 @@
       <div
         class="flex w-full flex-col items-center gap-2 border-t px-4 py-4 dark:bg-baseDark dark:border-surfaceDark md:h-[58px] md:flex-row md:items-center md:justify-between md:px-8 md:py-0"
       >
-        <!-- ©2025 Mobile -->
-        <p class="order-1 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
-          {{ 'COPYRIGHT_NOTICE' | translate }}
-        </p>
-
         <!-- Social links Mobile -->
-        <div class="order-2 flex items-center gap-4">
+        <div class="order-1 flex items-center gap-4">
           <!-- LinkedIn Mobile -->
           <a
             href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
@@ -802,7 +797,6 @@
             rel="noopener noreferrer"
             class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
           >
-            <span class="text-xs font-expoArabicMedium">LinkedIn</span>
             <img
               src="/icons/linkedin.svg"
               alt="LinkedIn"
@@ -820,7 +814,6 @@
             rel="noopener noreferrer nofollow"
             class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
           >
-            <span class="text-xs font-expoArabicMedium">GitHub</span>
             <img
               src="/icons/github.svg"
               alt="GitHub"
@@ -830,15 +823,47 @@
               height="16"
             />
           </a>
+          <!-- X Icon & Link -->
+          <a
+            href="https://x.com/PastePoint"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2"
+          >
+            <img
+              src="/icons/x-icon.svg"
+              alt="X (Twitter)"
+              class="h-4 w-4"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
+          </a>
+          <!-- Instagram Icon & Link -->
+          <a
+            href="https://www.instagram.com/paste_point/"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2"
+          >
+            <img
+              src="/icons/instagram-icon.svg"
+              alt="Instagram"
+              class="h-4 w-4"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
+          </a>
         </div>
 
         <!-- Version & Privacy Mobile -->
-        <div class="order-3 flex items-center gap-2">
+        <div class="order-2 flex items-center gap-2">
           <a
             href="/privacy"
             target="_self"
             rel="noopener noreferrer"
-            class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+            class="inline-flex items-center gap-2 underline text-brand hover:underline dark:text-brandDark"
           >
             <p class="text-xs font-expoArabicMedium text-brand">
               {{ 'PRIVACY_AND_TERMS' | translate }}
@@ -852,10 +877,16 @@
               height="16"
             />
           </a>
-          <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
-            {{ 'VERSION' | translate }} {{ appVersion }}
-          </p>
         </div>
+
+        <p class="order-3 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+          {{ 'VERSION' | translate }} {{ appVersion }}
+        </p>
+
+        <!-- ©2025 Mobile -->
+        <p class="order-4 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+          {{ 'COPYRIGHT_NOTICE' | translate }}
+        </p>
       </div>
     </div>
   </aside>
@@ -1350,23 +1381,22 @@
       <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
         {{ 'COPYRIGHT_NOTICE' | translate }}
       </p>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3">
         <div class="flex items-center">
           <!-- LinkedIn Icon & Link -->
           <a
             href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
             target="_blank"
             rel="noopener noreferrer"
-            class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+            class="inline-flex items-center gap-2"
           >
-            <p class="text-xs font-expoArabicMedium text-brand">LinkedIn</p>
             <img
               src="/icons/linkedin.svg"
               alt="LinkedIn"
-              class="h-4 w-4"
+              class="h-6 w-6"
               loading="lazy"
-              width="16"
-              height="16"
+              width="24"
+              height="24"
             />
           </a>
         </div>
@@ -1376,16 +1406,51 @@
             href="https://github.com/SloMR/pastepoint"
             target="_blank"
             rel="noopener noreferrer nofollow"
-            class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+            class="inline-flex items-center gap-2"
           >
-            <p class="text-xs font-expoArabicMedium text-brand">GitHub</p>
             <img
               src="/icons/github.svg"
               alt="GitHub"
-              class="h-4 w-4"
+              class="h-6 w-6"
               loading="lazy"
-              width="16"
-              height="16"
+              width="24"
+              height="24"
+            />
+          </a>
+        </div>
+        <div class="flex items-center">
+          <!-- X Icon & Link -->
+          <a
+            href="https://x.com/PastePoint"
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            class="inline-flex items-center gap-2"
+          >
+            <img
+              src="/icons/x-icon.svg"
+              alt="X (Twitter)"
+              class="h-6 w-6"
+              loading="lazy"
+              width="24"
+              height="24"
+            />
+          </a>
+        </div>
+        <div class="flex items-center">
+          <!-- Instagram Icon & Link -->
+          <a
+            href="https://www.instagram.com/paste_point/"
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+            class="inline-flex items-center gap-2"
+          >
+            <img
+              src="/icons/instagram-icon.svg"
+              alt="Instagram"
+              class="h-6 w-6"
+              loading="lazy"
+              width="24"
+              height="24"
             />
           </a>
         </div>
@@ -1395,7 +1460,7 @@
           href="/privacy"
           target="_self"
           rel="noopener noreferrer"
-          class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+          class="inline-flex items-center gap-2 underline text-brand hover:underline dark:text-brandDark"
         >
           <p class="text-xs font-expoArabicMedium text-brand">
             {{ 'PRIVACY_AND_TERMS' | translate }}
@@ -1403,10 +1468,10 @@
           <img
             src="/icons/privacy-and-terms.svg"
             alt="Privacy and Terms"
-            class="h-4 w-4"
+            class="h-6 w-6"
             loading="lazy"
-            width="16"
-            height="16"
+            width="24"
+            height="24"
           />
         </a>
         <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">

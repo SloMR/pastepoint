@@ -113,28 +113,22 @@
   <div
     class="flex w-full flex-col items-center gap-2 border-t px-4 py-4 dark:bg-baseDark dark:border-surfaceDark md:h-[58px] md:flex-row md:items-center md:justify-between md:px-8 md:py-0"
   >
-    <!-- ©2025 -->
-    <p class="order-1 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
-      {{ 'COPYRIGHT_NOTICE' | translate }}
-    </p>
-
     <!-- Social links -->
-    <div class="order-2 flex items-center gap-4">
+    <div class="order-1 flex items-center gap-4 md:order-2">
       <!-- LinkedIn -->
       <a
         href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
         target="_blank"
         rel="noopener noreferrer"
-        class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+        class="inline-flex items-center gap-2"
       >
-        <span class="text-xs font-expoArabicMedium">LinkedIn</span>
         <img
           src="/icons/linkedin.svg"
           alt="LinkedIn"
-          class="h-4 w-4"
+          class="h-6 w-6"
           loading="lazy"
-          width="16"
-          height="16"
+          width="24"
+          height="24"
         />
       </a>
 
@@ -143,41 +137,86 @@
         href="https://github.com/SloMR/pastepoint"
         target="_blank"
         rel="noopener noreferrer nofollow"
-        class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
+        class="inline-flex items-center gap-2"
       >
-        <span class="text-xs font-expoArabicMedium">GitHub</span>
         <img
           src="/icons/github.svg"
           alt="GitHub"
-          class="h-4 w-4"
+          class="h-6 w-6"
           loading="lazy"
-          width="16"
-          height="16"
+          width="24"
+          height="24"
+        />
+      </a>
+
+      <!-- X Icon & Link -->
+      <a
+        href="https://x.com/PastePoint"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        class="inline-flex items-center gap-2"
+      >
+        <img
+          src="/icons/x-icon.svg"
+          alt="X (Twitter)"
+          class="h-6 w-6"
+          loading="lazy"
+          width="24"
+          height="24"
+        />
+      </a>
+
+      <!-- Instagram Icon & Link -->
+      <a
+        href="https://www.instagram.com/paste_point/"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        class="inline-flex items-center gap-2"
+      >
+        <img
+          src="/icons/instagram-icon.svg"
+          alt="Instagram"
+          class="h-6 w-6"
+          loading="lazy"
+          width="24"
+          height="24"
         />
       </a>
     </div>
 
     <!-- Version & Privacy -->
-    <div class="order-3 flex items-center gap-4">
+    <div class="order-2 flex items-center gap-4 md:order-3">
       <a
         routerLink="/privacy"
         class="inline-flex items-center gap-2 text-brand hover:underline dark:text-brandDark"
       >
-        <p class="text-xs font-expoArabicMedium text-brand">
+        <p class="text-xs underline font-expoArabicMedium text-brand">
           {{ 'PRIVACY_AND_TERMS' | translate }}
         </p>
         <img
           src="/icons/privacy-and-terms.svg"
           alt="Privacy and Terms"
-          class="h-4 w-4"
+          class="h-6 w-6"
           loading="lazy"
-          width="16"
-          height="16"
+          width="24"
+          height="24"
         />
       </a>
-      <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+      <p class="hidden text-xs font-expoArabicMedium text-content dark:text-textVeryMuted md:block">
         {{ 'VERSION' | translate }} {{ appVersion }}
       </p>
     </div>
+
+    <!-- Version (Mobile Only) -->
+    <p class="order-3 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted md:hidden">
+      {{ 'VERSION' | translate }} {{ appVersion }}
+    </p>
+
+    <!-- ©2025 -->
+    <p
+      class="order-4 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted md:order-1"
+    >
+      {{ 'COPYRIGHT_NOTICE' | translate }}
+    </p>
   </div>
 </div>
