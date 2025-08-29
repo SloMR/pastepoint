@@ -204,7 +204,7 @@
         <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar">
           <div *ngFor="let member of members">
             <div
-              class="flex w-full cursor-pointer items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+              class="flex w-full items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
             >
               <div class="h-4 w-4 rounded-full bg-green-500"></div>
               <p class="truncate text-base font-expoArabicMedium">{{ member }}</p>
@@ -213,7 +213,7 @@
           </div>
           <div *ngIf="members.length === 0">
             <div
-              class="flex w-full cursor-pointer items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+              class="flex w-full items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
             >
               <p class="truncate text-base font-expoArabicMedium">
                 {{ 'NO_MEMBERS_ONLINE' | translate }}
@@ -253,7 +253,7 @@
           <!-- Uploads -->
           <div class="text-sm" *ngFor="let upload of activeUploads">
             <div class="mb-1 flex items-center justify-between">
-              <div class="flex items-center justify-start gap-2">
+              <div class="flex items-start justify-start gap-2 min-w-0">
                 <img
                   [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
                   alt="Uploading"
@@ -268,7 +268,7 @@
               </div>
               <div class="flex items-center justify-end gap-1">
                 <span class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted">
-                  {{ transfer.progress | number: '1.0-0' }}%
+                  {{ ProgressValue(upload.progress, 'upload', upload.fileId) | number: '1.0-0' }}%
                 </span>
                 <button
                   (click)="$event.stopPropagation(); $event.preventDefault(); cancelUpload(upload)"
@@ -287,10 +287,13 @@
                 </button>
               </div>
             </div>
-            <div class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark">
+            <div
+              class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark overflow-hidden"
+            >
               <div
-                class="rounded-full bg-brand h-1.5 dark:bg-brandDark"
-                [style.width.%]="transfer.progress"
+                class="h-full rounded-full bg-brand dark:bg-brandDark transition-all duration-300 ease-out"
+                [style.width]="getProgressBarWidth(upload.progress, 'upload', upload.fileId)"
+                [style.max-width]="'100%'"
               ></div>
             </div>
           </div>
@@ -298,7 +301,7 @@
           <!-- Downloads -->
           <div class="text-sm" *ngFor="let download of activeDownloads">
             <div class="mb-1 flex items-center justify-between">
-              <div class="flex items-center justify-start gap-2">
+              <div class="flex items-start justify-start gap-2 min-w-0">
                 <img
                   [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
                   alt="Downloading"
@@ -313,7 +316,9 @@
               </div>
               <div class="flex items-center justify-end gap-1">
                 <span class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted">
-                  {{ download.progress | number: '1.0-0' }}%
+                  {{
+                    ProgressValue(download.progress, 'download', download.fileId) | number: '1.0-0'
+                  }}%
                 </span>
                 <button
                   (click)="
@@ -334,10 +339,13 @@
                 </button>
               </div>
             </div>
-            <div class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark">
+            <div
+              class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark overflow-hidden"
+            >
               <div
-                class="rounded-full bg-brand h-1.5 dark:bg-brandDark"
-                [style.width.%]="download.progress"
+                class="h-full rounded-full bg-brand dark:bg-brandDark transition-all duration-300 ease-out"
+                [style.width]="getProgressBarWidth(download.progress, 'download', download.fileId)"
+                [style.max-width]="'100%'"
               ></div>
             </div>
           </div>
@@ -613,7 +621,7 @@
           <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar">
             <div *ngFor="let member of members">
               <div
-                class="flex w-full cursor-pointer items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+                class="flex w-full items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
               >
                 <div class="h-4 w-4 rounded-full bg-green-500"></div>
                 <p class="truncate text-base font-expoArabicMedium">{{ member }}</p>
@@ -622,7 +630,7 @@
             </div>
             <div *ngIf="members.length === 0">
               <div
-                class="flex w-full cursor-pointer items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+                class="flex w-full items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
               >
                 <p class="truncate text-base font-expoArabicMedium">
                   {{ 'NO_MEMBERS_ONLINE' | translate }}
@@ -662,7 +670,7 @@
             <!-- Uploads -->
             <div class="text-sm" *ngFor="let upload of activeUploads">
               <div class="mb-1 flex items-center justify-between">
-                <div class="flex items-center justify-start gap-2">
+                <div class="flex items-start justify-start gap-2 min-w-0">
                   <img
                     [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
                     alt="Uploading"
@@ -679,7 +687,7 @@
                   <span
                     class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted"
                   >
-                    {{ transfer.progress | number: '1.0-0' }}%
+                    {{ ProgressValue(upload.progress, 'upload', upload.fileId) | number: '1.0-0' }}%
                   </span>
                   <button
                     (click)="
@@ -700,10 +708,13 @@
                   </button>
                 </div>
               </div>
-              <div class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark">
+              <div
+                class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark overflow-hidden"
+              >
                 <div
-                  class="rounded-full bg-brand h-1.5 dark:bg-brandDark"
-                  [style.width.%]="transfer.progress"
+                  class="h-full rounded-full bg-brand dark:bg-brandDark transition-all duration-300 ease-out"
+                  [style.width]="getProgressBarWidth(upload.progress, 'upload', upload.fileId)"
+                  [style.max-width]="'100%'"
                 ></div>
               </div>
             </div>
@@ -711,7 +722,7 @@
             <!-- Downloads -->
             <div class="text-sm" *ngFor="let download of activeDownloads">
               <div class="mb-1 flex items-center justify-between">
-                <div class="flex items-center justify-start gap-2">
+                <div class="flex items-start justify-start gap-2 min-w-0">
                   <img
                     [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
                     alt="Downloading"
@@ -728,7 +739,10 @@
                   <span
                     class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted"
                   >
-                    {{ download.progress | number: '1.0-0' }}%
+                    {{
+                      ProgressValue(download.progress, 'download', download.fileId)
+                        | number: '1.0-0'
+                    }}%
                   </span>
                   <button
                     (click)="
@@ -749,10 +763,15 @@
                   </button>
                 </div>
               </div>
-              <div class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark">
+              <div
+                class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark overflow-hidden"
+              >
                 <div
-                  class="rounded-full bg-brand h-1.5 dark:bg-brandDark"
-                  [style.width.%]="download.progress"
+                  class="h-full rounded-full bg-brand dark:bg-brandDark transition-all duration-300 ease-out"
+                  [style.width]="
+                    getProgressBarWidth(download.progress, 'download', download.fileId)
+                  "
+                  [style.max-width]="'100%'"
                 ></div>
               </div>
             </div>

@@ -872,6 +872,41 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
+   * PROGRESS BAR METHODS
+   * Methods to help track progress bar accuracy issues
+   * ==========================================================
+   */
+  protected ProgressValue(progress: number, type: 'upload' | 'download', fileId: string): number {
+    const clampedProgress = Math.min(100, Math.max(0, progress));
+
+    if (progress !== clampedProgress) {
+      this.logger.warn(
+        'ProgressValue',
+        `Progress out of range for ${type} ${fileId}: ${progress} -> ${clampedProgress}`
+      );
+    }
+
+    if (clampedProgress % 10 < 2) {
+      this.logger.debug(
+        'ProgressValue',
+        `${type.charAt(0).toUpperCase() + type.slice(1)} progress ${fileId}: ${clampedProgress.toFixed(2)}%`
+      );
+    }
+
+    return clampedProgress;
+  }
+
+  protected getProgressBarWidth(
+    progress: number,
+    type: 'upload' | 'download' = 'upload',
+    fileId: string = 'unknown'
+  ): string {
+    const safeProgress = this.ProgressValue(progress, type, fileId);
+    return `${safeProgress}%`;
+  }
+
+  /**
+   * ==========================================================
    * CREATE AND SEND FILE MESSAGES
    * Creates chat messages for files being sent and sends them to all members
    * ==========================================================
