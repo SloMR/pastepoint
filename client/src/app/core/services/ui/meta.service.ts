@@ -144,7 +144,7 @@ export class MetaService {
         og: {
           title: 'Private Session – Secure File Sharing & Encrypted Chat App',
           description:
-            'PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies.',
+            'PastePoint lets you share files and chat instantly with end-to-end encryption. No cloud, no accounts, no tracking—secure peer-to-peer transfers made simple.',
           type: 'website',
           url: 'https://pastepoint.com/',
           image: 'https://pastepoint.com/assets/pastepoint-banner.png',
@@ -156,25 +156,25 @@ export class MetaService {
           creator: '@pastepoint',
           title: 'Private Session – Secure File Sharing & Encrypted Chat App',
           description:
-            'PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies.',
+            'PastePoint lets you share files and chat instantly with end-to-end encryption. No cloud, no accounts, no tracking—secure peer-to-peer transfers made simple.',
           image: 'https://pastepoint.com/assets/pastepoint-banner.png',
         },
       });
     } else {
       // Regular chat page
       this.update({
-        title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
+        title: 'PastePoint | Secure Peer-to-Peer File Sharing & Encrypted Messaging',
         description:
-          'PastePoint is a secure peer-to-peer file sharing and messaging platform. Share files with end-to-end encryption, no cloud storage, and zero tracking.',
+          'PastePoint lets you share files and chat instantly with end-to-end encryption. No cloud, no accounts, no tracking—secure peer-to-peer transfers made simple.',
         keywords:
           'secure file sharing, encrypted messaging, peer-to-peer transfer, private file sharing, WebRTC chat, direct file transfer, real-time messaging, zero tracking, no cloud, local network sharing',
         robots: 'index, follow',
         canonical: 'https://pastepoint.com/',
         og: {
           url: 'https://pastepoint.com/',
-          title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
+          title: 'PastePoint | Secure Peer-to-Peer File Sharing & Encrypted Messaging',
           description:
-            'PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies.',
+            'PastePoint lets you share files and chat instantly with end-to-end encryption. No cloud, no accounts, no tracking—secure peer-to-peer transfers made simple.',
           type: 'website',
           image: 'https://pastepoint.com/assets/pastepoint-banner.png',
           siteName: 'PastePoint',
@@ -183,9 +183,9 @@ export class MetaService {
           card: 'summary_large_image',
           site: '@pastepoint',
           creator: '@pastepoint',
-          title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
+          title: 'PastePoint | Secure Peer-to-Peer File Sharing & Encrypted Messaging',
           description:
-            'PastePoint enables real-time encrypted messaging and file sharing without cloud dependencies.',
+            'PastePoint lets you share files and chat instantly with end-to-end encryption. No cloud, no accounts, no tracking—secure peer-to-peer transfers made simple.',
           image: 'https://pastepoint.com/assets/pastepoint-banner.png',
         },
       });
