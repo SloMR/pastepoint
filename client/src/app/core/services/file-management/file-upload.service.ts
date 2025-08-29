@@ -367,6 +367,14 @@ export class FileUploadService extends FileTransferBaseService {
     fileTransfer: FileUpload,
     end: number
   ): Promise<boolean> {
+    if (fileTransfer.isPaused) {
+      this.logger.info(
+        'processFileChunk',
+        `Transfer paused for fileId=${fileTransfer.fileId}, skipping chunk`
+      );
+      return false;
+    }
+
     const dataChannel = this.getDataChannel(fileTransfer.targetUser);
     if (!dataChannel) {
       this.logger.error('processFileChunk', `No data channel for ${fileTransfer.targetUser}`);
@@ -411,6 +419,16 @@ export class FileUploadService extends FileTransferBaseService {
 
       const userMap = await this.getFileTransfers(fileTransfer.targetUser);
       if (userMap) {
+        // If the transfer was removed (e.g., cancelled) while this chunk was in-flight,
+        // do not re-add it back to the map/UI.
+        if (!userMap.has(fileTransfer.fileId)) {
+          this.logger.warn(
+            'processFileChunk',
+            `Transfer no longer exists for fileId=${fileTransfer.fileId}; skipping update`
+          );
+          return false;
+        }
+
         userMap.set(fileTransfer.fileId, fileTransfer);
         await this.setFileTransfers(fileTransfer.targetUser, userMap);
       }

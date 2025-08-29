@@ -130,6 +130,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private readonly HEARTBEAT_INTERVAL_MS = 1000;
   private readonly HEARTBEAT_TIMEOUT_MS = 2000;
   private isNavigatingIntentionally = false;
+  private lastMessagesLength: number = 0;
 
   appVersion: string = packageJson.version;
 
@@ -473,9 +474,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.subscriptions.push(
       this.chatService.messages$.subscribe((messages: ChatMessage[]) => {
         this.ngZone.run(() => {
+          const previousLength = this.lastMessagesLength;
           this.messages = [...messages];
           this.cdr.detectChanges();
-          this.scrollToBottom();
+
+          // Auto-scroll only when new messages are added, not when items are edited in place
+          if (this.messages.length > previousLength) {
+            this.scrollToBottom();
+          }
+
+          this.lastMessagesLength = this.messages.length;
         });
       })
     );
@@ -774,7 +782,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   trackMessage(index: number, message: ChatMessage): string {
-    return message.text + index;
+    if (message.type === ChatMessageType.ATTACHMENT && message.fileTransfer?.fileId) {
+      return `att-${message.fileTransfer.fileId}`;
+    }
+
+    const ts =
+      message.timestamp instanceof Date ? message.timestamp.getTime() : `${message.timestamp}`;
+    return `${message.from}-${ts}`;
   }
 
   /**
