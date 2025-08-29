@@ -45,7 +45,7 @@
             "ssr": {
               "entry": "src/server.ts"
             },
-            "allowedCommonJsDependencies": ["compression"]
+            "allowedCommonJsDependencies": ["compression", "qrcode"]
           },
           "configurations": {
             "production": {

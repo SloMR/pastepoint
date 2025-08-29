@@ -9,6 +9,5 @@ Disallow: /private/*
 Disallow: /404
 Disallow: /ws/
 Disallow: /create-session
-Disallow: /*?ref=
 
 Sitemap: https://pastepoint.com/sitemap.xml
