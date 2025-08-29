@@ -94,9 +94,9 @@ export class MetaInitService {
    */
   private getDefaultMetaConfig(): MetaConfig {
     return {
-      title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
+      title: 'PastePoint | Secure Peer-to-Peer File Sharing & Encrypted Messaging',
       description:
-        'PastePoint is a secure peer-to-peer file sharing and messaging platform. Share files with end-to-end encryption, no cloud storage, and zero tracking.',
+        'PastePoint lets you share files and chat instantly with end-to-end encryption. No cloud, no accounts, no tracking—secure peer-to-peer transfers made simple.',
       keywords:
         'secure file sharing, encrypted messaging, peer-to-peer transfer, private file sharing, WebRTC chat, direct file transfer, real-time messaging, zero tracking, no cloud, local network sharing',
       author: 'PastePoint',
@@ -117,7 +117,7 @@ export class MetaInitService {
       // Open Graph metadata
       og: {
         type: 'website',
-        title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
+        title: 'PastePoint | Secure Peer-to-Peer File Sharing & Encrypted Messaging',
         description:
           'PastePoint is a secure, feature-rich file sharing and messaging platform. Transfer files directly using peer-to-peer WebRTC connections with no tracking or cloud storage.',
         siteName: 'PastePoint',
@@ -127,7 +127,7 @@ export class MetaInitService {
       // Twitter Card metadata
       twitter: {
         card: 'summary_large_image',
-        title: 'PastePoint – Encrypted File Sharing & Real-Time Messaging',
+        title: 'PastePoint | Secure Peer-to-Peer File Sharing & Encrypted Messaging',
         description:
           'Send messages and files securely with PastePoint. Peer-to-peer file transfers, end-to-end encryption, and no cloud.',
       },
