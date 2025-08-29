@@ -5,6 +5,7 @@ import {
   MAX_BUFFERED_AMOUNT,
   MB,
   FILE_TRANSFER_MESSAGE_TYPES,
+  FileTransferStatus,
 } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { WebRTCService } from '../communication/webrtc.service';
@@ -72,7 +73,7 @@ export class FileUploadService extends FileTransferBaseService {
     for (const fileTransfer of userMap.values()) {
       const key = this.getOrCreateStatusKey(targetUser, fileTransfer.fileId);
       const status = await this.getFileTransferStatus(key);
-      if (!status || status === 'pending') {
+      if (!status || status === FileTransferStatus.PENDING) {
         await this.sendFileOffer(fileTransfer.fileId, targetUser);
       } else {
         this.logger.info(
@@ -88,7 +89,7 @@ export class FileUploadService extends FileTransferBaseService {
    */
   public async startSendingFile(targetUser: string, fileId: string): Promise<void> {
     const transferId = this.getOrCreateStatusKey(targetUser, fileId);
-    await this.setFileTransferStatus(transferId, 'accepted');
+    await this.setFileTransferStatus(transferId, FileTransferStatus.ACCEPTED);
 
     const userMap = await this.getFileTransfers(targetUser);
     if (!userMap) {
@@ -122,7 +123,7 @@ export class FileUploadService extends FileTransferBaseService {
    */
   public async declineFileOffer(targetUser: string, fileId: string): Promise<void> {
     const transferId = this.getOrCreateStatusKey(targetUser, fileId);
-    await this.setFileTransferStatus(transferId, 'declined');
+    await this.setFileTransferStatus(transferId, FileTransferStatus.DECLINED);
 
     const userMap = await this.getFileTransfers(targetUser);
     if (userMap) {
@@ -226,7 +227,7 @@ export class FileUploadService extends FileTransferBaseService {
     };
 
     const key = this.getOrCreateStatusKey(targetUser, fileId);
-    await this.setFileTransferStatus(key, 'pending');
+    await this.setFileTransferStatus(key, FileTransferStatus.PENDING);
     this.sendData(message, targetUser);
   }
 
@@ -238,7 +239,7 @@ export class FileUploadService extends FileTransferBaseService {
     this.logger.debug('checkAllUsersResponded', 'All statuses:', allStatuses);
 
     const allResponded = allStatuses.every(
-      (status) => status === 'declined' || status === 'completed'
+      (status) => status === FileTransferStatus.DECLINED || status === FileTransferStatus.COMPLETED
     );
 
     if (allResponded && allStatuses.length > 0) {
@@ -330,7 +331,7 @@ export class FileUploadService extends FileTransferBaseService {
 
           fileTransfer.progress = 100;
           const key = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
-          await this.setFileTransferStatus(key, 'completed');
+          await this.setFileTransferStatus(key, FileTransferStatus.COMPLETED);
 
           this.toaster.success(
             this.translate.instant('FILE_UPLOAD_COMPLETED', { fileName: fileTransfer.file.name })

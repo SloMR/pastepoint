@@ -22,7 +22,6 @@ import {
   NgIf,
   NgOptimizedImage,
   NgStyle,
-  SlicePipe,
   UpperCasePipe,
 } from '@angular/common';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -42,6 +41,7 @@ import {
   ChatMessage,
   ChatMessageType,
   FileDownload,
+  FileTransferStatus,
   FileUpload,
   MB,
   NAVIGATION_DELAY_MS,
@@ -83,7 +83,6 @@ import { SecurityContext } from '@angular/core';
     NgOptimizedImage,
     RouterLink,
     NgClass,
-    SlicePipe,
   ],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css'],
@@ -125,7 +124,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   activeUploads: FileUpload[] = [];
   activeDownloads: FileDownload[] = [];
-  incomingFiles: FileDownload[] = [];
 
   private heartbeatIntervalId: ReturnType<typeof setInterval> | null = null;
   private lastHeartbeat: number = Date.now();
@@ -160,6 +158,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private subscriptions: Subscription[] = [];
   private emojiPickerTimeout: ReturnType<typeof setTimeout> | null = null;
   public isHoveringOverPicker = false;
+  public FileTransferStatus = FileTransferStatus;
 
   /**
    * ==========================================================
@@ -533,7 +532,86 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           `Incoming file offers: ${incomingFiles.length} (length)`
         );
         this.ngZone.run(() => {
-          this.incomingFiles = incomingFiles;
+          const currentMessages = this.chatService.messages$.value;
+          let updatedMessages = [...currentMessages];
+
+          // Mark any pending file-offer messages as cancelled if they are no longer in incoming offers
+          const incomingIds = new Set(incomingFiles.map((f) => f.fileId));
+          updatedMessages = updatedMessages.map((msg) => {
+            if (
+              msg.type === ChatMessageType.ATTACHMENT &&
+              msg.fileTransfer?.status === FileTransferStatus.PENDING &&
+              !incomingIds.has(msg.fileTransfer.fileId)
+            ) {
+              const cancelledText = `${msg.fileTransfer.fileName} - ${this.translate.instant('FILE_UPLOAD_CANCELLED')}`;
+              return {
+                ...msg,
+                text: cancelledText,
+                fileTransfer: {
+                  ...msg.fileTransfer,
+                  status: FileTransferStatus.DECLINED,
+                },
+              };
+            }
+            return msg;
+          });
+
+          incomingFiles.forEach((fileDownload: FileDownload) => {
+            // Check if we already have any message for this file (pending, accepted, or declined)
+            const existingIndex = updatedMessages.findIndex(
+              (msg) =>
+                msg.type === ChatMessageType.ATTACHMENT &&
+                msg.fileTransfer?.fileId === fileDownload.fileId
+            );
+
+            if (existingIndex === -1) {
+              // Look for the "FILE_SENT" message that was created when this file was initially sent
+              const truncated = this.truncateFilename(fileDownload.fileName);
+              const fileSentMessageIndex = updatedMessages.findIndex(
+                (msg) =>
+                  msg.type === ChatMessageType.ATTACHMENT &&
+                  msg.from === fileDownload.fromUser &&
+                  !msg.fileTransfer &&
+                  (msg.text.includes(fileDownload.fileName) ||
+                    msg.text.includes(truncated) ||
+                    msg.text
+                      .toUpperCase()
+                      .startsWith(this.translate.instant('FILE_SENT').toUpperCase()))
+              );
+
+              if (fileSentMessageIndex !== -1) {
+                // Convert the existing "FILE_SENT" message to a file transfer request
+                updatedMessages[fileSentMessageIndex] = {
+                  ...updatedMessages[fileSentMessageIndex],
+                  text: fileDownload.fileName,
+                  fileTransfer: {
+                    fileId: fileDownload.fileId,
+                    fileName: fileDownload.fileName,
+                    fileSize: fileDownload.fileSize,
+                    fromUser: fileDownload.fromUser,
+                    status: FileTransferStatus.PENDING,
+                  },
+                };
+              } else {
+                // Create new message if no existing "FILE_SENT" message found (fallback)
+                updatedMessages.push({
+                  from: fileDownload.fromUser,
+                  text: fileDownload.fileName,
+                  type: ChatMessageType.ATTACHMENT,
+                  timestamp: new Date(),
+                  fileTransfer: {
+                    fileId: fileDownload.fileId,
+                    fileName: fileDownload.fileName,
+                    fileSize: fileDownload.fileSize,
+                    fromUser: fileDownload.fromUser,
+                    status: FileTransferStatus.PENDING,
+                  },
+                });
+              }
+            }
+          });
+
+          this.chatService.replaceMessages(updatedMessages);
           this.cdr.detectChanges();
         });
       })
@@ -874,8 +952,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * User confirms file download from another user.
    * ==========================================================
    */
-  public async acceptIncomingFile(fileDownload: FileDownload): Promise<void> {
-    await this.fileTransferService.acceptFileOffer(fileDownload.fromUser, fileDownload.fileId);
+  public async acceptIncomingFile(message: ChatMessage): Promise<void> {
+    if (!message.fileTransfer) return;
+
+    await this.fileTransferService.acceptFileOffer(
+      message.fileTransfer.fromUser,
+      message.fileTransfer.fileId
+    );
+
+    // Update the message status and text
+    this.updateFileTransferMessageStatus(message.fileTransfer.fileId, FileTransferStatus.ACCEPTED);
   }
 
   /**
@@ -884,8 +970,49 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * User declines file transfer request from another user.
    * ==========================================================
    */
-  public async declineIncomingFile(fileDownload: FileDownload): Promise<void> {
-    await this.fileTransferService.declineFileOffer(fileDownload.fromUser, fileDownload.fileId);
+  public async declineIncomingFile(message: ChatMessage): Promise<void> {
+    if (!message.fileTransfer) return;
+
+    await this.fileTransferService.declineFileOffer(
+      message.fileTransfer.fromUser,
+      message.fileTransfer.fileId
+    );
+
+    // Update the message status and text
+    this.updateFileTransferMessageStatus(message.fileTransfer.fileId, FileTransferStatus.DECLINED);
+  }
+
+  /**
+   * ==========================================================
+   * UPDATE FILE TRANSFER MESSAGE STATUS
+   * Updates the status and text of a file transfer message
+   * ==========================================================
+   */
+  private updateFileTransferMessageStatus(
+    fileId: string,
+    status: FileTransferStatus.ACCEPTED | FileTransferStatus.DECLINED
+  ): void {
+    const currentMessages = this.chatService.messages$.value;
+    const updatedMessages = currentMessages.map((msg) => {
+      if (msg.type === ChatMessageType.ATTACHMENT && msg.fileTransfer?.fileId === fileId) {
+        const statusText =
+          status === FileTransferStatus.ACCEPTED
+            ? this.translate.instant('FILE_TRANSFER_ACCEPTED')
+            : this.translate.instant('FILE_TRANSFER_DECLINED');
+
+        return {
+          ...msg,
+          text: `${msg.fileTransfer.fileName} - ${statusText}`,
+          fileTransfer: {
+            ...msg.fileTransfer,
+            status,
+          },
+        };
+      }
+      return msg;
+    });
+
+    this.chatService.replaceMessages(updatedMessages);
   }
 
   /**

@@ -134,15 +134,29 @@ export enum ChatMessageType {
   ATTACHMENT = 'attachment',
 }
 
+export interface FileTransferData {
+  fileId: string;
+  fileName: string;
+  fileSize: number;
+  fromUser: string;
+  status: FileTransferStatus;
+}
+
 export interface ChatMessage {
   from: string;
   text: string;
   type: ChatMessageType;
   timestamp: Date;
+  fileTransfer?: FileTransferData;
 }
 
 // File transfer interfaces
-export type FileTransferStatus = 'pending' | 'accepted' | 'declined' | 'completed';
+export enum FileTransferStatus {
+  PENDING = 'pending',
+  ACCEPTED = 'accepted',
+  DECLINED = 'declined',
+  COMPLETED = 'completed',
+}
 
 export interface FileUpload {
   fileId: string;

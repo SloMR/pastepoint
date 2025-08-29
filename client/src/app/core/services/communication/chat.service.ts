@@ -130,6 +130,16 @@ export class ChatService implements IChatService {
   }
 
   /**
+   * Replace all messages (keeps BehaviorSubject and internal array in sync)
+   */
+  public replaceMessages(messages: ChatMessage[]): void {
+    this.ngZone.run(() => {
+      this.messages = messages;
+      this.messages$.next(this.messages);
+    });
+  }
+
+  /**
    * ==========================================================
    * PRIVATE METHODS
    * Handlers for incoming messages

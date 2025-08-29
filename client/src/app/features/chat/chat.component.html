@@ -251,7 +251,7 @@
         <!-- Scrollable Transfers -->
         <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar space-y-3">
           <!-- Uploads -->
-          <div class="text-sm" *ngFor="let transfer of activeUploads">
+          <div class="text-sm" *ngFor="let upload of activeUploads">
             <div class="mb-1 flex items-center justify-between">
               <div class="flex items-center justify-start gap-2">
                 <img
@@ -271,9 +271,7 @@
                   {{ transfer.progress | number: '1.0-0' }}%
                 </span>
                 <button
-                  (click)="
-                    $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
-                  "
+                  (click)="$event.stopPropagation(); $event.preventDefault(); cancelUpload(upload)"
                   class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
                   aria-label="Cancel upload"
                   title="Cancel upload"
@@ -662,7 +660,7 @@
           <!-- Scrollable Transfers -->
           <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar space-y-3">
             <!-- Uploads -->
-            <div class="text-sm" *ngFor="let transfer of activeUploads">
+            <div class="text-sm" *ngFor="let upload of activeUploads">
               <div class="mb-1 flex items-center justify-between">
                 <div class="flex items-center justify-start gap-2">
                   <img
@@ -685,7 +683,7 @@
                   </span>
                   <button
                     (click)="
-                      $event.stopPropagation(); $event.preventDefault(); cancelUpload(transfer)
+                      $event.stopPropagation(); $event.preventDefault(); cancelUpload(upload)
                     "
                     class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
                     aria-label="Cancel upload"
@@ -863,7 +861,7 @@
             href="/privacy"
             target="_self"
             rel="noopener noreferrer nofollow"
-            class="inline-flex items-center gap-2 underline text-brand dark:text-brandDark"
+            class="inline-flex items-center gap-2 text-brand dark:text-brandDark"
           >
             <p class="text-xs font-expoArabicMedium text-brand">
               {{ 'PRIVACY_AND_TERMS' | translate }}
@@ -1100,20 +1098,100 @@
                           *ngIf="message.type === ChatMessageType.TEXT"
                           [innerHTML]="convertUrlsToLinks(message.text, isDarkMode, false)"
                         ></p>
-                        <p
-                          class="flex items-center gap-2 break-all text-xs text-white font-expoArabic"
-                          *ngIf="message.type === ChatMessageType.ATTACHMENT"
-                        >
-                          <img
-                            src="/icons/file-white.svg"
-                            alt="File"
-                            class="h-4 w-4"
-                            loading="lazy"
-                            width="16"
-                            height="16"
-                          />
-                          {{ message.text | slice: 0 : 65 }}...
-                        </p>
+                        <!-- Attachment Message -->
+                        <div *ngIf="message.type === ChatMessageType.ATTACHMENT" class="w-full">
+                          <!-- File Transfer Request with buttons (pending status) -->
+                          <div *ngIf="message.fileTransfer?.status === FileTransferStatus.PENDING">
+                            <div class="flex items-start gap-2 mb-3">
+                              <img
+                                src="/icons/file-white.svg"
+                                alt="File"
+                                class="h-4 w-4 mt-0.5"
+                                loading="lazy"
+                                width="16"
+                                height="16"
+                              />
+                              <div class="flex-1">
+                                <p class="mb-1 text-sm font-expoArabic text-white">
+                                  {{ message.fileTransfer?.fileName }} ({{
+                                    (message.fileTransfer?.fileSize || 0) / MB | number: '1.2-2'
+                                  }}
+                                  MB)
+                                </p>
+                                <p class="text-sm font-normal font-expoArabic text-white">
+                                  {{ 'WANTS_TO_SEND_FILE' | translate }}
+                                </p>
+                              </div>
+                            </div>
+                            <div class="mt-3 flex items-center gap-3 justify-end">
+                              <!-- Accept -->
+                              <button
+                                (click)="acceptIncomingFile(message)"
+                                class="w-10 h-10 rounded-xl bg-emerald-500/90 text-white flex items-center justify-center shadow-md backdrop-blur-sm hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all"
+                                aria-label="Accept file"
+                                title="Accept"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="20"
+                                  height="20"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.3"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path d="M5 12l5 5l10 -10" />
+                                </svg>
+                              </button>
+
+                              <!-- Decline -->
+                              <button
+                                (click)="declineIncomingFile(message)"
+                                class="w-10 h-10 rounded-xl bg-rose-500/90 text-white flex items-center justify-center shadow-md backdrop-blur-sm hover:bg-rose-500 hover:scale-105 active:scale-95 transition-all"
+                                aria-label="Decline file"
+                                title="Decline"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="20"
+                                  height="20"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="2.3"
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                >
+                                  <path d="M18 6L6 18M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+
+                          <!-- Regular attachment or processed file transfer -->
+                          <div
+                            *ngIf="
+                              !message.fileTransfer ||
+                              message.fileTransfer.status !== FileTransferStatus.PENDING
+                            "
+                          >
+                            <p
+                              class="flex items-center gap-2 break-all text-xs text-white font-expoArabic"
+                            >
+                              <img
+                                src="/icons/file-white.svg"
+                                alt="File"
+                                class="h-4 w-4"
+                                loading="lazy"
+                                width="16"
+                                height="16"
+                              />
+                              {{ message.text }}
+                            </p>
+                          </div>
+                        </div>
                       </div>
                       <div
                         class="flex items-center gap-2"
@@ -1151,20 +1229,61 @@
                             *ngIf="message.type === ChatMessageType.TEXT"
                             [innerHTML]="convertUrlsToLinks(message.text, isDarkMode, true)"
                           ></p>
-                          <p
-                            class="flex items-center gap-2 break-all text-xs font-expoArabic text-content dark:text-contentMuted"
-                            *ngIf="message.type === ChatMessageType.ATTACHMENT"
-                          >
-                            <img
-                              [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
-                              alt="File"
-                              class="h-4 w-4"
-                              loading="lazy"
-                              width="16"
-                              height="16"
-                            />
-                            {{ message.text | slice: 0 : 65 }}...
-                          </p>
+                          <!-- Attachment Message (My Message) -->
+                          <div *ngIf="message.type === ChatMessageType.ATTACHMENT" class="w-full">
+                            <!-- File Transfer Offer (sender's view) -->
+                            <div
+                              *ngIf="message.fileTransfer?.status === FileTransferStatus.PENDING"
+                            >
+                              <div class="flex items-start gap-2 mb-3">
+                                <img
+                                  [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
+                                  alt="File"
+                                  class="h-4 w-4 mt-0.5"
+                                  loading="lazy"
+                                  width="16"
+                                  height="16"
+                                />
+                                <div class="flex-1">
+                                  <p
+                                    class="mb-1 text-sm font-expoArabic text-content dark:text-contentMuted"
+                                  >
+                                    {{ message.fileTransfer?.fileName }} ({{
+                                      (message.fileTransfer?.fileSize || 0) / MB | number: '1.2-2'
+                                    }}
+                                    MB)
+                                  </p>
+                                  <p
+                                    class="text-sm font-normal font-expoArabic text-content dark:text-contentMuted"
+                                  >
+                                    {{ 'FILE_OFFER_SENT' | translate }}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+
+                            <!-- Regular attachment or processed file transfer -->
+                            <div
+                              *ngIf="
+                                !message.fileTransfer ||
+                                message.fileTransfer.status !== FileTransferStatus.PENDING
+                              "
+                            >
+                              <p
+                                class="flex items-center gap-2 break-all text-xs font-expoArabic text-content dark:text-contentMuted"
+                              >
+                                <img
+                                  [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
+                                  alt="File"
+                                  class="h-4 w-4"
+                                  loading="lazy"
+                                  width="16"
+                                  height="16"
+                                />
+                                {{ message.text }}
+                              </p>
+                            </div>
+                          </div>
                         </div>
                         <div
                           class="flex items-center gap-2"
@@ -1189,63 +1308,6 @@
                   </div>
                 </div>
               </ng-template>
-            </div>
-          </div>
-
-          <!-- MARK: - Incoming Files Section -->
-          <div *ngIf="incomingFiles.length > 0" class="mt-4 w-full space-y-2">
-            <div
-              *ngFor="let incomingFile of incomingFiles"
-              class="rounded-lg p-4 bg-surface dark:bg-surfaceDark"
-            >
-              <div
-                class="flex w-full flex-col items-start justify-between gap-3 sm:flex-row sm:items-center sm:gap-0"
-                [ngClass]="isRTL ? 'animate-slide-in-right' : 'animate-slide-in-left'"
-              >
-                <div class="flex items-start gap-2">
-                  <img
-                    src="/icons/file.svg"
-                    alt="File"
-                    class="h-4 w-4 mt-0.5"
-                    loading="lazy"
-                    width="16"
-                    height="16"
-                  />
-                  <div>
-                    <p class="mb-1 text-sm font-expoArabic text-content dark:text-contentMuted">
-                      {{ incomingFile.fileName }} ({{
-                        incomingFile.fileSize / MB | number: '1.2-2'
-                      }}
-                      MB)
-                    </p>
-                    <p class="text-sm font-normal font-expoArabic text-content dark:text-white">
-                      {{ incomingFile.fromUser }} {{ 'WANTS_TO_SEND_FILE' | translate }}
-                    </p>
-                  </div>
-                </div>
-                <div class="flex w-full justify-end gap-2 sm:w-auto sm:justify-start">
-                  <button
-                    (click)="acceptIncomingFile(incomingFile)"
-                    class="flex items-center justify-center rounded-lg text-white w-[100px] h-[36px] bg-brand p-1.5 hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
-                    aria-label="Accept file"
-                    title="Accept file"
-                  >
-                    <span class="text-base font-medium font-expoArabicMedium">{{
-                      'ACCEPT' | translate
-                    }}</span>
-                  </button>
-                  <button
-                    (click)="declineIncomingFile(incomingFile)"
-                    class="flex items-center justify-center rounded-lg border bg-transparent w-[100px] h-[36px] text-danger border-danger p-1.5 hover:bg-danger/80 hover:text-white"
-                    aria-label="Decline file"
-                    title="Decline file"
-                  >
-                    <span class="text-base font-medium font-expoArabicMedium">{{
-                      'CANCEL' | translate
-                    }}</span>
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -1460,7 +1522,7 @@
           href="/privacy"
           target="_self"
           rel="noopener noreferrer nofollow"
-          class="inline-flex items-center gap-2 underline text-brand dark:text-brandDark"
+          class="inline-flex items-center gap-2 text-brand dark:text-brandDark"
         >
           <p class="text-xs font-expoArabicMedium text-brand">
             {{ 'PRIVACY_AND_TERMS' | translate }}
