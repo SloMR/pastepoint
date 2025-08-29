@@ -208,7 +208,24 @@
             >
               <div class="h-4 w-4 rounded-full bg-green-500"></div>
               <p class="truncate text-base font-expoArabicMedium">{{ member }}</p>
-              <p></p>
+              <div class="ml-auto">
+                <button
+                  type="button"
+                  class="rounded-md p-1 text-textMuted hover:text-brand dark:text-textVeryMuted dark:hover:text-brandDark"
+                  aria-label="Send file to user"
+                  title="Send file to user"
+                  (click)="openFilePickerForMember(member)"
+                >
+                  <img
+                    [src]="isDarkMode ? '/icons/link.svg' : '/icons/link.svg'"
+                    alt="Send file"
+                    class="h-4 w-4"
+                    loading="lazy"
+                    width="16"
+                    height="16"
+                  />
+                </button>
+              </div>
             </div>
           </div>
           <div *ngIf="members.length === 0">
@@ -262,9 +279,27 @@
                   width="16"
                   height="16"
                 />
-                <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
-                  {{ truncateFilename(transfer.file.name) }}
-                </span>
+                <div class="flex flex-col min-w-0">
+                  <span
+                    class="text-xs font-expoArabicMedium text-content dark:text-white break-words"
+                    dir="auto"
+                  >
+                    {{ truncateFilename(upload.file.name) }}
+                  </span>
+                  <div
+                    class="mt-0.5 flex items-center gap-1 text-[11px] text-textMuted dark:text-textVeryMuted"
+                  >
+                    <img
+                      [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+                      alt=""
+                      class="h-3.5 w-3.5 opacity-80"
+                      loading="lazy"
+                      width="14"
+                      height="14"
+                    />
+                    <span class="break-words" dir="auto">{{ upload.targetUser }}</span>
+                  </div>
+                </div>
               </div>
               <div class="flex items-center justify-end gap-1">
                 <span class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted">
@@ -310,9 +345,27 @@
                   width="16"
                   height="16"
                 />
-                <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
-                  {{ truncateFilename(download.fileName) }}
-                </span>
+                <div class="flex flex-col min-w-0">
+                  <span
+                    class="text-xs font-expoArabicMedium text-content dark:text-white break-words"
+                    dir="auto"
+                  >
+                    {{ truncateFilename(download.fileName) }}
+                  </span>
+                  <div
+                    class="mt-0.5 flex items-center gap-1 text-[11px] text-textMuted dark:text-textVeryMuted"
+                  >
+                    <img
+                      [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+                      alt=""
+                      class="h-3.5 w-3.5 opacity-80"
+                      loading="lazy"
+                      width="14"
+                      height="14"
+                    />
+                    <span class="break-words" dir="auto">{{ download.fromUser }}</span>
+                  </div>
+                </div>
               </div>
               <div class="flex items-center justify-end gap-1">
                 <span class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted">
@@ -377,7 +430,7 @@
 
   <!-- MARK: - Mobile Sidebar -->
   <aside
-    class="fixed top-0 h-full transition-transform ease-in-out w-[286px] min-w-[286px] bg-surface z-[10000] dark:bg-surfaceDark md:hidden"
+    class="fixed top-0 h-full transition-transform ease-in-out w-[360px] min-w-[360px] bg-surface z-[10000] dark:bg-surfaceDark md:hidden"
     [style.left]="isRTL ? 'auto' : 0"
     [style.right]="isRTL ? 0 : 'auto'"
     [ngClass]="[
@@ -625,7 +678,24 @@
               >
                 <div class="h-4 w-4 rounded-full bg-green-500"></div>
                 <p class="truncate text-base font-expoArabicMedium">{{ member }}</p>
-                <p></p>
+                <div class="ml-auto">
+                  <button
+                    type="button"
+                    class="rounded-md p-1 text-textMuted hover:text-brand dark:text-textVeryMuted dark:hover:text-brandDark"
+                    aria-label="Send file to user"
+                    title="Send file to user"
+                    (click)="openFilePickerForMember(member)"
+                  >
+                    <img
+                      [src]="isDarkMode ? '/icons/link.svg' : '/icons/link.svg'"
+                      alt="Send file"
+                      class="h-4 w-4"
+                      loading="lazy"
+                      width="16"
+                      height="16"
+                    />
+                  </button>
+                </div>
               </div>
             </div>
             <div *ngIf="members.length === 0">
@@ -679,9 +749,27 @@
                     width="16"
                     height="16"
                   />
-                  <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
-                    {{ truncateFilename(transfer.file.name) }}
-                  </span>
+                  <div class="flex flex-col min-w-0">
+                    <span
+                      class="text-xs font-expoArabicMedium text-content dark:text-white break-words"
+                      dir="auto"
+                    >
+                      {{ truncateFilename(upload.file.name) }}
+                    </span>
+                    <div
+                      class="mt-0.5 flex items-center gap-1 text-[11px] text-textMuted dark:text-textVeryMuted"
+                    >
+                      <img
+                        [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+                        alt=""
+                        class="h-3.5 w-3.5 opacity-80"
+                        loading="lazy"
+                        width="14"
+                        height="14"
+                      />
+                      <span class="break-words" dir="auto">{{ upload.targetUser }}</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="flex items-center justify-end gap-1">
                   <span
@@ -731,9 +819,27 @@
                     width="16"
                     height="16"
                   />
-                  <span class="truncate text-xs font-expoArabicMedium text-content dark:text-white">
-                    {{ truncateFilename(download.fileName) }}
-                  </span>
+                  <div class="flex flex-col min-w-0">
+                    <span
+                      class="text-xs font-expoArabicMedium text-content dark:text-white break-words"
+                      dir="auto"
+                    >
+                      {{ truncateFilename(download.fileName) }}
+                    </span>
+                    <div
+                      class="mt-0.5 flex items-center gap-1 text-[11px] text-textMuted dark:text-textVeryMuted"
+                    >
+                      <img
+                        [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+                        alt=""
+                        class="h-3.5 w-3.5 opacity-80"
+                        loading="lazy"
+                        width="14"
+                        height="14"
+                      />
+                      <span class="break-words" dir="auto">{{ download.fromUser }}</span>
+                    </div>
+                  </div>
                 </div>
                 <div class="flex items-center justify-end gap-1">
                   <span

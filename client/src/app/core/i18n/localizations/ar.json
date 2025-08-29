@@ -58,6 +58,8 @@
   "FILE_TRANSFER": "نقل الملفات",
   "ACTIVE_TRANSFERS_COUNT": "عدد الملفات",
   "FILE_SENT": "تم إرسال الملف",
+  "FILE_TRANSFER_ACCEPTED": "تم قبول الملف",
+  "FILE_TRANSFER_DECLINED": "تم رفض الملف",
 
   "_404_PAGE_SECTION": "==== 404 PAGE ====",
   "PAGE_NOT_FOUND": "الصفحة غير موجودة",
@@ -112,7 +114,6 @@
   "SERVER_CONNECTION_LOST_PERMANENTLY": "تم فقد الاتصال بالخادم. يرجى تحديث الصفحة.",
   "RECONNECTING_TO_SERVER": "جارٍ إعادة الاتصال بالخادم...",
   "CANCELLED": "تم الإلغاء",
-  "FILE_TRANSFER_DECLINED": "تم رفض الملف",
   "DECLINED": "مرفوض",
   "NO_FILE_TO_SEND": "لا يوجد ملف لإرساله",
   "ALL_FILES_RESPONDED": "تم الرد على جميع الملفات",

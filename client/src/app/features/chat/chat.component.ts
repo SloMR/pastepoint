@@ -160,6 +160,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private emojiPickerTimeout: ReturnType<typeof setTimeout> | null = null;
   public isHoveringOverPicker = false;
   public FileTransferStatus = FileTransferStatus;
+  private overrideRecipients: string[] | null = null;
 
   /**
    * ==========================================================
@@ -171,6 +172,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
   @ViewChild('messageTextarea', { static: false }) messageTextarea!: ElementRef;
   @ViewChild('qrCodeContainer', { static: false }) qrCodeContainer!: ElementRef;
+  @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>;
 
   /**
    * ==========================================================
@@ -956,18 +958,24 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (input.files && input.files.length > 0) {
       const filesToSend = Array.from(input.files);
 
-      const otherMembers = this.members.filter((m) => m !== this.userService.user);
-      if (otherMembers.length === 0) {
+      const defaultRecipients = this.members.filter((m) => m !== this.userService.user);
+      const recipients =
+        this.overrideRecipients && this.overrideRecipients.length > 0
+          ? this.overrideRecipients
+          : defaultRecipients;
+
+      if (recipients.length === 0) {
         this.toaster.warning(this.translate.instant('NO_USERS_FOR_UPLOAD'));
+        this.overrideRecipients = null;
         return;
       }
 
       // Create chat messages for each file being sent
-      await this.createAndSendFileMessages(filesToSend, otherMembers);
+      await this.createAndSendFileMessages(filesToSend, recipients);
 
-      // First prepare all files for all members
+      // First prepare all files for all recipients
       for (const fileToSend of filesToSend) {
-        for (const member of otherMembers) {
+        for (const member of recipients) {
           await this.fileTransferService.prepareFileForSending(fileToSend, member);
           if (!this.webrtcService.isConnectedOrConnecting(member)) {
             this.logger.info(
@@ -979,10 +987,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       }
 
-      // Then send all file offers once per member
-      for (const member of otherMembers) {
+      // Then send all file offers once per recipient
+      for (const member of recipients) {
         const connectionReady = await this.waitForFileTransferConnection(member);
-
         if (connectionReady) {
           await this.fileTransferService.sendAllFileOffers(member);
           this.logger.debug('sendAttachments', `Sent ${filesToSend.length} files to ${member}`);
@@ -990,8 +997,23 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       }
 
       input.value = '';
+      this.overrideRecipients = null;
     } else {
       this.toaster.warning(this.translate.instant('NO_FILES_SELECTED'));
+    }
+  }
+
+  /**
+   * ==========================================================
+   * OPEN FILE PICKER FOR SPECIFIC USER
+   * Triggers hidden input to choose files and target a single user.
+   * ==========================================================
+   */
+  openFilePickerForMember(member: string): void {
+    this.overrideRecipients = [member];
+    if (this.fileInput?.nativeElement) {
+      this.fileInput.nativeElement.value = '';
+      this.fileInput.nativeElement.click();
     }
   }
 
@@ -1304,7 +1326,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.rooms = [];
       this.activeUploads = [];
       this.activeDownloads = [];
-      this.incomingFiles = [];
+      this.overrideRecipients = null;
 
       // Disconnect WebSocket
       this.wsConnectionService.disconnect();
