@@ -1264,14 +1264,20 @@
                               />
                             </ng-container>
                             <ng-template #noPreview>
-                              <img
-                                [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
-                                alt="Attachment"
-                                class="h-12 w-12 mb-3"
-                                loading="lazy"
-                                width="48"
-                                height="48"
-                              />
+                              <div
+                                class="h-[180px] w-[280px] rounded-xl border border-gray-200 mb-2 dark:border-gray-700 bg-gray-50 dark:bg-gray-600 flex items-center justify-center shadow-inner"
+                              >
+                                <img
+                                  [src]="
+                                    isDarkMode
+                                      ? '/icons/file-unknown-white.svg'
+                                      : '/icons/file-unknown.svg'
+                                  "
+                                  alt="Attachment"
+                                  class="h-20 w-20 object-contain opacity-90"
+                                  loading="lazy"
+                                />
+                              </div>
                             </ng-template>
                           </div>
 
@@ -1299,14 +1305,20 @@
                               />
                             </ng-container>
                             <ng-template #receiverPlaceholder>
-                              <img
-                                [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
-                                alt="Attachment"
-                                class="h-12 w-12 mb-2"
-                                loading="lazy"
-                                width="48"
-                                height="48"
-                              />
+                              <div
+                                class="h-[180px] w-[280px] rounded-xl border border-gray-200 mb-2 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-center shadow-inner"
+                              >
+                                <img
+                                  [src]="
+                                    isDarkMode
+                                      ? '/icons/file-unknown-white.svg'
+                                      : '/icons/file-unknown.svg'
+                                  "
+                                  alt="Attachment"
+                                  class="h-20 w-20 object-contain opacity-90"
+                                  loading="lazy"
+                                />
+                              </div>
                             </ng-template>
                             <p
                               class="flex items-center gap-2 break-all text-xs text-white font-expoArabic"
@@ -1467,14 +1479,20 @@
                                 />
                               </ng-container>
                               <ng-template #senderPlaceholder>
-                                <img
-                                  [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
-                                  alt="Attachment"
-                                  class="h-12 w-12 mb-2"
-                                  loading="lazy"
-                                  width="48"
-                                  height="48"
-                                />
+                                <div
+                                  class="h-[180px] w-[280px] rounded-xl border border-gray-200 mb-2 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 flex items-center justify-center shadow-inner"
+                                >
+                                  <img
+                                    [src]="
+                                      isDarkMode
+                                        ? '/icons/file-unknown-white.svg'
+                                        : '/icons/file-unknown.svg'
+                                    "
+                                    alt="Attachment"
+                                    class="h-20 w-20 object-contain opacity-90"
+                                    loading="lazy"
+                                  />
+                                </div>
                               </ng-template>
                               <!-- Single filename/text line below -->
                               <p
