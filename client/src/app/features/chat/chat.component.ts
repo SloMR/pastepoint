@@ -61,6 +61,7 @@ import { Router } from '@angular/router';
 import { HotToastService } from '@ngneat/hot-toast';
 import * as QRCode from 'qrcode';
 import { SecurityContext } from '@angular/core';
+import { FileSizePipe } from '../../utils/file-size.pipe';
 
 /**
  * ==========================================================
@@ -83,7 +84,9 @@ import { SecurityContext } from '@angular/core';
     NgOptimizedImage,
     RouterLink,
     NgClass,
+    FileSizePipe,
   ],
+  providers: [FileSizePipe],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css'],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -194,7 +197,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngZone: NgZone,
     private toaster: HotToastService,
     private flowbiteService: FlowbiteService,
-    @Inject(TranslateService) protected translate: TranslateService,
     private sessionService: SessionService,
     private route: ActivatedRoute,
     private logger: NGXLogger,
@@ -202,6 +204,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private metaService: MetaService,
     private router: Router,
     private sanitizer: DomSanitizer,
+    private fileSizePipe: FileSizePipe,
+    @Inject(TranslateService) protected translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
@@ -915,9 +919,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   private async createAndSendFileMessages(files: File[], otherMembers: string[]): Promise<void> {
     for (const file of files) {
-      const fileSizeInMB = (file.size / MB).toFixed(2);
       const truncatedFilename = this.truncateFilename(file.name);
-      const fileMessageText = `${this.translate.instant('FILE_SENT')}: ${truncatedFilename} (${fileSizeInMB} MB)`;
+      const fileSizeLabel = this.fileSizePipe.transform(file.size, 2);
+      const fileMessageText = `${this.translate.instant('FILE_SENT')}: ${truncatedFilename} (${fileSizeLabel})`;
 
       let hasSuccessfulSend = false;
 
@@ -1428,8 +1432,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         width: isMobile ? 180 : 220,
         margin: 1,
         color: {
-          dark: '#000000',
-          light: '#FFFFFF',
+          dark: '#f0f4ff',
+          light: '#6366f1',
         },
       });
 

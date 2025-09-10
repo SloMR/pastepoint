@@ -1239,9 +1239,8 @@
                               <div class="flex-1">
                                 <p class="mb-1 text-sm font-expoArabic text-white">
                                   {{ message.fileTransfer?.fileName }} ({{
-                                    (message.fileTransfer?.fileSize || 0) / MB | number: '1.2-2'
-                                  }}
-                                  MB)
+                                    message.fileTransfer?.fileSize || 0 | filesize: 2
+                                  }})
                                 </p>
                                 <p class="text-sm font-normal font-expoArabic text-white">
                                   {{ 'WANTS_TO_SEND_FILE' | translate }}
@@ -1374,9 +1373,8 @@
                                     class="mb-1 text-sm font-expoArabic text-content dark:text-contentMuted"
                                   >
                                     {{ message.fileTransfer?.fileName }} ({{
-                                      (message.fileTransfer?.fileSize || 0) / MB | number: '1.2-2'
-                                    }}
-                                    MB)
+                                      message.fileTransfer?.fileSize || 0 | filesize: 2
+                                    }})
                                   </p>
                                   <p
                                     class="text-sm font-normal font-expoArabic text-content dark:text-contentMuted"
