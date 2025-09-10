@@ -5,6 +5,7 @@ import { WebRTCService } from '../communication/webrtc.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { HotToastService } from '@ngneat/hot-toast';
+import { PreviewService } from '../../services/ui/preview.service';
 
 @Injectable({
   providedIn: 'root',
@@ -16,7 +17,8 @@ export class FileDownloadService extends FileTransferBaseService {
     toaster: HotToastService,
     translate: TranslateService,
     logger: NGXLogger,
-    ngZone: NgZone
+    ngZone: NgZone,
+    private previewService: PreviewService
   ) {
     super(webrtcService, toaster, translate, logger, ngZone);
   }
@@ -67,9 +69,43 @@ export class FileDownloadService extends FileTransferBaseService {
         offset += chunk.length;
       }
 
-      const receivedBlob = new Blob([combinedArray]);
+      const lowerName = (fileDownload.fileName || '').toLowerCase();
+      const ext = lowerName.split('.').pop() || '';
+      let blobType = '';
+      if (ext === 'pdf') {
+        blobType = 'application/pdf';
+      } else if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
+        // Use a generic image type; exact type isn't critical for <img>, but set if known
+        blobType = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+      }
+
+      const receivedBlob = new Blob([combinedArray], { type: blobType || undefined });
       const downloadUrl = URL.createObjectURL(receivedBlob);
       const fileName = fileDownload.fileName || 'downloaded_file';
+
+      // Update preview after completion for images/PDFs
+      try {
+        if (blobType === 'application/pdf') {
+          // Keep existing thumbnail from offer if present; otherwise generate one
+          if (!fileDownload.previewDataUrl) {
+            const thumb = await this.previewService.createPdfThumbnailFromBytes(combinedArray);
+            if (thumb) {
+              fileDownload.previewDataUrl = thumb;
+              fileDownload.previewMime = 'image/png';
+            }
+          } else {
+            // Ensure mime reflects image
+            fileDownload.previewMime = 'image/png';
+          }
+        } else if (blobType.startsWith('image/')) {
+          fileDownload.previewMime = 'image/*';
+          fileDownload.previewDataUrl = downloadUrl;
+        }
+        await this.updateActiveDownloads();
+        await this.updateIncomingFileOffers();
+      } catch {
+        this.logger.warn('handleDataChunk', `Failed to generate preview for fileId=${fileId}`);
+      }
 
       const anchor = document.createElement('a');
       anchor.href = downloadUrl;

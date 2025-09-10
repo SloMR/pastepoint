@@ -100,7 +100,8 @@ export class ChatService implements IChatService {
    */
   public addMessageToLocal(
     content: string,
-    messageType: ChatMessageType = ChatMessageType.TEXT
+    messageType: ChatMessageType = ChatMessageType.TEXT,
+    extras?: Partial<ChatMessage>
   ): void {
     if (content.trim()) {
       const chatMsg: ChatMessage = {
@@ -108,6 +109,7 @@ export class ChatService implements IChatService {
         text: content.trim(),
         type: messageType,
         timestamp: new Date(),
+        ...(extras || {}),
       };
 
       this.ngZone.run(() => {
