@@ -1247,51 +1247,32 @@
                                 </p>
                               </div>
                             </div>
-                            <div class="mt-3 flex items-center gap-3 justify-end">
-                              <!-- Accept -->
-                              <button
-                                (click)="acceptIncomingFile(message)"
-                                class="w-10 h-10 rounded-xl bg-emerald-500/90 text-white flex items-center justify-center shadow-md backdrop-blur-sm hover:bg-emerald-500 hover:scale-105 active:scale-95 transition-all"
-                                aria-label="Accept file"
-                                title="Accept"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="20"
-                                  height="20"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2.3"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <path d="M5 12l5 5l10 -10" />
-                                </svg>
-                              </button>
-
-                              <!-- Decline -->
-                              <button
-                                (click)="declineIncomingFile(message)"
-                                class="w-10 h-10 rounded-xl bg-rose-500/90 text-white flex items-center justify-center shadow-md backdrop-blur-sm hover:bg-rose-500 hover:scale-105 active:scale-95 transition-all"
-                                aria-label="Decline file"
-                                title="Decline"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  width="20"
-                                  height="20"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  stroke-width="2.3"
-                                  stroke-linecap="round"
-                                  stroke-linejoin="round"
-                                >
-                                  <path d="M18 6L6 18M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </div>
+                            <!-- Receiver preview before accept/decline (if available) -->
+                            <ng-container *ngIf="message.previewUrl; else noPreview">
+                              <!-- Image preview -->
+                              <img
+                                *ngIf="
+                                  message.previewMime?.startsWith('image/') ||
+                                  message.previewMime === 'application/pdf'
+                                "
+                                [src]="message.previewUrl"
+                                [alt]="message.fileTransfer?.fileName || 'Attachment'"
+                                class="max-h-48 w-auto rounded-lg mb-3 border border-borderLight dark:border-borderDark"
+                                loading="lazy"
+                                width="320"
+                                height="192"
+                              />
+                            </ng-container>
+                            <ng-template #noPreview>
+                              <img
+                                [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
+                                alt="Attachment"
+                                class="h-12 w-12 mb-3"
+                                loading="lazy"
+                                width="48"
+                                height="48"
+                              />
+                            </ng-template>
                           </div>
 
                           <!-- Regular attachment or processed file transfer -->
@@ -1301,6 +1282,32 @@
                               message.fileTransfer.status !== FileTransferStatus.PENDING
                             "
                           >
+                            <!-- Receiver preview after accepted/completed (if available) -->
+                            <ng-container *ngIf="message.previewUrl; else receiverPlaceholder">
+                              <!-- Image preview -->
+                              <img
+                                *ngIf="
+                                  message.previewMime?.startsWith('image/') ||
+                                  message.previewMime === 'application/pdf'
+                                "
+                                [src]="message.previewUrl"
+                                [alt]="message.fileTransfer?.fileName || 'Attachment'"
+                                class="max-h-48 w-auto rounded-lg mb-2 border border-borderLight dark:border-borderDark"
+                                loading="lazy"
+                                width="320"
+                                height="192"
+                              />
+                            </ng-container>
+                            <ng-template #receiverPlaceholder>
+                              <img
+                                [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
+                                alt="Attachment"
+                                class="h-12 w-12 mb-2"
+                                loading="lazy"
+                                width="48"
+                                height="48"
+                              />
+                            </ng-template>
                             <p
                               class="flex items-center gap-2 break-all text-xs text-white font-expoArabic"
                             >
@@ -1318,12 +1325,64 @@
                         </div>
                       </div>
                       <div
-                        class="flex items-center gap-2"
-                        [ngClass]="!isRTL ? 'justify-end' : 'justify-start'"
+                        class="flex items-center gap-2 justify-between"
+                        [ngClass]="isRTL ? 'flex-row-reverse' : 'flex-row'"
                       >
                         <span class="text-xs leading-6 text-white font-expoArabic">
                           {{ message.timestamp | date: 'shortTime' }}
                         </span>
+                        <div class="flex items-center gap-2">
+                          <ng-container
+                            *ngIf="
+                              message.type === ChatMessageType.ATTACHMENT &&
+                              message.fileTransfer?.status === FileTransferStatus.PENDING
+                            "
+                          >
+                            <!-- Accept -->
+                            <button
+                              (click)="acceptIncomingFile(message)"
+                              class="w-10 h-10 text-emerald-500 flex items-center justify-center backdrop-blur-sm hover:text-emerald-700 hover:scale-105 active:scale-95 transition-all"
+                              aria-label="Accept file"
+                              title="Accept"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.3"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <path d="M5 12l5 5l10 -10" />
+                              </svg>
+                            </button>
+
+                            <!-- Decline -->
+                            <button
+                              (click)="declineIncomingFile(message)"
+                              class="w-10 h-10 text-rose-500 flex items-center backdrop-blur-sm hover:text-rose-800 hover:scale-105 active:scale-95 transition-all"
+                              aria-label="Decline file"
+                              title="Decline"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                width="20"
+                                height="20"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.3"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                              >
+                                <path d="M18 6L6 18M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </ng-container>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1392,6 +1451,32 @@
                                 message.fileTransfer.status !== FileTransferStatus.PENDING
                               "
                             >
+                              <!-- Visual preview or placeholder (sender side) -->
+                              <ng-container *ngIf="message.previewUrl; else senderPlaceholder">
+                                <img
+                                  *ngIf="
+                                    message.previewMime?.startsWith('image/') ||
+                                    message.previewMime === 'application/pdf'
+                                  "
+                                  [src]="message.previewUrl"
+                                  [alt]="message.fileTransfer?.fileName || 'Attachment'"
+                                  class="max-h-48 w-auto rounded-lg mb-2 border border-borderLight dark:border-borderDark"
+                                  loading="lazy"
+                                  width="320"
+                                  height="192"
+                                />
+                              </ng-container>
+                              <ng-template #senderPlaceholder>
+                                <img
+                                  [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
+                                  alt="Attachment"
+                                  class="h-12 w-12 mb-2"
+                                  loading="lazy"
+                                  width="48"
+                                  height="48"
+                                />
+                              </ng-template>
+                              <!-- Single filename/text line below -->
                               <p
                                 class="flex items-center gap-2 break-all text-xs font-expoArabic text-content dark:text-contentMuted"
                               >
