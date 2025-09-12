@@ -98,7 +98,7 @@ export class FileDownloadService extends FileTransferBaseService {
             fileDownload.previewMime = 'image/png';
           }
         } else if (blobType.startsWith('image/')) {
-          fileDownload.previewMime = 'image/*';
+          fileDownload.previewMime = blobType;
           fileDownload.previewDataUrl = downloadUrl;
         }
         await this.updateActiveDownloads();
