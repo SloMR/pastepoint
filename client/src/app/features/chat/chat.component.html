@@ -1122,13 +1122,7 @@
     </div>
 
     <!-- MARK: - Main Content -->
-    <div
-      class="flex-1 overflow-auto px-4 py-6 bg-contentArea dark:bg-baseDark md:p-8"
-      (dragover)="handleDragOver($event)"
-      (dragleave)="handleDragLeave($event)"
-      (dragenter)="handleDragEnter()"
-      (drop)="handleDrop($event)"
-    >
+    <div class="flex-1 overflow-auto px-4 py-6 bg-contentArea dark:bg-baseDark md:p-8">
       <div class="flex h-full w-full flex-col items-start justify-between">
         <!-- MARK: - Info Banner -->
         <div
@@ -1544,6 +1538,10 @@
           #messageForm="ngForm"
           (submit)="sendMessage(messageForm); $event.preventDefault()"
           class="flex w-full"
+          (dragover)="handleDragOver($event)"
+          (dragleave)="handleDragLeave($event)"
+          (dragenter)="handleDragEnter()"
+          (drop)="handleDrop($event)"
         >
           <div
             class="relative mt-6 mb-0 flex w-full items-center justify-end gap-2 rounded-xl p-4 pt-0 pb-0 min-h-[110px]"
