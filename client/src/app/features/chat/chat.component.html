@@ -1231,13 +1231,14 @@
                               <img
                                 src="/icons/file-white.svg"
                                 alt="File"
-                                class="h-4 w-4 mt-0.5"
-                                loading="lazy"
+                                class="h-4 w-4 shrink-0 mt-[2px]"
                                 width="16"
                                 height="16"
                               />
-                              <div class="flex-1">
-                                <p class="mb-1 text-sm font-expoArabic text-white">
+                              <div class="flex-1 min-w-0">
+                                <p
+                                  class="mb-1 text-sm font-expoArabic text-white leading-5 break-words overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]"
+                                >
                                   {{ message.fileTransfer?.fileName }} ({{
                                     message.fileTransfer?.fileSize || 0 | filesize: 2
                                   }})
@@ -1257,7 +1258,7 @@
                                 "
                                 [src]="message.previewUrl"
                                 [alt]="message.fileTransfer?.fileName || 'Attachment'"
-                                class="max-h-48 w-auto rounded-lg mb-3 border border-borderLight dark:border-borderDark"
+                                class="w-[90%] h-auto rounded-lg mb-3 mx-auto border border-borderLight dark:border-borderDark"
                                 loading="lazy"
                                 width="320"
                                 height="192"
@@ -1298,7 +1299,7 @@
                                 "
                                 [src]="message.previewUrl"
                                 [alt]="message.fileTransfer?.fileName || 'Attachment'"
-                                class="max-h-48 w-auto rounded-lg mb-2 border border-borderLight dark:border-borderDark"
+                                class="w-[90%] h-auto rounded-lg mb-2 mx-auto border border-borderLight dark:border-borderDark"
                                 loading="lazy"
                                 width="320"
                                 height="192"
@@ -1472,7 +1473,7 @@
                                   "
                                   [src]="message.previewUrl"
                                   [alt]="message.fileTransfer?.fileName || 'Attachment'"
-                                  class="max-h-48 w-auto rounded-lg mb-2 border border-borderLight dark:border-borderDark"
+                                  class="w-[90%] h-auto rounded-lg mb-2 mx-auto border border-borderLight dark:border-borderDark"
                                   loading="lazy"
                                   width="320"
                                   height="192"
