@@ -61,6 +61,8 @@ import { Router } from '@angular/router';
 import { HotToastService } from '@ngneat/hot-toast';
 import * as QRCode from 'qrcode';
 import { SecurityContext } from '@angular/core';
+import { PreviewService } from '../../core/services/ui/preview.service';
+import { FileSizePipe } from '../../utils/file-size.pipe';
 
 /**
  * ==========================================================
@@ -83,7 +85,9 @@ import { SecurityContext } from '@angular/core';
     NgOptimizedImage,
     RouterLink,
     NgClass,
+    FileSizePipe,
   ],
+  providers: [FileSizePipe],
   templateUrl: './chat.component.html',
   styleUrls: ['./chat.component.css'],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
@@ -161,6 +165,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   public isHoveringOverPicker = false;
   public FileTransferStatus = FileTransferStatus;
   private overrideRecipients: string[] | null = null;
+  private createdPreviewUrls: string[] = [];
 
   /**
    * ==========================================================
@@ -194,7 +199,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private ngZone: NgZone,
     private toaster: HotToastService,
     private flowbiteService: FlowbiteService,
-    @Inject(TranslateService) protected translate: TranslateService,
     private sessionService: SessionService,
     private route: ActivatedRoute,
     private logger: NGXLogger,
@@ -202,6 +206,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private metaService: MetaService,
     private router: Router,
     private sanitizer: DomSanitizer,
+    private previewService: PreviewService,
+    private fileSizePipe: FileSizePipe,
+    @Inject(TranslateService) protected translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
 
@@ -322,6 +329,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.emojiPickerTimeout) {
       clearTimeout(this.emojiPickerTimeout);
     }
+
+    for (const url of this.createdPreviewUrls) {
+      try {
+        URL.revokeObjectURL(url);
+      } catch (e) {
+        this.logger.warn('ngOnDestroy', 'Failed to revoke preview URL', e as unknown);
+      }
+    }
+    this.createdPreviewUrls = [];
 
     if (!this.isNavigatingIntentionally && this.SessionCode) {
       this.clearSessionCode();
@@ -529,6 +545,26 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.logger.info('activeDownloads', `Active downloads: ${downloads.length} (length)`);
         this.ngZone.run(() => {
           this.activeDownloads = downloads;
+          const currentMessages = this.chatService.messages$.value;
+          const updatedMessages = currentMessages.map((msg) => {
+            if (msg.type === ChatMessageType.ATTACHMENT && msg.fileTransfer) {
+              const fileTransfer = msg.fileTransfer;
+              const match =
+                fileTransfer &&
+                downloads.find(
+                  (d) => d.fileId === fileTransfer.fileId && d.fromUser === fileTransfer.fromUser
+                );
+              if (match && match.previewDataUrl) {
+                return {
+                  ...msg,
+                  previewUrl: match.previewDataUrl,
+                  previewMime: match.previewMime,
+                };
+              }
+            }
+            return msg;
+          });
+          this.chatService.replaceMessages(updatedMessages);
           this.cdr.detectChanges();
         });
       })
@@ -594,6 +630,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
                 updatedMessages[fileSentMessageIndex] = {
                   ...updatedMessages[fileSentMessageIndex],
                   text: fileDownload.fileName,
+                  previewUrl: fileDownload.previewDataUrl,
+                  previewMime: fileDownload.previewMime,
                   fileTransfer: {
                     fileId: fileDownload.fileId,
                     fileName: fileDownload.fileName,
@@ -609,6 +647,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
                   text: fileDownload.fileName,
                   type: ChatMessageType.ATTACHMENT,
                   timestamp: new Date(),
+                  previewUrl: fileDownload.previewDataUrl,
+                  previewMime: fileDownload.previewMime,
                   fileTransfer: {
                     fileId: fileDownload.fileId,
                     fileName: fileDownload.fileName,
@@ -617,6 +657,15 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
                     status: FileTransferStatus.PENDING,
                   },
                 });
+              }
+            } else {
+              // Update existing pending message with preview if available
+              if (!updatedMessages[existingIndex].previewUrl && fileDownload.previewDataUrl) {
+                updatedMessages[existingIndex] = {
+                  ...updatedMessages[existingIndex],
+                  previewUrl: fileDownload.previewDataUrl,
+                  previewMime: fileDownload.previewMime,
+                };
               }
             }
           });
@@ -915,9 +964,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   private async createAndSendFileMessages(files: File[], otherMembers: string[]): Promise<void> {
     for (const file of files) {
-      const fileSizeInMB = (file.size / MB).toFixed(2);
       const truncatedFilename = this.truncateFilename(file.name);
-      const fileMessageText = `${this.translate.instant('FILE_SENT')}: ${truncatedFilename} (${fileSizeInMB} MB)`;
+      const fileSizeLabel = this.fileSizePipe.transform(file.size, 2);
+      const fileMessageText = `${this.translate.instant('FILE_SENT')}: ${truncatedFilename} (${fileSizeLabel})`;
 
       let hasSuccessfulSend = false;
 
@@ -941,7 +990,33 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       // Only add to local chat if at least one send was successful
       if (hasSuccessfulSend) {
-        this.chatService.addMessageToLocal(fileMessageText, ChatMessageType.ATTACHMENT);
+        let previewUrl: string | undefined;
+        let previewMime: string | undefined;
+        const mime = file.type || '';
+        if (mime.startsWith('image/')) {
+          try {
+            previewUrl = URL.createObjectURL(file);
+            this.createdPreviewUrls.push(previewUrl);
+            previewMime = mime;
+          } catch (e) {
+            this.logger.warn('createPreview', 'Failed to create image preview URL', e as unknown);
+          }
+        } else if (mime === 'application/pdf') {
+          try {
+            const thumb = await this.previewService.createPdfThumbnailFromFile(file);
+            if (thumb) {
+              previewUrl = thumb;
+              previewMime = 'image/png';
+            }
+          } catch (e) {
+            this.logger.warn('createPreview', 'Failed to create PDF thumbnail', e as unknown);
+          }
+        }
+
+        this.chatService.addMessageToLocal(fileMessageText, ChatMessageType.ATTACHMENT, {
+          previewUrl,
+          previewMime,
+        });
       }
     }
   }
@@ -1428,8 +1503,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         width: isMobile ? 180 : 220,
         margin: 1,
         color: {
-          dark: '#000000',
-          light: '#FFFFFF',
+          dark: '#f0f4ff',
+          light: '#6366f1',
         },
       });
 

@@ -148,6 +148,8 @@ export interface ChatMessage {
   type: ChatMessageType;
   timestamp: Date;
   fileTransfer?: FileTransferData;
+  previewUrl?: string;
+  previewMime?: string;
 }
 
 // File transfer interfaces
@@ -176,6 +178,8 @@ export interface FileDownload {
   dataBuffer: Uint8Array[];
   progress: number;
   isAccepted: boolean;
+  previewDataUrl?: string;
+  previewMime?: string;
 }
 
 // Metadata configuration interfaces

@@ -57,6 +57,8 @@ export const appConfig: ApplicationConfig = {
       style: {
         borderRadius: '20px',
         zIndex: 99999,
+        whiteSpace: 'normal',
+        wordBreak: 'break-word',
       },
     }),
     // Initialize translation module with in-memory loader

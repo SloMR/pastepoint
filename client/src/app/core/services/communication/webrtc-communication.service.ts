@@ -26,6 +26,8 @@ export class WebRTCCommunicationService {
     fileSize: number;
     fromUser: string;
     fileId: string;
+    previewDataUrl?: string;
+    previewMime?: string;
   }>();
   public fileResponses$ = new Subject<{ accepted: boolean; fromUser: string; fileId: string }>();
   public fileUploadCancelled$ = new Subject<{ fromUser: string; fileId: string }>();
@@ -311,12 +313,16 @@ export class WebRTCCommunicationService {
               fileId: string;
               fileName: string;
               fileSize: number;
+              previewDataUrl?: string;
+              previewMime?: string;
             };
             this.fileOffers$.next({
               fileId: fileOfferPayload.fileId,
               fileName: fileOfferPayload.fileName,
               fileSize: fileOfferPayload.fileSize,
               fromUser: targetUser,
+              previewDataUrl: fileOfferPayload.previewDataUrl,
+              previewMime: fileOfferPayload.previewMime,
             });
             break;
           }

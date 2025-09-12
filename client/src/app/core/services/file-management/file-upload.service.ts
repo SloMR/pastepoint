@@ -12,6 +12,7 @@ import { WebRTCService } from '../communication/webrtc.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { HotToastService } from '@ngneat/hot-toast';
+import { PreviewService } from '../../services/ui/preview.service';
 
 @Injectable({
   providedIn: 'root',
@@ -28,7 +29,8 @@ export class FileUploadService extends FileTransferBaseService {
     toaster: HotToastService,
     translate: TranslateService,
     logger: NGXLogger,
-    ngZone: NgZone
+    ngZone: NgZone,
+    private previewService: PreviewService
   ) {
     super(webrtcService, toaster, translate, logger, ngZone);
   }
@@ -216,12 +218,32 @@ export class FileUploadService extends FileTransferBaseService {
     }
 
     this.logger.info('sendFileOffer', `Sending file offer to ${targetUser} (id=${fileId})`);
+
+    let previewDataUrl: string | undefined;
+    let previewMime: string | undefined;
+    try {
+      const mime = fileTransfer.file.type || '';
+      if (mime.startsWith('image/')) {
+        previewDataUrl = await this.previewService.createImageThumbnail(fileTransfer.file);
+        previewMime = 'image/png';
+      } else if (mime === 'application/pdf') {
+        previewDataUrl = await this.previewService.createPdfThumbnailFromFile(fileTransfer.file);
+        if (previewDataUrl) {
+          previewMime = 'image/png';
+        }
+      }
+    } catch (e) {
+      this.logger.warn('sendFileOffer', `Failed generating preview: ${String(e)}`);
+    }
+
     const message = {
       type: FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER,
       payload: {
         fileId: fileId,
         fileName: fileTransfer.file.name,
         fileSize: fileTransfer.file.size,
+        previewDataUrl,
+        previewMime,
         fromUser: targetUser,
       },
     };

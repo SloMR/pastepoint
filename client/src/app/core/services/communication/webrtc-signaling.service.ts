@@ -460,8 +460,14 @@ export class WebRTCSignalingService {
   private handleConnectionRequest(message: SignalMessage): void {
     const targetUser = message.from;
     this.logger.info('handleConnectionRequest', `Received connection request from ${targetUser}`);
+    if (this.isDuplicateMessage(targetUser, message.sequence)) {
+      this.logger.warn(
+        'handleConnectionRequest',
+        `Duplicate connection request from ${targetUser}`
+      );
+      return;
+    }
 
-    // If we're the designated caller, initiate the connection
     if (this.shouldInitiateConnection(targetUser)) {
       this.logger.debug(
         'handleConnectionRequest',
@@ -469,11 +475,10 @@ export class WebRTCSignalingService {
       );
       this.initiateConnection(targetUser);
     } else {
-      this.logger.warn(
+      this.logger.debug(
         'handleConnectionRequest',
-        `Received connection request from ${targetUser} but we're not the designated caller`
+        `Not caller for ${targetUser}; ignoring request`
       );
-      this.sendConnectionRequest(targetUser);
     }
   }
 
@@ -744,7 +749,11 @@ export class WebRTCSignalingService {
   private sendConnectionRequest(targetUser: string): void {
     const existingTimeout = this.connectionRequests.get(targetUser);
     if (existingTimeout) {
-      clearTimeout(existingTimeout);
+      this.logger.debug(
+        'sendConnectionRequest',
+        `Connection request already pending for ${targetUser}`
+      );
+      return;
     }
 
     const message: SignalMessage = {
