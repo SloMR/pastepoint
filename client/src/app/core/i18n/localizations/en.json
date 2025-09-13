@@ -83,7 +83,7 @@
   "PRIVACY_NO_RETENTION": "No content sent through the Service (files, messages, or session codes) is stored on our servers. Once the peer‑to‑peer transfer is complete, the content is no longer accessible to us.",
   "PRIVACY_ENCRYPTION": "All transfers occur over WebRTC data channels secured by DTLS and SRTP, providing end‑to‑end encryption between the participating devices.",
   "PRIVACY_COLLECTION": "Connection metadata such as IP addresses may transit our signaling server solely to coordinate the WebRTC handshake. This metadata is transient, retained only as long as necessary to establish the connection, and is never used to identify you.",
-  "PRIVACY_THIRD_PARTIES": "We do not sell, rent, or share your personal information with third parties. Open‑source, self‑hosted analytics (e.g., Umami) may aggregate anonymized usage statistics to help us improve the Service.",
+  "PRIVACY_THIRD_PARTIES": "We do not sell, rent, or share your personal information with third parties. Open‑source, self‑hosted analytics (e.g., Umami, GAnalytics, etc.) may aggregate anonymized usage statistics to help us improve the Service.",
   "PRIVACY_CHANGES": "We may update this Privacy Policy from time to time. If we make material changes, we will post the new policy in the application. Continued use after the effective date constitutes acceptance of the revised policy.",
   "TERMS_TITLE": "Terms of Service",
   "TERMS_AGREEMENT": "By accessing or using PastePoint you agree to be bound by these Terms of Service (\"Terms\"). If you do not agree, do not use the Service.",
