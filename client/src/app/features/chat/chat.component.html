@@ -8,10 +8,11 @@
     <div class="h-[calc(100vh-80px)] overflow-auto flex flex-col justify-start items-start w-full">
       <!-- MARK: - Logo Section -->
       <div class="flex w-full items-center justify-center py-8">
-        <a routerLink="/">
+        <a routerLink="/" title="Home">
           <img
             [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
             alt="PastePoint Logo"
+            title="PastePoint Logo"
             class="h-12 w-auto cursor-pointer"
             width="136"
             height="48"
@@ -29,6 +30,7 @@
           <img
             src="/icons/white-plus.svg"
             alt="Create New Room"
+            title="Create New Room"
             class="h-6 w-6"
             loading="lazy"
             width="24"
@@ -45,6 +47,7 @@
             <img
               [src]="isDarkMode ? '/icons/home-white.svg' : '/icons/home.svg'"
               alt="Rooms"
+              title="Rooms"
               class=""
               loading="lazy"
               width="16"
@@ -80,6 +83,7 @@
                   room === currentRoom ? '/icons/active-comment.svg' : '/icons/inactive-comment.svg'
                 "
                 alt="Join Room"
+                title="Join Room"
                 class=""
                 loading="lazy"
                 width="20"
@@ -97,6 +101,7 @@
         <img
           [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
           alt="Session Code"
+          title="Session Code"
           class="h-4 w-4"
           loading="lazy"
           width="16"
@@ -122,6 +127,7 @@
           <img
             src="/icons/copy.svg"
             alt="Copy"
+            title="Copy"
             class="h-4 w-4"
             loading="lazy"
             width="16"
@@ -135,6 +141,7 @@
           <img
             src="/icons/qrcode.svg"
             alt="QR Code"
+            title="QR Code"
             class="h-4 w-4"
             loading="lazy"
             width="16"
@@ -157,6 +164,7 @@
             <img
               src="/icons/blue-plus.svg"
               alt="Create Private Session"
+              title="Create Private Session"
               class="h-6 w-6"
               loading="lazy"
               width="24"
@@ -190,6 +198,7 @@
             <img
               [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
               alt="Members"
+              title="Members"
               class=""
               loading="lazy"
               width="16"
@@ -219,6 +228,7 @@
                   <img
                     [src]="'/icons/link.svg'"
                     alt="Send file"
+                    title="Send file"
                     class="h-4 w-4"
                     loading="lazy"
                     width="16"
@@ -251,6 +261,7 @@
             <img
               [src]="isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'"
               alt="Active Transfers"
+              title="Active Transfers"
               loading="lazy"
               width="16"
               height="16"
@@ -274,6 +285,7 @@
                 <img
                   [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
                   alt="Uploading"
+                  title="Uploading"
                   class="h-4 w-4"
                   loading="lazy"
                   width="16"
@@ -291,7 +303,8 @@
                   >
                     <img
                       [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
-                      alt=""
+                      alt="User"
+                      title="User"
                       class="h-3.5 w-3.5 opacity-80"
                       loading="lazy"
                       width="14"
@@ -340,6 +353,7 @@
                 <img
                   [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
                   alt="Downloading"
+                  title="Downloading"
                   class="h-4 w-4"
                   loading="lazy"
                   width="16"
@@ -357,7 +371,8 @@
                   >
                     <img
                       [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
-                      alt=""
+                      alt="User"
+                      title="User"
                       class="h-3.5 w-3.5 opacity-80"
                       loading="lazy"
                       width="14"
@@ -416,6 +431,7 @@
         <img
           class=""
           alt="End Session"
+          title="End Session"
           src="/icons/cross-small.svg"
           loading="lazy"
           width="16"
@@ -453,6 +469,7 @@
             <img
               src="/icons/Group.svg"
               alt="User"
+              title="User"
               class="h-10 w-10"
               loading="lazy"
               width="40"
@@ -467,6 +484,7 @@
           <img
             [src]="isDarkMode ? '/icons/cross-close-white.svg' : '/icons/cross-close.svg'"
             alt="Close"
+            title="Close"
             class="h-4 w-4 shrink-0 cursor-pointer"
             (click)="isMenuOpen = false"
             loading="lazy"
@@ -484,6 +502,7 @@
             <img
               src="/icons/white-plus.svg"
               alt="Create New Room"
+              title="Create New Room"
               class="h-6 w-6"
               loading="lazy"
               width="24"
@@ -502,6 +521,7 @@
               <img
                 [src]="isDarkMode ? '/icons/home-white.svg' : '/icons/home.svg'"
                 alt="Rooms"
+                title="Rooms"
                 class=""
                 loading="lazy"
                 width="16"
@@ -539,6 +559,7 @@
                       : '/icons/inactive-comment.svg'
                   "
                   alt="Home"
+                  title="Join Room"
                   class=""
                   loading="lazy"
                   width="20"
@@ -557,6 +578,7 @@
             <img
               [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
               alt="Session Code"
+              title="Session Code"
               class="h-4 w-4"
               loading="lazy"
               width="16"
@@ -588,6 +610,7 @@
                 <img
                   src="/icons/copy.svg"
                   alt="Copy"
+                  title="Copy"
                   class="h-6 w-6"
                   loading="lazy"
                   width="24"
@@ -601,6 +624,7 @@
                 <img
                   src="/icons/qrcode.svg"
                   alt="QR Code"
+                  title="QR Code"
                   class="h-6 w-6"
                   loading="lazy"
                   width="24"
@@ -625,6 +649,7 @@
               <img
                 src="/icons/blue-plus.svg"
                 alt="Create Private Session"
+                title="Create Private Session"
                 class="h-6 w-6"
                 loading="lazy"
                 width="24"
@@ -658,6 +683,7 @@
               <img
                 [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
                 alt="Members"
+                title="Members"
                 class=""
                 loading="lazy"
                 width="16"
@@ -689,6 +715,7 @@
                     <img
                       [src]="'/icons/link.svg'"
                       alt="Send file"
+                      title="Send file"
                       class="h-4 w-4"
                       loading="lazy"
                       width="16"
@@ -721,6 +748,7 @@
               <img
                 [src]="isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'"
                 alt="Active Transfers"
+                title="Active Transfers"
                 loading="lazy"
                 width="16"
                 height="16"
@@ -744,6 +772,7 @@
                   <img
                     [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
                     alt="Uploading"
+                    title="Uploading"
                     class="h-4 w-4"
                     loading="lazy"
                     width="16"
@@ -761,7 +790,8 @@
                     >
                       <img
                         [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
-                        alt=""
+                        alt="User"
+                        title="User"
                         class="h-3.5 w-3.5 opacity-80"
                         loading="lazy"
                         width="14"
@@ -814,6 +844,7 @@
                   <img
                     [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
                     alt="Downloading"
+                    title="Downloading"
                     class="h-4 w-4"
                     loading="lazy"
                     width="16"
@@ -831,7 +862,8 @@
                     >
                       <img
                         [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
-                        alt=""
+                        alt="User"
+                        title="User"
                         class="h-3.5 w-3.5 opacity-80"
                         loading="lazy"
                         width="14"
@@ -895,6 +927,7 @@
             <img
               class=""
               alt="End Session"
+              title="End Session"
               src="/icons/cross-small.svg"
               loading="lazy"
               width="16"
@@ -916,6 +949,7 @@
           <!-- LinkedIn Mobile -->
           <a
             href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
+            title="LinkedIn"
             target="_blank"
             rel="noopener noreferrer nofollow"
             class="inline-flex items-center gap-2 hover:opacity-75"
@@ -923,6 +957,7 @@
             <img
               src="/icons/linkedin.svg"
               alt="LinkedIn"
+              title="LinkedIn"
               class="h-4 w-4"
               loading="lazy"
               width="16"
@@ -933,6 +968,7 @@
           <!-- GitHub Mobile -->
           <a
             href="https://github.com/SloMR/pastepoint"
+            title="GitHub"
             target="_blank"
             rel="noopener noreferrer nofollow"
             class="inline-flex items-center gap-2 hover:opacity-75"
@@ -940,6 +976,7 @@
             <img
               src="/icons/github.svg"
               alt="GitHub"
+              title="GitHub"
               class="h-4 w-4"
               loading="lazy"
               width="16"
@@ -949,6 +986,7 @@
           <!-- X Icon & Link -->
           <a
             href="https://x.com/PastePoint"
+            title="X (Twitter)"
             target="_blank"
             rel="noopener noreferrer nofollow"
             class="inline-flex items-center gap-2 hover:opacity-75"
@@ -956,6 +994,7 @@
             <img
               src="/icons/x-icon.svg"
               alt="X (Twitter)"
+              title="X (Twitter)"
               class="h-4 w-4"
               loading="lazy"
               width="16"
@@ -965,6 +1004,7 @@
           <!-- Instagram Icon & Link -->
           <a
             href="https://www.instagram.com/paste_point/"
+            title="Instagram"
             target="_blank"
             rel="noopener noreferrer nofollow"
             class="inline-flex items-center gap-2 hover:opacity-75"
@@ -972,6 +1012,7 @@
             <img
               src="/icons/instagram-icon.svg"
               alt="Instagram"
+              title="Instagram"
               class="h-4 w-4"
               loading="lazy"
               width="16"
@@ -984,6 +1025,7 @@
         <div class="order-2 flex items-center gap-2">
           <a
             href="/privacy"
+            title="Privacy and Terms"
             target="_self"
             rel="noopener noreferrer nofollow"
             class="inline-flex items-center gap-2 text-brand dark:text-brandDark"
@@ -994,6 +1036,7 @@
             <img
               src="/icons/privacy-and-terms.svg"
               alt="Privacy and Terms"
+              title="Privacy and Terms"
               class="h-4 w-4"
               loading="lazy"
               width="16"
@@ -1028,10 +1071,11 @@
       class="flex w-full items-center justify-between border-b px-4 h-[88px] border-borderLight dark:border-b-surfaceDark md:px-8"
     >
       <div class="flex w-full items-center justify-start py-8 md:hidden">
-        <a routerLink="/">
+        <a routerLink="/" title="Home">
           <img
             [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
             alt="PastePoint Logo"
+            title="PastePoint Logo"
             class="h-8 w-auto cursor-pointer"
             width="91"
             height="32"
@@ -1053,6 +1097,7 @@
               <img
                 [src]="isDarkMode ? '/icons/brightness.svg' : '/icons/moon.svg'"
                 alt="Theme"
+                title="Theme"
                 class="h-5 w-5"
                 loading="lazy"
                 width="20"
@@ -1113,6 +1158,7 @@
         <img
           src="/icons/Group.svg"
           alt="User"
+          title="User"
           class="h-10 w-10"
           loading="lazy"
           width="40"
@@ -1133,6 +1179,7 @@
             <img
               src="/icons/information-circle.svg"
               alt="Info"
+              title="Info"
               class="h-4 w-4"
               loading="lazy"
               width="16"
@@ -1157,6 +1204,7 @@
             <img
               src="/icons/cross-close.svg"
               alt="Close"
+              title="Close"
               class="h-3 w-3"
               loading="lazy"
               width="12"
@@ -1171,6 +1219,7 @@
             *ngIf="SessionCode.length > 0"
             [src]="isDarkMode ? '/icons/lock-white.svg' : '/icons/lock.svg'"
             alt="Lock"
+            title="Lock"
             class="h-5 w-5"
           />
           <p class="pt-1 text-2xl font-normal font-expoArabicMedium text-content dark:text-white">
@@ -1198,6 +1247,7 @@
                   <img
                     src="/icons/Group.svg"
                     alt="User"
+                    title="User"
                     class="h-8 w-8"
                     loading="lazy"
                     width="32"
@@ -1225,6 +1275,7 @@
                               <img
                                 src="/icons/file-white.svg"
                                 alt="File"
+                                title="File"
                                 class="h-4 w-4 shrink-0 mt-[2px]"
                                 width="16"
                                 height="16"
@@ -1252,6 +1303,7 @@
                                 "
                                 [src]="message.previewUrl"
                                 [alt]="message.fileTransfer?.fileName || 'Attachment'"
+                                [title]="message.fileTransfer?.fileName || 'Attachment'"
                                 class="w-[90%] h-auto rounded-lg mb-3 mx-auto border border-borderLight dark:border-borderDark"
                                 loading="lazy"
                                 width="320"
@@ -1269,6 +1321,7 @@
                                       : '/icons/file-unknown.svg'
                                   "
                                   alt="Attachment"
+                                  title="Attachment"
                                   class="h-20 w-20 object-contain opacity-90"
                                   loading="lazy"
                                 />
@@ -1293,6 +1346,7 @@
                                 "
                                 [src]="message.previewUrl"
                                 [alt]="message.fileTransfer?.fileName || 'Attachment'"
+                                [title]="message.fileTransfer?.fileName || 'Attachment'"
                                 class="w-[90%] h-auto rounded-lg mb-2 mx-auto border border-borderLight dark:border-borderDark"
                                 loading="lazy"
                                 width="320"
@@ -1310,6 +1364,7 @@
                                       : '/icons/file-unknown.svg'
                                   "
                                   alt="Attachment"
+                                  title="Attachment"
                                   class="h-20 w-20 object-contain opacity-90"
                                   loading="lazy"
                                 />
@@ -1321,6 +1376,7 @@
                               <img
                                 src="/icons/file-white.svg"
                                 alt="File"
+                                title="File"
                                 class="h-4 w-4"
                                 loading="lazy"
                                 width="16"
@@ -1429,6 +1485,7 @@
                                 <img
                                   [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
                                   alt="File"
+                                  title="File"
                                   class="h-4 w-4 mt-0.5"
                                   loading="lazy"
                                   width="16"
@@ -1467,6 +1524,7 @@
                                   "
                                   [src]="message.previewUrl"
                                   [alt]="message.fileTransfer?.fileName || 'Attachment'"
+                                  [title]="message.fileTransfer?.fileName || 'Attachment'"
                                   class="w-[90%] h-auto rounded-lg mb-2 mx-auto border border-borderLight dark:border-borderDark"
                                   loading="lazy"
                                   width="320"
@@ -1484,6 +1542,7 @@
                                         : '/icons/file-unknown.svg'
                                     "
                                     alt="Attachment"
+                                    title="Attachment"
                                     class="h-20 w-20 object-contain opacity-90"
                                     loading="lazy"
                                   />
@@ -1496,6 +1555,7 @@
                                 <img
                                   [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
                                   alt="File"
+                                  title="File"
                                   class="h-4 w-4"
                                   loading="lazy"
                                   width="16"
@@ -1521,6 +1581,7 @@
                     <img
                       src="/icons/Group.svg"
                       alt="User"
+                      title="User"
                       class="h-8 w-8"
                       loading="lazy"
                       width="32"
@@ -1595,6 +1656,7 @@
                   <img
                     [src]="'/icons/link.svg'"
                     alt="Attach Files"
+                    title="Attach Files"
                     (click)="fileInput.click()"
                     class="h-5 w-5 cursor-pointer"
                     loading="lazy"
@@ -1604,11 +1666,11 @@
                   <img
                     [src]="'/icons/emoji.svg'"
                     alt="Emoji"
+                    title="Open emoji picker"
                     class="h-5 w-5 cursor-pointer"
                     (mouseenter)="isEmojiPickerVisible = true"
                     (mouseleave)="handleEmojiIconMouseLeave()"
                     aria-label="Open emoji picker"
-                    title="Open emoji picker"
                     loading="lazy"
                     width="20"
                     height="20"
@@ -1622,6 +1684,7 @@
                   <img
                     [src]="'/icons/send.svg'"
                     alt="Send"
+                    title="Send"
                     class="h-5 w-5"
                     loading="lazy"
                     width="20"
@@ -1673,6 +1736,7 @@
           <!-- LinkedIn Icon & Link -->
           <a
             href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
+            title="LinkedIn"
             target="_blank"
             rel="noopener noreferrer nofollow"
             class="inline-flex items-center gap-2 hover:opacity-75"
@@ -1680,6 +1744,7 @@
             <img
               src="/icons/linkedin.svg"
               alt="LinkedIn"
+              title="LinkedIn"
               class="h-6 w-6"
               loading="lazy"
               width="24"
@@ -1691,6 +1756,7 @@
           <!-- GitHub Icon & Link -->
           <a
             href="https://github.com/SloMR/pastepoint"
+            title="GitHub"
             target="_blank"
             rel="noopener noreferrer nofollow"
             class="inline-flex items-center gap-2 hover:opacity-75"
@@ -1698,6 +1764,7 @@
             <img
               src="/icons/github.svg"
               alt="GitHub"
+              title="GitHub"
               class="h-6 w-6"
               loading="lazy"
               width="24"
@@ -1709,6 +1776,7 @@
           <!-- X Icon & Link -->
           <a
             href="https://x.com/PastePoint"
+            title="X (Twitter)"
             target="_blank"
             rel="noopener noreferrer nofollow"
             class="inline-flex items-center gap-2 hover:opacity-75"
@@ -1716,6 +1784,7 @@
             <img
               src="/icons/x-icon.svg"
               alt="X (Twitter)"
+              title="X (Twitter)"
               class="h-6 w-6"
               loading="lazy"
               width="24"
@@ -1727,6 +1796,7 @@
           <!-- Instagram Icon & Link -->
           <a
             href="https://www.instagram.com/paste_point/"
+            title="Instagram"
             target="_blank"
             rel="noopener noreferrer nofollow"
             class="inline-flex items-center gap-2 hover:opacity-75"
@@ -1734,6 +1804,7 @@
             <img
               src="/icons/instagram-icon.svg"
               alt="Instagram"
+              title="Instagram"
               class="h-6 w-6"
               loading="lazy"
               width="24"
@@ -1745,6 +1816,7 @@
       <div class="flex items-center gap-4">
         <a
           href="/privacy"
+          title="Privacy and Terms"
           target="_self"
           rel="noopener noreferrer nofollow"
           class="inline-flex items-center gap-2 text-brand dark:text-brandDark"
@@ -1755,6 +1827,7 @@
           <img
             src="/icons/privacy-and-terms.svg"
             alt="Privacy and Terms"
+            title="Privacy and Terms"
             class="h-6 w-6"
             loading="lazy"
             width="24"
@@ -1791,6 +1864,7 @@
             <img
               src="/icons/cross-close.svg"
               alt="Close"
+              title="Close"
               class="h-4 w-4 cursor-pointer"
               (click)="closePopup('join')"
               loading="lazy"
@@ -1853,6 +1927,7 @@
             <img
               src="/icons/cross-close.svg"
               alt="Close"
+              title="Close"
               class="h-4 w-4 cursor-pointer"
               (click)="closePopup('create')"
               loading="lazy"
@@ -1915,6 +1990,7 @@
             <img
               src="/icons/cross-close.svg"
               alt="Close"
+              title="Close"
               class="h-4 w-4 cursor-pointer"
               (click)="closePopup('end')"
               loading="lazy"
@@ -1962,6 +2038,7 @@
               <img
                 src="/icons/cross-close.svg"
                 alt="Close"
+                title="Close"
                 class="h-4 w-4"
                 loading="lazy"
                 width="16"

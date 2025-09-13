@@ -11,10 +11,11 @@
       <div class="flex h-20 items-center justify-between">
         <!-- MARK: - Logo & Title -->
         <div class="flex items-center">
-          <a routerLink="/" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'">
+          <a routerLink="/" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'" title="Home">
             <img
               [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
               alt="PastePoint Logo"
+              title="PastePoint Logo"
               class="h-12 w-auto cursor-pointer"
               width="136"
               height="48"
@@ -37,6 +38,7 @@
               <img
                 [src]="isDarkMode ? '/icons/brightness.svg' : '/icons/moon.svg'"
                 alt="Theme"
+                title="Theme"
                 class="h-5 w-5"
               />
             </button>
@@ -66,6 +68,7 @@
         <img
           src="/icons/privacy-and-terms.svg"
           alt="Privacy and Terms"
+          title="Privacy and Terms"
           class="h-10 w-10"
           loading="lazy"
           width="40"
@@ -146,10 +149,12 @@
         <button
           class="flex items-center justify-center gap-2 rounded-md px-4 py-2 text-white font-expoArabicMedium bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
           routerLink="/"
+          title="Go Back"
         >
           <img
             src="/icons/back-arrow.svg"
             alt="arrow-right"
+            title="Go Back"
             [ngClass]="isRTL ? 'rotate-0' : 'rotate-180'"
           />
           {{ 'GO_BACK_HOME' | translate }}
@@ -167,6 +172,7 @@
       <!-- LinkedIn -->
       <a
         href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
+        title="LinkedIn"
         target="_blank"
         rel="noopener noreferrer nofollow"
         class="inline-flex items-center gap-2 hover:opacity-75"
@@ -174,6 +180,7 @@
         <img
           src="/icons/linkedin.svg"
           alt="LinkedIn"
+          title="LinkedIn"
           class="h-6 w-6"
           loading="lazy"
           width="24"
@@ -184,6 +191,7 @@
       <!-- GitHub -->
       <a
         href="https://github.com/SloMR/pastepoint"
+        title="GitHub"
         target="_blank"
         rel="noopener noreferrer nofollow"
         class="inline-flex items-center gap-2 hover:opacity-75"
@@ -191,6 +199,7 @@
         <img
           src="/icons/github.svg"
           alt="GitHub"
+          title="GitHub"
           class="h-6 w-6"
           loading="lazy"
           width="24"
@@ -201,6 +210,7 @@
       <!-- X -->
       <a
         href="https://x.com/PastePoint"
+        title="X (Twitter)"
         target="_blank"
         rel="noopener noreferrer nofollow"
         class="inline-flex items-center gap-2 hover:opacity-75"
@@ -208,6 +218,7 @@
         <img
           src="/icons/x-icon.svg"
           alt="X"
+          title="X"
           class="h-6 w-6"
           loading="lazy"
           width="24"
@@ -218,6 +229,7 @@
       <!-- Instagram -->
       <a
         href="https://www.instagram.com/paste_point/"
+        title="Instagram"
         target="_blank"
         rel="noopener noreferrer nofollow"
         class="inline-flex items-center gap-2 hover:opacity-75"
@@ -225,6 +237,7 @@
         <img
           src="/icons/instagram-icon.svg"
           alt="Instagram"
+          title="Instagram"
           class="h-6 w-6"
           loading="lazy"
           width="24"
