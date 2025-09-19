@@ -1,6 +1,6 @@
 [package]
 name = "server"
-version = "0.7.5"
+version = "0.7.6"
 edition = "2021"
 authors = ["Sulaiman AlRomaih"]
 license = "GPL-3"
