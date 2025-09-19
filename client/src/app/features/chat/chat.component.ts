@@ -117,7 +117,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   isMenuOpen = false;
   isEmojiPickerVisible = false;
   isDragging = false;
-  showSessionInfo = true;
 
   isOpenCreateRoom = false;
   isOpenJoinSessionPopup = false;
@@ -1305,7 +1304,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.sessionService.createNewSessionCode().subscribe({
       next: (res) => {
         this.ngZone.run(() => {
-          this.showSessionInfo = true;
           const code = res.code;
           this.openChatSession(code);
           this.cdr.detectChanges();
@@ -1327,7 +1325,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   joinPrivateSession(): void {
     const code = this.newSessionCode.trim();
     this.ngZone.run(() => {
-      this.showSessionInfo = true;
       this.cdr.detectChanges();
     });
     if (!code) {
@@ -1681,19 +1678,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         }, 100);
       });
     }
-  }
-
-  /**
-   * ==========================================================
-   * SHOW SeSSION INFO
-   * Dismisses the session info banner.
-   * ==========================================================
-   */
-  dismissSessionInfo(): void {
-    this.ngZone.run(() => {
-      this.showSessionInfo = false;
-      this.cdr.detectChanges();
-    });
   }
 
   /**
