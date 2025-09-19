@@ -3,7 +3,7 @@ use actix_cors::Cors;
 use actix_web::{http::StatusCode, test, web, App};
 use bytes::Bytes;
 use server::{
-    chat_ws, index, private_chat_ws, ChatMessage, ServerConfig, SessionStore, WsChatServer,
+    chat_ws, health, index, private_chat_ws, ChatMessage, ServerConfig, SessionStore, WsChatServer,
 };
 
 #[actix_rt::test]
@@ -12,11 +12,18 @@ async fn test_index() {
     let req = test::TestRequest::get().uri("/").to_request();
     let resp = test::call_service(&app, req).await;
 
+    assert_eq!(resp.status(), StatusCode::FOUND);
+}
+
+#[actix_rt::test]
+async fn test_health() {
+    let app = test::init_service(App::new().service(health)).await;
+    let req = test::TestRequest::get().uri("/health").to_request();
+    let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), StatusCode::OK);
 
     let body = test::read_body(resp).await;
-
-    assert_eq!(body, Bytes::from_static(b"Hello, this is PastePoint!"));
+    assert_eq!(body, Bytes::from_static(b"PastePoint Server is running!"));
 }
 
 #[actix_rt::test]
@@ -201,7 +208,8 @@ async fn test_cors_origin_checking() {
             )
             .app_data(session_manager.clone())
             .app_data(config.clone())
-            .service(index),
+            .service(index)
+            .service(health),
     )
     .await;
 
@@ -212,7 +220,7 @@ async fn test_cors_origin_checking() {
         .insert_header(("Origin", origin.clone()))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::FOUND);
     assert_eq!(
         resp.headers().get("Access-Control-Allow-Origin").unwrap(),
         &origin
@@ -228,7 +236,7 @@ async fn test_cors_origin_checking() {
         .insert_header(("Origin", origin.clone()))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::FOUND);
     assert_eq!(
         resp.headers().get("Access-Control-Allow-Origin").unwrap(),
         &origin
@@ -241,12 +249,17 @@ async fn test_cors_origin_checking() {
         .insert_header(("Origin", origin))
         .to_request();
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::FOUND);
     assert!(resp.headers().get("Access-Control-Allow-Origin").is_none());
 
     // Test missing origin header
     let req = test::TestRequest::get().uri("/").to_request();
     let resp = test::call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::OK);
+    assert_eq!(resp.status(), StatusCode::FOUND);
     assert!(resp.headers().get("Access-Control-Allow-Origin").is_none());
+
+    // Test health endpoint
+    let req = test::TestRequest::get().uri("/health").to_request();
+    let resp = test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
 }
