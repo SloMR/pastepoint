@@ -1,4 +1,7 @@
-use crate::{session_store::SessionData, ServerConfig, ServerError, SessionStore};
+use crate::{
+    session_store::SessionData, ServerConfig, ServerError, SessionStore, CONTENT_TYPE_TEXT_PLAIN,
+    MIN_USER_AGENT_LENGTH, SESSION_CODE_LENGTH,
+};
 use actix_web::{get, http::header, web, Error, HttpRequest, HttpResponse, Responder};
 use serde_json::json;
 use uuid::Uuid;
@@ -18,7 +21,7 @@ pub async fn index() -> impl Responder {
 // -----------------------------------------------------
 #[get("/create-session")]
 pub async fn create_session(store: web::Data<SessionStore>) -> Result<HttpResponse, ServerError> {
-    let code = SessionStore::generate_random_code(10);
+    let code = SessionStore::generate_random_code(SESSION_CODE_LENGTH);
     // Insert the new session without calling get_or_create_session_uuid.
     let new_uuid = Uuid::new_v4();
     {

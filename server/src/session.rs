@@ -4,7 +4,9 @@ use crate::{
     message::{
         JoinRoom, LeaveRoom, ListRooms, ValidateAndRelaySignal, WsChatServer, WsChatSession,
     },
-    SessionStore,
+    SessionStore, HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, WS_PREFIX_SIGNAL_MESSAGE,
+    WS_PREFIX_SYSTEM_ERROR, WS_PREFIX_SYSTEM_NAME, WS_PREFIX_SYSTEM_ROOMS, WS_PREFIX_USER_COMMAND,
+    WS_PREFIX_USER_DISCONNECTED,
 };
 use actix::prelude::*;
 use actix_web_actors::ws;
@@ -14,7 +16,7 @@ use fake::{
 };
 use rand::{rng, Rng};
 use serde_json::Value;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 impl WsChatSession {
     pub fn new(session_id: &str, auto_join: bool, session_store: SessionStore) -> Self {
@@ -89,12 +91,12 @@ impl WsChatSession {
             .into_actor(self)
             .then(|res, _, ctx| {
                 if let Ok(rooms) = res {
-                    log::debug!(target: "Websocket", "[SystemRooms] Rooms Available: {:?}", rooms);
+                    log::debug!(target: "Websocket", "{} Rooms Available: {:?}", WS_PREFIX_SYSTEM_ROOMS, rooms);
 
                     let room_list = rooms.join(", ");
-                    ctx.text(format!("[SystemRooms] {}", room_list));
+                    ctx.text(format!("{} {}", WS_PREFIX_SYSTEM_ROOMS, room_list));
                 } else {
-                    ctx.text("[SystemError] Failed to retrieve room list.");
+                    ctx.text(format!("{} Failed to retrieve room list.", WS_PREFIX_SYSTEM_ERROR));
                 }
                 fut::ready(())
             })
@@ -118,17 +120,18 @@ impl WsChatSession {
                     log::debug!(target: "Websocket", "Received join command for room '{}'", room_name);
                     self.join_room(room_name, ctx);
                 } else {
-                    ctx.text("[SystemError] Room name is required");
+                    ctx.text(format!("{} Room name is required", WS_PREFIX_SYSTEM_ERROR));
                 }
             }
             "/name" => {
                 log::debug!(target: "Websocket","Received name command");
-                ctx.text(format!("[SystemName] {}", self.name));
+                ctx.text(format!("{} {}", WS_PREFIX_SYSTEM_NAME, self.name));
             }
             _ => {
                 log::debug!(target: "Websocket", "Unknown command: '{}'", cmd);
                 ctx.text(format!(
-                    "[SystemError] Error Unknown command: {}",
+                    "{} Error Unknown command: {}",
+                    WS_PREFIX_SYSTEM_ERROR,
                     ServerError::NotFound
                 ))
             }
@@ -144,17 +147,23 @@ impl WsChatSession {
                 msg.len(),
                 self.name
             );
-            ctx.text("[SystemError] Signal message too large");
+            ctx.text(format!(
+                "{} Signal message too large",
+                WS_PREFIX_SYSTEM_ERROR
+            ));
             return;
         }
 
         // 2. Parse and validate the message
-        let payload = msg.trim_start_matches("[SignalMessage]").trim();
+        let payload = msg.trim_start_matches(WS_PREFIX_SIGNAL_MESSAGE).trim();
         let value = match serde_json::from_str::<Value>(payload) {
             Ok(v) => v,
             Err(e) => {
                 log::warn!(target: "Websocket", "Invalid signal JSON from {}: {}", self.name, e);
-                ctx.text("[SystemError] Invalid signaling message format");
+                ctx.text(format!(
+                    "{} Invalid signaling message format",
+                    WS_PREFIX_SYSTEM_ERROR
+                ));
                 return;
             }
         };
@@ -164,7 +173,10 @@ impl WsChatSession {
             Some(user) => user,
             None => {
                 log::warn!(target: "Websocket", "Signal missing 'to' field from {}", self.name);
-                ctx.text("[SystemError] Signaling message missing 'to' field");
+                ctx.text(format!(
+                    "{} Signaling message missing 'to' field",
+                    WS_PREFIX_SYSTEM_ERROR
+                ));
                 return;
             }
         };
@@ -185,9 +197,9 @@ impl WsChatSession {
     }
 
     pub fn start_heartbeat(&self, ctx: &mut ws::WebsocketContext<Self>) {
-        ctx.run_interval(Duration::from_secs(120), |act, ctx| {
+        ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
             if let Some(last) = act.last_heartbeat {
-                if Instant::now().duration_since(last) > Duration::from_secs(300) {
+                if Instant::now().duration_since(last) > HEARTBEAT_TIMEOUT {
                     log::debug!(
                         target: "Websocket",
                         "Heartbeat failed for user {}, disconnecting!",
@@ -209,7 +221,8 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
         let msg = match msg {
             Err(_) => {
                 ctx.text(format!(
-                    "[SystemError] Invalid message format: {}",
+                    "{} Invalid message format: {}",
+                    WS_PREFIX_SYSTEM_ERROR,
                     ServerError::InternalServerError
                 ));
                 ctx.stop();
@@ -222,23 +235,24 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
             ws::Message::Text(text) => {
                 let msg = text.trim();
                 log::debug!(target: "Websocket", "Received message: '{}'", msg);
-                if msg.starts_with("[SignalMessage]") {
+                if msg.starts_with(WS_PREFIX_SIGNAL_MESSAGE) {
                     self.handle_signal_message(msg, ctx);
-                } else if msg.starts_with("[UserCommand]") {
-                    let command_str = msg.trim_start_matches("[UserCommand]").trim();
+                } else if msg.starts_with(WS_PREFIX_USER_COMMAND) {
+                    let command_str = msg.trim_start_matches(WS_PREFIX_USER_COMMAND).trim();
                     log::debug!(
                         target: "Websocket",
                         "Command string after trimming: '{}'",
                         command_str
                     );
                     self.user_command(command_str, ctx);
-                } else if msg.starts_with("[UserDisconnected]") {
+                } else if msg.starts_with(WS_PREFIX_USER_DISCONNECTED) {
                     log::debug!(target: "Websocket","Received disconnect command");
                     self.handle_user_disconnect();
                 } else {
                     log::debug!(target: "Websocket","Unknown command: {}", msg);
                     ctx.text(format!(
-                        "[SystemError] Error Unknown command: {}",
+                        "{} Error Unknown command: {}",
+                        WS_PREFIX_SYSTEM_ERROR,
                         ServerError::NotFound
                     ));
                 }

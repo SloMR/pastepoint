@@ -1,3 +1,4 @@
+use crate::CONTENT_TYPE_TEXT_PLAIN;
 use actix_web::{HttpResponse, ResponseError};
 use derive_more::{Display, From};
 
@@ -25,28 +26,28 @@ impl ResponseError for ServerError {
     fn error_response(&self) -> HttpResponse {
         match *self {
             ServerError::InternalServerError => HttpResponse::InternalServerError()
-                .content_type("text/plain; charset=utf-8")
+                .content_type(CONTENT_TYPE_TEXT_PLAIN)
                 .body("Internal Server Error"),
             ServerError::NotFound => HttpResponse::NotFound()
-                .content_type("text/plain; charset=utf-8")
+                .content_type(CONTENT_TYPE_TEXT_PLAIN)
                 .body("Not Found"),
             ServerError::BadRequest(ref message) => HttpResponse::BadRequest()
-                .content_type("text/plain; charset=utf-8")
+                .content_type(CONTENT_TYPE_TEXT_PLAIN)
                 .body(message.clone()),
             ServerError::IndexOutOfBounds => HttpResponse::BadRequest()
-                .content_type("text/plain; charset=utf-8")
+                .content_type(CONTENT_TYPE_TEXT_PLAIN)
                 .body("Index out of bounds"),
             ServerError::ChunkMissing => HttpResponse::BadRequest()
-                .content_type("text/plain; charset=utf-8")
+                .content_type(CONTENT_TYPE_TEXT_PLAIN)
                 .body("Chunk Missing"),
             ServerError::FileReassemblyError => HttpResponse::BadRequest()
-                .content_type("text/plain; charset=utf-8")
+                .content_type(CONTENT_TYPE_TEXT_PLAIN)
                 .body("File Reassembly Error"),
             ServerError::MetadataParsingError => HttpResponse::BadRequest()
-                .content_type("text/plain; charset=utf-8")
+                .content_type(CONTENT_TYPE_TEXT_PLAIN)
                 .body("Metadata Parsing Error"),
             ServerError::InvalidFile => HttpResponse::BadRequest()
-                .content_type("text/plain; charset=utf-8")
+                .content_type(CONTENT_TYPE_TEXT_PLAIN)
                 .body("Invalid File"),
         }
     }
