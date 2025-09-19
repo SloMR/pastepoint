@@ -11,7 +11,7 @@ use uuid::Uuid;
 // -----------------------------------------------------
 #[get("/")]
 pub async fn index() -> impl Responder {
-    HttpResponse::SeeOther()
+    HttpResponse::Found()
         .append_header(("Location", "/health"))
         .finish()
 }
@@ -70,9 +70,7 @@ pub async fn chat_ws(
     config: web::Data<ServerConfig>,
 ) -> Result<HttpResponse, ServerError> {
     // Validate that this is a proper WebSocket connection
-    if let Err(response) = validate_websocket_headers(&req) {
-        return Err(response);
-    }
+    validate_websocket_headers(&req)?;
 
     let is_dev_mode = ServerConfig::is_dev_env();
 
@@ -100,9 +98,7 @@ pub async fn private_chat_ws(
     config: web::Data<ServerConfig>,
 ) -> Result<HttpResponse, ServerError> {
     // Validate that this is a proper WebSocket connection
-    if let Err(response) = validate_websocket_headers(&req) {
-        return Err(response);
-    }
+    validate_websocket_headers(&req)?;
 
     let code = path.into_inner();
     log::debug!(target: "Websocket", "Received session code: {}", code);
