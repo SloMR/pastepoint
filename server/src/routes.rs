@@ -7,13 +7,23 @@ use serde_json::json;
 use uuid::Uuid;
 
 // -----------------------------------------------------
-// Simple "Hello" index route
+// Simple index route
 // -----------------------------------------------------
 #[get("/")]
 pub async fn index() -> impl Responder {
+    HttpResponse::SeeOther()
+        .append_header(("Location", "/health"))
+        .finish()
+}
+
+// -----------------------------------------------------
+// Simple health check route
+// -----------------------------------------------------
+#[get("/health")]
+pub async fn health() -> impl Responder {
     HttpResponse::Ok()
-        .content_type("text/plain; charset=utf-8")
-        .body("Hello, this is PastePoint!")
+        .content_type(CONTENT_TYPE_TEXT_PLAIN)
+        .body("PastePoint Server is running!")
 }
 
 // -----------------------------------------------------

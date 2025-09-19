@@ -22,5 +22,5 @@ pub use message::{
     ChatMessage, ClientMetadata, JoinRoom, LeaveRoom, ListRooms, RelaySignalMessage, WsChatServer,
     WsChatSession,
 };
-pub use routes::{chat_ws, create_session, index, private_chat_ws};
+pub use routes::{chat_ws, create_session, health, index, private_chat_ws};
 pub use session_store::SessionStore;

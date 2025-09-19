@@ -4,7 +4,7 @@ use actix_http::KeepAlive;
 use actix_web::{middleware::Logger, web::Data, App, HttpServer};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use server::{
-    chat_ws, create_session, index, private_chat_ws, ServerConfig, SessionStore,
+    chat_ws, create_session, health, index, private_chat_ws, ServerConfig, SessionStore,
     CORS_MAX_AGE, KEEP_ALIVE_INTERVAL,
 };
 use std::io::Result;
@@ -70,6 +70,7 @@ async fn main() -> Result<()> {
             .app_data(session_manager.clone())
             .app_data(server_config_for_app)
             .service(index)
+            .service(health)
             .service(create_session)
             .service(chat_ws)
             .service(private_chat_ws)
