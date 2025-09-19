@@ -72,7 +72,7 @@ USER appuser
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl --fail http://localhost:9000/ || exit 1
+  CMD curl --fail http://localhost:9000/health || exit 1
 
 # Set the command to run the binary
 CMD ["./server_bin"]

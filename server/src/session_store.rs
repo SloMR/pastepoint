@@ -1,6 +1,6 @@
 use crate::{
-    message::CleanupSession, ServerConfig, WsChatServer, WsChatSession, MAX_FRAME_SIZE,
-    SAFE_CHARSET,
+    message::CleanupSession, ServerConfig, WsChatServer, WsChatSession, CONTENT_TYPE_TEXT_PLAIN,
+    MAX_FRAME_SIZE, SAFE_CHARSET, SESSION_EXPIRATION_TIME,
 };
 use actix::SystemService;
 use actix_rt::{spawn, task, time};
@@ -136,7 +136,7 @@ impl SessionStore {
                 Err(_) => {
                     log::error!(target: "Websocket", "Invalid UUID returned: {}", uuid_str);
                     Ok(HttpResponse::InternalServerError()
-                        .content_type("text/plain; charset=utf-8")
+                        .content_type(CONTENT_TYPE_TEXT_PLAIN)
                         .body("Server configuration error"))
                 }
             },
@@ -147,7 +147,7 @@ impl SessionStore {
                     key
                 );
                 Ok(HttpResponse::NotFound()
-                    .content_type("text/plain; charset=utf-8")
+                    .content_type(CONTENT_TYPE_TEXT_PLAIN)
                     .body("Unknown session code"))
             }
         }
@@ -213,7 +213,7 @@ impl SessionStore {
                         let key_clone = key.clone();
 
                         let handle = spawn(async move {
-                            time::sleep(std::time::Duration::from_secs(60)).await;
+                            time::sleep(SESSION_EXPIRATION_TIME).await;
 
                             let mut scheduled = store_clone
                                 .scheduled_expirations

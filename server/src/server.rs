@@ -1,10 +1,10 @@
-use crate::message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer};
+use crate::{
+    message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer},
+    CLEANUP_INTERVAL, WS_PREFIX_SYSTEM_MEMBERS, WS_PREFIX_SYSTEM_ROOMS,
+};
 use actix::prelude::*;
 use rand::{rng, Rng};
-use std::{
-    collections::{hash_map::Entry::Vacant, HashMap},
-    time::Duration,
-};
+use std::collections::{hash_map::Entry::Vacant, HashMap};
 
 impl WsChatServer {
     pub fn take_room(&mut self, session_id: &str, room_name: &str) -> Option<Room> {
@@ -121,7 +121,7 @@ impl WsChatServer {
     pub fn broadcast_room_list(&self, session_id: &str) {
         if let Some(users) = self.rooms.get(session_id) {
             let room_list = users.keys().cloned().collect::<Vec<String>>().join(", ");
-            let message = format!("[SystemRooms] {}", room_list);
+            let message = format!("{} {}", WS_PREFIX_SYSTEM_ROOMS, room_list);
 
             for room in users.values() {
                 for client in room.values() {
@@ -144,7 +144,8 @@ impl WsChatServer {
                     room_name,
                     member_list
                 );
-                let member_message = format!("[SystemMembers] {}", member_list.join(", "));
+                let member_message =
+                    format!("{} {}", WS_PREFIX_SYSTEM_MEMBERS, member_list.join(", "));
 
                 for client_metadata in room.values() {
                     if client_metadata
@@ -181,7 +182,7 @@ impl WsChatServer {
     }
 
     pub fn start_cleanup_interval(&self, ctx: &mut Context<Self>) {
-        ctx.run_interval(Duration::from_secs(3600 /* Every Hour */), |act, _| {
+        ctx.run_interval(CLEANUP_INTERVAL, |act, _| {
             act.cleanup_stale_sessions();
         });
     }

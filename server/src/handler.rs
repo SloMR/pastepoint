@@ -3,6 +3,7 @@ use actix::{Handler, MessageResult};
 use crate::{
     message::{CleanupSession, RelaySignalMessage, ValidateAndRelaySignal},
     ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer, WsChatSession,
+    WS_PREFIX_SIGNAL_MESSAGE, WS_PREFIX_SYSTEM_JOIN,
 };
 
 impl Handler<JoinRoom> for WsChatServer {
@@ -13,7 +14,7 @@ impl Handler<JoinRoom> for WsChatServer {
 
         let id =
             self.add_client_to_room(&session_id, &room_name, None, client, client_name.clone());
-        let join_msg = format!("{} [SystemJoin] {}", client_name, room_name);
+        let join_msg = format!("{} {} {}", client_name, WS_PREFIX_SYSTEM_JOIN, room_name);
 
         self.send_join_message(&session_id, &room_name, &join_msg, id);
         self.broadcast_room_members(&session_id, &room_name);
@@ -157,7 +158,7 @@ impl Handler<ValidateAndRelaySignal> for WsChatServer {
             return;
         }
 
-        let relay_msg = ChatMessage(format!("[SignalMessage] {}", msg.payload));
+        let relay_msg = ChatMessage(format!("{} {}", WS_PREFIX_SIGNAL_MESSAGE, msg.payload));
         self.relay_message_to_user(&msg.to_user, relay_msg, &msg.from_user);
     }
 }
