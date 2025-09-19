@@ -68,16 +68,24 @@ pub async fn chat_ws(
     stream: web::Payload,
     store: web::Data<SessionStore>,
     config: web::Data<ServerConfig>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse, ServerError> {
+    // Validate that this is a proper WebSocket connection
+    if let Err(response) = validate_websocket_headers(&req) {
+        return Err(response);
+    }
+
     let is_dev_mode = ServerConfig::is_dev_env();
 
-    let ip_str = get_client_ip(&req, is_dev_mode)?;
+    let ip_str = get_client_ip(&req, is_dev_mode)
+        .map_err(|e| ServerError::BadRequest(format!("Failed to get client IP: {}", e)))?;
     check_suspicious_connection(&req, &ip_str);
 
     let session_key = create_session_key(&req, &ip_str);
 
     log::debug!(target: "Websocket", "Connection request - IP: {}, Session Key: {}", ip_str, session_key);
-    store.start_websocket(config.get_ref(), &req, stream, &session_key, false, false)
+    store
+        .start_websocket(config.get_ref(), &req, stream, &session_key, false, false)
+        .map_err(|e| ServerError::BadRequest(format!("WebSocket connection failed: {}", e)))
 }
 
 // -----------------------------------------------------
@@ -90,17 +98,24 @@ pub async fn private_chat_ws(
     path: web::Path<String>,
     store: web::Data<SessionStore>,
     config: web::Data<ServerConfig>,
-) -> Result<HttpResponse, Error> {
+) -> Result<HttpResponse, ServerError> {
+    // Validate that this is a proper WebSocket connection
+    if let Err(response) = validate_websocket_headers(&req) {
+        return Err(response);
+    }
+
     let code = path.into_inner();
     log::debug!(target: "Websocket", "Received session code: {}", code);
     if code.trim().is_empty() {
         log::debug!(target: "Websocket", "Empty code => returning 400");
-        return Ok(HttpResponse::BadRequest()
-            .content_type("text/plain; charset=utf-8")
-            .body("Session code cannot be empty"));
+        return Err(ServerError::BadRequest(
+            "Session code cannot be empty".to_string(),
+        ));
     }
 
-    store.start_websocket(config.get_ref(), &req, stream, &code, true, true)
+    store
+        .start_websocket(config.get_ref(), &req, stream, &code, true, true)
+        .map_err(|e| ServerError::BadRequest(format!("WebSocket connection failed: {}", e)))
 }
 
 // -----------------------------------------------------
@@ -157,7 +172,75 @@ fn check_suspicious_connection(req: &HttpRequest, ip_str: &str) {
         .and_then(|v| v.to_str().ok())
         .unwrap_or("unknown");
 
-    if user_agent.len() < 5 || user_agent.to_lowercase().contains("bot") {
+    if user_agent.len() < MIN_USER_AGENT_LENGTH || user_agent.to_lowercase().contains("bot") {
         log::error!(target: "Websocket", "Suspicious connection attempt - IP: {}, UA: {}", ip_str, user_agent);
     }
+}
+
+// Helper function to validate WebSocket connection headers
+fn validate_websocket_headers(req: &HttpRequest) -> Result<(), ServerError> {
+    let connection = req
+        .headers()
+        .get("Connection")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    let upgrade = req
+        .headers()
+        .get("Upgrade")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("");
+
+    let websocket_key = req
+        .headers()
+        .get("Sec-WebSocket-Key")
+        .and_then(|v| v.to_str().ok());
+
+    let websocket_version = req
+        .headers()
+        .get("Sec-WebSocket-Version")
+        .and_then(|v| v.to_str().ok());
+
+    let x_real_ip = req.headers().get("X-Real-IP").and_then(|v| v.to_str().ok());
+
+    let x_forwarded_for = req
+        .headers()
+        .get("X-Forwarded-For")
+        .and_then(|v| v.to_str().ok());
+
+    // Check if this is a proper WebSocket upgrade request
+    if !connection.to_lowercase().contains("upgrade")
+        || !upgrade.eq_ignore_ascii_case("websocket")
+        || websocket_key.is_none()
+        || websocket_version.is_none()
+    {
+        log::warn!(
+            target: "Websocket",
+            "Invalid WebSocket connection attempt - Connection: '{}', Upgrade: '{}', Key present: {}, Version present: {}, X-Real-IP: '{}', X-Forwarded-For: '{}'",
+            connection,
+            upgrade,
+            websocket_key.is_some(),
+            websocket_version.is_some(),
+            x_real_ip.is_some(),
+            x_forwarded_for.is_some()
+        );
+
+        return Err(ServerError::BadRequest(
+            "This endpoint requires a WebSocket connection. Please use a WebSocket client."
+                .to_string(),
+        ));
+    }
+
+    log::debug!(
+        target: "Websocket",
+        "Valid WebSocket connection - Connection: '{}', Upgrade: '{}', Key: present={}, Version: present={}, X-Real-IP: present={}, X-Forwarded-For: present={}",
+        connection,
+        upgrade,
+        websocket_key.is_some(),
+        websocket_version.is_some(),
+        x_real_ip.is_some(),
+        x_forwarded_for.is_some()
+    );
+
+    Ok(())
 }
