@@ -44,6 +44,10 @@ import {
   FileTransferStatus,
   FileUpload,
   MB,
+  HEARTBEAT_INTERVAL_DESKTOP_MS,
+  HEARTBEAT_INTERVAL_MOBILE_MS,
+  HEARTBEAT_TIMEOUT_DESKTOP_MS,
+  HEARTBEAT_TIMEOUT_MOBILE_MS,
   NAVIGATION_DELAY_MS,
   SESSION_CODE_KEY,
   THEME_PREFERENCE_KEY,
@@ -63,6 +67,7 @@ import * as QRCode from 'qrcode';
 import { SecurityContext } from '@angular/core';
 import { PreviewService } from '../../core/services/ui/preview.service';
 import { FileSizePipe } from '../../utils/file-size.pipe';
+import { DeviceDetectorService } from 'ngx-device-detector';
 
 /**
  * ==========================================================
@@ -130,8 +135,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private heartbeatIntervalId: ReturnType<typeof setInterval> | null = null;
   private lastHeartbeat: number = Date.now();
-  private readonly HEARTBEAT_INTERVAL_MS = 1000;
-  private readonly HEARTBEAT_TIMEOUT_MS = 2000;
   private isNavigatingIntentionally = false;
   private lastMessagesLength: number = 0;
 
@@ -207,6 +210,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private sanitizer: DomSanitizer,
     private previewService: PreviewService,
     private fileSizePipe: FileSizePipe,
+    private deviceDetectorService: DeviceDetectorService,
     @Inject(TranslateService) protected translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
@@ -396,10 +400,23 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    * HEARTBEAT MONITOR
    * Monitors the heartbeat to detect if the app is hidden or suspended.
+   * Uses different intervals for desktop vs mobile devices.
    * If the heartbeat is missed, it closes all connections and notifies the user.
    * ==========================================================
    */
   private startHeartbeatMonitor(): void {
+    const isDesktop = this.deviceDetectorService.isDesktop();
+
+    const heartbeatInterval = isDesktop
+      ? HEARTBEAT_INTERVAL_DESKTOP_MS
+      : HEARTBEAT_INTERVAL_MOBILE_MS;
+    const heartbeatTimeout = isDesktop ? HEARTBEAT_TIMEOUT_DESKTOP_MS : HEARTBEAT_TIMEOUT_MOBILE_MS;
+
+    this.logger.debug(
+      'startHeartbeatMonitor',
+      `Starting heartbeat monitor for ${isDesktop ? 'desktop' : 'mobile'} device with ${heartbeatInterval}ms interval`
+    );
+
     this.heartbeatIntervalId = setInterval(() => {
       const now = Date.now();
       const diff = now - this.lastHeartbeat;
@@ -407,7 +424,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       // Simulate heartbeat update
       this.lastHeartbeat = now;
       // Detect suspension
-      if (diff > this.HEARTBEAT_TIMEOUT_MS) {
+      if (diff > heartbeatTimeout) {
         this.logger.warn('Heartbeat', `Suspension detected: last beat was ${diff}ms ago.`);
         this.toaster.warning(this.translate.instant('AUTO_REFRESH_NOTICE'));
 
@@ -418,7 +435,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           }, 2000);
         }
       }
-    }, this.HEARTBEAT_INTERVAL_MS);
+    }, heartbeatInterval);
   }
 
   /**

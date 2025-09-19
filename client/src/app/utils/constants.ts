@@ -6,6 +6,12 @@ export const CHUNK_SIZE = 256 * KB;
 export const MAX_BUFFERED_AMOUNT = 2 * MB;
 export const BUFFERED_AMOUNT_LOW_THRESHOLD = MB;
 
+// Heartbeat constants
+export const HEARTBEAT_INTERVAL_DESKTOP_MS = 5000;
+export const HEARTBEAT_TIMEOUT_DESKTOP_MS = 15000;
+export const HEARTBEAT_INTERVAL_MOBILE_MS = 1000;
+export const HEARTBEAT_TIMEOUT_MOBILE_MS = 2000;
+
 // Local storage keys
 export const SESSION_CODE_KEY = 'session_code';
 export const LANGUAGE_PREFERENCE_KEY = 'language_preference';
