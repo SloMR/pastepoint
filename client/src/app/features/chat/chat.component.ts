@@ -44,10 +44,10 @@ import {
   FileTransferStatus,
   FileUpload,
   MB,
-  HEARTBEAT_INTERVAL_DESKTOP_MS,
-  HEARTBEAT_INTERVAL_MOBILE_MS,
-  HEARTBEAT_TIMEOUT_DESKTOP_MS,
-  HEARTBEAT_TIMEOUT_MOBILE_MS,
+  HEARTBEAT_INTERVAL_DESKTOP_SEC,
+  HEARTBEAT_INTERVAL_MOBILE_SEC,
+  HEARTBEAT_TIMEOUT_DESKTOP_SEC,
+  HEARTBEAT_TIMEOUT_MOBILE_SEC,
   NAVIGATION_DELAY_MS,
   SESSION_CODE_KEY,
   THEME_PREFERENCE_KEY,
@@ -408,24 +408,26 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     const isDesktop = this.deviceDetectorService.isDesktop();
 
     const heartbeatInterval = isDesktop
-      ? HEARTBEAT_INTERVAL_DESKTOP_MS
-      : HEARTBEAT_INTERVAL_MOBILE_MS;
-    const heartbeatTimeout = isDesktop ? HEARTBEAT_TIMEOUT_DESKTOP_MS : HEARTBEAT_TIMEOUT_MOBILE_MS;
+      ? HEARTBEAT_INTERVAL_DESKTOP_SEC
+      : HEARTBEAT_INTERVAL_MOBILE_SEC;
+    const heartbeatTimeout = isDesktop
+      ? HEARTBEAT_TIMEOUT_DESKTOP_SEC
+      : HEARTBEAT_TIMEOUT_MOBILE_SEC;
 
     this.logger.debug(
       'startHeartbeatMonitor',
-      `Starting heartbeat monitor for ${isDesktop ? 'desktop' : 'mobile'} device with ${heartbeatInterval}ms interval`
+      `Starting heartbeat monitor for ${isDesktop ? 'desktop' : 'mobile'} device with ${heartbeatInterval}sec interval`
     );
 
     this.heartbeatIntervalId = setInterval(() => {
       const now = Date.now();
-      const diff = now - this.lastHeartbeat;
+      const diff = (now - this.lastHeartbeat) / 1000;
 
       // Simulate heartbeat update
       this.lastHeartbeat = now;
       // Detect suspension
       if (diff > heartbeatTimeout) {
-        this.logger.warn('Heartbeat', `Suspension detected: last beat was ${diff}ms ago.`);
+        this.logger.warn('Heartbeat', `Suspension detected: last beat was ${diff}sec ago.`);
         this.toaster.warning(this.translate.instant('AUTO_REFRESH_NOTICE'));
 
         // Force page refresh to completely reset the app state if needed
@@ -435,7 +437,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           }, 2000);
         }
       }
-    }, heartbeatInterval);
+    }, heartbeatInterval * 1000);
   }
 
   /**
@@ -1517,8 +1519,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         width: isMobile ? 180 : 220,
         margin: 1,
         color: {
-          dark: '#f0f4ff',
-          light: '#6366f1',
+          dark: '#000000',
+          light: '#FFFFFF',
         },
       });
 
