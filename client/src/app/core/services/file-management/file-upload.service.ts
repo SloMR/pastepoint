@@ -20,6 +20,7 @@ import { PreviewService } from '../../services/ui/preview.service';
 export class FileUploadService extends FileTransferBaseService {
   // =============== Private Properties ===============
   private processingQueues = new Map<string, boolean>();
+  private userSendingLocks = new Map<string, boolean>(); // Per-user lock to prevent concurrent sends
   private consecutiveErrorCounts = new Map<string, number>();
   private maxConsecutiveErrors = 5;
 
@@ -317,10 +318,12 @@ export class FileUploadService extends FileTransferBaseService {
           continue;
         }
 
-        if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+        // Use a lower threshold (50% of max) to be more conservative with multiple files
+        const bufferThreshold = MAX_BUFFERED_AMOUNT * 0.5;
+        if (dataChannel.bufferedAmount > bufferThreshold) {
           this.logger.warn(
             'sendNextChunk',
-            `Data channel buffer is full (${dataChannel.bufferedAmount} bytes) for ${fileTransfer.targetUser}. Pausing upload.`
+            `Data channel buffer is high (${dataChannel.bufferedAmount} bytes, threshold ${bufferThreshold}) for ${fileTransfer.targetUser}. Pausing upload.`
           );
           fileTransfer.isPaused = true;
           break;
@@ -403,14 +406,35 @@ export class FileUploadService extends FileTransferBaseService {
       return false;
     }
 
-    if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT) {
+    // Use a lower threshold to be more conservative with multiple files
+    const bufferThreshold = MAX_BUFFERED_AMOUNT * 0.5;
+    if (dataChannel.bufferedAmount > bufferThreshold) {
       fileTransfer.isPaused = true;
       this.logger.info(
         'processFileChunk',
-        `Pausing transfer to ${fileTransfer.targetUser} due to buffer size: ${dataChannel.bufferedAmount}`
+        `Pausing transfer to ${fileTransfer.targetUser} due to buffer size: ${dataChannel.bufferedAmount} (threshold: ${bufferThreshold})`
       );
       return false;
     }
+
+    // Wait for any other file transfers to this user to complete their chunk send
+    const maxWaitAttempts = 100; // Max 5 seconds wait (100 * 50ms)
+    let waitAttempts = 0;
+    while (this.userSendingLocks.get(fileTransfer.targetUser) && waitAttempts < maxWaitAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      waitAttempts++;
+    }
+
+    if (waitAttempts >= maxWaitAttempts) {
+      this.logger.warn(
+        'processFileChunk',
+        `Timeout waiting for user lock for ${fileTransfer.targetUser}`
+      );
+      return false;
+    }
+
+    // Acquire lock for this user
+    this.userSendingLocks.set(fileTransfer.targetUser, true);
 
     const transferId = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
     try {
@@ -423,7 +447,8 @@ export class FileUploadService extends FileTransferBaseService {
       };
 
       this.sendData(metaMessage, fileTransfer.targetUser);
-      await new Promise((resolve) => setTimeout(resolve, 5));
+      // Increased delay to ensure metadata arrives before chunk, especially with multiple files
+      await new Promise((resolve) => setTimeout(resolve, 20));
 
       const dataSent = this.sendRawData(arrayBuffer, fileTransfer.targetUser);
       if (!dataSent) {
@@ -433,6 +458,10 @@ export class FileUploadService extends FileTransferBaseService {
         );
         return false;
       }
+
+      // Small delay after sending chunk to allow receiver to process
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
       this.consecutiveErrorCounts.set(transferId, 0);
 
       const progress = (end / fileTransfer.file.size) * 100;
@@ -473,6 +502,9 @@ export class FileUploadService extends FileTransferBaseService {
       }
 
       return false;
+    } finally {
+      // Release lock for this user
+      this.userSendingLocks.delete(fileTransfer.targetUser);
     }
   }
 }
