@@ -1,4 +1,5 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, PLATFORM_ID, Inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, Subject } from 'rxjs';
 import {
   BUFFERED_AMOUNT_LOW_THRESHOLD,
@@ -43,8 +44,8 @@ export class WebRTCCommunicationService {
   private dataChannels = new Map<string, RTCDataChannel>();
   private messageQueues = new Map<string, (DataChannelMessage | ArrayBuffer)[]>();
   private pendingChunks = new Map<
-    string, // fromUser
-    { fileId: string; chunkSize: number }
+    string, // key: "fromUser:fileId"
+    { fileId: string; chunkSize: number; timestamp: number }
   >();
   private connectionTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
@@ -52,8 +53,14 @@ export class WebRTCCommunicationService {
     private zone: NgZone,
     private logger: NGXLogger,
     private toaster: HotToastService,
-    private translate: TranslateService
-  ) {}
+    private translate: TranslateService,
+    @Inject(PLATFORM_ID) private platformId: object
+  ) {
+    // Cleanup stale pending chunks every 10 seconds (only in browser, not during SSR)
+    if (isPlatformBrowser(this.platformId)) {
+      setInterval(() => this.cleanupStalePendingChunks(), 10000);
+    }
+  }
 
   // =============== Public Methods ===============
 
@@ -384,17 +391,31 @@ export class WebRTCCommunicationService {
               `Received chunk metadata from ${targetUser} (fileId=${fileId}, chunkSize=${chunkSize})`
             );
 
-            this.pendingChunks.set(targetUser, { fileId, chunkSize });
+            const chunkKey = `${targetUser}:${fileId}`;
+            this.pendingChunks.set(chunkKey, { fileId, chunkSize, timestamp: Date.now() });
             break;
           }
           default:
             this.logger.warn('handleDataChannelMessage', `Unknown message type: ${message.type}`);
         }
       } else if (data instanceof ArrayBuffer) {
-        const chunkMeta = this.pendingChunks.get(targetUser);
+        // Try to find matching chunk metadata
+        let matchedChunkKey: string | null = null;
+        let matchedChunkMeta: { fileId: string; chunkSize: number; timestamp: number } | null =
+          null;
 
-        if (chunkMeta) {
-          const { fileId, chunkSize } = chunkMeta;
+        // Look for the oldest pending chunk from this user that matches the size
+        for (const [key, meta] of this.pendingChunks.entries()) {
+          if (key.startsWith(`${targetUser}:`)) {
+            if (!matchedChunkMeta || meta.timestamp < matchedChunkMeta.timestamp) {
+              matchedChunkKey = key;
+              matchedChunkMeta = meta;
+            }
+          }
+        }
+
+        if (matchedChunkMeta && matchedChunkKey) {
+          const { fileId, chunkSize } = matchedChunkMeta;
 
           if (data.byteLength !== chunkSize) {
             this.logger.warn(
@@ -409,11 +430,11 @@ export class WebRTCCommunicationService {
             chunk: data,
           });
 
-          this.pendingChunks.delete(targetUser);
+          this.pendingChunks.delete(matchedChunkKey);
         } else {
           this.logger.warn(
             'handleDataChannelMessage',
-            `Raw ArrayBuffer from ${targetUser} but no fileId in pendingChunks.`
+            `Raw ArrayBuffer from ${targetUser} but no matching metadata in pendingChunks. Size: ${data.byteLength}`
           );
         }
       } else {
@@ -426,6 +447,27 @@ export class WebRTCCommunicationService {
   }
 
   // =============== Helper Methods ===============
+
+  /**
+   * Cleans up stale pending chunks that never received their data
+   */
+  private cleanupStalePendingChunks(): void {
+    const now = Date.now();
+    const staleThreshold = 30000; // 30 seconds
+    const staleKeys: string[] = [];
+
+    for (const [key, meta] of this.pendingChunks.entries()) {
+      if (now - meta.timestamp > staleThreshold) {
+        staleKeys.push(key);
+        this.logger.warn(
+          'cleanupStalePendingChunks',
+          `Removing stale pending chunk: ${key} (fileId=${meta.fileId})`
+        );
+      }
+    }
+
+    staleKeys.forEach((key) => this.pendingChunks.delete(key));
+  }
 
   /**
    * Ensures a message queue exists for the target user
