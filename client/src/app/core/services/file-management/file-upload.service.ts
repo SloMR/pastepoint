@@ -504,7 +504,7 @@ export class FileUploadService extends FileTransferBaseService {
       return false;
     } finally {
       // Release lock for this user
-      this.userSendingLocks.set(fileTransfer.targetUser, false);
+      this.userSendingLocks.delete(fileTransfer.targetUser);
     }
   }
 }
