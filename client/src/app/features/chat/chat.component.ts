@@ -1679,7 +1679,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         });
         this.cdr.detectChanges();
       });
-    }, 3000); // Update every 3 seconds
+    }, 3000);
 
     this.subscriptions.push({
       unsubscribe: () => clearInterval(statusCheckInterval),
