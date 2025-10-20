@@ -29,6 +29,7 @@ export class WebRTCSignalingService {
   private lastSequences = new Map<string, number>();
   private candidateQueues = new Map<string, RTCIceCandidateInit[]>();
   private connectionRequests = new Map<string, ReturnType<typeof setTimeout>>();
+  private collectedCandidates = new Map<string, RTCIceCandidate[]>();
 
   constructor(
     private wsService: WebSocketConnectionService,
@@ -220,6 +221,7 @@ export class WebRTCSignalingService {
 
     if (force) {
       this.candidateQueues.delete(targetUser);
+      this.collectedCandidates.delete(targetUser);
       this.communicationService.deleteDataChannel(targetUser);
       this.communicationService.deleteMessageQueue(targetUser);
     }
@@ -235,6 +237,7 @@ export class WebRTCSignalingService {
     this.peerConnections.clear();
     this.reconnectAttempts.clear();
     this.candidateQueues.clear();
+    this.collectedCandidates.clear();
 
     // Clear all connection request timeouts
     this.connectionRequests.forEach((timeout) => {
@@ -298,6 +301,12 @@ export class WebRTCSignalingService {
           iceGatheringTimeout = null;
         }
 
+        // Store candidate for diagnostics
+        if (!this.collectedCandidates.has(targetUser)) {
+          this.collectedCandidates.set(targetUser, []);
+        }
+        this.collectedCandidates.get(targetUser)!.push(event.candidate);
+
         const message: SignalMessage = {
           type: SignalMessageType.CANDIDATE,
           data: event.candidate,
@@ -311,7 +320,28 @@ export class WebRTCSignalingService {
           clearTimeout(iceGatheringTimeout);
           iceGatheringTimeout = null;
         }
-        this.logger.info('createPeerConnection', `ICE gathering complete for ${targetUser}`);
+
+        const candidates = this.collectedCandidates.get(targetUser) || [];
+        const candidateTypes = candidates.reduce(
+          (acc, c) => {
+            acc[c.type || 'unknown'] = (acc[c.type || 'unknown'] || 0) + 1;
+            return acc;
+          },
+          {} as Record<string, number>
+        );
+
+        this.logger.info(
+          'ICE',
+          `Gathering complete for ${targetUser}. Collected ${candidates.length} candidates: ${JSON.stringify(candidateTypes)}`
+        );
+
+        const hasRelay = candidates.some((c) => c.type === 'relay');
+        if (!hasRelay && candidates.length > 0) {
+          this.logger.warn(
+            'ICE',
+            `No TURN/relay candidates for ${targetUser} - connection may fail behind restrictive NATs (but working via STUN for now)`
+          );
+        }
       }
     };
 
@@ -377,6 +407,12 @@ export class WebRTCSignalingService {
    */
   private handleDisconnection(targetUser: string) {
     const attempts = this.reconnectAttempts.get(targetUser) ?? 0;
+
+    // Log diagnostic info on first failure
+    if (attempts === 0) {
+      this.logConnectionDiagnostics(targetUser);
+    }
+
     if (attempts < MAX_RECONNECT_ATTEMPTS) {
       this.reconnectAttempts.set(targetUser, attempts + 1);
 
@@ -413,6 +449,10 @@ export class WebRTCSignalingService {
         'handleDisconnection',
         `Max reconnection attempts reached for ${targetUser}. Could not reconnect.`
       );
+
+      // Final diagnostic log
+      this.logConnectionDiagnostics(targetUser);
+
       if (this.wsService.isConnected()) {
         this.toaster.error(
           this.translate.instant('CANNOT_CONNECT_TO_USER', { userName: targetUser })
@@ -420,6 +460,27 @@ export class WebRTCSignalingService {
       }
       this.closePeerConnection(targetUser, true);
     }
+  }
+
+  /**
+   * Logs diagnostic info for failed connections (minimal)
+   */
+  private logConnectionDiagnostics(targetUser: string): void {
+    const peerConnection = this.peerConnections.get(targetUser);
+    const candidates = this.collectedCandidates.get(targetUser) || [];
+
+    if (!peerConnection) return;
+
+    const hasRelay = candidates.some((c) => c.type === 'relay');
+    const hasSrflx = candidates.some((c) => c.type === 'srflx');
+
+    this.logger.error(
+      'DIAGNOSTIC',
+      `Connection FAILED with ${targetUser}:\n` +
+        `  State: ${peerConnection.connectionState} / ICE: ${peerConnection.iceConnectionState}\n` +
+        `  Candidates: ${candidates.length} total (relay: ${hasRelay ? '✓' : '✗'}, srflx: ${hasSrflx ? '✓' : '✗'})\n` +
+        `  ${!hasRelay ? 'ISSUE: No TURN relay candidates - connection will fail behind symmetric NAT' : ''}`
+    );
   }
 
   /**
@@ -756,31 +817,44 @@ export class WebRTCSignalingService {
       return;
     }
 
-    const message: SignalMessage = {
-      type: SignalMessageType.CONNECTION_REQUEST,
-      data: null,
-      from: this.userService.user,
-      to: targetUser,
-      sequence: this.getNextSequence(targetUser),
-    };
-    this.wsService.sendSignalMessage(message);
-    this.logger.info('sendConnectionRequest', `Sent connection request to ${targetUser}`);
-
-    const timeout = setTimeout(() => {
-      this.logger.warn('sendConnectionRequest', `Connection request timeout for ${targetUser}`);
-      this.connectionRequests.delete(targetUser);
-
-      // Fallback: try to initiate connection ourselves if no response
-      if (!this.peerConnections.has(targetUser)) {
+    // Add a small delay before sending the request to prevent race conditions
+    // This gives the other peer time to send their offer if they're the designated caller
+    setTimeout(() => {
+      // Check again if we already have a connection in progress
+      if (this.peerConnections.has(targetUser) || this.connectionLocks.has(targetUser)) {
         this.logger.debug(
           'sendConnectionRequest',
-          `Fallback: initiating connection with ${targetUser} after timeout`
+          `Connection already in progress with ${targetUser}, skipping request`
         );
-        this.forceInitiateConnection(targetUser);
+        return;
       }
-    }, CONNECTION_REQUEST_TIMEOUT);
 
-    this.connectionRequests.set(targetUser, timeout);
+      const message: SignalMessage = {
+        type: SignalMessageType.CONNECTION_REQUEST,
+        data: null,
+        from: this.userService.user,
+        to: targetUser,
+        sequence: this.getNextSequence(targetUser),
+      };
+      this.wsService.sendSignalMessage(message);
+      this.logger.info('sendConnectionRequest', `Sent connection request to ${targetUser}`);
+
+      const timeout = setTimeout(() => {
+        this.logger.warn('sendConnectionRequest', `Connection request timeout for ${targetUser}`);
+        this.connectionRequests.delete(targetUser);
+
+        // Fallback: try to initiate connection ourselves if no response
+        if (!this.peerConnections.has(targetUser)) {
+          this.logger.debug(
+            'sendConnectionRequest',
+            `Fallback: initiating connection with ${targetUser} after timeout`
+          );
+          this.forceInitiateConnection(targetUser);
+        }
+      }, CONNECTION_REQUEST_TIMEOUT);
+
+      this.connectionRequests.set(targetUser, timeout);
+    }, 500); // 500ms delay to prevent race conditions
   }
 
   /**
