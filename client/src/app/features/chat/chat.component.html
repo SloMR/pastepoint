@@ -215,7 +215,12 @@
             <div
               class="flex w-full items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
             >
-              <div class="h-4 w-4 rounded-full bg-green-500"></div>
+              <div
+                class="h-4 w-4 rounded-full transition-colors duration-300"
+                [class.bg-green-500]="isConnectedToMember(member)"
+                [class.bg-red-500]="!isConnectedToMember(member)"
+                [attr.title]="isConnectedToMember(member) ? 'Connected' : 'Not connected'"
+              ></div>
               <p class="truncate text-base font-expoArabicMedium">{{ member }}</p>
               <div class="ml-auto">
                 <button
@@ -702,7 +707,12 @@
               <div
                 class="flex w-full items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
               >
-                <div class="h-4 w-4 rounded-full bg-green-500"></div>
+                <div
+                  class="h-4 w-4 rounded-full transition-colors duration-300"
+                  [class.bg-green-500]="isConnectedToMember(member)"
+                  [class.bg-red-500]="!isConnectedToMember(member)"
+                  [attr.title]="isConnectedToMember(member) ? 'Connected' : 'Not connected'"
+                ></div>
                 <p class="truncate text-base font-expoArabicMedium">{{ member }}</p>
                 <div class="ml-auto">
                   <button
@@ -1416,7 +1426,7 @@
                                 [src]="message.previewUrl"
                                 [alt]="message.fileTransfer?.fileName || 'Attachment'"
                                 [title]="message.fileTransfer?.fileName || 'Attachment'"
-                                class="w-[90%] h-auto rounded-lg mb-3 mx-auto border border-borderLight dark:border-borderDark"
+                                class="w-[280px] h-auto max-h-[180px] rounded-lg mb-3 mx-auto border border-borderLight dark:border-borderDark object-contain"
                                 loading="lazy"
                                 width="320"
                                 height="192"
@@ -1459,7 +1469,7 @@
                                 [src]="message.previewUrl"
                                 [alt]="message.fileTransfer?.fileName || 'Attachment'"
                                 [title]="message.fileTransfer?.fileName || 'Attachment'"
-                                class="w-[90%] h-auto rounded-lg mb-2 mx-auto border border-borderLight dark:border-borderDark"
+                                class="w-[280px] h-auto max-h-[180px] rounded-lg mb-2 mx-auto border border-borderLight dark:border-borderDark object-contain"
                                 loading="lazy"
                                 width="320"
                                 height="192"
@@ -1637,7 +1647,7 @@
                                   [src]="message.previewUrl"
                                   [alt]="message.fileTransfer?.fileName || 'Attachment'"
                                   [title]="message.fileTransfer?.fileName || 'Attachment'"
-                                  class="w-[90%] h-auto rounded-lg mb-2 mx-auto border border-borderLight dark:border-borderDark"
+                                  class="w-[280px] h-auto max-h-[180px] rounded-lg mb-2 mx-auto border border-borderLight dark:border-borderDark object-contain"
                                   loading="lazy"
                                   width="320"
                                   height="192"

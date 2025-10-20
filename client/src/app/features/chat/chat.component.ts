@@ -115,6 +115,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   messages: ChatMessage[] = [];
   rooms: string[] = [];
   members: string[] = [];
+  memberConnectionStatus = new Map<string, boolean>(); // true = connected, false = failed
 
   currentRoom = 'main';
   isDarkMode = false;
@@ -137,6 +138,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private lastHeartbeat: number = Date.now();
   private isNavigatingIntentionally = false;
   private lastMessagesLength: number = 0;
+  private connectionInitTimeouts: ReturnType<typeof setTimeout>[] = [];
+  private navigationTimeout: ReturnType<typeof setTimeout> | null = null;
+  private emojiPickerHideTimeout: ReturnType<typeof setTimeout> | null = null;
+  private statusCheckIntervalId: ReturnType<typeof setInterval> | null = null;
 
   appVersion: string = packageJson.version;
 
@@ -351,6 +356,29 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.logger.debug('ngOnDestroy', 'Heartbeat monitor cleared');
     }
 
+    // Clear all connection initialization timeouts
+    this.connectionInitTimeouts.forEach((timeout) => clearTimeout(timeout));
+    this.connectionInitTimeouts = [];
+
+    // Clear navigation timeout
+    if (this.navigationTimeout) {
+      clearTimeout(this.navigationTimeout);
+      this.navigationTimeout = null;
+    }
+
+    // Clear emoji picker hide timeout
+    if (this.emojiPickerHideTimeout) {
+      clearTimeout(this.emojiPickerHideTimeout);
+      this.emojiPickerHideTimeout = null;
+    }
+
+    // Clear status check interval
+    if (this.statusCheckIntervalId) {
+      clearInterval(this.statusCheckIntervalId);
+      this.statusCheckIntervalId = null;
+      this.logger.debug('ngOnDestroy', 'Status check interval cleared');
+    }
+
     if (isPlatformBrowser(this.platformId) && this.visibilityChangeListener) {
       document.removeEventListener('visibilitychange', this.visibilityChangeListener);
     }
@@ -540,6 +568,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.ngZone.run(() => {
           // Filter out the local user's own name
           this.members = allMembers.filter((m) => m !== this.userService.user);
+
+          // Initialize connection status for new members
+          this.members.forEach((member) => {
+            if (!this.memberConnectionStatus.has(member)) {
+              this.memberConnectionStatus.set(member, false); // Start as disconnected
+            }
+          });
+
           this.cdr.detectChanges();
           this.initiateConnectionsWithMembers();
         });
@@ -795,7 +831,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   /**
    * ==========================================================
    * SEND MESSAGE
-   * Sends the chat message to other members, then clears
+   * Sends the chat message to other members via WebRTC, then clears
    * the input field and scrolls chat down.
    * ==========================================================
    */
@@ -1436,7 +1472,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const sanitizedCode = this.sanitizeSessionCode(code);
       localStorage.setItem(SESSION_CODE_KEY, sanitizedCode);
 
-      setTimeout(() => {
+      // Clear any existing navigation timeout
+      if (this.navigationTimeout) {
+        clearTimeout(this.navigationTimeout);
+      }
+
+      this.navigationTimeout = setTimeout(() => {
+        this.navigationTimeout = null;
         window.open(`/private/${sanitizedCode}`, '_self');
       }, NAVIGATION_DELAY_MS);
     }
@@ -1608,6 +1650,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    * INITIATE CONNECTIONS WITH ROOM MEMBERS
    * Attempts to open a WebRTC connection with each peer.
+   * Updates connection status indicators.
    * ==========================================================
    */
   private initiateConnectionsWithMembers(): void {
@@ -1619,6 +1662,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
+    // Clear any existing connection initialization timeouts
+    this.connectionInitTimeouts.forEach((timeout) => clearTimeout(timeout));
+    this.connectionInitTimeouts = [];
+
     this.logger.info('initiateConnectionsWithMembers', 'Initiating connections with other members');
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
 
@@ -1627,11 +1674,72 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    setTimeout(() => {
-      otherMembers.forEach((member) => {
-        this.webrtcService.initiateConnection(member);
+    // Stagger connection initiation to prevent race conditions
+    // Callers initiate immediately, callees wait to give callers time to send offers
+    otherMembers.forEach((member, index) => {
+      // Determine if we should be the caller for this member
+      const shouldInitiate = this.userService.user.localeCompare(member) < 0;
+
+      // Callers start at 1000ms, callees wait an additional 800ms
+      const baseDelay = 1000;
+      const staggerDelay = shouldInitiate ? 0 : 800;
+      const indexDelay = index * 100; // Small delay between multiple members
+
+      const timeoutId = setTimeout(
+        () => {
+          this.webrtcService.initiateConnection(member);
+
+          // Check connection status after a delay
+          const statusCheckTimeoutId = setTimeout(() => {
+            const isConnected = this.webrtcService.isConnected(member);
+            this.ngZone.run(() => {
+              this.memberConnectionStatus.set(member, isConnected);
+              this.cdr.detectChanges();
+            });
+          }, 2000); // Check after 2 seconds (connection usually establishes within 1-2s)
+
+          this.connectionInitTimeouts.push(statusCheckTimeoutId);
+        },
+        baseDelay + staggerDelay + indexDelay
+      );
+
+      this.connectionInitTimeouts.push(timeoutId);
+    });
+
+    // Clear any existing status check interval before creating a new one
+    if (this.statusCheckIntervalId) {
+      clearInterval(this.statusCheckIntervalId);
+      this.statusCheckIntervalId = null;
+    }
+
+    // Periodically update connection status
+    this.statusCheckIntervalId = setInterval(() => {
+      if (this.members.length === 0) {
+        if (this.statusCheckIntervalId) {
+          clearInterval(this.statusCheckIntervalId);
+          this.statusCheckIntervalId = null;
+        }
+        return;
+      }
+
+      this.ngZone.run(() => {
+        this.members.forEach((member) => {
+          const isConnected = this.webrtcService.isConnected(member);
+          this.memberConnectionStatus.set(member, isConnected);
+        });
+        this.cdr.detectChanges();
       });
-    }, 1000);
+    }, 3000);
+  }
+
+  /**
+   * ==========================================================
+   * GET CONNECTION STATUS
+   * Returns true if connected via WebRTC, false otherwise
+   * ==========================================================
+   */
+  protected isConnectedToMember(member: string): boolean {
+    return this.memberConnectionStatus.get(member) ?? false;
   }
 
   /**
@@ -1668,7 +1776,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   protected handleEmojiIconMouseLeave(): void {
-    setTimeout(() => {
+    // Clear any existing emoji picker hide timeout
+    if (this.emojiPickerHideTimeout) {
+      clearTimeout(this.emojiPickerHideTimeout);
+    }
+
+    this.emojiPickerHideTimeout = setTimeout(() => {
+      this.emojiPickerHideTimeout = null;
       if (!this.isHoveringOverPicker) {
         this.ngZone.run(() => {
           this.isEmojiPickerVisible = false;
