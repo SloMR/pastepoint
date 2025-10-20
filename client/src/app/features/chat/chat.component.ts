@@ -138,6 +138,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private lastHeartbeat: number = Date.now();
   private isNavigatingIntentionally = false;
   private lastMessagesLength: number = 0;
+  private connectionInitTimeouts: ReturnType<typeof setTimeout>[] = [];
+  private navigationTimeout: ReturnType<typeof setTimeout> | null = null;
+  private emojiPickerHideTimeout: ReturnType<typeof setTimeout> | null = null;
+  private statusCheckIntervalId: ReturnType<typeof setInterval> | null = null;
 
   appVersion: string = packageJson.version;
 
@@ -350,6 +354,29 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.heartbeatIntervalId) {
       clearInterval(this.heartbeatIntervalId);
       this.logger.debug('ngOnDestroy', 'Heartbeat monitor cleared');
+    }
+
+    // Clear all connection initialization timeouts
+    this.connectionInitTimeouts.forEach((timeout) => clearTimeout(timeout));
+    this.connectionInitTimeouts = [];
+
+    // Clear navigation timeout
+    if (this.navigationTimeout) {
+      clearTimeout(this.navigationTimeout);
+      this.navigationTimeout = null;
+    }
+
+    // Clear emoji picker hide timeout
+    if (this.emojiPickerHideTimeout) {
+      clearTimeout(this.emojiPickerHideTimeout);
+      this.emojiPickerHideTimeout = null;
+    }
+
+    // Clear status check interval
+    if (this.statusCheckIntervalId) {
+      clearInterval(this.statusCheckIntervalId);
+      this.statusCheckIntervalId = null;
+      this.logger.debug('ngOnDestroy', 'Status check interval cleared');
     }
 
     if (isPlatformBrowser(this.platformId) && this.visibilityChangeListener) {
@@ -1445,7 +1472,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const sanitizedCode = this.sanitizeSessionCode(code);
       localStorage.setItem(SESSION_CODE_KEY, sanitizedCode);
 
-      setTimeout(() => {
+      // Clear any existing navigation timeout
+      if (this.navigationTimeout) {
+        clearTimeout(this.navigationTimeout);
+      }
+
+      this.navigationTimeout = setTimeout(() => {
+        this.navigationTimeout = null;
         window.open(`/private/${sanitizedCode}`, '_self');
       }, NAVIGATION_DELAY_MS);
     }
@@ -1629,6 +1662,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
+    // Clear any existing connection initialization timeouts
+    this.connectionInitTimeouts.forEach((timeout) => clearTimeout(timeout));
+    this.connectionInitTimeouts = [];
+
     this.logger.info('initiateConnectionsWithMembers', 'Initiating connections with other members');
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
 
@@ -1648,27 +1685,40 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       const staggerDelay = shouldInitiate ? 0 : 800;
       const indexDelay = index * 100; // Small delay between multiple members
 
-      setTimeout(
+      const timeoutId = setTimeout(
         () => {
           this.webrtcService.initiateConnection(member);
 
           // Check connection status after a delay
-          setTimeout(() => {
+          const statusCheckTimeoutId = setTimeout(() => {
             const isConnected = this.webrtcService.isConnected(member);
             this.ngZone.run(() => {
               this.memberConnectionStatus.set(member, isConnected);
               this.cdr.detectChanges();
             });
           }, 2000); // Check after 2 seconds (connection usually establishes within 1-2s)
+
+          this.connectionInitTimeouts.push(statusCheckTimeoutId);
         },
         baseDelay + staggerDelay + indexDelay
       );
+
+      this.connectionInitTimeouts.push(timeoutId);
     });
 
+    // Clear any existing status check interval before creating a new one
+    if (this.statusCheckIntervalId) {
+      clearInterval(this.statusCheckIntervalId);
+      this.statusCheckIntervalId = null;
+    }
+
     // Periodically update connection status
-    const statusCheckInterval = setInterval(() => {
+    this.statusCheckIntervalId = setInterval(() => {
       if (this.members.length === 0) {
-        clearInterval(statusCheckInterval);
+        if (this.statusCheckIntervalId) {
+          clearInterval(this.statusCheckIntervalId);
+          this.statusCheckIntervalId = null;
+        }
         return;
       }
 
@@ -1680,10 +1730,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.cdr.detectChanges();
       });
     }, 3000);
-
-    this.subscriptions.push({
-      unsubscribe: () => clearInterval(statusCheckInterval),
-    } as Subscription);
   }
 
   /**
@@ -1730,7 +1776,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   protected handleEmojiIconMouseLeave(): void {
-    setTimeout(() => {
+    // Clear any existing emoji picker hide timeout
+    if (this.emojiPickerHideTimeout) {
+      clearTimeout(this.emojiPickerHideTimeout);
+    }
+
+    this.emojiPickerHideTimeout = setTimeout(() => {
+      this.emojiPickerHideTimeout = null;
       if (!this.isHoveringOverPicker) {
         this.ngZone.run(() => {
           this.isEmojiPickerVisible = false;

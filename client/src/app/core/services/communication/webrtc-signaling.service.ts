@@ -29,6 +29,9 @@ export class WebRTCSignalingService {
   private lastSequences = new Map<string, number>();
   private candidateQueues = new Map<string, RTCIceCandidateInit[]>();
   private connectionRequests = new Map<string, ReturnType<typeof setTimeout>>();
+  private connectionRequestDelays = new Map<string, ReturnType<typeof setTimeout>>();
+  private reconnectionTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+  private stateMismatchTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   private collectedCandidates = new Map<string, RTCIceCandidate[]>();
 
   constructor(
@@ -219,6 +222,27 @@ export class WebRTCSignalingService {
       this.connectionRequests.delete(targetUser);
     }
 
+    // Clear connection request delay timeout
+    const requestDelayTimeout = this.connectionRequestDelays.get(targetUser);
+    if (requestDelayTimeout) {
+      clearTimeout(requestDelayTimeout);
+      this.connectionRequestDelays.delete(targetUser);
+    }
+
+    // Clear reconnection timeout
+    const reconnectionTimeout = this.reconnectionTimeouts.get(targetUser);
+    if (reconnectionTimeout) {
+      clearTimeout(reconnectionTimeout);
+      this.reconnectionTimeouts.delete(targetUser);
+    }
+
+    // Clear state mismatch timeout
+    const stateMismatchTimeout = this.stateMismatchTimeouts.get(targetUser);
+    if (stateMismatchTimeout) {
+      clearTimeout(stateMismatchTimeout);
+      this.stateMismatchTimeouts.delete(targetUser);
+    }
+
     if (force) {
       this.candidateQueues.delete(targetUser);
       this.collectedCandidates.delete(targetUser);
@@ -244,6 +268,24 @@ export class WebRTCSignalingService {
       clearTimeout(timeout);
     });
     this.connectionRequests.clear();
+
+    // Clear all connection request delay timeouts
+    this.connectionRequestDelays.forEach((timeout) => {
+      clearTimeout(timeout);
+    });
+    this.connectionRequestDelays.clear();
+
+    // Clear all reconnection timeouts
+    this.reconnectionTimeouts.forEach((timeout) => {
+      clearTimeout(timeout);
+    });
+    this.reconnectionTimeouts.clear();
+
+    // Clear all state mismatch timeouts
+    this.stateMismatchTimeouts.forEach((timeout) => {
+      clearTimeout(timeout);
+    });
+    this.stateMismatchTimeouts.clear();
   }
 
   /**
@@ -339,7 +381,7 @@ export class WebRTCSignalingService {
         if (!hasRelay && candidates.length > 0) {
           this.logger.warn(
             'ICE',
-            `No TURN/relay candidates for ${targetUser} - connection may fail behind restrictive NATs (but working via STUN for now)`
+            `No TURN/relay candidates for ${targetUser} - connection may be unstable or fail behind restrictive NATs`
           );
         }
       }
@@ -430,7 +472,14 @@ export class WebRTCSignalingService {
         this.logger.info('handleDisconnection', `Starting reconnection attempts to ${targetUser}`);
       }
 
-      setTimeout(() => {
+      // Clear any existing reconnection timeout for this user
+      const existingTimeout = this.reconnectionTimeouts.get(targetUser);
+      if (existingTimeout) {
+        clearTimeout(existingTimeout);
+      }
+
+      const timeoutId = setTimeout(() => {
+        this.reconnectionTimeouts.delete(targetUser);
         if (!this.peerConnections.has(targetUser)) {
           this.logger.debug(
             'handleDisconnection',
@@ -444,6 +493,8 @@ export class WebRTCSignalingService {
           );
         }
       }, delay);
+
+      this.reconnectionTimeouts.set(targetUser, timeoutId);
     } else {
       this.logger.error(
         'handleDisconnection',
@@ -683,9 +734,19 @@ export class WebRTCSignalingService {
       `Resetting connection due to state mismatch with ${targetUser}`
     );
     this.closePeerConnection(targetUser, true);
-    setTimeout(() => {
+
+    // Clear any existing state mismatch timeout for this user
+    const existingTimeout = this.stateMismatchTimeouts.get(targetUser);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+
+    const timeoutId = setTimeout(() => {
+      this.stateMismatchTimeouts.delete(targetUser);
       this.initiateConnection(targetUser);
     }, 500);
+
+    this.stateMismatchTimeouts.set(targetUser, timeoutId);
   }
 
   /**
@@ -817,9 +878,19 @@ export class WebRTCSignalingService {
       return;
     }
 
+    // Clear any existing delay timeout for this user
+    const existingDelayTimeout = this.connectionRequestDelays.get(targetUser);
+    if (existingDelayTimeout) {
+      clearTimeout(existingDelayTimeout);
+      this.connectionRequestDelays.delete(targetUser);
+    }
+
     // Add a small delay before sending the request to prevent race conditions
     // This gives the other peer time to send their offer if they're the designated caller
-    setTimeout(() => {
+    const delayTimeout = setTimeout(() => {
+      // Remove from tracking once executed
+      this.connectionRequestDelays.delete(targetUser);
+
       // Check again if we already have a connection in progress
       if (this.peerConnections.has(targetUser) || this.connectionLocks.has(targetUser)) {
         this.logger.debug(
@@ -855,6 +926,8 @@ export class WebRTCSignalingService {
 
       this.connectionRequests.set(targetUser, timeout);
     }, 500); // 500ms delay to prevent race conditions
+
+    this.connectionRequestDelays.set(targetUser, delayTimeout);
   }
 
   /**
