@@ -331,6 +331,17 @@ export class WebRTCSignalingService {
       return;
     }
 
+    // Check and close existing connection first to prevent memory leaks
+    const existingConnection = this.peerConnections.get(targetUser);
+    if (existingConnection) {
+      this.logger.warn(
+        'createPeerConnection',
+        `Peer connection already exists for ${targetUser}, closing old one`
+      );
+      existingConnection.close();
+      this.peerConnections.delete(targetUser);
+    }
+
     const peerConnection = new RTCPeerConnection(RTC_CONFIGURATION);
 
     let iceGatheringTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -635,10 +646,14 @@ export class WebRTCSignalingService {
       }
     }
 
+    // Set lock while processing offer to prevent concurrent connection attempts
+    this.connectionLocks.add(targetUser);
+
     const peerConnection = this.createPeerConnection(targetUser);
 
     if (!peerConnection) {
       this.logger.error('handleOffer', `PeerConnection missing for ${targetUser}`);
+      this.connectionLocks.delete(targetUser);
       return;
     }
 
@@ -651,6 +666,8 @@ export class WebRTCSignalingService {
         return peerConnection.setLocalDescription(answer);
       })
       .then(() => {
+        // Release lock after answer is sent
+        this.connectionLocks.delete(targetUser);
         const response: SignalMessage = {
           type: SignalMessageType.ANSWER,
           data: peerConnection.localDescription,
@@ -661,6 +678,8 @@ export class WebRTCSignalingService {
         this.processCandidateQueue(targetUser);
       })
       .catch((error) => {
+        // Release lock on error
+        this.connectionLocks.delete(targetUser);
         this.logger.error('handleOffer', `Error handling offer: ${error}`);
         if (this.wsService.isConnected()) {
           this.toaster.warning(
@@ -739,6 +758,17 @@ export class WebRTCSignalingService {
     const existingTimeout = this.stateMismatchTimeouts.get(targetUser);
     if (existingTimeout) {
       clearTimeout(existingTimeout);
+    }
+
+    // Clear reconnection timeout to prevent collision with state mismatch recovery
+    const reconnectionTimeout = this.reconnectionTimeouts.get(targetUser);
+    if (reconnectionTimeout) {
+      clearTimeout(reconnectionTimeout);
+      this.reconnectionTimeouts.delete(targetUser);
+      this.logger.debug(
+        'handleStateMismatch',
+        `Cleared reconnection timeout for ${targetUser} to prevent collision`
+      );
     }
 
     const timeoutId = setTimeout(() => {
