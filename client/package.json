@@ -48,13 +48,13 @@
     "ngx-device-detector": "^9.0.0"
   },
   "devDependencies": {
-    "@angular-devkit/build-angular": "^19.2.16",
+    "@angular-devkit/build-angular": "^19.2.18",
     "@angular-eslint/builder": "^19.8.1",
     "@angular-eslint/eslint-plugin": "^19.8.1",
     "@angular-eslint/eslint-plugin-template": "^19.8.1",
     "@angular-eslint/schematics": "^19.8.1",
     "@angular-eslint/template-parser": "^19.8.1",
-    "@angular/cli": "^19.2.16",
+    "@angular/cli": "^19.2.18",
     "@eslint/js": "^9.31.0",
     "@types/compression": "^1.8.1",
     "@types/express": "^4.17.23",
