@@ -1667,10 +1667,26 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.connectionInitTimeouts = [];
 
     this.logger.info('initiateConnectionsWithMembers', 'Initiating connections with other members');
-    const otherMembers = this.members.filter((m) => m !== this.userService.user);
+
+    // Filter out self AND already connected/connecting peers
+    const otherMembers = this.members.filter((m) => {
+      if (m === this.userService.user) {
+        return false;
+      }
+
+      // Skip if already connected or connecting
+      const isConnectedOrConnecting = this.webrtcService.isConnectedOrConnecting(m);
+      if (isConnectedOrConnecting) {
+        this.logger.debug(
+          'initiateConnectionsWithMembers',
+          `Skipping ${m} - already connected/connecting`
+        );
+      }
+      return !isConnectedOrConnecting;
+    });
 
     if (otherMembers.length === 0) {
-      this.logger.warn('initiateConnectionsWithMembers', 'No other members to connect to');
+      this.logger.info('initiateConnectionsWithMembers', 'No new members to connect to');
       return;
     }
 
@@ -1680,9 +1696,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       // Determine if we should be the caller for this member
       const shouldInitiate = this.userService.user.localeCompare(member) < 0;
 
-      // Callers start at 1000ms, callees wait an additional 800ms
+      // Callers start at 1000ms, callees wait an additional 500ms
       const baseDelay = 1000;
-      const staggerDelay = shouldInitiate ? 0 : 800;
+      const staggerDelay = shouldInitiate ? 0 : 500;
       const indexDelay = index * 100; // Small delay between multiple members
 
       const timeoutId = setTimeout(
