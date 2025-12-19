@@ -139,5 +139,7 @@
   "ENTER_VALID_ROOM": "Enter a valid room name",
   "CONNECTION_TIMEOUT_WITH_USER": "Connection with {{userName}} is unstable. Please check your internet connection.",
   "FAILED_TO_SEND_MESSAGE": "Failed to send message to {{member}}.",
-  "FAILED_TO_SEND_FILE_MESSAGE": "Failed to send file to {{member}}."
+  "FAILED_TO_SEND_FILE_MESSAGE": "Failed to send file to {{member}}.",
+  "CHUNK_INTEGRITY_ERROR": "File transfer failed: data corruption detected.",
+  "FILE_INCOMPLETE_ERROR": "File transfer incomplete: missing data chunks."
 }

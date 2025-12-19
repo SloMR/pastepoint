@@ -1150,7 +1150,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
         return {
           ...msg,
-          text: `${msg.fileTransfer.fileName} - ${statusText}`,
+          text: `${this.truncateFilename(msg.fileTransfer.fileName)} - ${statusText}`,
           fileTransfer: {
             ...msg.fileTransfer,
             status,
