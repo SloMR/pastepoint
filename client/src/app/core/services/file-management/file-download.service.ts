@@ -1,11 +1,12 @@
 import { Injectable, NgZone } from '@angular/core';
-import { FILE_TRANSFER_MESSAGE_TYPES } from '../../../utils/constants';
+import { FILE_TRANSFER_MESSAGE_TYPES, FileDownload } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { WebRTCService } from '../communication/webrtc.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { HotToastService } from '@ngneat/hot-toast';
 import { PreviewService } from '../../services/ui/preview.service';
+import { calculateBufferHash } from '../../../utils/chunk-protocol';
 
 @Injectable({
   providedIn: 'root',
@@ -25,109 +26,215 @@ export class FileDownloadService extends FileTransferBaseService {
 
   // =============== Data Handling Methods ===============
   /**
-   * Handles incoming file data chunks and assembles the file
+   * Handles incoming file data chunks and assembles the file.
+   * Uses chunk index for ordered assembly, preventing corruption from out-of-order delivery.
+   * Validates chunk integrity via CRC32 checksum.
    */
   public async handleDataChunk(
     fileId: string,
     chunk: ArrayBuffer,
-    fromUser: string
+    fromUser: string,
+    chunkIndex: number,
+    totalChunks: number,
+    isValid: boolean = true
   ): Promise<void> {
     const userMap = await this.getIncomingFileTransfers(fromUser);
     if (!userMap) {
       this.logger.warn(
         'handleDataChunk',
-        `Discarding chunk - no incomingFileTransfers map found for user ${fromUser}`
+        `Discarding chunk - no incomingFileTransfers map for ${fromUser}`
       );
       return;
     }
 
     const fileDownload = userMap.get(fileId);
-    if (!fileDownload?.isAccepted) {
-      this.logger.warn(
+    if (!fileDownload) {
+      this.logger.error(
         'handleDataChunk',
-        `Discarding chunk - transfer not active or not accepted for fileId=${fileId}`
+        `Chunk ${chunkIndex}/${totalChunks} - fileId ${fileId.substring(0, 8)}... NOT FOUND in map`
       );
       return;
     }
 
-    fileDownload.dataBuffer.push(new Uint8Array(chunk));
+    if (!fileDownload.isAccepted) {
+      this.logger.error(
+        'handleDataChunk',
+        `Chunk ${chunkIndex}/${totalChunks} - fileId ${fileId.substring(0, 8)}... NOT YET ACCEPTED`
+      );
+      return;
+    }
+
+    // Verify chunk integrity (CRC32 checksum)
+    if (!isValid) {
+      this.logger.error(
+        'handleDataChunk',
+        `Chunk ${chunkIndex} for ${fileId} failed CRC32 validation - data corrupted!`
+      );
+      this.toaster.error(
+        this.translate.instant('CHUNK_INTEGRITY_ERROR', {
+          chunkIndex: chunkIndex + 1,
+          totalChunks,
+        })
+      );
+      return;
+    }
+
+    // Initialize totalChunks if not set
+    if (fileDownload.totalChunks === 0) {
+      fileDownload.totalChunks = totalChunks;
+    }
+
+    // Check for duplicate chunk
+    if (fileDownload.receivedChunks.has(chunkIndex)) {
+      this.logger.warn('handleDataChunk', `Duplicate chunk ${chunkIndex} for ${fileId}, ignoring`);
+      return;
+    }
+
+    // Store chunk by index for ordered assembly
+    fileDownload.receivedChunks.set(chunkIndex, new Uint8Array(chunk));
     fileDownload.receivedSize += chunk.byteLength;
 
-    const progress = (fileDownload.receivedSize / fileDownload.fileSize) * 100;
+    const progress = (fileDownload.receivedChunks.size / totalChunks) * 100;
     fileDownload.progress = parseFloat(progress.toFixed(2));
+
+    // Log first chunk processed
+    if (chunkIndex === 0) {
+      this.logger.info(
+        'handleDataChunk',
+        `First chunk processed for ${fileId.substring(0, 8)}... (${chunk.byteLength} bytes)`
+      );
+    }
 
     await this.updateActiveDownloads();
 
-    if (fileDownload.receivedSize >= fileDownload.fileSize) {
-      this.logger.info('handleDataChunk', `File received successfully (fileId=${fileId})`);
-
-      const totalLength = fileDownload.dataBuffer.reduce((acc, curr) => acc + curr.length, 0);
-      const combinedArray = new Uint8Array(totalLength);
-      let offset = 0;
-      for (const chunk of fileDownload.dataBuffer) {
-        combinedArray.set(chunk, offset);
-        offset += chunk.length;
-      }
-
-      const lowerName = (fileDownload.fileName || '').toLowerCase();
-      const ext = lowerName.split('.').pop() || '';
-      let blobType = '';
-      if (ext === 'pdf') {
-        blobType = 'application/pdf';
-      } else if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
-        // Use a generic image type; exact type isn't critical for <img>, but set if known
-        blobType = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-      }
-
-      const receivedBlob = new Blob([combinedArray], { type: blobType || undefined });
-      const downloadUrl = URL.createObjectURL(receivedBlob);
-      const fileName = fileDownload.fileName || 'downloaded_file';
-
-      // Update preview after completion for images/PDFs
-      try {
-        if (blobType === 'application/pdf') {
-          // Keep existing thumbnail from offer if present; otherwise generate one
-          if (!fileDownload.previewDataUrl) {
-            const thumb = await this.previewService.createPdfThumbnailFromBytes(combinedArray);
-            if (thumb) {
-              fileDownload.previewDataUrl = thumb;
-              fileDownload.previewMime = 'image/png';
-            }
-          } else {
-            // Ensure mime reflects image
-            fileDownload.previewMime = 'image/png';
-          }
-        } else if (blobType.startsWith('image/')) {
-          fileDownload.previewMime = blobType;
-          fileDownload.previewDataUrl = downloadUrl;
-        }
-        await this.updateActiveDownloads();
-        await this.updateIncomingFileOffers();
-      } catch {
-        this.logger.warn('handleDataChunk', `Failed to generate preview for fileId=${fileId}`);
-      }
-
-      const anchor = document.createElement('a');
-      anchor.href = downloadUrl;
-      anchor.download = fileName;
-      document.body.appendChild(anchor);
-      anchor.click();
-      document.body.removeChild(anchor);
-
-      this.toaster.success(this.translate.instant('FILE_DOWNLOAD_COMPLETED', { fileName }));
-
-      userMap.delete(fileId);
-      if (userMap.size === 0) {
-        await this.deleteIncomingFileTransfers(fromUser);
-      }
-
-      await this.updateActiveDownloads();
+    // Check if all chunks received
+    if (fileDownload.receivedChunks.size >= totalChunks) {
+      this.logger.info('handleDataChunk', `All chunks received for fileId=${fileId}`);
+      await this.assembleAndDownloadFile(fileDownload, userMap, fromUser);
     } else {
-      this.logger.info(
+      this.logger.debug(
         'handleDataChunk',
-        `FileId=${fileId} chunk received. Progress: ${fileDownload.progress.toFixed(2)}%`
+        `${fileId}: ${fileDownload.receivedChunks.size}/${totalChunks} chunks`
       );
     }
+  }
+
+  /**
+   * Assembles chunks in order, verifies file integrity, and triggers download
+   */
+  private async assembleAndDownloadFile(
+    fileDownload: FileDownload,
+    userMap: Map<string, FileDownload>,
+    fromUser: string
+  ): Promise<void> {
+    // Assemble chunks in order
+    const totalLength = Array.from(fileDownload.receivedChunks.values()).reduce(
+      (acc, chunk) => acc + chunk.length,
+      0
+    );
+    const combinedArray = new Uint8Array(totalLength);
+
+    let offset = 0;
+    let missingChunks = 0;
+    for (let i = 0; i < fileDownload.totalChunks; i++) {
+      const chunk = fileDownload.receivedChunks.get(i);
+      if (chunk) {
+        combinedArray.set(chunk, offset);
+        offset += chunk.length;
+      } else {
+        this.logger.error(
+          'assembleAndDownloadFile',
+          `Missing chunk ${i} for ${fileDownload.fileId}`
+        );
+        missingChunks++;
+      }
+    }
+
+    if (missingChunks > 0) {
+      this.logger.error(
+        'assembleAndDownloadFile',
+        `${missingChunks} chunks missing, file may be corrupted`
+      );
+      this.toaster.error(this.translate.instant('FILE_INCOMPLETE_ERROR', { count: missingChunks }));
+    }
+
+    // Verify full file integrity via SHA-256 hash
+    if (fileDownload.expectedHash) {
+      try {
+        const actualHash = await calculateBufferHash(combinedArray.buffer);
+        if (actualHash !== fileDownload.expectedHash) {
+          this.logger.error(
+            'assembleAndDownloadFile',
+            `Hash mismatch for ${fileDownload.fileId}! Expected: ${fileDownload.expectedHash.substring(0, 16)}..., Got: ${actualHash.substring(0, 16)}...`
+          );
+          this.toaster.error(this.translate.instant('FILE_INTEGRITY_ERROR'));
+          // Still allow download but warn user
+        } else {
+          this.logger.info(
+            'assembleAndDownloadFile',
+            `File integrity verified for ${fileDownload.fileId} ✓`
+          );
+        }
+      } catch (e) {
+        this.logger.warn('assembleAndDownloadFile', `Failed to verify file hash: ${e}`);
+      }
+    }
+
+    const lowerName = (fileDownload.fileName || '').toLowerCase();
+    const ext = lowerName.split('.').pop() || '';
+    let blobType = '';
+    if (ext === 'pdf') {
+      blobType = 'application/pdf';
+    } else if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
+      blobType = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+    }
+
+    const receivedBlob = new Blob([combinedArray], { type: blobType || undefined });
+    const downloadUrl = URL.createObjectURL(receivedBlob);
+    const fileName = fileDownload.fileName || 'downloaded_file';
+
+    // Update preview after completion
+    try {
+      if (blobType === 'application/pdf') {
+        if (!fileDownload.previewDataUrl) {
+          const thumb = await this.previewService.createPdfThumbnailFromBytes(combinedArray);
+          if (thumb) {
+            fileDownload.previewDataUrl = thumb;
+            fileDownload.previewMime = 'image/png';
+          }
+        } else {
+          fileDownload.previewMime = 'image/png';
+        }
+      } else if (blobType.startsWith('image/')) {
+        fileDownload.previewMime = blobType;
+        fileDownload.previewDataUrl = downloadUrl;
+      }
+      await this.updateActiveDownloads();
+      await this.updateIncomingFileOffers();
+    } catch {
+      this.logger.warn(
+        'assembleAndDownloadFile',
+        `Failed to generate preview for ${fileDownload.fileId}`
+      );
+    }
+
+    // Trigger download
+    const anchor = document.createElement('a');
+    anchor.href = downloadUrl;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+
+    this.toaster.success(this.translate.instant('FILE_DOWNLOAD_COMPLETED', { fileName }));
+
+    // Cleanup
+    userMap.delete(fileDownload.fileId);
+    if (userMap.size === 0) {
+      await this.deleteIncomingFileTransfers(fromUser);
+    }
+
+    await this.updateActiveDownloads();
   }
 
   // =============== Cancellation Methods ===============

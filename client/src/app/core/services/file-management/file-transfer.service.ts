@@ -21,10 +21,22 @@ export class FileTransferService implements IFileTransferService {
     private fileDownloadService: FileDownloadService,
     private fileOfferService: FileOfferService
   ) {
-    this.webrtcService.incomingFileChunk$.subscribe(async ({ fromUser, fileId, chunk }) => {
-      await this.fileDownloadService.handleDataChunk(fileId, chunk, fromUser);
-      this.logger.debug('FileTransferService', `File download ${fileId} received from ${fromUser}`);
-    });
+    this.webrtcService.incomingFileChunk$.subscribe(
+      async ({ fromUser, fileId, chunkIndex, totalChunks, chunk, isValid }) => {
+        await this.fileDownloadService.handleDataChunk(
+          fileId,
+          chunk,
+          fromUser,
+          chunkIndex,
+          totalChunks,
+          isValid
+        );
+        this.logger.debug(
+          'FileTransferService',
+          `Chunk ${chunkIndex + 1}/${totalChunks} for ${fileId} (valid: ${isValid})`
+        );
+      }
+    );
 
     this.webrtcService.fileOffers$.subscribe(async (offer) => {
       this.logger.debug(

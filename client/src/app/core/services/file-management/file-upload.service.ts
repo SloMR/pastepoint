@@ -13,6 +13,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { HotToastService } from '@ngneat/hot-toast';
 import { PreviewService } from '../../services/ui/preview.service';
+import {
+  encodeChunk,
+  calculateTotalChunks,
+  calculateFileHash,
+} from '../../../utils/chunk-protocol';
 
 @Injectable({
   providedIn: 'root',
@@ -20,7 +25,8 @@ import { PreviewService } from '../../services/ui/preview.service';
 export class FileUploadService extends FileTransferBaseService {
   // =============== Private Properties ===============
   private processingQueues = new Map<string, boolean>();
-  private userSendingLocks = new Map<string, boolean>(); // Per-user lock to prevent concurrent sends
+  private userFileQueues = new Map<string, string[]>(); // Queue of fileIds per user for sequential transfer
+  private activeFilePerUser = new Map<string, string | null>(); // Currently transferring file per user
   private consecutiveErrorCounts = new Map<string, number>();
   private maxConsecutiveErrors = 5;
 
@@ -88,9 +94,15 @@ export class FileUploadService extends FileTransferBaseService {
   }
 
   /**
-   * Starts sending a file after an offer has been accepted
+   * Starts sending a file after an offer has been accepted.
+   * Files are queued and sent sequentially to prevent chunk interleaving.
    */
   public async startSendingFile(targetUser: string, fileId: string): Promise<void> {
+    this.logger.info(
+      'startSendingFile',
+      `File send started: ${fileId.substring(0, 8)}... to ${targetUser}`
+    );
+
     const transferId = this.getOrCreateStatusKey(targetUser, fileId);
     await this.setFileTransferStatus(transferId, FileTransferStatus.ACCEPTED);
 
@@ -106,18 +118,95 @@ export class FileUploadService extends FileTransferBaseService {
       this.toaster.error(this.translate.instant('NO_FILE_TO_SEND'));
       return;
     }
-    this.logger.info('startSendingFile', `Starting to send fileId=${fileId} to ${targetUser}`);
 
-    const dataChannel = this.getDataChannel(targetUser);
-    if (!dataChannel || dataChannel.readyState !== 'open') {
-      this.logger.error('startSendingFile', `Data channel not available/open for ${targetUser}`);
+    // Add to queue for sequential processing
+    this.enqueueFileForUser(targetUser, fileId);
+    const queueLength = this.userFileQueues.get(targetUser)?.length ?? 0;
+    this.logger.info(
+      'startSendingFile',
+      `Queued ${fileId.substring(0, 8)}... for ${targetUser} (queue size: ${queueLength})`
+    );
+
+    // Try to start processing if no file is currently being sent
+    await this.processNextFileInQueue(targetUser);
+  }
+
+  /**
+   * Adds a file to the user's transfer queue
+   */
+  private enqueueFileForUser(targetUser: string, fileId: string): void {
+    if (!this.userFileQueues.has(targetUser)) {
+      this.userFileQueues.set(targetUser, []);
+    }
+    const queue = this.userFileQueues.get(targetUser)!;
+    if (!queue.includes(fileId)) {
+      queue.push(fileId);
+    }
+  }
+
+  /**
+   * Processes the next file in the user's queue if no transfer is active
+   */
+  private async processNextFileInQueue(targetUser: string): Promise<void> {
+    // Check if already processing a file for this user
+    const activeFile = this.activeFilePerUser.get(targetUser);
+    if (activeFile) {
+      // possible issue
+      this.logger.info(
+        'processNextFileInQueue',
+        `Already sending ${activeFile.substring(0, 8)}... to ${targetUser}, waiting`
+      );
       return;
     }
 
+    const queue = this.userFileQueues.get(targetUser);
+    if (!queue || queue.length === 0) {
+      this.logger.debug('processNextFileInQueue', `No files in queue for ${targetUser}`);
+      return;
+    }
+
+    this.logger.info(
+      'processNextFileInQueue',
+      `Processing queue for ${targetUser}: ${queue.length} files waiting`
+    );
+
+    const nextFileId = queue.shift()!; // fix force unwrap
+    const userMap = await this.getFileTransfers(targetUser);
+    if (!userMap) {
+      this.logger.error('processNextFileInQueue', `No userMap for ${targetUser}`);
+      await this.processNextFileInQueue(targetUser);
+      return;
+    }
+
+    const fileTransfer = userMap.get(nextFileId);
+    if (!fileTransfer) {
+      this.logger.warn('processNextFileInQueue', `File ${nextFileId.substring(0, 8)}... cancelled`);
+      await this.processNextFileInQueue(targetUser);
+      return;
+    }
+
+    const dataChannel = this.getDataChannel(targetUser);
+    const channelState = dataChannel?.readyState ?? 'no-channel';
+    if (!dataChannel || dataChannel.readyState !== 'open') {
+      this.logger.error(
+        'processNextFileInQueue',
+        `Channel not open for ${targetUser} (state: ${channelState}), re-queuing`
+      );
+      queue.unshift(nextFileId);
+      return;
+    }
+
+    // Mark as active and start transfer
+    this.activeFilePerUser.set(targetUser, nextFileId);
+    this.logger.info(
+      'processNextFileInQueue',
+      `Starting file transfer: ${fileTransfer.file.name} (${nextFileId.substring(0, 8)}...) to ${targetUser}`
+    );
+
     try {
-      await this.sendNextChunk(fileTransfer);
+      await this.sendFileChunks(fileTransfer);
     } catch (error) {
-      this.logger.error('startSendingFile', `File transfer failed: ${error}`);
+      this.logger.error('processNextFileInQueue', `File transfer failed: ${error}`);
     }
   }
 
@@ -155,6 +244,22 @@ export class FileUploadService extends FileTransferBaseService {
       await this.setFileTransfers(targetUser, userMap);
       await this.updateActiveUploads();
 
+      // Remove from queue if present
+      const queue = this.userFileQueues.get(targetUser);
+      if (queue) {
+        const idx = queue.indexOf(fileId);
+        if (idx !== -1) {
+          queue.splice(idx, 1);
+        }
+      }
+
+      // Clear active file if this was the one being transferred
+      if (this.activeFilePerUser.get(targetUser) === fileId) {
+        this.activeFilePerUser.set(targetUser, null);
+        // Process next file in queue
+        await this.processNextFileInQueue(targetUser);
+      }
+
       const message = {
         type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_UPLOAD,
         payload: {
@@ -177,25 +282,25 @@ export class FileUploadService extends FileTransferBaseService {
     const userMap = await this.getFileTransfers(targetUser);
     if (!userMap) return;
 
-    for (const fileTransfer of userMap.values()) {
-      if (fileTransfer.isPaused && fileTransfer.currentOffset < fileTransfer.file.size) {
-        const dataChannel = this.getDataChannel(fileTransfer.targetUser);
-        if (dataChannel && dataChannel.bufferedAmount <= MAX_BUFFERED_AMOUNT) {
-          this.logger.info(
-            'resumePausedTransfer',
-            `Buffered amount low for ${targetUser}, resuming fileId=${fileTransfer.fileId}`
-          );
-          fileTransfer.isPaused = false;
-          await this.setFileTransfers(targetUser, userMap);
-          this.sendNextChunk(fileTransfer).catch((error: unknown) => {
-            this.logger.error('resumePausedTransfer', `Error resuming file transfer: ${error}`);
-          });
-        }
-      } else {
-        this.logger.info(
-          'resumePausedTransfer',
-          `FileId=${fileTransfer.fileId} is not paused or already completed.`
-        );
+    const activeFileId = this.activeFilePerUser.get(targetUser);
+    if (!activeFileId) {
+      // No active file, try to process queue
+      await this.processNextFileInQueue(targetUser);
+      return;
+    }
+
+    const fileTransfer = userMap.get(activeFileId);
+    if (fileTransfer?.isPaused && fileTransfer.currentOffset < fileTransfer.file.size) {
+      const dataChannel = this.getDataChannel(targetUser);
+      if (dataChannel && dataChannel.bufferedAmount <= MAX_BUFFERED_AMOUNT) {
+        this.logger.info('resumePausedTransfer', `Resuming ${activeFileId} for ${targetUser}`);
+        fileTransfer.isPaused = false;
+        await this.setFileTransfers(targetUser, userMap);
+
+        // Continue sending chunks
+        this.sendFileChunks(fileTransfer).catch((error: unknown) => {
+          this.logger.error('resumePausedTransfer', `Error resuming: ${error}`);
+        });
       }
     }
   }
@@ -222,6 +327,19 @@ export class FileUploadService extends FileTransferBaseService {
 
     let previewDataUrl: string | undefined;
     let previewMime: string | undefined;
+    let fileHash: string | undefined;
+
+    // Calculate file hash for integrity verification
+    try {
+      fileHash = await calculateFileHash(fileTransfer.file);
+      this.logger.debug(
+        'sendFileOffer',
+        `File hash for ${fileId}: ${fileHash.substring(0, 16)}...`
+      );
+    } catch (e) {
+      this.logger.warn('sendFileOffer', `Failed calculating file hash: ${String(e)}`);
+    }
+
     try {
       const mime = fileTransfer.file.type || '';
       if (mime.startsWith('image/')) {
@@ -243,6 +361,7 @@ export class FileUploadService extends FileTransferBaseService {
         fileId: fileId,
         fileName: fileTransfer.file.name,
         fileSize: fileTransfer.file.size,
+        fileHash,
         previewDataUrl,
         previewMime,
         fromUser: targetUser,
@@ -275,236 +394,163 @@ export class FileUploadService extends FileTransferBaseService {
 
   // =============== File Chunk Processing Methods ===============
   /**
-   * Sends next chunk of the file being transferred
+   * Sends all chunks of a file using the self-contained binary protocol.
+   * Each chunk contains embedded fileId, eliminating chunk mismatching.
    */
-  private async sendNextChunk(fileTransfer: FileUpload): Promise<void> {
+  private async sendFileChunks(fileTransfer: FileUpload): Promise<void> {
     const transferId = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
     if (this.processingQueues.get(transferId)) {
+      this.logger.warn(
+        'sendFileChunks',
+        `Already processing ${fileTransfer.fileId.substring(0, 8)}...`
+      );
       return;
     }
 
     this.processingQueues.set(transferId, true);
+    const totalChunks = calculateTotalChunks(fileTransfer.file.size, CHUNK_SIZE);
+    let chunkIndex = Math.floor(fileTransfer.currentOffset / CHUNK_SIZE);
+
+    this.logger.info(
+      'sendFileChunks',
+      `Starting: ${fileTransfer.file.name}, size=${fileTransfer.file.size}, chunks=${totalChunks}`
+    );
 
     try {
       while (fileTransfer.currentOffset < fileTransfer.file.size) {
         const userMap = await this.getFileTransfers(fileTransfer.targetUser);
         if (!userMap?.has(fileTransfer.fileId)) {
           this.logger.warn(
-            'sendNextChunk',
-            `File transfer for user=${fileTransfer.targetUser}, fileId=${fileTransfer.fileId} does not exist anymore`
+            'sendFileChunks',
+            `File transfer cancelled for fileId=${fileTransfer.fileId}`
           );
           break;
         }
 
         if (fileTransfer.isPaused) {
-          this.logger.warn('sendNextChunk', `Upload is paused for fileId=${fileTransfer.fileId}`);
+          this.logger.warn('sendFileChunks', `Upload paused for fileId=${fileTransfer.fileId}`);
           break;
         }
 
         const dataChannel = this.getDataChannel(fileTransfer.targetUser);
-        if (!dataChannel) {
+        if (!dataChannel || dataChannel.readyState !== 'open') {
           this.logger.error(
-            'sendNextChunk',
-            `Data channel is not available for ${fileTransfer.targetUser}`
+            'sendFileChunks',
+            `Data channel not available for ${fileTransfer.targetUser}`
           );
-
           this.initiateConnection(fileTransfer.targetUser);
           await new Promise((resolve) => setTimeout(resolve, 1000));
 
           const errorCount = this.consecutiveErrorCounts.get(transferId) ?? 0;
+          this.consecutiveErrorCounts.set(transferId, errorCount + 1);
           if (errorCount > this.maxConsecutiveErrors) {
             break;
           }
           continue;
         }
 
-        // Use a lower threshold (50% of max) to be more conservative with multiple files
-        const bufferThreshold = MAX_BUFFERED_AMOUNT * 0.5;
-        if (dataChannel.bufferedAmount > bufferThreshold) {
-          this.logger.warn(
-            'sendNextChunk',
-            `Data channel buffer is high (${dataChannel.bufferedAmount} bytes, threshold ${bufferThreshold}) for ${fileTransfer.targetUser}. Pausing upload.`
-          );
+        // Check buffer before sending
+        if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT * 0.7) {
+          this.logger.warn('sendFileChunks', `Buffer high, pausing for ${fileTransfer.targetUser}`);
           fileTransfer.isPaused = true;
           break;
         }
 
+        // Prepare chunk data
         const start = fileTransfer.currentOffset;
         const end = Math.min(start + CHUNK_SIZE, fileTransfer.file.size);
         const blob = fileTransfer.file.slice(start, end);
 
         try {
-          const arrayBuffer = await blob.arrayBuffer();
-          const chunkSent = await this.processFileChunk(arrayBuffer, fileTransfer, end);
+          const chunkData = await blob.arrayBuffer();
 
-          if (!chunkSent) {
-            this.logger.warn('sendNextChunk', `Failed to send chunk, pausing for retry`);
+          // Encode chunk with embedded metadata (fileId, index, total)
+          const encodedChunk = encodeChunk(fileTransfer.fileId, chunkIndex, totalChunks, chunkData);
+
+          // Send the self-contained chunk
+          const sent = this.sendRawData(encodedChunk, fileTransfer.targetUser);
+          if (!sent) {
+            this.logger.warn(
+              'sendFileChunks',
+              `Failed to send chunk ${chunkIndex}/${totalChunks} for ${fileTransfer.fileId.substring(0, 8)}...`
+            );
             await new Promise((resolve) => setTimeout(resolve, 500));
             continue;
           }
-        } catch (error) {
-          this.logger.error('sendNextChunk', `Error preparing chunk: ${error}`);
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          continue;
-        }
 
-        if (fileTransfer.currentOffset >= fileTransfer.file.size) {
-          this.logger.info(
-            'sendNextChunk',
-            `FileId=${fileTransfer.fileId} fully sent to ${fileTransfer.targetUser}`
-          );
+          // Log first chunk sent
+          if (chunkIndex === 0) {
+            this.logger.info(
+              'sendFileChunks',
+              `First chunk sent for ${fileTransfer.file.name} (encoded size: ${encodedChunk.byteLength})`
+            );
+          }
 
-          fileTransfer.progress = 100;
-          const key = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
-          await this.setFileTransferStatus(key, FileTransferStatus.COMPLETED);
+          // Update progress
+          fileTransfer.currentOffset = end;
+          fileTransfer.progress = parseFloat(((end / fileTransfer.file.size) * 100).toFixed(2));
+          chunkIndex++;
 
-          this.toaster.success(
-            this.translate.instant('FILE_UPLOAD_COMPLETED', { fileName: fileTransfer.file.name })
-          );
+          // Reset error count on success
+          this.consecutiveErrorCounts.set(transferId, 0);
 
-          userMap.delete(fileTransfer.fileId);
+          // Update state
+          userMap.set(fileTransfer.fileId, fileTransfer);
           await this.setFileTransfers(fileTransfer.targetUser, userMap);
           await this.updateActiveUploads();
-          await this.checkAllUsersResponded();
-          break;
-        }
 
-        if (fileTransfer.currentOffset % MB < CHUNK_SIZE) {
-          const mbSent = (fileTransfer.currentOffset / MB).toFixed(2);
-          this.logger.info(
-            'sendNextChunk',
-            `FileId=${fileTransfer.fileId} sent ${mbSent}MB to ${fileTransfer.targetUser}`
-          );
+          // Log progress every MB
+          if (fileTransfer.currentOffset % MB < CHUNK_SIZE) {
+            const mbSent = (fileTransfer.currentOffset / MB).toFixed(2);
+            this.logger.info('sendFileChunks', `${fileTransfer.fileId}: ${mbSent}MB sent`);
+          }
 
-          await new Promise((resolve) => setTimeout(resolve, 1));
+          // Small yield to prevent blocking
+          if (chunkIndex % 10 === 0) {
+            await new Promise((resolve) => setTimeout(resolve, 1));
+          }
+        } catch (error) {
+          this.logger.error('sendFileChunks', `Error preparing chunk: ${error}`);
+          const errorCount = this.consecutiveErrorCounts.get(transferId) ?? 0;
+          this.consecutiveErrorCounts.set(transferId, errorCount + 1);
+
+          if (errorCount >= this.maxConsecutiveErrors) {
+            await this.cancelFileUpload(fileTransfer.targetUser, fileTransfer.fileId);
+            break;
+          }
+          await new Promise((resolve) => setTimeout(resolve, 500));
         }
+      }
+
+      // Check if transfer completed
+      if (fileTransfer.currentOffset >= fileTransfer.file.size) {
+        this.logger.info(
+          'sendFileChunks',
+          `Completed ${fileTransfer.fileId} to ${fileTransfer.targetUser}`
+        );
+        fileTransfer.progress = 100;
+
+        const key = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
+        await this.setFileTransferStatus(key, FileTransferStatus.COMPLETED);
+
+        this.toaster.success(
+          this.translate.instant('FILE_UPLOAD_COMPLETED', { fileName: fileTransfer.file.name })
+        );
+
+        const userMap = await this.getFileTransfers(fileTransfer.targetUser);
+        if (userMap) {
+          userMap.delete(fileTransfer.fileId);
+          await this.setFileTransfers(fileTransfer.targetUser, userMap);
+        }
+        await this.updateActiveUploads();
+        await this.checkAllUsersResponded();
       }
     } finally {
       this.processingQueues.set(transferId, false);
-    }
-  }
+      this.activeFilePerUser.set(fileTransfer.targetUser, null);
 
-  /**
-   * Processes and sends a single file chunk
-   */
-  private async processFileChunk(
-    arrayBuffer: ArrayBuffer,
-    fileTransfer: FileUpload,
-    end: number
-  ): Promise<boolean> {
-    if (fileTransfer.isPaused) {
-      this.logger.info(
-        'processFileChunk',
-        `Transfer paused for fileId=${fileTransfer.fileId}, skipping chunk`
-      );
-      return false;
-    }
-
-    const dataChannel = this.getDataChannel(fileTransfer.targetUser);
-    if (!dataChannel) {
-      this.logger.error('processFileChunk', `No data channel for ${fileTransfer.targetUser}`);
-      return false;
-    }
-
-    // Use a lower threshold to be more conservative with multiple files
-    const bufferThreshold = MAX_BUFFERED_AMOUNT * 0.5;
-    if (dataChannel.bufferedAmount > bufferThreshold) {
-      fileTransfer.isPaused = true;
-      this.logger.info(
-        'processFileChunk',
-        `Pausing transfer to ${fileTransfer.targetUser} due to buffer size: ${dataChannel.bufferedAmount} (threshold: ${bufferThreshold})`
-      );
-      return false;
-    }
-
-    // Wait for any other file transfers to this user to complete their chunk send
-    const maxWaitAttempts = 100; // Max 5 seconds wait (100 * 50ms)
-    let waitAttempts = 0;
-    while (this.userSendingLocks.get(fileTransfer.targetUser) && waitAttempts < maxWaitAttempts) {
-      await new Promise((resolve) => setTimeout(resolve, 50));
-      waitAttempts++;
-    }
-
-    if (waitAttempts >= maxWaitAttempts) {
-      this.logger.warn(
-        'processFileChunk',
-        `Timeout waiting for user lock for ${fileTransfer.targetUser}`
-      );
-      return false;
-    }
-
-    // Acquire lock for this user
-    this.userSendingLocks.set(fileTransfer.targetUser, true);
-
-    const transferId = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
-    try {
-      const metaMessage = {
-        type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CHUNK,
-        payload: {
-          fileId: fileTransfer.fileId,
-          chunkSize: arrayBuffer.byteLength,
-        },
-      };
-
-      this.sendData(metaMessage, fileTransfer.targetUser);
-      // Increased delay to ensure metadata arrives before chunk, especially with multiple files
-      await new Promise((resolve) => setTimeout(resolve, 20));
-
-      const dataSent = this.sendRawData(arrayBuffer, fileTransfer.targetUser);
-      if (!dataSent) {
-        this.logger.warn(
-          'processFileChunk',
-          `Failed to send data chunk for ${fileTransfer.fileId}`
-        );
-        return false;
-      }
-
-      // Small delay after sending chunk to allow receiver to process
-      await new Promise((resolve) => setTimeout(resolve, 10));
-
-      this.consecutiveErrorCounts.set(transferId, 0);
-
-      const progress = (end / fileTransfer.file.size) * 100;
-      fileTransfer.currentOffset = end;
-      fileTransfer.progress = parseFloat(progress.toFixed(2));
-
-      const userMap = await this.getFileTransfers(fileTransfer.targetUser);
-      if (userMap) {
-        // If the transfer was removed (e.g., cancelled) while this chunk was in-flight,
-        // do not re-add it back to the map/UI.
-        if (!userMap.has(fileTransfer.fileId)) {
-          this.logger.warn(
-            'processFileChunk',
-            `Transfer no longer exists for fileId=${fileTransfer.fileId}; skipping update`
-          );
-          return false;
-        }
-
-        userMap.set(fileTransfer.fileId, fileTransfer);
-        await this.setFileTransfers(fileTransfer.targetUser, userMap);
-      }
-      await this.updateActiveUploads();
-
-      return true;
-    } catch (error) {
-      const errorKey = this.getOrCreateStatusKey(fileTransfer.targetUser, fileTransfer.fileId);
-      const currentErrors = this.consecutiveErrorCounts.get(errorKey) ?? 0;
-      this.consecutiveErrorCounts.set(errorKey, currentErrors + 1);
-
-      this.logger.error('processFileChunk', `Error sending chunk: ${error}`);
-
-      if (currentErrors >= this.maxConsecutiveErrors) {
-        this.logger.error(
-          'processFileChunk',
-          `Too many consecutive errors (${currentErrors}). Canceling transfer.`
-        );
-        await this.cancelFileUpload(fileTransfer.targetUser, fileTransfer.fileId);
-      }
-
-      return false;
-    } finally {
-      // Release lock for this user
-      this.userSendingLocks.delete(fileTransfer.targetUser);
+      // Process next file in queue
+      await this.processNextFileInQueue(fileTransfer.targetUser);
     }
   }
 }

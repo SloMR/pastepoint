@@ -17,7 +17,10 @@ export interface IWebRTCService {
   incomingFileChunk$: Subject<{
     fromUser: string;
     fileId: string;
+    chunkIndex: number;
+    totalChunks: number;
     chunk: ArrayBuffer;
+    isValid: boolean;
   }>;
 
   initiateConnection(targetUser: string): void;

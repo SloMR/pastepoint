@@ -39,6 +39,7 @@ export class WebRTCService implements IWebRTCService {
     fileSize: number;
     fromUser: string;
     fileId: string;
+    fileHash?: string;
   }> {
     return this.communicationService.fileOffers$;
   }
@@ -77,7 +78,10 @@ export class WebRTCService implements IWebRTCService {
   public get incomingFileChunk$(): Subject<{
     fromUser: string;
     fileId: string;
+    chunkIndex: number;
+    totalChunks: number;
     chunk: ArrayBuffer;
+    isValid: boolean;
   }> {
     return this.communicationService.incomingFileChunk$;
   }

@@ -2,7 +2,8 @@
 export const KB = 1024;
 export const MB = 1024 * KB;
 
-export const CHUNK_SIZE = 256 * KB;
+// Note: WebRTC SCTP has ~256KB message limit. With protocol header (~64 bytes),
+export const CHUNK_SIZE = 64 * KB;
 export const MAX_BUFFERED_AMOUNT = 2 * MB;
 export const BUFFERED_AMOUNT_LOW_THRESHOLD = MB;
 
@@ -182,10 +183,13 @@ export interface FileDownload {
   fromUser: string;
   receivedSize: number;
   dataBuffer: Uint8Array[];
+  receivedChunks: Map<number, Uint8Array>;
+  totalChunks: number;
   progress: number;
   isAccepted: boolean;
   previewDataUrl?: string;
   previewMime?: string;
+  expectedHash?: string;
 }
 
 // Metadata configuration interfaces

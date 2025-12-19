@@ -30,10 +30,11 @@ export class FileOfferService extends FileTransferBaseService {
     fileName: string;
     fileSize: number;
     fromUser: string;
+    fileHash?: string;
     previewDataUrl?: string;
     previewMime?: string;
   }): Promise<void> {
-    const { fromUser, fileId, fileName, fileSize, previewDataUrl, previewMime } = offer;
+    const { fromUser, fileId, fileName, fileSize, fileHash, previewDataUrl, previewMime } = offer;
     const userMap = await this.getIncomingFileTransfers(fromUser);
     if (!userMap) {
       await this.setIncomingFileTransfers(fromUser, new Map<string, FileDownload>());
@@ -48,10 +49,13 @@ export class FileOfferService extends FileTransferBaseService {
         fromUser,
         receivedSize: 0,
         dataBuffer: [],
+        receivedChunks: new Map<number, Uint8Array>(),
+        totalChunks: 0,
         progress: 0,
         isAccepted: false,
         previewDataUrl,
         previewMime,
+        expectedHash: fileHash,
       };
 
       fileTransfers.set(fileId, fileDownload);
