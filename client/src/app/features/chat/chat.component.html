@@ -1404,13 +1404,13 @@
                               />
                               <div class="flex-1 min-w-0">
                                 <p
-                                  class="mb-1 text-sm font-expoArabic text-white leading-5 break-words overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]"
+                                  class="mb-1 text-xs font-expoArabic text-white leading-5 break-words overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]"
                                 >
-                                  {{ message.fileTransfer?.fileName }} ({{
+                                  {{ truncateFilename(message.fileTransfer?.fileName || '') }} ({{
                                     message.fileTransfer?.fileSize || 0 | filesize: 2
                                   }})
                                 </p>
-                                <p class="text-sm font-normal font-expoArabic text-white">
+                                <p class="text-xs font-normal font-expoArabic text-white">
                                   {{ 'WANTS_TO_SEND_FILE' | translate }}
                                 </p>
                               </div>

@@ -1,5 +1,4 @@
 import { Injectable, NgZone, PLATFORM_ID, Inject } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject, Subject } from 'rxjs';
 import {
   BUFFERED_AMOUNT_LOW_THRESHOLD,
@@ -12,6 +11,7 @@ import {
 import { NGXLogger } from 'ngx-logger';
 import { HotToastService } from '@ngneat/hot-toast';
 import { TranslateService } from '@ngx-translate/core';
+import { decodeChunk } from '../../../utils/chunk-protocol';
 
 @Injectable({
   providedIn: 'root',
@@ -27,6 +27,7 @@ export class WebRTCCommunicationService {
     fileSize: number;
     fromUser: string;
     fileId: string;
+    fileHash?: string;
     previewDataUrl?: string;
     previewMime?: string;
   }>();
@@ -37,16 +38,15 @@ export class WebRTCCommunicationService {
   public incomingFileChunk$ = new Subject<{
     fromUser: string;
     fileId: string;
+    chunkIndex: number;
+    totalChunks: number;
     chunk: ArrayBuffer;
+    isValid: boolean;
   }>();
 
   // Private Collections
   private dataChannels = new Map<string, RTCDataChannel>();
   private messageQueues = new Map<string, (DataChannelMessage | ArrayBuffer)[]>();
-  private pendingChunks = new Map<
-    string, // key: "fromUser:fileId"
-    { fileId: string; chunkSize: number; timestamp: number }
-  >();
   private connectionTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
   constructor(
@@ -55,12 +55,7 @@ export class WebRTCCommunicationService {
     private toaster: HotToastService,
     private translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: object
-  ) {
-    // Cleanup stale pending chunks every 10 seconds (only in browser, not during SSR)
-    if (isPlatformBrowser(this.platformId)) {
-      setInterval(() => this.cleanupStalePendingChunks(), 10000);
-    }
-  }
+  ) {}
 
   // =============== Public Methods ===============
 
@@ -320,6 +315,7 @@ export class WebRTCCommunicationService {
               fileId: string;
               fileName: string;
               fileSize: number;
+              fileHash?: string;
               previewDataUrl?: string;
               previewMime?: string;
             };
@@ -327,6 +323,7 @@ export class WebRTCCommunicationService {
               fileId: fileOfferPayload.fileId,
               fileName: fileOfferPayload.fileName,
               fileSize: fileOfferPayload.fileSize,
+              fileHash: fileOfferPayload.fileHash,
               fromUser: targetUser,
               previewDataUrl: fileOfferPayload.previewDataUrl,
               previewMime: fileOfferPayload.previewMime,
@@ -383,58 +380,35 @@ export class WebRTCCommunicationService {
             });
             break;
           }
-          case FILE_TRANSFER_MESSAGE_TYPES.FILE_CHUNK: {
-            const fileChunkPayload = message.payload as { fileId: string; chunkSize: number };
-            const { fileId, chunkSize } = fileChunkPayload;
-            this.logger.info(
-              'handleDataChannelMessage',
-              `Received chunk metadata from ${targetUser} (fileId=${fileId}, chunkSize=${chunkSize})`
-            );
-
-            const chunkKey = `${targetUser}:${fileId}`;
-            this.pendingChunks.set(chunkKey, { fileId, chunkSize, timestamp: Date.now() });
-            break;
-          }
           default:
             this.logger.warn('handleDataChannelMessage', `Unknown message type: ${message.type}`);
         }
       } else if (data instanceof ArrayBuffer) {
-        // Try to find matching chunk metadata
-        let matchedChunkKey: string | null = null;
-        let matchedChunkMeta: { fileId: string; chunkSize: number; timestamp: number } | null =
-          null;
+        const parsed = decodeChunk(data);
 
-        // Look for the oldest pending chunk from this user that matches the size
-        for (const [key, meta] of this.pendingChunks.entries()) {
-          if (key.startsWith(`${targetUser}:`)) {
-            if (!matchedChunkMeta || meta.timestamp < matchedChunkMeta.timestamp) {
-              matchedChunkKey = key;
-              matchedChunkMeta = meta;
-            }
-          }
-        }
+        if (parsed) {
+          const { metadata, data: chunkData, isValid } = parsed;
 
-        if (matchedChunkMeta && matchedChunkKey) {
-          const { fileId, chunkSize } = matchedChunkMeta;
-
-          if (data.byteLength !== chunkSize) {
-            this.logger.warn(
+          // Log first chunk for each file
+          if (metadata.chunkIndex === 0) {
+            this.logger.info(
               'handleDataChannelMessage',
-              `Got chunk of size ${data.byteLength}, expected ${chunkSize} (fileId=${fileId})`
+              `First chunk received for ${metadata.fileId.substring(0, 8)}... (${chunkData.byteLength} bytes, CRC: ${isValid ? 'OK' : 'FAIL'})`
             );
           }
 
           this.incomingFileChunk$.next({
             fromUser: targetUser,
-            fileId: fileId,
-            chunk: data,
+            fileId: metadata.fileId,
+            chunkIndex: metadata.chunkIndex,
+            totalChunks: metadata.totalChunks,
+            chunk: chunkData,
+            isValid,
           });
-
-          this.pendingChunks.delete(matchedChunkKey);
         } else {
-          this.logger.warn(
+          this.logger.error(
             'handleDataChannelMessage',
-            `Raw ArrayBuffer from ${targetUser} but no matching metadata in pendingChunks. Size: ${data.byteLength}`
+            `Failed to decode chunk from ${targetUser}, size: ${data.byteLength}`
           );
         }
       } else {
@@ -447,27 +421,6 @@ export class WebRTCCommunicationService {
   }
 
   // =============== Helper Methods ===============
-
-  /**
-   * Cleans up stale pending chunks that never received their data
-   */
-  private cleanupStalePendingChunks(): void {
-    const now = Date.now();
-    const staleThreshold = 30000; // 30 seconds
-    const staleKeys: string[] = [];
-
-    for (const [key, meta] of this.pendingChunks.entries()) {
-      if (now - meta.timestamp > staleThreshold) {
-        staleKeys.push(key);
-        this.logger.warn(
-          'cleanupStalePendingChunks',
-          `Removing stale pending chunk: ${key} (fileId=${meta.fileId})`
-        );
-      }
-    }
-
-    staleKeys.forEach((key) => this.pendingChunks.delete(key));
-  }
 
   /**
    * Ensures a message queue exists for the target user

@@ -39,6 +39,16 @@ export default [
       ],
       '@typescript-eslint/no-explicit-any': 'off',
       '@angular-eslint/prefer-standalone': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        {
+          vars: 'all', // Check all variables
+          args: 'after-used', // Check function arguments after the last used one
+          ignoreRestSiblings: true, // Ignore rest siblings in destructuring
+          argsIgnorePattern: '^_', // Ignore args starting with underscore
+          varsIgnorePattern: '^_', // Ignore vars starting with underscore
+        },
+      ],
     },
   },
   // HTML template configuration

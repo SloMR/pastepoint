@@ -139,5 +139,7 @@
   "ENTER_VALID_ROOM": "يرجى إدخال اسم غرفة صالح",
   "CONNECTION_TIMEOUT_WITH_USER": "انتهت مهلة الاتصال مع المستخدم {{userName}}. يرجى التحقق من اتصالك بالإنترنت.",
   "FAILED_TO_SEND_MESSAGE": "فشل إرسال الرسالة إلى {{member}}.",
-  "FAILED_TO_SEND_FILE_MESSAGE": "فشل إرسال الملف إلى {{member}}."
+  "FAILED_TO_SEND_FILE_MESSAGE": "فشل إرسال الملف إلى {{member}}.",
+  "CHUNK_INTEGRITY_ERROR": "فشل نقل الملف: تم اكتشاف تلف في البيانات.",
+  "FILE_INCOMPLETE_ERROR": "نقل الملف غير مكتمل: {{count}} جزء مفقود."
 }

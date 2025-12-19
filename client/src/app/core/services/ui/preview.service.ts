@@ -37,66 +37,102 @@ export class PreviewService {
     }
   }
 
+  /**
+   * Creates a thumbnail from an image file.
+   * Uses createObjectURL instead of readAsDataURL to avoid loading entire file into memory.
+   */
   public async createImageThumbnail(
     file: File,
     maxWidth: number = 320,
     maxHeight: number = 192
   ): Promise<string> {
     return new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          let { width, height } = img;
-          const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
-          width = Math.floor(width * ratio);
-          height = Math.floor(height * ratio);
+      // Use createObjectURL - more memory efficient than readAsDataURL
+      // It creates a reference to the file, not a copy
+      const objectUrl = URL.createObjectURL(file);
 
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
+      const img = new Image();
+      img.onload = () => {
+        // Revoke the object URL immediately after loading - free memory
+        URL.revokeObjectURL(objectUrl);
 
-          const ctx = canvas.getContext('2d');
-          if (!ctx) {
-            reject(new Error('Canvas context not available'));
-            return;
-          }
+        let { width, height } = img;
+        const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+        width = Math.floor(width * ratio);
+        height = Math.floor(height * ratio);
 
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL('image/png'));
-        };
-        img.onerror = () => reject(new Error('Image load failed'));
-        img.src = String(reader.result);
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) {
+          reject(new Error('Canvas context not available'));
+          return;
+        }
+
+        ctx.drawImage(img, 0, 0, width, height);
+        const dataUrl = canvas.toDataURL('image/png');
+
+        // Clear canvas to help garbage collection
+        canvas.width = 0;
+        canvas.height = 0;
+
+        resolve(dataUrl);
       };
-      reader.onerror = () => reject(new Error('File read failed'));
-      reader.readAsDataURL(file);
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Image load failed'));
+      };
+      img.src = objectUrl;
     });
   }
 
+  // Skip PDF preview for files larger than this (too memory intensive)
+  private static readonly MAX_PDF_SIZE_FOR_PREVIEW = 100 * 1024 * 1024; // 100MB
+
+  /**
+   * Creates a thumbnail from a PDF file.
+   * Skips large PDFs to avoid memory spikes.
+   */
   public async createPdfThumbnailFromFile(
     file: File,
     maxWidth: number = 320
   ): Promise<string | undefined> {
+    // Skip large PDFs to avoid memory spikes
+    if (file.size > PreviewService.MAX_PDF_SIZE_FOR_PREVIEW) {
+      return undefined;
+    }
+
     try {
       await this.ensurePdfJsLoaded();
       const buffer = await file.arrayBuffer();
-      return await this.createPdfThumbnailFromBytes(new Uint8Array(buffer), maxWidth);
+      const result = await this.createPdfThumbnailFromBytes(new Uint8Array(buffer), maxWidth);
+      // buffer will be garbage collected
+      return result;
     } catch {
       return undefined;
     }
   }
 
+  /**
+   * Creates a thumbnail from PDF bytes.
+   * Properly cleans up PDF.js resources after rendering.
+   */
   public async createPdfThumbnailFromBytes(
     data: Uint8Array,
     maxWidth: number = 320
   ): Promise<string | undefined> {
+    let pdf: any = null;
+    let page: any = null;
+
     try {
       await this.ensurePdfJsLoaded();
       if (!this.pdfjsLib) return undefined;
 
       const loadingTask = this.pdfjsLib.getDocument({ data });
-      const pdf = await loadingTask.promise;
-      const page = await pdf.getPage(1);
+      pdf = await loadingTask.promise;
+      page = await pdf.getPage(1);
 
       const viewport = page.getViewport({ scale: 1 });
       const ratio = Math.min(maxWidth / viewport.width, 1);
@@ -110,9 +146,23 @@ export class PreviewService {
       if (!ctx) return undefined;
 
       await page.render({ canvasContext: ctx, viewport: scaled }).promise;
-      return canvas.toDataURL('image/png');
+      const dataUrl = canvas.toDataURL('image/png');
+
+      // Clear canvas to help garbage collection
+      canvas.width = 0;
+      canvas.height = 0;
+
+      return dataUrl;
     } catch {
       return undefined;
+    } finally {
+      // Clean up PDF.js resources to free memory
+      if (page) {
+        page.cleanup();
+      }
+      if (pdf) {
+        await pdf.destroy();
+      }
     }
   }
 }

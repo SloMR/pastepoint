@@ -21,10 +21,22 @@ export class FileTransferService implements IFileTransferService {
     private fileDownloadService: FileDownloadService,
     private fileOfferService: FileOfferService
   ) {
-    this.webrtcService.incomingFileChunk$.subscribe(async ({ fromUser, fileId, chunk }) => {
-      await this.fileDownloadService.handleDataChunk(fileId, chunk, fromUser);
-      this.logger.debug('FileTransferService', `File download ${fileId} received from ${fromUser}`);
-    });
+    this.webrtcService.incomingFileChunk$.subscribe(
+      async ({ fromUser, fileId, chunkIndex, totalChunks, chunk, isValid }) => {
+        await this.fileDownloadService.handleDataChunk(
+          fileId,
+          chunk,
+          fromUser,
+          chunkIndex,
+          totalChunks,
+          isValid
+        );
+        this.logger.debug(
+          'FileTransferService',
+          `Chunk ${chunkIndex + 1}/${totalChunks} for ${fileId} (valid: ${isValid})`
+        );
+      }
+    );
 
     this.webrtcService.fileOffers$.subscribe(async (offer) => {
       this.logger.debug(
@@ -69,8 +81,11 @@ export class FileTransferService implements IFileTransferService {
     });
 
     this.webrtcService.fileDownloadCancelled$.subscribe(async ({ fromUser, fileId }) => {
-      await this.fileDownloadService.handleFileDownloadCancellation(fromUser, fileId);
-      this.logger.debug('FileTransferService', `File download ${fileId} cancelled by ${fromUser}`);
+      await this.fileUploadService.stopFileUpload(fromUser, fileId, false);
+      this.logger.debug(
+        'FileTransferService',
+        `Download cancelled by receiver ${fromUser}, stopping upload ${fileId}`
+      );
     });
   }
 
@@ -114,11 +129,11 @@ export class FileTransferService implements IFileTransferService {
   }
 
   /**
-   * Cancels an ongoing file upload to a target user
+   * Stops an ongoing file upload to a target user
    */
-  public async cancelFileUpload(targetUser: string, fileId: string): Promise<void> {
-    await this.fileUploadService.cancelFileUpload(targetUser, fileId);
-    this.logger.debug('cancelFileUpload', `File upload ${fileId} cancelled by ${targetUser}`);
+  public async stopFileUpload(targetUser: string, fileId: string): Promise<void> {
+    await this.fileUploadService.stopFileUpload(targetUser, fileId);
+    this.logger.debug('stopFileUpload', `File upload ${fileId} stopped for ${targetUser}`);
   }
 
   // =============== Download Methods ===============
