@@ -81,8 +81,11 @@ export class FileTransferService implements IFileTransferService {
     });
 
     this.webrtcService.fileDownloadCancelled$.subscribe(async ({ fromUser, fileId }) => {
-      await this.fileDownloadService.handleFileDownloadCancellation(fromUser, fileId);
-      this.logger.debug('FileTransferService', `File download ${fileId} cancelled by ${fromUser}`);
+      await this.fileUploadService.stopFileUpload(fromUser, fileId, false);
+      this.logger.debug(
+        'FileTransferService',
+        `Download cancelled by receiver ${fromUser}, stopping upload ${fileId}`
+      );
     });
   }
 
@@ -126,11 +129,11 @@ export class FileTransferService implements IFileTransferService {
   }
 
   /**
-   * Cancels an ongoing file upload to a target user
+   * Stops an ongoing file upload to a target user
    */
-  public async cancelFileUpload(targetUser: string, fileId: string): Promise<void> {
-    await this.fileUploadService.cancelFileUpload(targetUser, fileId);
-    this.logger.debug('cancelFileUpload', `File upload ${fileId} cancelled by ${targetUser}`);
+  public async stopFileUpload(targetUser: string, fileId: string): Promise<void> {
+    await this.fileUploadService.stopFileUpload(targetUser, fileId);
+    this.logger.debug('stopFileUpload', `File upload ${fileId} stopped for ${targetUser}`);
   }
 
   // =============== Download Methods ===============

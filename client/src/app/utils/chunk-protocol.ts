@@ -190,24 +190,3 @@ export function decodeChunk(buffer: ArrayBuffer): ParsedChunk | null {
 export function calculateTotalChunks(fileSize: number, chunkSize: number): number {
   return Math.ceil(fileSize / chunkSize);
 }
-
-/**
- * Validates that all chunks have been received for a file
- */
-export function validateChunkSequence(
-  receivedChunks: Map<number, ArrayBuffer>,
-  totalChunks: number
-): { isComplete: boolean; missingChunks: number[] } {
-  const missingChunks: number[] = [];
-
-  for (let i = 0; i < totalChunks; i++) {
-    if (!receivedChunks.has(i)) {
-      missingChunks.push(i);
-    }
-  }
-
-  return {
-    isComplete: missingChunks.length === 0,
-    missingChunks,
-  };
-}

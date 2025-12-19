@@ -8,7 +8,7 @@ export interface IFileTransferService {
 
   prepareFileForSending(file: File, targetUser: string): Promise<void>;
   sendAllFileOffers(targetUser: string): Promise<void>;
-  cancelFileUpload(targetUser: string, fileId: string): Promise<void>;
+  stopFileUpload(targetUser: string, fileId: string): Promise<void>;
   cancelFileDownload(fromUser: string, fileId: string): Promise<void>;
   acceptFileOffer(fromUser: string, fileId: string): Promise<void>;
   declineFileOffer(fromUser: string, fileId: string): Promise<void>;

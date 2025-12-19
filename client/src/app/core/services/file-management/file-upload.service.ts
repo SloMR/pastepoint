@@ -151,7 +151,6 @@ export class FileUploadService extends FileTransferBaseService {
     // Check if already processing a file for this user
     const activeFile = this.activeFilePerUser.get(targetUser);
     if (activeFile) {
-      // possible issue
       this.logger.info(
         'processNextFileInQueue',
         `Already sending ${activeFile.substring(0, 8)}... to ${targetUser}, waiting`
@@ -170,7 +169,11 @@ export class FileUploadService extends FileTransferBaseService {
       `Processing queue for ${targetUser}: ${queue.length} files waiting`
     );
 
-    const nextFileId = queue.shift()!; // fix force unwrap
+    const nextFileId = queue.shift();
+    if (!nextFileId) {
+      return;
+    }
+
     const userMap = await this.getFileTransfers(targetUser);
     if (!userMap) {
       this.logger.error('processNextFileInQueue', `No userMap for ${targetUser}`);
@@ -190,9 +193,12 @@ export class FileUploadService extends FileTransferBaseService {
     if (!dataChannel || dataChannel.readyState !== 'open') {
       this.logger.error(
         'processNextFileInQueue',
-        `Channel not open for ${targetUser} (state: ${channelState}), re-queuing`
+        `Channel not open for ${targetUser} (state: ${channelState}), initiating connection and retrying`
       );
       queue.unshift(nextFileId);
+      // Initiate connection and retry after delay
+      this.initiateConnection(targetUser);
+      setTimeout(() => this.processNextFileInQueue(targetUser), 2000);
       return;
     }
 
@@ -227,9 +233,17 @@ export class FileUploadService extends FileTransferBaseService {
   }
 
   /**
-   * Cancels an active file upload and notifies the recipient
+   * Stops an active file upload
+   * @param targetUser The user the file was being sent to
+   * @param fileId The file ID to stop
+   * @param notifyRecipient Whether to send cancellation message to recipient (default: true)
+   *                        Set to false when receiver already cancelled (to avoid redundant message)
    */
-  public async cancelFileUpload(targetUser: string, fileId: string): Promise<void> {
+  public async stopFileUpload(
+    targetUser: string,
+    fileId: string,
+    notifyRecipient: boolean = true
+  ): Promise<void> {
     const userMap = await this.getFileTransfers(targetUser);
     if (userMap?.has(fileId)) {
       const fileTransfer = userMap.get(fileId);
@@ -260,16 +274,19 @@ export class FileUploadService extends FileTransferBaseService {
         await this.processNextFileInQueue(targetUser);
       }
 
-      const message = {
-        type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_UPLOAD,
-        payload: {
-          fileId: fileId,
-        },
-      };
-      this.sendData(message, targetUser);
+      // Only send notification if recipient doesn't already know
+      if (notifyRecipient) {
+        const message = {
+          type: FILE_TRANSFER_MESSAGE_TYPES.FILE_CANCEL_UPLOAD,
+          payload: {
+            fileId: fileId,
+          },
+        };
+        this.sendData(message, targetUser);
+      }
     } else {
       this.logger.error(
-        'cancelFileUpload',
+        'stopFileUpload',
         `No file transfer found for ${targetUser} and fileId=${fileId}`
       );
     }
@@ -494,10 +511,12 @@ export class FileUploadService extends FileTransferBaseService {
           // Reset error count on success
           this.consecutiveErrorCounts.set(transferId, 0);
 
-          // Update state
-          userMap.set(fileTransfer.fileId, fileTransfer);
-          await this.setFileTransfers(fileTransfer.targetUser, userMap);
-          await this.updateActiveUploads();
+          // Update state (only if not cancelled)
+          if (!fileTransfer.isPaused && userMap.has(fileTransfer.fileId)) {
+            userMap.set(fileTransfer.fileId, fileTransfer);
+            await this.setFileTransfers(fileTransfer.targetUser, userMap);
+            await this.updateActiveUploads();
+          }
 
           // Log progress every MB
           if (fileTransfer.currentOffset % MB < CHUNK_SIZE) {
@@ -515,7 +534,7 @@ export class FileUploadService extends FileTransferBaseService {
           this.consecutiveErrorCounts.set(transferId, errorCount + 1);
 
           if (errorCount >= this.maxConsecutiveErrors) {
-            await this.cancelFileUpload(fileTransfer.targetUser, fileTransfer.fileId);
+            await this.stopFileUpload(fileTransfer.targetUser, fileTransfer.fileId);
             break;
           }
           await new Promise((resolve) => setTimeout(resolve, 500));

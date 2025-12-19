@@ -1222,7 +1222,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   public async cancelUpload(upload: FileUpload): Promise<void> {
-    await this.fileTransferService.cancelFileUpload(upload.targetUser, upload.fileId);
+    await this.fileTransferService.stopFileUpload(upload.targetUser, upload.fileId);
   }
 
   /**

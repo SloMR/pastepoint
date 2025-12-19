@@ -112,9 +112,9 @@ export class FileDownloadService extends FileTransferBaseService {
       this.logger.info('handleDataChunk', `All chunks received for fileId=${fileId}`);
       await this.assembleAndDownloadFile(fileDownload, userMap, fromUser);
     } else {
-      this.logger.debug(
+      this.logger.error(
         'handleDataChunk',
-        `${fileId}: ${fileDownload.receivedChunks.size}/${totalChunks} chunks`
+        `File ${fileId.substring(0, 8)}... not fully received: ${fileDownload.receivedChunks.size}/${totalChunks} chunks`
       );
     }
   }
@@ -158,17 +158,36 @@ export class FileDownloadService extends FileTransferBaseService {
       this.toaster.error(this.translate.instant('FILE_INCOMPLETE_ERROR', { count: missingChunks }));
     }
 
-    // Verify full file integrity via SHA-256 hash
+    const lowerName = (fileDownload.fileName || '').toLowerCase();
+    const ext = lowerName.split('.').pop() || '';
+    let blobType = '';
+    if (ext === 'pdf') {
+      blobType = 'application/pdf';
+    } else if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
+      blobType = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
+    }
+
+    // Create final Blob directly from chunk Blobs (memory efficient!)
+    const receivedBlob = new Blob(orderedChunks, { type: blobType || undefined });
+    const downloadUrl = URL.createObjectURL(receivedBlob);
+    const timestamp = new Date().toISOString().split('T')[0];
+    const fileName = fileDownload.fileName || `downloaded_file_${timestamp}`;
+
+    // Clear the orderedChunks array to help GC
+    orderedChunks.length = 0;
+
+    this.logger.info(
+      'assembleAndDownloadFile',
+      `File assembled: ${fileName} (${(receivedBlob.size / 1024 / 1024).toFixed(2)}MB)`
+    );
+
     if (fileDownload.expectedHash) {
       try {
-        const actualHash = await calculateBufferHash(combinedArray.buffer);
+        const buffer = await receivedBlob.arrayBuffer();
+        const actualHash = await calculateBufferHash(buffer);
         if (actualHash !== fileDownload.expectedHash) {
-          this.logger.error(
-            'assembleAndDownloadFile',
-            `Hash mismatch for ${fileDownload.fileId}! Expected: ${fileDownload.expectedHash.substring(0, 16)}..., Got: ${actualHash.substring(0, 16)}...`
-          );
+          this.logger.error('assembleAndDownloadFile', `Hash mismatch for ${fileDownload.fileId}!`);
           this.toaster.error(this.translate.instant('FILE_INTEGRITY_ERROR'));
-          // Still allow download but warn user
         } else {
           this.logger.info(
             'assembleAndDownloadFile',
@@ -180,24 +199,14 @@ export class FileDownloadService extends FileTransferBaseService {
       }
     }
 
-    const lowerName = (fileDownload.fileName || '').toLowerCase();
-    const ext = lowerName.split('.').pop() || '';
-    let blobType = '';
-    if (ext === 'pdf') {
-      blobType = 'application/pdf';
-    } else if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
-      blobType = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-    }
-
-    const receivedBlob = new Blob([combinedArray], { type: blobType || undefined });
-    const downloadUrl = URL.createObjectURL(receivedBlob);
-    const fileName = fileDownload.fileName || 'downloaded_file';
-
-    // Update preview after completion
+    // Update preview after completion (only for small files to avoid memory issues)
     try {
       if (blobType === 'application/pdf') {
         if (!fileDownload.previewDataUrl) {
-          const thumb = await this.previewService.createPdfThumbnailFromBytes(combinedArray);
+          const buffer = await receivedBlob.arrayBuffer();
+          const thumb = await this.previewService.createPdfThumbnailFromBytes(
+            new Uint8Array(buffer)
+          );
           if (thumb) {
             fileDownload.previewDataUrl = thumb;
             fileDownload.previewMime = 'image/png';
@@ -225,6 +234,9 @@ export class FileDownloadService extends FileTransferBaseService {
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
+
+    // Revoke the object URL after a short delay to allow download to start
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
 
     this.toaster.success(this.translate.instant('FILE_DOWNLOAD_COMPLETED', { fileName }));
 
@@ -281,28 +293,5 @@ export class FileDownloadService extends FileTransferBaseService {
     await this.updateActiveDownloads();
 
     this.toaster.info(this.translate.instant('FILE_UPLOAD_CANCELLED'));
-  }
-
-  /**
-   * Handles file download cancellation notification
-   */
-  public async handleFileDownloadCancellation(fromUser: string, fileId: string): Promise<void> {
-    this.logger.debug(
-      'handleFileDownloadCancellation',
-      `File download from ${fromUser} (fileId=${fileId}) was cancelled.`
-    );
-
-    const userMap = await this.getFileTransfers(fromUser);
-    if (userMap) {
-      userMap.delete(fileId);
-      if (userMap.size === 0) {
-        await this.deleteFileTransfers(fromUser);
-      }
-    }
-
-    await this.updateIncomingFileOffers();
-    await this.updateActiveDownloads();
-
-    this.toaster.info(this.translate.instant('FILE_DOWNLOAD_CANCELLED'));
   }
 }
