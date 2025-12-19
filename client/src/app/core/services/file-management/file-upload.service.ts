@@ -584,10 +584,16 @@ export class FileUploadService extends FileTransferBaseService {
       }
     } finally {
       this.processingQueues.set(transferId, false);
-      this.activeFilePerUser.set(fileTransfer.targetUser, null);
 
-      // Process next file in queue
-      await this.processNextFileInQueue(fileTransfer.targetUser);
+      if (!fileTransfer.isPaused) {
+        this.activeFilePerUser.set(fileTransfer.targetUser, null);
+        await this.processNextFileInQueue(fileTransfer.targetUser);
+      } else {
+        this.logger.info(
+          'sendFileChunks',
+          `File ${fileTransfer.fileId.substring(0, 8)}... paused, waiting for buffer to empty`
+        );
+      }
     }
   }
 }
