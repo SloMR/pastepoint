@@ -342,6 +342,23 @@ export class FileUploadService extends FileTransferBaseService {
 
     this.logger.info('sendFileOffer', `Sending file offer to ${targetUser} (id=${fileId})`);
 
+    const key = this.getOrCreateStatusKey(targetUser, fileId);
+    await this.setFileTransferStatus(key, FileTransferStatus.PENDING);
+
+    // Phase 1: Send basic offer IMMEDIATELY so receiver sees it right away
+    const basicMessage = {
+      type: FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER,
+      payload: {
+        fileId: fileId,
+        fileName: fileTransfer.file.name,
+        fileSize: fileTransfer.file.size,
+        fromUser: targetUser,
+      },
+    };
+    this.sendData(basicMessage, targetUser);
+    this.logger.debug('sendFileOffer', `Sent basic offer for ${fileId} to ${targetUser}`);
+
+    // Phase 2: Calculate hash and generate preview, then send complete offer
     let previewDataUrl: string | undefined;
     let previewMime: string | undefined;
     let fileHash: string | undefined;
@@ -372,22 +389,23 @@ export class FileUploadService extends FileTransferBaseService {
       this.logger.warn('sendFileOffer', `Failed generating preview: ${String(e)}`);
     }
 
-    const message = {
-      type: FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER,
-      payload: {
-        fileId: fileId,
-        fileName: fileTransfer.file.name,
-        fileSize: fileTransfer.file.size,
-        fileHash,
-        previewDataUrl,
-        previewMime,
-        fromUser: targetUser,
-      },
-    };
-
-    const key = this.getOrCreateStatusKey(targetUser, fileId);
-    await this.setFileTransferStatus(key, FileTransferStatus.PENDING);
-    this.sendData(message, targetUser);
+    // Only send update if we have hash or preview to add
+    if (fileHash || previewDataUrl) {
+      const completeMessage = {
+        type: FILE_TRANSFER_MESSAGE_TYPES.FILE_OFFER,
+        payload: {
+          fileId: fileId,
+          fileName: fileTransfer.file.name,
+          fileSize: fileTransfer.file.size,
+          fileHash,
+          previewDataUrl,
+          previewMime,
+          fromUser: targetUser,
+        },
+      };
+      this.sendData(completeMessage, targetUser);
+      this.logger.debug('sendFileOffer', `Sent complete offer with preview for ${fileId}`);
+    }
   }
 
   /**

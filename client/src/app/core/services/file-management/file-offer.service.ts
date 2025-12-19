@@ -23,7 +23,9 @@ export class FileOfferService extends FileTransferBaseService {
 
   // =============== File Offer Methods ===============
   /**
-   * Receives and processes a file offer from another user
+   * Receives and processes a file offer from another user.
+   * If the fileId already exists, updates it with new fields (preview, hash).
+   * This allows instant notification followed by preview update.
    */
   public async receiveFileOffer(offer: {
     fileId: string;
@@ -35,13 +37,29 @@ export class FileOfferService extends FileTransferBaseService {
     previewMime?: string;
   }): Promise<void> {
     const { fromUser, fileId, fileName, fileSize, fileHash, previewDataUrl, previewMime } = offer;
-    const userMap = await this.getIncomingFileTransfers(fromUser);
-    if (!userMap) {
-      await this.setIncomingFileTransfers(fromUser, new Map<string, FileDownload>());
+
+    let fileTransfers = await this.getIncomingFileTransfers(fromUser);
+    if (!fileTransfers) {
+      fileTransfers = new Map<string, FileDownload>();
+      await this.setIncomingFileTransfers(fromUser, fileTransfers);
     }
 
-    const fileTransfers = await this.getIncomingFileTransfers(fromUser);
-    if (fileTransfers) {
+    const existingDownload = fileTransfers.get(fileId);
+
+    if (existingDownload) {
+      // Update existing entry with new fields (preview/hash came in second message)
+      if (fileHash) {
+        existingDownload.expectedHash = fileHash;
+      }
+      if (previewDataUrl) {
+        existingDownload.previewDataUrl = previewDataUrl;
+      }
+      if (previewMime) {
+        existingDownload.previewMime = previewMime;
+      }
+      this.logger.debug('receiveFileOffer', `Updated existing offer ${fileId} with preview/hash`);
+    } else {
+      // Create new entry
       const fileDownload: FileDownload = {
         fileId,
         fileName,
@@ -56,14 +74,12 @@ export class FileOfferService extends FileTransferBaseService {
         previewMime,
         expectedHash: fileHash,
       };
-
       fileTransfers.set(fileId, fileDownload);
-      await this.setIncomingFileTransfers(fromUser, fileTransfers);
-      await this.updateIncomingFileOffers();
-    } else {
-      this.logger.error('receiveFileOffer', `No file transfers map for user: ${fromUser}`);
-      return;
+      this.logger.debug('receiveFileOffer', `Created new offer ${fileId} from ${fromUser}`);
     }
+
+    await this.setIncomingFileTransfers(fromUser, fileTransfers);
+    await this.updateIncomingFileOffers();
   }
 
   /**
