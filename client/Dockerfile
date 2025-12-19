@@ -51,7 +51,7 @@ CMD ["node", "dist/client/server/server.mjs"]
 FROM nginx:1.29-alpine-slim AS nginx
 
 # Install only necessary packages
-RUN apk add --no-cache gettext
+RUN apk add --no-cache gettext=0.24.1-r1
 
 # Copy only the specific static files needed
 COPY --from=builder /usr/src/app/dist/client/browser/robots.txt /usr/share/nginx/html/browser/robots.txt

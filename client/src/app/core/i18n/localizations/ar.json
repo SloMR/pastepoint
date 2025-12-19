@@ -141,5 +141,5 @@
   "FAILED_TO_SEND_MESSAGE": "فشل إرسال الرسالة إلى {{member}}.",
   "FAILED_TO_SEND_FILE_MESSAGE": "فشل إرسال الملف إلى {{member}}.",
   "CHUNK_INTEGRITY_ERROR": "فشل نقل الملف: تم اكتشاف تلف في البيانات.",
-  "FILE_INCOMPLETE_ERROR": "نقل الملف غير مكتمل: أجزاء من البيانات مفقودة."
+  "FILE_INCOMPLETE_ERROR": "نقل الملف غير مكتمل: {{count}} جزء مفقود."
 }

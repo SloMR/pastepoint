@@ -156,9 +156,12 @@ export class FileDownloadService extends FileTransferBaseService {
     if (missingChunks > 0) {
       this.logger.error(
         'assembleAndDownloadFile',
-        `${missingChunks} chunks missing, file may be corrupted`
+        `${missingChunks} chunks missing, aborting download`
       );
       this.toaster.error(this.translate.instant('FILE_INCOMPLETE_ERROR', { count: missingChunks }));
+      orderedChunks.length = 0; // Clear to free memory
+      await this.cleanupAfterDownload(fileDownload.fromUser, fileDownload.fileId);
+      return;
     }
 
     const lowerName = (fileDownload.fileName || '').toLowerCase();
@@ -183,13 +186,15 @@ export class FileDownloadService extends FileTransferBaseService {
 
         if (actualHash !== fileDownload.expectedHash) {
           this.logger.error('assembleAndDownloadFile', `Hash mismatch for ${fileDownload.fileId}!`);
-          this.toaster.error(this.translate.instant('FILE_INTEGRITY_ERROR'));
-        } else {
-          this.logger.info(
-            'assembleAndDownloadFile',
-            `File integrity verified for ${fileDownload.fileId} ✓`
-          );
+          this.toaster.error(this.translate.instant('CHUNK_INTEGRITY_ERROR'));
+          orderedChunks.length = 0; // Clear to free memory
+          await this.cleanupAfterDownload(fileDownload.fromUser, fileDownload.fileId);
+          return; // Abort - don't download corrupted file
         }
+        this.logger.info(
+          'assembleAndDownloadFile',
+          `File integrity verified for ${fileDownload.fileId} ✓`
+        );
       } catch (e) {
         this.logger.warn('assembleAndDownloadFile', `Failed to verify file hash: ${e}`);
       }
@@ -257,6 +262,22 @@ export class FileDownloadService extends FileTransferBaseService {
     }
 
     await this.updateActiveDownloads();
+  }
+
+  // =============== Helper Methods ===============
+  /**
+   * Cleans up after a failed download (missing chunks or integrity error)
+   */
+  private async cleanupAfterDownload(fromUser: string, fileId: string): Promise<void> {
+    const userMap = await this.getIncomingFileTransfers(fromUser);
+    if (userMap) {
+      userMap.delete(fileId);
+      if (userMap.size === 0) {
+        await this.deleteIncomingFileTransfers(fromUser);
+      }
+    }
+    await this.updateActiveDownloads();
+    await this.updateIncomingFileOffers();
   }
 
   // =============== Cancellation Methods ===============
