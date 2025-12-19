@@ -657,7 +657,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           });
 
           incomingFiles.forEach((fileDownload: FileDownload) => {
-            // Check if we already have any message for this file (pending, accepted, or declined)
+            // Check if we already have a message for this file
             const existingIndex = updatedMessages.findIndex(
               (msg) =>
                 msg.type === ChatMessageType.ATTACHMENT &&
@@ -665,55 +665,24 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
             );
 
             if (existingIndex === -1) {
-              // Look for the "FILE_SENT" message that was created when this file was initially sent
-              const truncated = this.truncateFilename(fileDownload.fileName);
-              const fileSentMessageIndex = updatedMessages.findIndex(
-                (msg) =>
-                  msg.type === ChatMessageType.ATTACHMENT &&
-                  msg.from === fileDownload.fromUser &&
-                  !msg.fileTransfer &&
-                  (msg.text.includes(fileDownload.fileName) ||
-                    msg.text.includes(truncated) ||
-                    msg.text
-                      .toUpperCase()
-                      .startsWith(this.translate.instant('FILE_SENT').toUpperCase()))
-              );
-
-              if (fileSentMessageIndex !== -1) {
-                // Convert the existing "FILE_SENT" message to a file transfer request
-                updatedMessages[fileSentMessageIndex] = {
-                  ...updatedMessages[fileSentMessageIndex],
-                  text: fileDownload.fileName,
-                  previewUrl: fileDownload.previewDataUrl,
-                  previewMime: fileDownload.previewMime,
-                  fileTransfer: {
-                    fileId: fileDownload.fileId,
-                    fileName: fileDownload.fileName,
-                    fileSize: fileDownload.fileSize,
-                    fromUser: fileDownload.fromUser,
-                    status: FileTransferStatus.PENDING,
-                  },
-                };
-              } else {
-                // Create new message if no existing "FILE_SENT" message found (fallback)
-                updatedMessages.push({
-                  from: fileDownload.fromUser,
-                  text: fileDownload.fileName,
-                  type: ChatMessageType.ATTACHMENT,
-                  timestamp: new Date(),
-                  previewUrl: fileDownload.previewDataUrl,
-                  previewMime: fileDownload.previewMime,
-                  fileTransfer: {
-                    fileId: fileDownload.fileId,
-                    fileName: fileDownload.fileName,
-                    fileSize: fileDownload.fileSize,
-                    fromUser: fileDownload.fromUser,
-                    status: FileTransferStatus.PENDING,
-                  },
-                });
-              }
+              // Create message directly from file offer (with preview)
+              updatedMessages.push({
+                from: fileDownload.fromUser,
+                text: fileDownload.fileName,
+                type: ChatMessageType.ATTACHMENT,
+                timestamp: new Date(),
+                previewUrl: fileDownload.previewDataUrl,
+                previewMime: fileDownload.previewMime,
+                fileTransfer: {
+                  fileId: fileDownload.fileId,
+                  fileName: fileDownload.fileName,
+                  fileSize: fileDownload.fileSize,
+                  fromUser: fileDownload.fromUser,
+                  status: FileTransferStatus.PENDING,
+                },
+              });
             } else {
-              // Update existing pending message with preview if available
+              // Update existing message with preview if available
               if (!updatedMessages[existingIndex].previewUrl && fileDownload.previewDataUrl) {
                 updatedMessages[existingIndex] = {
                   ...updatedMessages[existingIndex],
@@ -1012,66 +981,45 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
-   * CREATE AND SEND FILE MESSAGES
-   * Creates chat messages for files being sent and sends them to all members
+   * CREATE FILE MESSAGES (LOCAL)
+   * Creates local chat messages for files being sent (sender-side only).
+   * Recipients create their own messages from the file offer directly.
    * ==========================================================
    */
-  private async createAndSendFileMessages(files: File[], otherMembers: string[]): Promise<void> {
+  private async createLocalFileMessages(files: File[]): Promise<void> {
     for (const file of files) {
       const truncatedFilename = this.truncateFilename(file.name);
       const fileSizeLabel = this.fileSizePipe.transform(file.size, 2);
       const fileMessageText = `${this.translate.instant('FILE_SENT')}: ${truncatedFilename} (${fileSizeLabel})`;
 
-      let hasSuccessfulSend = false;
-
-      // Wait for all send operations to complete for this file
-      const sendPromises = otherMembers.map(async (member) => {
+      // Add message locally for the sender (with preview)
+      let previewUrl: string | undefined;
+      let previewMime: string | undefined;
+      const mime = file.type || '';
+      if (mime.startsWith('image/')) {
         try {
-          await this.chatService.sendMessage(fileMessageText, member, ChatMessageType.ATTACHMENT);
-          hasSuccessfulSend = true;
-          return { member, success: true };
-        } catch (error) {
-          this.logger.error(
-            'createAndSendFileMessages',
-            `Failed to send file message to ${member}: ${error}`
-          );
-          this.toaster.error(this.translate.instant('FAILED_TO_SEND_FILE_MESSAGE', { member }));
-          return { member, success: false };
+          previewUrl = URL.createObjectURL(file);
+          this.createdPreviewUrls.push(previewUrl);
+          previewMime = mime;
+        } catch (e) {
+          this.logger.warn('createPreview', 'Failed to create image preview URL', e as unknown);
         }
-      });
-
-      await Promise.all(sendPromises);
-
-      // Only add to local chat if at least one send was successful
-      if (hasSuccessfulSend) {
-        let previewUrl: string | undefined;
-        let previewMime: string | undefined;
-        const mime = file.type || '';
-        if (mime.startsWith('image/')) {
-          try {
-            previewUrl = URL.createObjectURL(file);
-            this.createdPreviewUrls.push(previewUrl);
-            previewMime = mime;
-          } catch (e) {
-            this.logger.warn('createPreview', 'Failed to create image preview URL', e as unknown);
+      } else if (mime === 'application/pdf') {
+        try {
+          const thumb = await this.previewService.createPdfThumbnailFromFile(file);
+          if (thumb) {
+            previewUrl = thumb;
+            previewMime = 'image/png';
           }
-        } else if (mime === 'application/pdf') {
-          try {
-            const thumb = await this.previewService.createPdfThumbnailFromFile(file);
-            if (thumb) {
-              previewUrl = thumb;
-              previewMime = 'image/png';
-            }
-          } catch (e) {
-            this.logger.warn('createPreview', 'Failed to create PDF thumbnail', e as unknown);
-          }
+        } catch (e) {
+          this.logger.warn('createPreview', 'Failed to create PDF thumbnail', e as unknown);
         }
-
-        this.chatService.addMessageToLocal(fileMessageText, ChatMessageType.ATTACHMENT, {
-          previewUrl,
-          previewMime,
-        });
       }
+
+      this.chatService.addMessageToLocal(fileMessageText, ChatMessageType.ATTACHMENT, {
+        previewUrl,
+        previewMime,
+      });
     }
   }
 
@@ -1099,8 +1047,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         return;
       }
 
-      // Create chat messages for each file being sent
-      await this.createAndSendFileMessages(filesToSend, recipients);
+      // Create local chat messages for each file being sent
+      await this.createLocalFileMessages(filesToSend);
 
       // First prepare all files for all recipients
       for (const fileToSend of filesToSend) {
@@ -1900,8 +1848,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     const files = Array.from(event.dataTransfer.files);
     if (files.length === 0) return;
 
-    // Create chat messages for each file being sent
-    await this.createAndSendFileMessages(files, otherMembers);
+    // Create local chat messages for each file being sent
+    await this.createLocalFileMessages(files);
 
     // First prepare all files for all members
     for (const fileToSend of files) {

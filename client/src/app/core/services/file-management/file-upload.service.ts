@@ -16,7 +16,7 @@ import { PreviewService } from '../../services/ui/preview.service';
 import {
   encodeChunk,
   calculateTotalChunks,
-  calculateFileHash,
+  calculateFileHashStreaming,
 } from '../../../utils/chunk-protocol';
 
 @Injectable({
@@ -348,7 +348,7 @@ export class FileUploadService extends FileTransferBaseService {
 
     // Calculate file hash for integrity verification
     try {
-      fileHash = await calculateFileHash(fileTransfer.file);
+      fileHash = await calculateFileHashStreaming(fileTransfer.file);
       this.logger.debug(
         'sendFileOffer',
         `File hash for ${fileId}: ${fileHash.substring(0, 16)}...`

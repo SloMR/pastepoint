@@ -6,7 +6,12 @@ import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { HotToastService } from '@ngneat/hot-toast';
 import { PreviewService } from '../../services/ui/preview.service';
-import { calculateBufferHash } from '../../../utils/chunk-protocol';
+import {
+  createStreamingHash,
+  updateStreamingHash,
+  finalizeStreamingHash,
+  IHasher,
+} from '../../../utils/chunk-protocol';
 
 @Injectable({
   providedIn: 'root',
@@ -90,8 +95,8 @@ export class FileDownloadService extends FileTransferBaseService {
       return;
     }
 
-    // Store chunk by index for ordered assembly
-    fileDownload.receivedChunks.set(chunkIndex, new Uint8Array(chunk));
+    // Store chunk as Blob
+    fileDownload.receivedChunks.set(chunkIndex, new Blob([chunk]));
     fileDownload.receivedSize += chunk.byteLength;
 
     const progress = (fileDownload.receivedChunks.size / totalChunks) * 100;
@@ -120,27 +125,22 @@ export class FileDownloadService extends FileTransferBaseService {
   }
 
   /**
-   * Assembles chunks in order, verifies file integrity, and triggers download
+   * Assembles chunks in order, verifies file integrity, and triggers download.
+   * Uses Blob-based assembly and streaming hash to minimize memory usage.
    */
   private async assembleAndDownloadFile(
     fileDownload: FileDownload,
     userMap: Map<string, FileDownload>,
     fromUser: string
   ): Promise<void> {
-    // Assemble chunks in order
-    const totalLength = Array.from(fileDownload.receivedChunks.values()).reduce(
-      (acc, chunk) => acc + chunk.length,
-      0
-    );
-    const combinedArray = new Uint8Array(totalLength);
-
-    let offset = 0;
+    // Collect chunks in order as Blobs
+    const orderedChunks: Blob[] = [];
     let missingChunks = 0;
+
     for (let i = 0; i < fileDownload.totalChunks; i++) {
       const chunk = fileDownload.receivedChunks.get(i);
       if (chunk) {
-        combinedArray.set(chunk, offset);
-        offset += chunk.length;
+        orderedChunks.push(chunk as Blob);
       } else {
         this.logger.error(
           'assembleAndDownloadFile',
@@ -149,6 +149,9 @@ export class FileDownloadService extends FileTransferBaseService {
         missingChunks++;
       }
     }
+
+    // Clear the map immediately to free memory
+    fileDownload.receivedChunks.clear();
 
     if (missingChunks > 0) {
       this.logger.error(
@@ -167,24 +170,17 @@ export class FileDownloadService extends FileTransferBaseService {
       blobType = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
     }
 
-    // Create final Blob directly from chunk Blobs (memory efficient!)
-    const receivedBlob = new Blob(orderedChunks, { type: blobType || undefined });
-    const downloadUrl = URL.createObjectURL(receivedBlob);
-    const timestamp = new Date().toISOString().split('T')[0];
-    const fileName = fileDownload.fileName || `downloaded_file_${timestamp}`;
-
-    // Clear the orderedChunks array to help GC
-    orderedChunks.length = 0;
-
-    this.logger.info(
-      'assembleAndDownloadFile',
-      `File assembled: ${fileName} (${(receivedBlob.size / 1024 / 1024).toFixed(2)}MB)`
-    );
-
+    // Verify file integrity via streaming SHA-256 hash (memory efficient!)
+    // Hashes chunk-by-chunk without loading entire file into memory
     if (fileDownload.expectedHash) {
       try {
-        const buffer = await receivedBlob.arrayBuffer();
-        const actualHash = await calculateBufferHash(buffer);
+        const hasher = await createStreamingHash();
+        for (const chunkBlob of orderedChunks) {
+          const chunkBuffer = await chunkBlob.arrayBuffer();
+          updateStreamingHash(hasher as IHasher, new Uint8Array(chunkBuffer));
+        }
+        const actualHash = finalizeStreamingHash(hasher as IHasher);
+
         if (actualHash !== fileDownload.expectedHash) {
           this.logger.error('assembleAndDownloadFile', `Hash mismatch for ${fileDownload.fileId}!`);
           this.toaster.error(this.translate.instant('FILE_INTEGRITY_ERROR'));
@@ -198,6 +194,20 @@ export class FileDownloadService extends FileTransferBaseService {
         this.logger.warn('assembleAndDownloadFile', `Failed to verify file hash: ${e}`);
       }
     }
+
+    // Create final Blob directly from chunk Blobs
+    const receivedBlob = new Blob(orderedChunks, { type: blobType || undefined });
+    const downloadUrl = URL.createObjectURL(receivedBlob);
+    const timestamp = new Date().toISOString().split('T')[0];
+    const fileName = fileDownload.fileName || `downloaded_file_${timestamp}`;
+
+    // Clear the orderedChunks array to help GC
+    orderedChunks.length = 0;
+
+    this.logger.info(
+      'assembleAndDownloadFile',
+      `File assembled: ${fileName} (${(receivedBlob.size / 1024 / 1024).toFixed(2)}MB)`
+    );
 
     // Update preview after completion (only for small files to avoid memory issues)
     try {

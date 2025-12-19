@@ -1,3 +1,8 @@
+import { createSHA256, IHasher } from 'hash-wasm';
+
+// Re-export IHasher type for consumers
+export type { IHasher };
+
 /**
  * Binary Chunk Protocol for reliable file transfers with integrity checking
  *
@@ -13,6 +18,7 @@
  * [remaining bytes: chunk data]
  */
 
+// =============== CRC32 ===============
 // CRC32 lookup table (pre-computed for performance)
 const CRC32_TABLE = new Uint32Array(256);
 (function initCRC32Table() {
@@ -28,7 +34,7 @@ const CRC32_TABLE = new Uint32Array(256);
 /**
  * Calculates CRC32 checksum for data integrity verification
  */
-export function crc32(data: Uint8Array): number {
+function crc32(data: Uint8Array): number {
   let crc = 0xffffffff;
   for (let i = 0; i < data.length; i++) {
     crc = CRC32_TABLE[(crc ^ data[i]) & 0xff] ^ (crc >>> 8);
@@ -36,25 +42,51 @@ export function crc32(data: Uint8Array): number {
   return (crc ^ 0xffffffff) >>> 0;
 }
 
+// =============== Streaming Hash ===============
 /**
- * Calculates SHA-256 hash of a file for full integrity verification
+ * Creates a new incremental SHA-256 hasher
+ * Use this to hash large files chunk-by-chunk without loading into memory
  */
-export async function calculateFileHash(file: File): Promise<string> {
-  const buffer = await file.arrayBuffer();
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+export async function createStreamingHash(): Promise<IHasher> {
+  return await createSHA256();
 }
 
 /**
- * Calculates SHA-256 hash of an ArrayBuffer
+ * Updates the hasher with new data (call for each chunk)
  */
-export async function calculateBufferHash(buffer: ArrayBuffer): Promise<string> {
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+export function updateStreamingHash(hasher: IHasher, data: Uint8Array): void {
+  hasher.update(data);
 }
 
+/**
+ * Finalizes the hash and returns the hex string
+ * After calling this, the hasher cannot be used again
+ */
+export function finalizeStreamingHash(hasher: IHasher): string {
+  return hasher.digest('hex');
+}
+
+// =============== File Hash ===============
+/**
+ * Calculates SHA-256 hash of a File using streaming (memory efficient)
+ * Reads file in 1MB chunks to avoid loading entire file into memory
+ */
+export async function calculateFileHashStreaming(file: File): Promise<string> {
+  const STREAM_CHUNK_SIZE = 1024 * 1024; // 1MB chunks for hashing
+  const hasher = await createSHA256();
+
+  let offset = 0;
+  while (offset < file.size) {
+    const slice = file.slice(offset, offset + STREAM_CHUNK_SIZE);
+    const buffer = await slice.arrayBuffer();
+    hasher.update(new Uint8Array(buffer));
+    offset += STREAM_CHUNK_SIZE;
+  }
+
+  return hasher.digest('hex');
+}
+
+// =============== Chunk Metadata ===============
 export interface ChunkMetadata {
   fileId: string;
   chunkIndex: number;
@@ -62,12 +94,14 @@ export interface ChunkMetadata {
   checksum: number;
 }
 
+// =============== Parsed Chunk ===============
 export interface ParsedChunk {
   metadata: ChunkMetadata;
   data: ArrayBuffer;
   isValid: boolean; // Whether checksum verification passed
 }
 
+// =============== Encode Chunk ===============
 /**
  * Encodes a chunk with embedded metadata and CRC32 checksum
  */
@@ -121,6 +155,7 @@ export function encodeChunk(
   return buffer;
 }
 
+// =============== Decode Chunk ===============
 /**
  * Decodes a chunk, extracting metadata and verifying checksum
  */
@@ -184,6 +219,7 @@ export function decodeChunk(buffer: ArrayBuffer): ParsedChunk | null {
   }
 }
 
+// =============== Calculate Total Chunks ===============
 /**
  * Calculates the total number of chunks needed for a file
  */

@@ -182,8 +182,7 @@ export interface FileDownload {
   fileSize: number;
   fromUser: string;
   receivedSize: number;
-  dataBuffer: Uint8Array[];
-  receivedChunks: Map<number, Uint8Array>;
+  receivedChunks: Map<number, Blob>; // Using Blob for memory efficiency (can be disk-backed)
   totalChunks: number;
   progress: number;
   isAccepted: boolean;
