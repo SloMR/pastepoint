@@ -48,10 +48,10 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 CMD ["node", "dist/client/server/server.mjs"]
 
 # ---------- Stage 3: NGINX to reverse proxy SSR ----------
-FROM nginx:1.27-alpine-slim AS nginx
+FROM nginx:1.29-alpine-slim AS nginx
 
 # Install only necessary packages
-RUN apk add --no-cache gettext=0.22.5-r0
+RUN apk add --no-cache gettext
 
 # Copy only the specific static files needed
 COPY --from=builder /usr/src/app/dist/client/browser/robots.txt /usr/share/nginx/html/browser/robots.txt
