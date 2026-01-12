@@ -1,35 +1,54 @@
 #!/bin/bash
+set -euo pipefail
 
 # Get the project root directory (one level up from scripts)
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Function to validate IP address format
 validate_ip() {
-    local ip=$1
-    if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-        return 0
-    else
-        return 1
-    fi
+  local ip=$1
+  [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
+}
+
+# Escape replacement string for sed (handles \, &, and delimiter |)
+escape_sed_replacement() {
+  printf '%s' "$1" | sed -e 's/[\\&|]/\\&/g'
+}
+
+# Run sed in-place in a way that works on macOS (BSD sed) and GNU sed
+sed_in_place() {
+  local expr=$1
+  local file=$2
+
+  if sed --version >/dev/null 2>&1; then
+    # GNU sed (Linux, many Windows ports)
+    sed -i "$expr" "$file"
+  else
+    # BSD sed (macOS)
+    sed -i '' "$expr" "$file"
+  fi
 }
 
 # Function to update file content
 update_file() {
-    local file=$1
-    local old_value=$2
-    local new_value=$3
+  local file=$1
+  local old_value=$2
+  local new_value=$3
 
-    if [ ! -f "$file" ]; then
-        echo "Error: Required file not found: $file"
-        exit 1
-    fi
+  if [ ! -f "$file" ]; then
+    echo "Error: Required file not found: $file"
+    exit 1
+  fi
 
-    if ! sed -i "s|$old_value|$new_value|g" "$file"; then
-        echo "Error: Failed to update $file"
-        exit 1
-    fi
+  local escaped_new
+  escaped_new="$(escape_sed_replacement "$new_value")"
 
-    echo "Updated $file"
+  if ! sed_in_place "s|$old_value|$escaped_new|g" "$file"; then
+    echo "Error: Failed to update $file"
+    exit 1
+  fi
+
+  echo "Updated $file"
 }
 
 # Get local IP address
@@ -47,7 +66,7 @@ update_file "$PROJECT_ROOT/.env.development" "SERVER_NAME=127.0.0.1" "SERVER_NAM
 update_file "$PROJECT_ROOT/.env.development" "HOST=127.0.0.1" "HOST=0.0.0.0"
 
 # Update client environment
-update_file "$PROJECT_ROOT/client/src/environments/environment.ts" "apiUrl: '127.0.0.1:9000'" "apiUrl: '$local_ip:9000'"
+update_file "$PROJECT_ROOT/client/web/src/environments/environment.ts" "apiUrl: '127.0.0.1:9000'" "apiUrl: '$local_ip:9000'"
 
 # Update server configurations
 update_file "$PROJECT_ROOT/server/config/development.toml" "cors_allowed_origins = \"https://127.0.0.1\"" "cors_allowed_origins = \"https://$local_ip\""
