@@ -42,7 +42,7 @@
       }
     },
     {
-      "label": "Client Run",
+      "label": "Web Client Run",
       "type": "shell",
       "command": "npm run start",
       "group": "build",
@@ -52,7 +52,7 @@
       }
     },
     {
-      "label": "Client Run Local",
+      "label": "Web Client Run Local",
       "type": "shell",
       "command": "npm run start-local",
       "group": "build",
@@ -62,7 +62,7 @@
       }
     },
     {
-      "label": "Client Test",
+      "label": "Web Client Test",
       "type": "shell",
       "command": "npm run test",
       "group": "test",
@@ -72,7 +72,7 @@
       }
     },
     {
-      "label": "Client Test Coverage",
+      "label": "Web Client Test Coverage",
       "type": "shell",
       "command": "npm run test:coverage",
       "group": "test",
@@ -82,7 +82,7 @@
       }
     },
     {
-      "label": "Client Test CI",
+      "label": "Web Client Test CI",
       "type": "shell",
       "command": "npm run test:ci",
       "group": "test",
@@ -92,7 +92,7 @@
       }
     },
     {
-      "label": "Client Format",
+      "label": "Web Client Format",
       "type": "shell",
       "command": "npm run format",
       "group": "build",
@@ -102,7 +102,7 @@
       }
     },
     {
-      "label": "Client Lint Fix",
+      "label": "Web Client Lint Fix",
       "type": "shell",
       "command": "npm run lint:fix",
       "group": "build",
@@ -114,7 +114,7 @@
     {
       "label": "Format PastePoint",
       "dependsOrder": "sequence",
-      "dependsOn": ["Server Format", "Client Format"],
+      "dependsOn": ["Server Format", "Web Client Format"],
       "group": {
         "kind": "build",
         "isDefault": false
@@ -124,7 +124,7 @@
     {
       "label": "Lint PastePoint",
       "dependsOrder": "sequence",
-      "dependsOn": ["Server Clippy", "Client Lint Fix"],
+      "dependsOn": ["Server Clippy", "Web Client Lint Fix"],
       "group": {
         "kind": "build",
         "isDefault": false
@@ -133,7 +133,7 @@
     },
     {
       "label": "Test PastePoint",
-      "dependsOn": ["Server Test", "Client Test"],
+      "dependsOn": ["Server Test", "Web Client Test"],
       "group": {
         "kind": "test",
         "isDefault": true
@@ -142,7 +142,7 @@
     },
     {
       "label": "Run PastePoint",
-      "dependsOn": ["Server Run", "Client Run Local"],
+      "dependsOn": ["Server Run", "Web Client Run Local"],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -151,7 +151,7 @@
     },
     {
       "label": "Run PastePoint (Non-Local)",
-      "dependsOn": ["Server Run", "Client Run"],
+      "dependsOn": ["Server Run", "Web Client Run"],
       "group": "build",
       "problemMatcher": []
     }

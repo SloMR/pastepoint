@@ -26,12 +26,12 @@
   "prettier.singleQuote": true,
   "prettier.trailingComma": "es5",
   "prettier.printWidth": 100,
-  "stylelint.configFile": "./client/stylelint.config.js",
+  "stylelint.configFile": "./client/web/stylelint.config.js",
   "stylelint.validate": ["css", "scss"],
   "editor.tabSize": 2,
   "rust-analyzer.check.command": "check",
   "files.exclude": {
-    "**/client/.angular/cache": true,
+    "**/client/web/.angular/cache": true,
     "**/server/target": true,
     "**/target": true
   },

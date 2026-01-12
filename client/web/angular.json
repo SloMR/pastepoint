@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "client": {
+    "web": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -23,7 +23,7 @@
         "build": {
           "builder": "@angular-devkit/build-angular:application",
           "options": {
-            "outputPath": "dist/client",
+            "outputPath": "dist/web",
             "index": "src/index.html",
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
@@ -125,22 +125,22 @@
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
             "production": {
-              "buildTarget": "client:build:production",
+              "buildTarget": "web:build:production",
               "ssl": true,
               "sslKey": "/etc/ssl/pastepoint/key.pem",
               "sslCert": "/etc/ssl/pastepoint/cert.pem",
               "port": 443
             },
             "development": {
-              "buildTarget": "client:build:development",
+              "buildTarget": "web:build:development",
               "ssl": true,
-              "sslKey": "../certs/key.pem",
-              "sslCert": "../certs/cert.pem",
+              "sslKey": "../../certs/key.pem",
+              "sslCert": "../../certs/cert.pem",
               "port": 443,
               "hmr": false
             },
             "docker": {
-              "buildTarget": "client:build:docker",
+              "buildTarget": "web:build:docker",
               "ssl": true,
               "sslKey": "/etc/ssl/pastepoint/key.pem",
               "sslCert": "/etc/ssl/pastepoint/cert.pem",
@@ -148,7 +148,7 @@
               "hmr": false
             },
             "docker-dev": {
-              "buildTarget": "client:build:docker-dev",
+              "buildTarget": "web:build:docker-dev",
               "ssl": true,
               "sslKey": "/etc/ssl/pastepoint/key.pem",
               "sslCert": "/etc/ssl/pastepoint/cert.pem",

@@ -15,7 +15,7 @@
       }
     },
     {
-      "name": "Debug Client",
+      "name": "Debug Web Client",
       "type": "chrome",
       "request": "launch",
       "url": "https://localhost:4200",
@@ -25,11 +25,11 @@
       }
     },
     {
-      "name": "Debug Client (Production)",
+      "name": "Debug Web Client (Production)",
       "type": "chrome",
       "request": "launch",
       "url": "https://localhost:4200",
-      "webRoot": "${workspaceFolder}/client/dist/client",
+      "webRoot": "${workspaceFolder}/client/web/dist/web",
       "sourceMapPathOverrides": {
         "webpack:/*": "${webRoot}/*"
       }

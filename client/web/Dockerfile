@@ -5,14 +5,14 @@ WORKDIR /usr/src/app
 ARG NPM_BUILD_CONFIG=docker
 
 # Copy package.json and package-lock.json first for better caching
-COPY client/package*.json ./
+COPY client/web/package*.json ./
 
 # Use npm ci for consistent installs and clean up cache
 RUN --mount=type=cache,target=/root/.npm \
     npm ci && npm cache clean --force
 
 # Copy application code
-COPY client/ ./
+COPY client/web/ ./
 
 # Build the application
 RUN npm run build -- --configuration=$NPM_BUILD_CONFIG
@@ -45,7 +45,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD wget --spider -q http://localhost:4000/ || exit 1
 
 # Launch SSR server
-CMD ["node", "dist/client/server/server.mjs"]
+CMD ["node", "dist/web/server/server.mjs"]
 
 # ---------- Stage 3: NGINX to reverse proxy SSR ----------
 FROM nginx:1.29-alpine-slim AS nginx
@@ -54,8 +54,8 @@ FROM nginx:1.29-alpine-slim AS nginx
 RUN apk add --no-cache gettext=0.24.1-r1
 
 # Copy only the specific static files needed
-COPY --from=builder /usr/src/app/dist/client/browser/robots.txt /usr/share/nginx/html/browser/robots.txt
-COPY --from=builder /usr/src/app/dist/client/browser/sitemap.xml /usr/share/nginx/html/browser/sitemap.xml
+COPY --from=builder /usr/src/app/dist/web/browser/robots.txt /usr/share/nginx/html/browser/robots.txt
+COPY --from=builder /usr/src/app/dist/web/browser/sitemap.xml /usr/share/nginx/html/browser/sitemap.xml
 
 # Copy nginx config files
 COPY nginx/nginx.conf /etc/nginx/conf.d/default.conf.template
@@ -70,7 +70,7 @@ RUN chmod +x /docker-entrypoint.sh && \
     chown nginx:nginx /etc/nginx/conf.d/default.conf.template
 
 # Create directories and set appropriate permissions for the nginx user
-RUN mkdir -p /var/cache/nginx/client_temp /var/run/nginx /var/log/nginx && \
+RUN mkdir -p /var/cache/nginx/web_temp /var/run/nginx /var/log/nginx && \
     touch /var/run/nginx.pid && \
     chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \

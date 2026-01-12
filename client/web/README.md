@@ -21,7 +21,7 @@ The PastePoint client is a modern Angular application with Server-Side Rendering
 ## 📁 Project Structure
 
 ```
-client/
+web/
 ├── 📁 src/
 │   ├── 📁 app/
 │   │   ├── 📁 core/
@@ -240,14 +240,14 @@ this.translate.instant('WELCOME');
 
 ## 🤝 Contributing
 
-- [Contributing](../CONTRIBUTING.md)
+- [Contributing](../../CONTRIBUTING.md)
 
 ## 📜 License
 
-This project is licensed under the GPL-3.0 License. See the [LICENSE](../LICENSE) file for details.
+This project is licensed under the GPL-3.0 License. See the [LICENSE](../../LICENSE) file for details.
 
 ## 🔗 Related Documentation
 
-- [Main project readme](../README.md)
-- [Server readme](../server/README.md)
-- [Docker Compose setup](../docker-compose.yml)
+- [Main project readme](../../README.md)
+- [Server readme](../../server/README.md)
+- [Docker Compose setup](../../docker-compose.yml)

@@ -24,7 +24,7 @@ jobs:
         with:
           node-version: '22.6.0'
           cache: 'npm'
-          cache-dependency-path: client/package-lock.json
+          cache-dependency-path: client/web/package-lock.json
 
       - name: Install dependencies
         working-directory: client

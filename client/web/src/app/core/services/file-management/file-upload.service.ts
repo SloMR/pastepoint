@@ -12,7 +12,7 @@ import { WebRTCService } from '../communication/webrtc.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { HotToastService } from '@ngneat/hot-toast';
-import { PreviewService } from '../../services/ui/preview.service';
+import { PreviewService } from '../ui/preview.service';
 import {
   encodeChunk,
   calculateTotalChunks,
