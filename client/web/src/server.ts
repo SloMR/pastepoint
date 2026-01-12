@@ -9,6 +9,28 @@ import https from 'https';
 import fs from 'fs';
 import { environment } from './environments/environment';
 
+// Helper function to find project root by looking for certs directory
+function findProjectRoot(startPath: string): string {
+  let currentPath = startPath;
+  const root = resolve('/');
+
+  // Traverse up until we find a directory containing 'certs' folder
+  while (currentPath !== root) {
+    const certsPath = join(currentPath, 'certs');
+    try {
+      if (fs.existsSync(certsPath) && fs.statSync(certsPath).isDirectory()) {
+        return currentPath;
+      }
+    } catch {
+      // Continue searching if we can't access the directory
+    }
+    currentPath = resolve(currentPath, '..');
+  }
+
+  // Fallback to process.cwd() if certs not found
+  return process.cwd();
+}
+
 // The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
   const server = express();
@@ -70,8 +92,12 @@ function run(): void {
 
     // Only use SSL directly in development mode
     if (!environment.production) {
-      const sslKeyPath = process.env['SSL_KEY_PATH'] ?? '../certs/key.pem';
-      const sslCertPath = process.env['SSL_CERT_PATH'] ?? '../certs/cert.pem';
+      // Find project root by searching for certs directory
+      const serverDistFolder = dirname(fileURLToPath(import.meta.url));
+      const projectRoot = findProjectRoot(serverDistFolder);
+
+      const sslKeyPath = process.env['SSL_KEY_PATH'] ?? join(projectRoot, 'certs/key.pem');
+      const sslCertPath = process.env['SSL_CERT_PATH'] ?? join(projectRoot, 'certs/cert.pem');
 
       try {
         const httpsOptions = {
