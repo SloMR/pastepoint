@@ -32,22 +32,22 @@ jobs:
           cache-dependency-path: client/web/package-lock.json
 
       - name: Install dependencies
-        working-directory: client
+        working-directory: client/web
         run: npm ci
 
       - name: Lint and Format
-        working-directory: client
+        working-directory: client/web
         run: |
           npm run lint
           npm run format
 
       - name: Production Build
-        working-directory: client
+        working-directory: client/web
         run: npm run build --configuration=production
 
       - name: Setup Chrome for testing
         uses: browser-actions/setup-chrome@latest
 
       - name: Run Tests
-        working-directory: client
+        working-directory: client/web
         run: npm run test:ci
