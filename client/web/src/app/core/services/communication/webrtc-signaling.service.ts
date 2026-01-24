@@ -43,6 +43,16 @@ export class WebRTCSignalingService {
     private communicationService: WebRTCCommunicationService
   ) {
     this.initializeSignalMessageHandler();
+    this.communicationService.dataChannelClosed$.subscribe((targetUser) => {
+      if (this.wsService.isConnected() && this.peerConnections.has(targetUser)) {
+        this.logger.info(
+          'handleDataChannelClose',
+          `Data channel closed with ${targetUser}, attempting reconnection`
+        );
+        this.closePeerConnection(targetUser, true);
+        this.handleDisconnection(targetUser);
+      }
+    });
   }
 
   // =============== Public Methods ===============
@@ -137,12 +147,19 @@ export class WebRTCSignalingService {
 
       dataChannel.onopen = () => {
         this.connectionLocks.delete(targetUser);
+        this.communicationService.sendQueuedMessages(targetUser);
       };
       dataChannel.onerror = () => {
         this.connectionLocks.delete(targetUser);
+        this.closePeerConnection(targetUser, true);
+        this.handleDisconnection(targetUser);
       };
       dataChannel.onclose = () => {
         this.connectionLocks.delete(targetUser);
+        if (this.wsService.isConnected()) {
+          this.closePeerConnection(targetUser, true);
+          this.handleDisconnection(targetUser);
+        }
       };
 
       peerConnection
@@ -247,7 +264,6 @@ export class WebRTCSignalingService {
       this.candidateQueues.delete(targetUser);
       this.collectedCandidates.delete(targetUser);
       this.communicationService.deleteDataChannel(targetUser);
-      this.communicationService.deleteMessageQueue(targetUser);
     }
   }
 
@@ -993,12 +1009,19 @@ export class WebRTCSignalingService {
 
       dataChannel.onopen = () => {
         this.connectionLocks.delete(targetUser);
+        this.communicationService.sendQueuedMessages(targetUser);
       };
       dataChannel.onerror = () => {
         this.connectionLocks.delete(targetUser);
+        this.closePeerConnection(targetUser, true);
+        this.handleDisconnection(targetUser);
       };
       dataChannel.onclose = () => {
         this.connectionLocks.delete(targetUser);
+        if (this.wsService.isConnected()) {
+          this.closePeerConnection(targetUser, true);
+          this.handleDisconnection(targetUser);
+        }
       };
 
       peerConnection

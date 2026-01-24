@@ -21,6 +21,7 @@ export class WebRTCCommunicationService {
 
   // Public Subjects
   public dataChannelOpen$ = new BehaviorSubject<boolean>(false);
+  public dataChannelClosed$ = new Subject<string>();
   public chatMessages$ = new Subject<ChatMessage>();
   public fileOffers$ = new Subject<{
     fileName: string;
@@ -148,6 +149,7 @@ export class WebRTCCommunicationService {
           `Data Channel Error with ${targetUser}: ${JSON.stringify(ev)}`
         );
       }
+      this.dataChannelClosed$.next(targetUser);
     };
 
     channel.onclose = () => {
@@ -161,6 +163,8 @@ export class WebRTCCommunicationService {
         clearTimeout(connectionTimeout);
         this.connectionTimeouts.delete(targetUser);
       }
+
+      this.dataChannelClosed$.next(targetUser);
     };
 
     channel.bufferedAmountLowThreshold = BUFFERED_AMOUNT_LOW_THRESHOLD;
@@ -289,6 +293,33 @@ export class WebRTCCommunicationService {
    */
   public deleteMessageQueue(targetUser: string): void {
     this.messageQueues.delete(targetUser);
+  }
+
+  /**
+   * Sends any queued messages to the target user
+   * @param targetUser The user to send queued messages to
+   */
+  public sendQueuedMessages(targetUser: string): void {
+    const channel = this.dataChannels.get(targetUser);
+    if (!channel || channel.readyState !== 'open') {
+      return;
+    }
+
+    const queuedMessages = this.messageQueues.get(targetUser);
+    if (queuedMessages && queuedMessages.length > 0) {
+      this.logger.info(
+        'sendQueuedMessages',
+        `Sending ${queuedMessages.length} queued messages to ${targetUser}`
+      );
+      queuedMessages.forEach((msg) => {
+        if (typeof msg === 'object' && !(msg instanceof ArrayBuffer)) {
+          channel.send(JSON.stringify(msg));
+        } else {
+          channel.send(msg);
+        }
+      });
+      this.messageQueues.set(targetUser, []);
+    }
   }
 
   // =============== Private Methods ===============
