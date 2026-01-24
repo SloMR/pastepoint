@@ -1,10 +1,14 @@
-name: Rust CI/CD
+name: Server CI/CD
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
@@ -15,8 +19,9 @@ env:
 
 jobs:
   build:
-    name: Build and Test Rust Server
+    name: Build and Test Server
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout code
