@@ -6,49 +6,49 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # Function to validate IP address format
 validate_ip() {
-  local ip=$1
-  [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
+    local ip=$1
+    [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
 }
 
 # Escape replacement string for sed (handles \, &, and delimiter |)
 escape_sed_replacement() {
-  printf '%s' "$1" | sed -e 's/[\\&|]/\\&/g'
+    printf '%s' "$1" | sed -e 's/[\\&|]/\\&/g'
 }
 
 # Run sed in-place in a way that works on macOS (BSD sed) and GNU sed
 sed_in_place() {
-  local expr=$1
-  local file=$2
+    local expr=$1
+    local file=$2
 
-  if sed --version >/dev/null 2>&1; then
-    # GNU sed (Linux, many Windows ports)
-    sed -i "$expr" "$file"
-  else
-    # BSD sed (macOS)
-    sed -i '' "$expr" "$file"
-  fi
+    if sed --version >/dev/null 2>&1; then
+        # GNU sed (Linux, many Windows ports)
+        sed -i "$expr" "$file"
+    else
+        # BSD sed (macOS)
+        sed -i '' "$expr" "$file"
+    fi
 }
 
 # Function to update file content
 update_file() {
-  local file=$1
-  local old_value=$2
-  local new_value=$3
+    local file=$1
+    local old_value=$2
+    local new_value=$3
 
-  if [ ! -f "$file" ]; then
-    echo "Error: Required file not found: $file"
-    exit 1
-  fi
+    if [ ! -f "$file" ]; then
+        echo "Error: Required file not found: $file"
+        exit 1
+    fi
 
-  local escaped_new
-  escaped_new="$(escape_sed_replacement "$new_value")"
+    local escaped_new
+    escaped_new="$(escape_sed_replacement "$new_value")"
 
-  if ! sed_in_place "s|$old_value|$escaped_new|g" "$file"; then
-    echo "Error: Failed to update $file"
-    exit 1
-  fi
+    if ! sed_in_place "s|$old_value|$escaped_new|g" "$file"; then
+        echo "Error: Failed to update $file"
+        exit 1
+    fi
 
-  echo "Updated $file"
+    echo "Updated $file"
 }
 
 # Get local IP address
