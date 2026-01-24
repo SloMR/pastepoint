@@ -1,0 +1,39 @@
+{
+  "configurations" : [
+    {
+      "id" : "BA3C53C3-41AE-4DB9-86E6-25244EE38FD2",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "performanceAntipatternCheckerEnabled" : true,
+    "targetForVariableExpansion" : {
+      "containerPath" : "container:PastePoint.xcodeproj",
+      "identifier" : "4C2326FF2F1ECB1B005FED3A",
+      "name" : "PastePoint"
+    }
+  },
+  "testTargets" : [
+    {
+      "parallelizable" : false,
+      "target" : {
+        "containerPath" : "container:PastePoint.xcodeproj",
+        "identifier" : "4C23270C2F1ECB1C005FED3A",
+        "name" : "PastePointTests"
+      }
+    },
+    {
+      "enabled" : false,
+      "parallelizable" : true,
+      "target" : {
+        "containerPath" : "container:PastePoint.xcodeproj",
+        "identifier" : "4C2327162F1ECB1C005FED3A",
+        "name" : "PastePointUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

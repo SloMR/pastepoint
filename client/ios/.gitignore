@@ -1,0 +1,29 @@
+# Xcode
+*.xcodeproj/*
+!*.xcodeproj/project.pbxproj
+!*.xcodeproj/xcshareddata/
+*.xcworkspace/*
+!*.xcworkspace/contents.xcworkspacedata
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+DerivedData/
+*.hmap
+*.ipa
+*.dSYM.zip
+*.dSYM
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# CocoaPods (if used later)
+Pods/
+Podfile.lock
+
+# Carthage (if used)
+Carthage/Build/
+
+# OS
+.DS_Store
