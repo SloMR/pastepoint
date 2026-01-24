@@ -7,7 +7,7 @@ import SwiftUI
 
 struct NumberBadge: View {
   let number: Int
-  
+
   var body: some View {
     Text("\(number)")
       .font(.caption2)

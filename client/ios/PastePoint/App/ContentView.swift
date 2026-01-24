@@ -28,7 +28,7 @@ struct ContentView: View {
 
 struct RoomContentView: View {
   @State private var hasMessages: Bool = true
-  
+
   var body: some View {
     Group {
       if hasMessages {

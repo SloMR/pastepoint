@@ -22,25 +22,25 @@ struct MessageBubble: View {
       .scaledToFit()
       .frame(width: 32, height: 32)
   }
-  
+
   var body: some View {
     HStack(alignment: .top, spacing: 10) {
-      
+
       if alignment == .leading {
         avatar
       } else {
         Spacer(minLength: 30)
       }
-      
+
       VStack(alignment: alignment == .leading ? .leading : .trailing, spacing: 6) {
-        
+
         HStack(spacing: 6) {
           if alignment == .leading {
             Text(name)
               .font(.caption)
               .fontWeight(.semibold)
               .foregroundStyle(.textPrimary)
-            
+
             Text(time)
               .font(.caption2)
               .foregroundStyle(.textSecondary)
@@ -48,14 +48,14 @@ struct MessageBubble: View {
             Text(time)
               .font(.caption2)
               .foregroundStyle(.textSecondary)
-            
+
             Text(name)
               .font(.caption)
               .fontWeight(.semibold)
               .foregroundStyle(.textPrimary)
           }
         }
-        
+
         Text(text)
           .font(.callout)
           .foregroundStyle(alignment == .trailing ? .textPrimary : .white)
@@ -74,7 +74,7 @@ struct MessageBubble: View {
           )
           .fixedSize(horizontal: false, vertical: true)
       }
-      
+
       if alignment == .trailing {
         avatar
       } else {
@@ -92,7 +92,7 @@ struct MessageBubble: View {
     time: "9:04 PM",
     text: "Hello"
   )
-  
+
   MessageBubble(
     alignment: .trailing,
     name: "Gwen Kuphal",
