@@ -19,7 +19,7 @@ export class MockTranslateService {
       SESSION_CODE: 'Session Code',
       GO_BACK_HOME: 'Go Back Home',
       PAGE_NOT_FOUND: 'Page Not Found',
-      COPYRIGHT_NOTICE: '© 2025 PastePoint. All rights reserved.',
+      COPYRIGHT_NOTICE: '© 2026 PastePoint. All rights reserved.',
       VERSION: 'Version',
     },
     ar: {

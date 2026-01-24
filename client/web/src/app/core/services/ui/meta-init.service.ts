@@ -98,7 +98,7 @@ export class MetaInitService {
       description:
         'PastePoint lets you share files and chat instantly with end-to-end encryption. No cloud, no accounts, no tracking—secure peer-to-peer transfers made simple.',
       keywords:
-        'secure file sharing, encrypted messaging, peer-to-peer transfer, private file sharing, WebRTC chat, direct file transfer, real-time messaging, zero tracking, no cloud, local network sharing',
+        'pastepoint, paste point, PastePoint, Paste Point, secure file sharing, encrypted messaging, peer-to-peer transfer, private file sharing, WebRTC chat, direct file transfer, real-time messaging, zero tracking, no cloud, local network sharing',
       author: 'PastePoint',
       themeColor: '#4285f4',
       robots: 'index, follow',
@@ -144,13 +144,23 @@ export class MetaInitService {
       '@context': 'https://schema.org',
       '@type': 'WebApplication',
       name: 'PastePoint',
+      alternateName: ['Paste Point', 'pastepoint', 'paste point'],
       url: 'https://pastepoint.com',
       applicationCategory: 'CommunicationApplication',
       operatingSystem: 'Web',
       description:
-        'Secure peer-to-peer file sharing and encrypted messaging solution for local networks.',
-      featureList:
-        'Encrypted messaging, P2P file transfer, WebSocket connections, Local network optimization',
+        'PastePoint (Paste Point) is a secure peer-to-peer file sharing and encrypted messaging solution. Transfer files directly with end-to-end encryption, no cloud storage or accounts required.',
+      featureList: [
+        'End-to-end encryption',
+        'Peer-to-peer file transfer',
+        'Real-time messaging',
+        'No cloud storage',
+        'No account required',
+        'WebRTC connections',
+        'Local network optimization',
+      ],
+      screenshot: 'https://pastepoint.com/assets/pastepoint-screenshot.png',
+      softwareVersion: '1.0.0',
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -160,6 +170,11 @@ export class MetaInitService {
         '@type': 'AggregateRating',
         ratingValue: '4.9',
         reviewCount: '150',
+      },
+      author: {
+        '@type': 'Organization',
+        name: 'PastePoint',
+        url: 'https://pastepoint.com',
       },
       itemListElement: [
         {

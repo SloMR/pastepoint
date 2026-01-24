@@ -1,6 +1,10 @@
 {
-  "name": "PastePoint",
+  "name": "PastePoint - Secure File Sharing & Encrypted Messaging",
   "short_name": "PastePoint",
+  "description": "PastePoint (Paste Point) lets you share files and chat instantly with end-to-end encryption. No cloud, no accounts, no tracking—secure peer-to-peer transfers made simple.",
+  "start_url": "/",
+  "scope": "/",
+  "id": "/",
   "icons": [
     {
       "src": "/assets/web-app-manifest-192x192.png",
@@ -13,9 +17,20 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/assets/favicon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
   "theme_color": "#141C2C",
   "background_color": "#141C2C",
-  "display": "standalone"
+  "display": "standalone",
+  "orientation": "any",
+  "categories": ["productivity", "utilities", "social"],
+  "lang": "en",
+  "dir": "auto",
+  "prefer_related_applications": false
 }
