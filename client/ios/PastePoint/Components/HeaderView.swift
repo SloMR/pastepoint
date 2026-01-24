@@ -13,11 +13,11 @@ struct HeaderView: View {
         .resizable()
         .scaledToFit()
         .frame(height: 32)
-      
+
       Spacer()
-      
+
       HStack(spacing: 10) {
-        
+
         // Language
         Button("AR") {
           print("Language Button Clicked")
@@ -30,7 +30,7 @@ struct HeaderView: View {
             .stroke(.border, lineWidth: 1)
         )
         .buttonStyle(.plain)
-        
+
         // Theme
         Button {
           print("Theme Switch Clicked")
@@ -48,7 +48,7 @@ struct HeaderView: View {
             )
         }
         .buttonStyle(.plain)
-        
+
         // Menu
         Button {
           print("Menu Button Clicked")

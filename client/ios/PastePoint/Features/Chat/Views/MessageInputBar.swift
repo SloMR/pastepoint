@@ -7,17 +7,17 @@ import SwiftUI
 
 struct MessageInputBar: View {
   @State private var message = ""
-  
+
   var body: some View {
     VStack(spacing: 10) {
-      
+
       TextField("Type your message", text: $message)
         .textFieldStyle(.plain)
         .font(.body)
         .foregroundStyle(.textPrimary)
-      
+
       HStack(alignment: .center) {
-        
+
         Button {
           print("Attachments Button Clicked")
         } label: {
@@ -29,9 +29,9 @@ struct MessageInputBar: View {
         }
         .foregroundStyle(.textSecondary)
         .buttonStyle(.plain)
-        
+
         Spacer()
-        
+
         Button {
           print("Send Button Clicked")
         } label: {
@@ -39,7 +39,7 @@ struct MessageInputBar: View {
             Text("Send")
               .font(.headline)
               .fontWeight(.bold)
-            
+
             Image("send")
               .renderingMode(.template)
               .resizable()

@@ -7,14 +7,14 @@ import SwiftUI
 
 struct ChatHeader: View {
   let isPrivate: Bool
-  
+
   var body: some View {
     HStack(spacing: 10) {
       Image(isPrivate ? "lock" : "users")
         .resizable()
         .scaledToFit()
         .frame(width: 22, height: 22)
-      
+
       Text(isPrivate ? "Private Room" : "Public Room")
         .font(.title2)
         .foregroundStyle(.textPrimary)

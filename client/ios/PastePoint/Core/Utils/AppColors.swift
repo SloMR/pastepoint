@@ -8,18 +8,18 @@ import SwiftUI
 // MARK: - AppColors
 
 enum AppColors {
-  
+
   enum Brand {
     static let brand = Color("brand")
     static let accent = Color("brandAccent")
   }
-  
+
   enum Text {
     static let primary = Color("textPrimary")
     static let secondary = Color("textSecondary")
     static let muted = Color("textMuted")
   }
-  
+
   enum Background {
     static let background = Color("background")
     static let surface = Color("surface")
@@ -27,17 +27,17 @@ enum AppColors {
     static let message = Color("messageBackground")
     static let input = Color("inputBackground")
   }
-  
+
   enum Border {
     static let border = Color("border")
     static let button = Color("borderButton")
   }
-  
+
   enum Primary {
     static let p100 = Color("primary/primary100")
     static let p300 = Color("primary/primary300")
   }
-  
+
   enum Gray {
     static let g300 = Color("gray300")
     static let g400 = Color("gray400")
@@ -46,20 +46,20 @@ enum AppColors {
     static let g800 = Color("gray800")
     static let g900 = Color("gray900")
   }
-  
+
   enum Status {
     static let danger = Color("danger")
     static let success = Color("success")
     static let warning = Color("warning")
     static let info = Color("info")
   }
-  
+
   enum QR {
     static let background = Color("qrBackground")
     static let accent = Color("qrAccent")
     static let hover = Color("qrHover")
   }
-  
+
   enum Scrollbar {
     static let track = Color("scrollbarTrack")
     static let thumb = Color("scrollbarThumb")

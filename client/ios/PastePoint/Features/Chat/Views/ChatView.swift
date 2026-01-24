@@ -7,11 +7,11 @@ import SwiftUI
 
 struct ChatView: View {
   @State var isPrivateRoom: Bool = false
-  
+
   var body: some View {
     ScrollView {
       VStack(alignment: .leading, spacing: 0) {
-        
+
         // Room header row
         ChatHeader(isPrivate: isPrivateRoom)
 
@@ -23,7 +23,7 @@ struct ChatView: View {
             time: "9:04 PM",
             text: "Hello"
           )
-          
+
           MessageBubble(
             alignment: .trailing,
             name: "Gwen Kuphal",

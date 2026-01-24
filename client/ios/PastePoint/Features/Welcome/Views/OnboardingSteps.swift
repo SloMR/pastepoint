@@ -14,7 +14,7 @@ struct OnboardingSteps: View {
           .font(.caption2)
           .foregroundStyle(.textPrimary)
       }
-      
+
       HStack(alignment: .center, spacing: 12) {
         NumberBadge(number: 2)
         Text("Start the conversation by sending a message")
