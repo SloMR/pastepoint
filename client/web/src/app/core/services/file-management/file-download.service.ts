@@ -1,11 +1,15 @@
 import { Injectable, NgZone } from '@angular/core';
-import { FILE_TRANSFER_MESSAGE_TYPES, FileDownload } from '../../../utils/constants';
+import {
+  FILE_TRANSFER_MESSAGE_TYPES,
+  FileDownload,
+  PREVIEW_MIME_TYPE,
+} from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { WebRTCService } from '../communication/webrtc.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { HotToastService } from '@ngneat/hot-toast';
-import { PreviewService } from '../ui/preview.service';
+import { PreviewService } from '../../services/ui/preview.service';
 import {
   createStreamingHash,
   updateStreamingHash,
@@ -224,10 +228,10 @@ export class FileDownloadService extends FileTransferBaseService {
           );
           if (thumb) {
             fileDownload.previewDataUrl = thumb;
-            fileDownload.previewMime = 'image/png';
+            fileDownload.previewMime = PREVIEW_MIME_TYPE;
           }
         } else {
-          fileDownload.previewMime = 'image/png';
+          fileDownload.previewMime = PREVIEW_MIME_TYPE;
         }
       } else if (blobType.startsWith('image/')) {
         fileDownload.previewMime = blobType;

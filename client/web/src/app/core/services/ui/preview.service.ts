@@ -1,5 +1,6 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
+import { PREVIEW_MIME_TYPE, PREVIEW_QUALITY } from '../../../utils/constants';
 
 @Injectable({
   providedIn: 'root',
@@ -118,6 +119,7 @@ export class PreviewService {
   /**
    * Creates a thumbnail from PDF bytes.
    * Properly cleans up PDF.js resources after rendering.
+   * Uses JPEG format with quality setting to keep file size small for WebRTC transfer.
    */
   public async createPdfThumbnailFromBytes(
     data: Uint8Array,
@@ -145,8 +147,13 @@ export class PreviewService {
       const ctx = canvas.getContext('2d');
       if (!ctx) return undefined;
 
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
       await page.render({ canvasContext: ctx, viewport: scaled }).promise;
-      const dataUrl = canvas.toDataURL('image/png');
+
+      // Use JPEG with 0.7 quality for much smaller file sizes
+      const dataUrl = canvas.toDataURL(PREVIEW_MIME_TYPE, PREVIEW_QUALITY);
 
       // Clear canvas to help garbage collection
       canvas.width = 0;

@@ -29,6 +29,9 @@ export const MAX_RECONNECT_ATTEMPTS = 5;
 export const RECONNECT_DELAY = 2000;
 export const ICE_GATHERING_TIMEOUT = 30000;
 export const CONNECTION_REQUEST_TIMEOUT = 15000;
+export const MAX_PREVIEW_DATA_URL_SIZE = 150 * KB;
+export const PREVIEW_MIME_TYPE = 'image/jpeg';
+export const PREVIEW_QUALITY = 0.7;
 
 export const OFFER_OPTIONS = {
   offerToReceiveAudio: false,

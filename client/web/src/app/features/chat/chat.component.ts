@@ -51,6 +51,7 @@ import {
   NAVIGATION_DELAY_MS,
   SESSION_CODE_KEY,
   THEME_PREFERENCE_KEY,
+  PREVIEW_MIME_TYPE,
 } from '../../utils/constants';
 import { PickerComponent } from '@ctrl/ngx-emoji-mart';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -1009,7 +1010,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           const thumb = await this.previewService.createPdfThumbnailFromFile(file);
           if (thumb) {
             previewUrl = thumb;
-            previewMime = 'image/png';
+            previewMime = PREVIEW_MIME_TYPE;
           }
         } catch (e) {
           this.logger.warn('createPreview', 'Failed to create PDF thumbnail', e as unknown);

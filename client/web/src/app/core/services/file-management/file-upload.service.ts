@@ -6,13 +6,15 @@ import {
   MB,
   FILE_TRANSFER_MESSAGE_TYPES,
   FileTransferStatus,
+  MAX_PREVIEW_DATA_URL_SIZE,
+  PREVIEW_MIME_TYPE,
 } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { WebRTCService } from '../communication/webrtc.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { HotToastService } from '@ngneat/hot-toast';
-import { PreviewService } from '../ui/preview.service';
+import { PreviewService } from '../../services/ui/preview.service';
 import {
   encodeChunk,
   calculateTotalChunks,
@@ -382,8 +384,18 @@ export class FileUploadService extends FileTransferBaseService {
       } else if (mime === 'application/pdf') {
         previewDataUrl = await this.previewService.createPdfThumbnailFromFile(fileTransfer.file);
         if (previewDataUrl) {
-          previewMime = 'image/png';
+          previewMime = PREVIEW_MIME_TYPE;
         }
+      }
+
+      // Check if preview is too large for WebRTC message limit
+      if (previewDataUrl && previewDataUrl.length > MAX_PREVIEW_DATA_URL_SIZE) {
+        this.logger.warn(
+          'sendFileOffer',
+          `Preview too large (${(previewDataUrl.length / 1024).toFixed(1)}KB), skipping to avoid WebRTC message limit`
+        );
+        previewDataUrl = undefined;
+        previewMime = undefined;
       }
     } catch (e) {
       this.logger.warn('sendFileOffer', `Failed generating preview: ${String(e)}`);
