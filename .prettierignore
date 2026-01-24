@@ -1,0 +1,8 @@
+# Xcode auto-generated asset catalog files
+client/ios/**/*.xcassets/**/*.json
+
+# Build outputs
+**/dist/
+**/build/
+**/node_modules/
+**/target/

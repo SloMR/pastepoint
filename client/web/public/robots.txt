@@ -1,0 +1,22 @@
+# robots.txt file for PastePoint (Paste Point)
+# Secure peer-to-peer file sharing and encrypted messaging platform
+
+User-agent: *
+Allow: /
+Allow: /privacy
+
+# Disallow all private routes
+Disallow: /private
+Disallow: /private/*
+Disallow: /404
+Disallow: /ws/
+Disallow: /create-session
+
+# Crawl delay for politeness
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://pastepoint.com/sitemap.xml
+
+# Host directive for search engines
+Host: https://pastepoint.com

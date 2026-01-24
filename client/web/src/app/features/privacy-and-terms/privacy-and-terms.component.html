@@ -1,0 +1,262 @@
+<!-- MARK: - Main Container -->
+<div
+  [attr.dir]="isRTL ? 'rtl' : 'ltr'"
+  class="flex h-screen flex-col bg-pageBackground dark:bg-baseDark"
+>
+  <!-- MARK: - Header Section -->
+  <header
+    class="border-b bg-pageBackground border-borderLight dark:border-surfaceDark dark:bg-baseDark"
+  >
+    <div class="mx-auto max-w-7xl pr-4 pl-16 sm:px-6 lg:px-8">
+      <div class="flex h-20 items-center justify-between">
+        <!-- MARK: - Logo & Title -->
+        <div class="flex items-center">
+          <a routerLink="/" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'" title="Home">
+            <img
+              [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
+              alt="PastePoint Logo"
+              title="PastePoint Logo"
+              class="h-12 w-auto cursor-pointer"
+              width="136"
+              height="48"
+              loading="lazy"
+            />
+          </a>
+        </div>
+
+        <!-- MARK: - Theme Toggler & Language Switcher -->
+        <div class="flex flex-row-reverse items-center gap-2 md:flex-row">
+          <!-- theme toggler -->
+          <div
+            (click)="toggleTheme()"
+            class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-black w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
+          >
+            <button
+              [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+              [attr.title]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+            >
+              <img
+                [src]="isDarkMode ? '/icons/brightness.svg' : '/icons/moon.svg'"
+                alt="Theme"
+                title="Theme"
+                class="h-5 w-5"
+              />
+            </button>
+          </div>
+
+          <!-- language switcher -->
+          <div
+            (click)="switchLanguage(translate.currentLang === 'ar' ? 'en' : 'ar')"
+            class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-brand w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
+          >
+            {{ translate.currentLang | uppercase }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MARK: - Main Content Area -->
+  <main class="flex-1 overflow-y-auto p-4 bg-pageBackground scrollbar dark:bg-baseDark md:p-8">
+    <div
+      class="mx-auto max-w-4xl text-left text-content dark:text-contentMuted"
+      [ngClass]="isRTL ? 'text-right' : 'text-left'"
+    >
+      <h1
+        class="mb-4 flex items-center gap-2 text-3xl font-expoArabicBold text-text-primary dark:text-white"
+      >
+        <img
+          src="/icons/privacy-and-terms.svg"
+          alt="Privacy and Terms"
+          title="Privacy and Terms"
+          class="h-10 w-10"
+          loading="lazy"
+          width="40"
+          height="40"
+        />
+        {{ 'PRIVACY_AND_TERMS' | translate }}
+      </h1>
+      <p class="mb-8 text-sm font-expoArabicMedium text-text-secondary dark:text-textMuted">
+        {{ 'LAST_UPDATED' | translate }}
+      </p>
+
+      <div class="space-y-6">
+        <section>
+          <h2 class="mb-3 text-2xl font-expoArabicBold text-text-primary dark:text-white">
+            {{ 'DISCLAIMER_TITLE' | translate }}
+          </h2>
+          <div class="text-base space-y-4 font-expoArabicLight">
+            <p>{{ 'DISCLAIMER_INTRO' | translate }}</p>
+            <p>{{ 'DISCLAIMER_NO_GUARANTEES' | translate }}</p>
+            <p>{{ 'DISCLAIMER_NO_LIABILITY' | translate }}</p>
+            <p>{{ 'DISCLAIMER_USER_RESPONSIBILITY' | translate }}</p>
+            <p>{{ 'DISCLAIMER_NO_STORAGE' | translate }}</p>
+            <p>
+              {{ 'DISCLAIMER_FULL_REFERENCE' | translate }}
+              <a
+                href="https://github.com/SloMR/pastepoint/blob/main/DISCLAIMER.md"
+                target="_blank"
+                class="text-brand hover:underline"
+                >{{ 'DISCLAIMER_LINK_TEXT' | translate }}</a
+              >
+              {{ 'DISCLAIMER_LINK' | translate }}
+            </p>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="mt-8 mb-3 text-2xl font-expoArabicBold text-text-primary dark:text-white">
+            {{ 'PRIVACY_TITLE' | translate }}
+          </h2>
+          <div class="text-base space-y-4 font-expoArabicLight">
+            <p>{{ 'PRIVACY_INTRO' | translate }}</p>
+            <p>{{ 'PRIVACY_NO_RETENTION' | translate }}</p>
+            <p>{{ 'PRIVACY_ENCRYPTION' | translate }}</p>
+            <p>{{ 'PRIVACY_COLLECTION' | translate }}</p>
+            <p>{{ 'PRIVACY_THIRD_PARTIES' | translate }}</p>
+            <p>{{ 'PRIVACY_CHANGES' | translate }}</p>
+          </div>
+        </section>
+
+        <section>
+          <h2 class="mt-8 mb-3 text-2xl font-expoArabicBold text-text-primary dark:text-white">
+            {{ 'TERMS_TITLE' | translate }}
+          </h2>
+          <div class="text-base space-y-4 font-expoArabicLight">
+            <p>{{ 'TERMS_AGREEMENT' | translate }}</p>
+            <p>{{ 'TERMS_INTENDED_USE' | translate }}</p>
+            <p>
+              {{ 'TERMS_LICENSE' | translate }}
+              <a
+                href="https://github.com/SloMR/pastepoint/blob/main/LICENSE"
+                target="_blank"
+                class="text-brand hover:underline"
+                >{{ 'TERMS_LICENSE_LINK_TEXT' | translate }}</a
+              >
+              {{ 'TERMS_LICENSE_LINK' | translate }}
+            </p>
+            <p>{{ 'TERMS_PROHIBITED' | translate }}</p>
+            <p>{{ 'TERMS_TERMINATION' | translate }}</p>
+            <p>{{ 'TERMS_GOVERNING_LAW' | translate }}</p>
+          </div>
+        </section>
+
+        <p class="mt-8 text-sm italic font-expoArabicLight">{{ 'LEGAL_NOTICE' | translate }}</p>
+      </div>
+
+      <!-- MARK: - Go Back Button -->
+      <div class="mt-8 flex items-center justify-center">
+        <button
+          class="flex items-center justify-center gap-2 rounded-md px-4 py-2 text-white font-expoArabicMedium bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+          routerLink="/"
+          title="Go Back"
+        >
+          <img
+            src="/icons/back-arrow.svg"
+            alt="arrow-right"
+            title="Go Back"
+            [ngClass]="isRTL ? 'rotate-0' : 'rotate-180'"
+          />
+          {{ 'GO_BACK_HOME' | translate }}
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- MARK: - Footer -->
+  <div
+    class="flex w-full flex-col items-center gap-2 border-t px-4 py-4 dark:bg-baseDark dark:border-surfaceDark md:h-[58px] md:flex-row md:items-center md:justify-between md:px-8 md:py-0"
+  >
+    <!-- Social links -->
+    <div class="order-1 flex items-center gap-4 md:order-2">
+      <!-- LinkedIn -->
+      <a
+        href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
+        title="LinkedIn"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        class="inline-flex items-center gap-2 hover:opacity-75"
+      >
+        <img
+          src="/icons/linkedin.svg"
+          alt="LinkedIn"
+          title="LinkedIn"
+          class="h-6 w-6"
+          loading="lazy"
+          width="24"
+          height="24"
+        />
+      </a>
+
+      <!-- GitHub -->
+      <a
+        href="https://github.com/SloMR/pastepoint"
+        title="GitHub"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        class="inline-flex items-center gap-2 hover:opacity-75"
+      >
+        <img
+          src="/icons/github.svg"
+          alt="GitHub"
+          title="GitHub"
+          class="h-6 w-6"
+          loading="lazy"
+          width="24"
+          height="24"
+        />
+      </a>
+
+      <!-- X -->
+      <a
+        href="https://x.com/PastePoint"
+        title="X (Twitter)"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        class="inline-flex items-center gap-2 hover:opacity-75"
+      >
+        <img
+          src="/icons/x-icon.svg"
+          alt="X"
+          title="X"
+          class="h-6 w-6"
+          loading="lazy"
+          width="24"
+          height="24"
+        />
+      </a>
+
+      <!-- Instagram -->
+      <a
+        href="https://www.instagram.com/paste_point/"
+        title="Instagram"
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+        class="inline-flex items-center gap-2 hover:opacity-75"
+      >
+        <img
+          src="/icons/instagram-icon.svg"
+          alt="Instagram"
+          title="Instagram"
+          class="h-6 w-6"
+          loading="lazy"
+          width="24"
+          height="24"
+        />
+      </a>
+    </div>
+    <!-- Version & Privacy -->
+    <p
+      class="order-2 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted md:order-3"
+    >
+      {{ 'VERSION' | translate }} {{ appVersion }}
+    </p>
+
+    <!-- ©2026 -->
+    <p
+      class="order-3 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted md:order-1"
+    >
+      {{ 'COPYRIGHT_NOTICE' | translate }}
+    </p>
+  </div>
+</div>

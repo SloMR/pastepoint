@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="client/public/assets/pastepoint-light.svg" alt="PastePoint Logo" style="width: 250px; height: 250px"/>
+  <img src="client/web/public/assets/pastepoint-light.svg" alt="PastePoint Logo" style="width: 250px; height: 250px"/>
 
 <br>
 <br>
@@ -101,7 +101,10 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 
 ```
 pastepoint/
-├── 📁 client/                      # Angular frontend with SSR
+├── 📁 client/                      # Frontend clients
+│   ├── 📁 web/                      # Angular SSR frontend
+│   ├── 📁 ios/                      # iOS client (WIP)
+│   └── 📁 android/                  # Android client (WIP)
 ├── 📁 server/                      # Rust backend with WebSockets
 ├── 📁 nginx/                       # Reverse proxy & SSL termination
 ├── 📁 scripts/                     # Development & deployment scripts
@@ -120,7 +123,7 @@ pastepoint/
 
 ##### Web (Angular):
 
-- 🌐 [Web readme](client/README.md)
+- 🌐 [Web readme](client/web/README.md)
 
 ##### iOS:
 

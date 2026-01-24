@@ -42,7 +42,7 @@ services:
   ssr:
     build:
       context: .
-      dockerfile: client/Dockerfile
+      dockerfile: client/web/Dockerfile
       target: ssr
       args:
         NPM_BUILD_CONFIG: ${NPM_BUILD_CONFIG:-docker}
@@ -61,7 +61,7 @@ services:
   nginx:
     build:
       context: .
-      dockerfile: client/Dockerfile
+      dockerfile: client/web/Dockerfile
       target: nginx
     container_name: pastepoint-nginx
     environment:

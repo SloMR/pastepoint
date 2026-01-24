@@ -1,5 +1,5 @@
 # Ignore node_modules directory
-client/node_modules
+client/web/node_modules
 
 # Ignore temporary files
 *.tmp
@@ -7,7 +7,7 @@ client/node_modules
 
 # Ignore build directories
 server/target
-client/dist
+client/web/dist
 scripts
 
 # Ignore environment files
@@ -16,7 +16,7 @@ scripts
 
 # Ignore Docker-related files
 server/Dockerfile
-client/Dockerfile
+client/web/Dockerfile
 docker-compose.yml
 
 # Ignore Git-related files
