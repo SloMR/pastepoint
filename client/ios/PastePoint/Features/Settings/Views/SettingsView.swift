@@ -51,7 +51,7 @@ struct SettingsView: View {
             print("Create new room tapped")
           } label: {
             HStack(spacing: 8) {
-              Image("light.plus")
+              Image("plus")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
@@ -120,7 +120,7 @@ struct SettingsView: View {
             print("Start private chat tapped")
           } label: {
             HStack(spacing: 8) {
-              Image("light.plus")
+              Image("plus")
                 .renderingMode(.template)
                 .resizable()
                 .scaledToFit()

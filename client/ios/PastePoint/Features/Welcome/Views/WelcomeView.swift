@@ -11,7 +11,7 @@ struct WelcomeView: View {
       Spacer()
 
       // Room icon
-      Image("users.light")
+      Image("users")
         .resizable()
         .scaledToFit()
         .frame(width: 24, height: 24)

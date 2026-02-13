@@ -6,12 +6,14 @@
 import SwiftUI
 
 struct ChatHeaderView: View {
+  @Environment(\.colorScheme) private var colorScheme
   var onMenuTap: (() -> Void)?
+  var onThemeTap: (() -> Void)?
 
   var body: some View {
     HStack {
       // Logo
-      Image("pastepoint.light")
+      Image("pastepoint")
         .resizable()
         .scaledToFit()
         .frame(height: 32)
@@ -35,13 +37,10 @@ struct ChatHeaderView: View {
 
         // Theme
         Button {
-          print("Theme Switch Clicked")
+          onThemeTap?()
         } label: {
-          Image("moon")
-            .renderingMode(.template)
-            .resizable()
-            .scaledToFit()
-            .frame(width: 18, height: 18)
+          Image(systemName: colorScheme == .dark ? "sun.max.fill" : "moon")
+            .font(.system(size: 18, weight: .medium))
             .foregroundStyle(.textPrimary)
             .frame(width: 36, height: 36)
             .overlay(

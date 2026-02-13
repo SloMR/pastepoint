@@ -64,4 +64,17 @@ enum AppColors {
     static let track = Color("scrollbarTrack")
     static let thumb = Color("scrollbarThumb")
   }
+
+  enum Scheme {
+    static let storageKey = "appColorScheme"
+    static let `default` = "light"
+
+    static func colorScheme(from raw: String) -> ColorScheme? {
+      raw == "dark" ? .dark : .light
+    }
+
+    static func next(after current: String) -> String {
+      current == "light" ? "dark" : "light"
+    }
+  }
 }

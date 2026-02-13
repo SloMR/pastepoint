@@ -1,6 +1,16 @@
 {
   "images" : [
     {
+      "filename" : "home.light.pdf",
+      "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
       "filename" : "home.pdf",
       "idiom" : "universal"
     }
