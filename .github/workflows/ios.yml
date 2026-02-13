@@ -21,7 +21,7 @@ permissions:
   pull-requests: read
 
 env:
-  DESTINATION: 'platform=iOS Simulator,name=iPhone 15'
+  DESTINATION: 'platform=iOS Simulator,name=iPhone 16'
   DERIVED_DATA: ${{ github.workspace }}/client/ios/build
 
 jobs:
@@ -56,7 +56,7 @@ jobs:
       - name: Boot iOS Simulator
         run: |
           xcrun simctl list devices available
-          xcrun simctl boot "iPhone 15" || true
+          xcrun simctl boot "iPhone 16" || true
 
       - name: Build for Testing
         working-directory: client/ios
