@@ -42,6 +42,7 @@ jobs:
           VALIDATE_MARKDOWN_PRETTIER: false
           VALIDATE_RUST_2015: false
           VALIDATE_RUST_2018: false
+          VALIDATE_RUST_2024: false
           VALIDATE_RUST_CLIPPY: false
           VALIDATE_CSS: false
           VALIDATE_CSS_PRETTIER: false
