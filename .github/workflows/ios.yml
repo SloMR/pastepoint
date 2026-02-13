@@ -3,11 +3,15 @@ name: iOS CI/CD
 on:
   push:
     branches: [main]
+    paths:
+      - 'client/ios/**'
+      - '.github/workflows/ios.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'client/ios/**'
+      - '.github/workflows/ios.yml'
 
-# Cancel in-progress runs when a new commit is pushed to the same PR
-# Saves CI minutes by not running duplicate builds
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
@@ -16,36 +20,45 @@ permissions:
   contents: read
   pull-requests: read
 
+env:
+  DESTINATION: 'platform=iOS Simulator,name=iPhone 16'
+  DERIVED_DATA: ${{ github.workspace }}/client/ios/build
+
 jobs:
   build:
     name: Build and Test iOS Client
     runs-on: macos-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Show Xcode version
-        run: xcodebuild -version
+      - name: Get Xcode version
+        id: xcode
+        run: echo "version=$(xcodebuild -version | head -1 | sed 's/Xcode //')" >> "$GITHUB_OUTPUT"
 
-      - name: Cache Swift Package Manager
+      - name: Cache Xcode DerivedData
         uses: actions/cache@v4
         with:
-          path: |
-            ~/Library/Developer/Xcode/DerivedData
-            ~/.swiftpm
-          key: ${{ runner.os }}-spm-${{ hashFiles('client/ios/**/Package.resolved') }}
+          path: ${{ env.DERIVED_DATA }}
+          key: ${{ runner.os }}-xcode-${{ steps.xcode.outputs.version }}-${{ hashFiles('client/ios/**') }}
           restore-keys: |
-            ${{ runner.os }}-spm-
+            ${{ runner.os }}-xcode-${{ steps.xcode.outputs.version }}-
 
-      - name: Build iOS App (Debug)
+      - name: Clear stale module cache
+        run: |
+          rm -rf ~/Library/Developer/Xcode/DerivedData/ModuleCache.noindex
+          rm -rf ${{ env.DERIVED_DATA }}/ModuleCache.noindex 2>/dev/null || true
+
+      - name: Build for Testing
         working-directory: client/ios
         run: |
-          xcodebuild build \
+          xcodebuild build-for-testing \
             -project PastePoint.xcodeproj \
             -scheme PastePoint \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination '${{ env.DESTINATION }}' \
+            -derivedDataPath '${{ env.DERIVED_DATA }}' \
             -configuration Debug \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
@@ -54,10 +67,11 @@ jobs:
       - name: Run Unit Tests
         working-directory: client/ios
         run: |
-          xcodebuild test \
+          xcodebuild test-without-building \
             -project PastePoint.xcodeproj \
             -scheme PastePoint \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination '${{ env.DESTINATION }}' \
+            -derivedDataPath '${{ env.DERIVED_DATA }}' \
             -configuration Debug \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
@@ -69,7 +83,8 @@ jobs:
           xcodebuild build \
             -project PastePoint.xcodeproj \
             -scheme PastePoint \
-            -destination 'platform=iOS Simulator,name=iPhone 16' \
+            -destination '${{ env.DESTINATION }}' \
+            -derivedDataPath '${{ env.DERIVED_DATA }}' \
             -configuration Release \
             CODE_SIGN_IDENTITY="" \
             CODE_SIGNING_REQUIRED=NO \
