@@ -21,7 +21,7 @@ permissions:
   pull-requests: read
 
 env:
-  DESTINATION: 'generic/platform=iOS Simulator'
+  DESTINATION: 'platform=iOS Simulator,name=iPhone 15'
   DERIVED_DATA: ${{ github.workspace }}/client/ios/build
 
 jobs:
@@ -52,6 +52,11 @@ jobs:
         run: |
           rm -rf ~/Library/Developer/Xcode/DerivedData/ModuleCache.noindex
           rm -rf ${{ env.DERIVED_DATA }}/ModuleCache.noindex 2>/dev/null || true
+
+      - name: Boot iOS Simulator
+        run: |
+          xcrun simctl list devices available
+          xcrun simctl boot "iPhone 15" || true
 
       - name: Build for Testing
         working-directory: client/ios
