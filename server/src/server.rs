@@ -8,7 +8,7 @@ use std::collections::{hash_map::Entry::Vacant, HashMap};
 
 impl WsChatServer {
     pub fn take_room(&mut self, session_id: &str, room_name: &str) -> Option<Room> {
-        log::debug!(target: "Websocket","Getting room: {}", room_name);
+        log::debug!(target: "Websocket","Getting room: {room_name}");
         let session_id = self.rooms.get_mut(session_id)?;
         let room = session_id.get_mut(room_name)?;
         let room = std::mem::take(room);
@@ -28,7 +28,7 @@ impl WsChatServer {
         if let Some(room) = self.rooms.get_mut(session_id) {
             if let Some(existing_room) = room.get_mut(room_name) {
                 return if let Vacant(e) = existing_room.entry(id) {
-                    log::debug!(target: "Websocket", "Adding client to room: {}", room_name);
+                    log::debug!(target: "Websocket", "Adding client to room: {room_name}");
                     e.insert(ClientMetadata {
                         recipient: client,
                         name,
@@ -37,9 +37,7 @@ impl WsChatServer {
                 } else {
                     log::debug!(
                         target: "Websocket",
-                        "Client {} already in room: {}, skipping addition",
-                        id,
-                        room_name
+                        "Client {id} already in room: {room_name}, skipping addition"
                     );
                     id
                 };
@@ -73,9 +71,7 @@ impl WsChatServer {
     ) -> Option<()> {
         log::debug!(
             target: "Websocket",
-            "Sending join message to room {}: {}",
-            room_name,
-            msg
+            "Sending join message to room {room_name}: {msg}"
         );
 
         if let Some(room) = self.rooms.get_mut(session_id)?.get_mut(room_name) {
@@ -90,16 +86,12 @@ impl WsChatServer {
                     {
                         log::debug!(
                             target: "Websocket",
-                            "Join Message sent to client {}, staying in room: {}",
-                            id,
-                            room_name
+                            "Join Message sent to client {id}, staying in room: {room_name}"
                         );
                     } else {
                         log::debug!(
                             target: "Websocket",
-                            "Failed to send join message to client {}, removing from room: {}",
-                            id,
-                            room_name
+                            "Failed to send join message to client {id}, removing from room: {room_name}"
                         );
                         room.remove(&id);
                     }
@@ -110,9 +102,7 @@ impl WsChatServer {
         } else {
             log::debug!(
                 target: "Websocket",
-                "Room {} not found in session {}",
-                room_name,
-                session_id
+                "Room {room_name} not found in session {session_id}"
             );
             None
         }
@@ -121,7 +111,7 @@ impl WsChatServer {
     pub fn broadcast_room_list(&self, session_id: &str) {
         if let Some(users) = self.rooms.get(session_id) {
             let room_list = users.keys().cloned().collect::<Vec<String>>().join(", ");
-            let message = format!("{} {}", WS_PREFIX_SYSTEM_ROOMS, room_list);
+            let message = format!("{WS_PREFIX_SYSTEM_ROOMS} {room_list}");
 
             for room in users.values() {
                 for client in room.values() {
@@ -140,9 +130,7 @@ impl WsChatServer {
                     .collect();
                 log::debug!(
                     target: "Websocket",
-                    "Broadcasting members of room {}: {:?}",
-                    room_name,
-                    member_list
+                    "Broadcasting members of room {room_name}: {member_list:?}"
                 );
                 let member_message =
                     format!("{} {}", WS_PREFIX_SYSTEM_MEMBERS, member_list.join(", "));
@@ -173,8 +161,7 @@ impl WsChatServer {
                 self.rooms.remove(session_id);
                 log::debug!(
                     target: "Websocket",
-                    "Session {} has no more users and is being removed",
-                    session_id
+                    "Session {session_id} has no more users and is being removed"
                 );
             }
         }
@@ -196,7 +183,7 @@ impl WsChatServer {
             .collect();
 
         for session_id in empty_sessions {
-            log::debug!(target: "Websocket","Cleanup: Removing empty session {}", session_id);
+            log::debug!(target: "Websocket","Cleanup: Removing empty session {session_id}");
             self.rooms.remove(&session_id);
         }
 
@@ -225,9 +212,7 @@ impl WsChatServer {
         if to_user == from_user {
             log::debug!(
                 target: "Websocket",
-                "Skipping self-relay from {} to {}",
-                from_user,
-                to_user
+                "Skipping self-relay from {from_user} to {to_user}"
             );
             return;
         }
@@ -240,17 +225,12 @@ impl WsChatServer {
                         if let Err(e) = client.recipient.try_send(message) {
                             log::error!(
                                 target: "Websocket",
-                                "Failed to relay signal from {} to {}: {:?}",
-                                from_user,
-                                to_user,
-                                e
+                                "Failed to relay signal from {from_user} to {to_user}: {e:?}"
                             );
                         } else {
                             log::debug!(
                                 target: "Websocket",
-                                "Successfully relayed signal from {} to {}",
-                                from_user,
-                                to_user
+                                "Successfully relayed signal from {from_user} to {to_user}"
                             );
                         }
                         return;
@@ -261,9 +241,7 @@ impl WsChatServer {
 
         log::debug!(
             target: "Websocket",
-            "Could not find target user {} to relay message from {}",
-            to_user,
-            from_user
+            "Could not find target user {to_user} to relay message from {from_user}"
         );
     }
 }

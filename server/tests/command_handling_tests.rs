@@ -111,7 +111,7 @@ async fn test_ws_invalid_signal_message() {
 
     framed
         .send(Message::Text(
-            format!("[SignalMessage] {}", invalid_signal_payload).into(),
+            format!("[SignalMessage] {invalid_signal_payload}").into(),
         ))
         .await
         .unwrap();

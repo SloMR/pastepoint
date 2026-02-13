@@ -14,7 +14,7 @@ impl Handler<JoinRoom> for WsChatServer {
 
         let id =
             self.add_client_to_room(&session_id, &room_name, None, client, client_name.clone());
-        let join_msg = format!("{} {} {}", client_name, WS_PREFIX_SYSTEM_JOIN, room_name);
+        let join_msg = format!("{client_name} {WS_PREFIX_SYSTEM_JOIN} {room_name}");
 
         self.send_join_message(&session_id, &room_name, &join_msg, id);
         self.broadcast_room_members(&session_id, &room_name);
@@ -105,9 +105,7 @@ impl Handler<RelaySignalMessage> for WsChatServer {
         if from == to {
             log::debug!(
                 target: "Websocket",
-                "Skipping self-to-self signal from '{}' to '{}'",
-                from,
-                to
+                "Skipping self-to-self signal from '{from}' to '{to}'"
             );
             return;
         }
@@ -119,8 +117,7 @@ impl Handler<RelaySignalMessage> for WsChatServer {
                         if client.recipient.try_send(message.clone()).is_err() {
                             log::debug!(
                                 target: "Websocket",
-                                "Failed to relay signal to '{}', client may have disconnected",
-                                to
+                                "Failed to relay signal to '{to}', client may have disconnected"
                             );
                         }
                         return;

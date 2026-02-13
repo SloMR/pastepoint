@@ -33,6 +33,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Get Xcode version
         id: xcode
@@ -50,6 +52,11 @@ jobs:
         run: |
           rm -rf ~/Library/Developer/Xcode/DerivedData/ModuleCache.noindex
           rm -rf ${{ env.DERIVED_DATA }}/ModuleCache.noindex 2>/dev/null || true
+
+      - name: Boot iOS Simulator
+        run: |
+          xcrun simctl list devices available
+          xcrun simctl boot "iPhone 16" || true
 
       - name: Build for Testing
         working-directory: client/ios
