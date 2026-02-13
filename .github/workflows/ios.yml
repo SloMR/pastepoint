@@ -21,7 +21,7 @@ permissions:
   pull-requests: read
 
 env:
-  DESTINATION: 'platform=iOS Simulator,name=iPhone 16'
+  DESTINATION: 'generic/platform=iOS Simulator'
   DERIVED_DATA: ${{ github.workspace }}/client/ios/build
 
 jobs:
