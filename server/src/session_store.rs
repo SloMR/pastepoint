@@ -55,7 +55,7 @@ impl SessionStore {
     ) -> Option<String> {
         // For private sessions, check if the code is expired.
         if is_private && self.is_code_expired(key) {
-            log::debug!(target: "Websocket", "Private session code {} is expired", key);
+            log::debug!(target: "Websocket", "Private session code {key} is expired");
             return None;
         }
 
@@ -64,7 +64,7 @@ impl SessionStore {
             let mut scheduled = self.scheduled_expirations.lock().expect("lock poisoned");
             if let Some(handle) = scheduled.remove(key) {
                 handle.abort();
-                log::debug!("Cancelled scheduled expiration for {}", key);
+                log::debug!("Cancelled scheduled expiration for {key}");
             }
         }
 
@@ -74,8 +74,7 @@ impl SessionStore {
                 Err(e) => {
                     log::error!(
                         target: "Websocket",
-                        "Failed to acquire lock on key_to_session: {:?}",
-                        e
+                        "Failed to acquire lock on key_to_session: {e:?}"
                     );
                     return None;
                 }
@@ -101,8 +100,7 @@ impl SessionStore {
                 Err(e) => {
                     log::error!(
                         target: "Websocket",
-                        "Failed to acquire lock on key_to_session: {:?}",
-                        e
+                        "Failed to acquire lock on key_to_session: {e:?}"
                     );
                     return None;
                 }
@@ -134,7 +132,7 @@ impl SessionStore {
                 .frame_size(MAX_FRAME_SIZE)
                 .start(),
                 Err(_) => {
-                    log::error!(target: "Websocket", "Invalid UUID returned: {}", uuid_str);
+                    log::error!(target: "Websocket", "Invalid UUID returned: {uuid_str}");
                     Ok(HttpResponse::InternalServerError()
                         .content_type(CONTENT_TYPE_TEXT_PLAIN)
                         .body("Server configuration error"))
@@ -143,8 +141,7 @@ impl SessionStore {
             None => {
                 log::warn!(
                     target: "Websocket",
-                    "Key '{}' not found in strict mode, returning 404",
-                    key
+                    "Key '{key}' not found in strict mode, returning 404"
                 );
                 Ok(HttpResponse::NotFound()
                     .content_type(CONTENT_TYPE_TEXT_PLAIN)
@@ -160,15 +157,14 @@ impl SessionStore {
             Err(e) => {
                 log::error!(
                     target: "Websocket",
-                    "Failed to acquire lock on uuid_client_counts: {:?}",
-                    e
+                    "Failed to acquire lock on uuid_client_counts: {e:?}"
                 );
                 return;
             }
         };
         let counter = counts.entry(uuid).or_default();
         let new_count = counter.fetch_add(1, Ordering::SeqCst) + 1;
-        log::debug!(target: "Websocket", "Session {} now has {} clients", uuid, new_count);
+        log::debug!(target: "Websocket", "Session {uuid} now has {new_count} clients");
     }
 
     /// Decrements the client count. If it reaches zero for a private session,
@@ -180,10 +176,7 @@ impl SessionStore {
             let new_count = prev.saturating_sub(1);
             log::debug!(
                 target: "Websocket",
-                "Client count for session {} decreased from {} to {}",
-                uuid,
-                prev,
-                new_count
+                "Client count for session {uuid} decreased from {prev} to {new_count}"
             );
             if new_count == 0 {
                 counts.remove(uuid);
@@ -192,7 +185,7 @@ impl SessionStore {
                     .try_send(CleanupSession(uuid.to_string()))
                     .is_ok()
                 {
-                    log::debug!(target: "Websocket", "Sent cleanup request for session {}", uuid);
+                    log::debug!(target: "Websocket", "Sent cleanup request for session {uuid}");
                 }
 
                 let map = self.key_to_session.lock().expect("lock poisoned");
@@ -207,7 +200,7 @@ impl SessionStore {
                     if !is_private {
                         let mut map = self.key_to_session.lock().expect("lock poisoned");
                         map.remove(&key);
-                        log::debug!(target: "Websocket", "Public session code {} removed", key);
+                        log::debug!(target: "Websocket", "Public session code {key} removed");
                     } else {
                         let store_clone = self.clone();
                         let key_clone = key.clone();
@@ -228,7 +221,7 @@ impl SessionStore {
                                     let mut expired =
                                         store_clone.expired_private_codes.lock().unwrap();
                                     expired.insert(key_clone.clone());
-                                    log::debug!("Private session code {} expired", key_clone);
+                                    log::debug!("Private session code {key_clone} expired");
                                 }
                             }
                         });
@@ -243,8 +236,7 @@ impl SessionStore {
         } else {
             log::debug!(
                 target: "Websocket",
-                "Attempted to remove client from unknown session {}",
-                uuid
+                "Attempted to remove client from unknown session {uuid}"
             );
         }
     }

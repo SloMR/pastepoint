@@ -40,8 +40,7 @@ pub async fn create_session(store: web::Data<SessionStore>) -> Result<HttpRespon
             Err(e) => {
                 log::error!(
                     target: "Websocket",
-                    "Failed to acquire lock on key_to_session: {:?}",
-                    e
+                    "Failed to acquire lock on key_to_session: {e:?}"
                 );
                 return Err(ServerError::InternalServerError);
             }
@@ -75,15 +74,15 @@ pub async fn chat_ws(
     let is_dev_mode = ServerConfig::is_dev_env();
 
     let ip_str = get_client_ip(&req, is_dev_mode)
-        .map_err(|e| ServerError::BadRequest(format!("Failed to get client IP: {}", e)))?;
+        .map_err(|e| ServerError::BadRequest(format!("Failed to get client IP: {e}")))?;
     check_suspicious_connection(&req, &ip_str);
 
     let session_key = create_session_key(&req, &ip_str);
 
-    log::debug!(target: "Websocket", "Connection request - IP: {}, Session Key: {}", ip_str, session_key);
+    log::debug!(target: "Websocket", "Connection request - IP: {ip_str}, Session Key: {session_key}");
     store
         .start_websocket(config.get_ref(), &req, stream, &session_key, false, false)
-        .map_err(|e| ServerError::BadRequest(format!("WebSocket connection failed: {}", e)))
+        .map_err(|e| ServerError::BadRequest(format!("WebSocket connection failed: {e}")))
 }
 
 // -----------------------------------------------------
@@ -101,7 +100,7 @@ pub async fn private_chat_ws(
     validate_websocket_headers(&req)?;
 
     let code = path.into_inner();
-    log::debug!(target: "Websocket", "Received session code: {}", code);
+    log::debug!(target: "Websocket", "Received session code: {code}");
     if code.trim().is_empty() {
         log::debug!(target: "Websocket", "Empty code => returning 400");
         return Err(ServerError::BadRequest(
@@ -111,7 +110,7 @@ pub async fn private_chat_ws(
 
     store
         .start_websocket(config.get_ref(), &req, stream, &code, true, true)
-        .map_err(|e| ServerError::BadRequest(format!("WebSocket connection failed: {}", e)))
+        .map_err(|e| ServerError::BadRequest(format!("WebSocket connection failed: {e}")))
 }
 
 // -----------------------------------------------------
@@ -139,7 +138,7 @@ fn get_client_ip(req: &HttpRequest, is_dev_mode: bool) -> Result<String, Error> 
         req.peer_addr()
             .map(|peer| {
                 let peer_ip = peer.ip().to_string();
-                log::info!(target: "Websocket", "Using direct peer IP in dev mode: {}", peer_ip);
+                log::info!(target: "Websocket", "Using direct peer IP in dev mode: {peer_ip}");
                 peer_ip
             })
             .ok_or_else(|| {
@@ -157,7 +156,7 @@ fn create_session_key(req: &HttpRequest, ip_str: &str) -> String {
         .and_then(|h| h.to_str().ok())
         .unwrap_or("unknown_host");
 
-    format!("{}:{}", host, ip_str)
+    format!("{host}:{ip_str}")
 }
 
 // Helper function to check for suspicious connections
@@ -169,7 +168,7 @@ fn check_suspicious_connection(req: &HttpRequest, ip_str: &str) {
         .unwrap_or("unknown");
 
     if user_agent.len() < MIN_USER_AGENT_LENGTH || user_agent.to_lowercase().contains("bot") {
-        log::error!(target: "Websocket", "Suspicious connection attempt - IP: {}, UA: {}", ip_str, user_agent);
+        log::error!(target: "Websocket", "Suspicious connection attempt - IP: {ip_str}, UA: {user_agent}");
     }
 }
 

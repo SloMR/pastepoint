@@ -23,7 +23,7 @@ impl WsChatSession {
         let id = rng().random_range(0..usize::MAX);
         let first_name = FirstName().fake::<String>();
         let last_name = LastName().fake::<String>();
-        let name = format!("{} {}", first_name, last_name);
+        let name = format!("{first_name} {last_name}");
 
         WsChatSession {
             session_id: session_id.to_owned(),
@@ -91,12 +91,12 @@ impl WsChatSession {
             .into_actor(self)
             .then(|res, _, ctx| {
                 if let Ok(rooms) = res {
-                    log::debug!(target: "Websocket", "{} Rooms Available: {:?}", WS_PREFIX_SYSTEM_ROOMS, rooms);
+                    log::debug!(target: "Websocket", "{WS_PREFIX_SYSTEM_ROOMS} Rooms Available: {rooms:?}");
 
                     let room_list = rooms.join(", ");
-                    ctx.text(format!("{} {}", WS_PREFIX_SYSTEM_ROOMS, room_list));
+                    ctx.text(format!("{WS_PREFIX_SYSTEM_ROOMS} {room_list}"));
                 } else {
-                    ctx.text(format!("{} Failed to retrieve room list.", WS_PREFIX_SYSTEM_ERROR));
+                    ctx.text(format!("{WS_PREFIX_SYSTEM_ERROR} Failed to retrieve room list."));
                 }
                 fut::ready(())
             })
@@ -105,7 +105,7 @@ impl WsChatSession {
 
     fn user_command(&mut self, command_str: &str, ctx: &mut ws::WebsocketContext<WsChatSession>) {
         let command_str = command_str.trim();
-        log::debug!(target: "Websocket","Processing command: '{}'", command_str);
+        log::debug!(target: "Websocket","Processing command: '{command_str}'");
 
         let mut parts = command_str.splitn(2, ' ');
         let cmd = parts.next().unwrap_or("");
@@ -117,10 +117,10 @@ impl WsChatSession {
             }
             "/join" => {
                 if let Some(room_name) = args {
-                    log::debug!(target: "Websocket", "Received join command for room '{}'", room_name);
+                    log::debug!(target: "Websocket", "Received join command for room '{room_name}'");
                     self.join_room(room_name, ctx);
                 } else {
-                    ctx.text(format!("{} Room name is required", WS_PREFIX_SYSTEM_ERROR));
+                    ctx.text(format!("{WS_PREFIX_SYSTEM_ERROR} Room name is required"));
                 }
             }
             "/name" => {
@@ -128,7 +128,7 @@ impl WsChatSession {
                 ctx.text(format!("{} {}", WS_PREFIX_SYSTEM_NAME, self.name));
             }
             _ => {
-                log::debug!(target: "Websocket", "Unknown command: '{}'", cmd);
+                log::debug!(target: "Websocket", "Unknown command: '{cmd}'");
                 ctx.text(format!(
                     "{} Error Unknown command: {}",
                     WS_PREFIX_SYSTEM_ERROR,
@@ -147,10 +147,7 @@ impl WsChatSession {
                 msg.len(),
                 self.name
             );
-            ctx.text(format!(
-                "{} Signal message too large",
-                WS_PREFIX_SYSTEM_ERROR
-            ));
+            ctx.text(format!("{WS_PREFIX_SYSTEM_ERROR} Signal message too large"));
             return;
         }
 
@@ -161,8 +158,7 @@ impl WsChatSession {
             Err(e) => {
                 log::warn!(target: "Websocket", "Invalid signal JSON from {}: {}", self.name, e);
                 ctx.text(format!(
-                    "{} Invalid signaling message format",
-                    WS_PREFIX_SYSTEM_ERROR
+                    "{WS_PREFIX_SYSTEM_ERROR} Invalid signaling message format"
                 ));
                 return;
             }
@@ -174,8 +170,7 @@ impl WsChatSession {
             None => {
                 log::warn!(target: "Websocket", "Signal missing 'to' field from {}", self.name);
                 ctx.text(format!(
-                    "{} Signaling message missing 'to' field",
-                    WS_PREFIX_SYSTEM_ERROR
+                    "{WS_PREFIX_SYSTEM_ERROR} Signaling message missing 'to' field"
                 ));
                 return;
             }
@@ -234,22 +229,21 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
         match msg {
             ws::Message::Text(text) => {
                 let msg = text.trim();
-                log::debug!(target: "Websocket", "Received message: '{}'", msg);
+                log::debug!(target: "Websocket", "Received message: '{msg}'");
                 if msg.starts_with(WS_PREFIX_SIGNAL_MESSAGE) {
                     self.handle_signal_message(msg, ctx);
                 } else if msg.starts_with(WS_PREFIX_USER_COMMAND) {
                     let command_str = msg.trim_start_matches(WS_PREFIX_USER_COMMAND).trim();
                     log::debug!(
                         target: "Websocket",
-                        "Command string after trimming: '{}'",
-                        command_str
+                        "Command string after trimming: '{command_str}'"
                     );
                     self.user_command(command_str, ctx);
                 } else if msg.starts_with(WS_PREFIX_USER_DISCONNECTED) {
                     log::debug!(target: "Websocket","Received disconnect command");
                     self.handle_user_disconnect();
                 } else {
-                    log::debug!(target: "Websocket","Unknown command: {}", msg);
+                    log::debug!(target: "Websocket","Unknown command: {msg}");
                     ctx.text(format!(
                         "{} Error Unknown command: {}",
                         WS_PREFIX_SYSTEM_ERROR,
@@ -267,7 +261,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 self.last_heartbeat = Some(Instant::now());
             }
             ws::Message::Close(reason) => {
-                log::debug!(target: "Websocket", "Closing connection: {:?}", reason);
+                log::debug!(target: "Websocket", "Closing connection: {reason:?}");
                 self.handle_user_disconnect();
                 ctx.close(reason);
                 ctx.stop();

@@ -57,7 +57,7 @@ impl Actor for WsChatSession {
         }
 
         if let Ok(uuid) = Uuid::parse_str(&self.session_id) {
-            log::debug!(target: "Websocket","Removing client {} from session", uuid);
+            log::debug!(target: "Websocket","Removing client {uuid} from session");
             self.session_store.remove_client(&uuid);
         } else {
             log::debug!(

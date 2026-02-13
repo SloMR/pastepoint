@@ -230,7 +230,7 @@ async fn test_cors_origin_checking() {
     let domain_only = allowed_domain
         .trim_start_matches("https://")
         .trim_start_matches("http://");
-    let origin = format!("https://www.{}", domain_only);
+    let origin = format!("https://www.{domain_only}");
     let req = test::TestRequest::get()
         .uri("/")
         .insert_header(("Origin", origin.clone()))

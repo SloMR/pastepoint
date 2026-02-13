@@ -27,12 +27,11 @@ impl ServerConfig {
         let environment = env::var("RUN_ENV").unwrap_or_else(|_| "development".to_string());
         log::debug!(
             target: "Websocket",
-            "Loading configuration for environment: {}",
-            environment
+            "Loading configuration for environment: {environment}"
         );
 
         let mut builder = Config::builder()
-            .add_source(File::with_name(&format!("config/{}", environment)).required(true));
+            .add_source(File::with_name(&format!("config/{environment}")).required(true));
 
         if let Some(auto_join) = auto_join_override {
             builder = builder.set_override("server.auto_join", auto_join)?;
@@ -46,8 +45,7 @@ impl ServerConfig {
         let environment = env::var("RUN_ENV").unwrap_or_else(|_| "development".to_string());
         log::debug!(
             target: "Websocket",
-            "Checking if environment is development: {}",
-            environment
+            "Checking if environment is development: {environment}"
         );
         environment == "development" || environment == "docker-dev"
     }
@@ -55,7 +53,7 @@ impl ServerConfig {
     pub fn check_origin(&self, origin: &HeaderValue) -> bool {
         fn extract_host(input: &str) -> Option<String> {
             Url::parse(input)
-                .or_else(|_| Url::parse(&format!("https://{}", input)))
+                .or_else(|_| Url::parse(&format!("https://{input}")))
                 .ok()
                 .and_then(|u| u.host_str().map(|s| s.to_ascii_lowercase()))
         }
@@ -65,7 +63,7 @@ impl ServerConfig {
                 extract_host(origin_str),
                 extract_host(&self.cors_allowed_origins),
             ) {
-                origin_host == allowed_host || origin_host.ends_with(&format!(".{}", allowed_host))
+                origin_host == allowed_host || origin_host.ends_with(&format!(".{allowed_host}"))
             } else {
                 false
             }
