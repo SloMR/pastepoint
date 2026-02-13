@@ -8,11 +8,15 @@ import SwiftUI
 // MARK: - Root
 
 struct ContentView: View {
+  @AppStorage(AppColors.Scheme.storageKey) private var colorSchemeRaw: String = AppColors.Scheme.default
   @State private var showSettings = false
 
   var body: some View {
     VStack(spacing: 0) {
-      ChatHeaderView(onMenuTap: { showSettings = true })
+      ChatHeaderView(
+        onMenuTap: { showSettings = true },
+        onThemeTap: { colorSchemeRaw = AppColors.Scheme.next(after: colorSchemeRaw) }
+      )
       Divider()
 
       RoomContentView()
@@ -22,6 +26,7 @@ struct ContentView: View {
         .padding(.vertical, 12)
     }
     .background(AppColors.Background.background)
+    .preferredColorScheme(AppColors.Scheme.colorScheme(from: colorSchemeRaw))
     .ignoresSafeArea(.keyboard, edges: .bottom)
     .sheet(isPresented: $showSettings) {
       NavigationStack {
