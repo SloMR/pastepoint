@@ -5,7 +5,9 @@
 
 import SwiftUI
 
-struct HeaderView: View {
+struct ChatHeaderView: View {
+  var onMenuTap: (() -> Void)?
+
   var body: some View {
     HStack {
       // Logo
@@ -51,7 +53,7 @@ struct HeaderView: View {
 
         // Menu
         Button {
-          print("Menu Button Clicked")
+          onMenuTap?()
         } label: {
           Image(systemName: "line.3.horizontal")
             .font(.system(size: 18, weight: .semibold))
@@ -73,5 +75,5 @@ struct HeaderView: View {
 }
 
 #Preview {
-    HeaderView()
+  ChatHeaderView()
 }

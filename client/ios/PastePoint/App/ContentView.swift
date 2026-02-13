@@ -8,9 +8,11 @@ import SwiftUI
 // MARK: - Root
 
 struct ContentView: View {
+  @State private var showSettings = false
+
   var body: some View {
     VStack(spacing: 0) {
-      HeaderView()
+      ChatHeaderView(onMenuTap: { showSettings = true })
       Divider()
 
       RoomContentView()
@@ -21,6 +23,11 @@ struct ContentView: View {
     }
     .background(AppColors.Background.background)
     .ignoresSafeArea(.keyboard, edges: .bottom)
+    .sheet(isPresented: $showSettings) {
+      NavigationStack {
+        SettingsView()
+      }
+    }
   }
 }
 
