@@ -3,6 +3,16 @@
     {
       "filename" : "warning-light.pdf",
       "idiom" : "universal"
+    },
+    {
+      "appearances" : [
+        {
+          "appearance" : "luminosity",
+          "value" : "dark"
+        }
+      ],
+      "filename" : "warning.dark.pdf",
+      "idiom" : "universal"
     }
   ],
   "info" : {
