@@ -27,7 +27,6 @@
 		4C2327002F1ECB1B005FED3A /* PastePoint.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PastePoint.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C23270D2F1ECB1C005FED3A /* PastePointTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PastePointTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		4C2327172F1ECB1C005FED3A /* PastePointUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PastePointUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		4CCB6C952F24035F007F4351 /* PastePoint.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; path = PastePoint.xctestplan; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -35,6 +34,7 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Resources/Info.plist,
+				Resources/PastePoint.xctestplan,
 			);
 			target = 4C2326FF2F1ECB1B005FED3A /* PastePoint */;
 		};
@@ -89,7 +89,6 @@
 		4C2326F72F1ECB1A005FED3A = {
 			isa = PBXGroup;
 			children = (
-				4CCB6C952F24035F007F4351 /* PastePoint.xctestplan */,
 				4C2327022F1ECB1B005FED3A /* PastePoint */,
 				4C2327102F1ECB1C005FED3A /* PastePointTests */,
 				4C23271A2F1ECB1C005FED3A /* PastePointUITests */,

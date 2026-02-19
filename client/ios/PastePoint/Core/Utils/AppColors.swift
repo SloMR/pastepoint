@@ -69,7 +69,7 @@ enum AppColors {
     static let storageKey = "appColorScheme"
     static let `default` = "light"
 
-    static func colorScheme(from raw: String) -> ColorScheme? {
+    static func colorScheme(from raw: String) -> ColorScheme {
       raw == "dark" ? .dark : .light
     }
 

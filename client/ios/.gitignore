@@ -9,6 +9,7 @@ xcuserdata/
 *.moved-aside
 *.xcuserstate
 DerivedData/
+build/
 *.hmap
 *.ipa
 *.dSYM.zip
