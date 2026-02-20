@@ -9,6 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
   @AppStorage(AppColors.Scheme.storageKey) private var colorSchemeRaw: String = AppColors.Scheme.default
+  @EnvironmentObject private var services: AppServices
+
   @State private var showSettings = false
 
   var body: some View {
