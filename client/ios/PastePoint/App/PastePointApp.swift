@@ -7,9 +7,12 @@ import SwiftUI
 
 @main
 struct PastePointApp: App {
+  @StateObject private var services = AppServices.shared
+  
     var body: some Scene {
         WindowGroup {
             ContentView()
+            .environmentObject(services)
         }
     }
 }
