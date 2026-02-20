@@ -9,6 +9,7 @@ import Combine
 @MainActor
 final class AppServices: ObservableObject {
   let wsService = WebSocketConnectionService()
+  lazy var roomService = RoomService(wsService: wsService)
   
   static let shared = AppServices()
 }
