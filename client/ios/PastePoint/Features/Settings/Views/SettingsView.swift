@@ -7,9 +7,11 @@ import SwiftUI
 
 struct SettingsView: View {
   @Environment(\.dismiss) private var dismiss
-  
-  @State private var numberOfRooms: Int = 1
-  @State private var numberOfMembers: Int = 1
+  @ObservedObject var roomService: RoomService
+  @ObservedObject var userService: UserService
+  @ObservedObject var wsService: WebSocketConnectionService
+  @ObservedObject var sessionService: SessionService
+
   @State private var privacyURLToShow: IdentifiableURL?
   
   private var avatar: some View {
@@ -26,7 +28,7 @@ struct SettingsView: View {
       HStack(alignment: .center, spacing: 0) {
         avatar
         
-        Text("John Doe")
+        Text(userService.user)
           .font(.title3)
           .foregroundColor(.textPrimary)
         
@@ -49,6 +51,9 @@ struct SettingsView: View {
           // MARK: - Create New Room Button
           Button {
             print("Create new room tapped")
+            Task {
+              await roomService.joinOrJoinRoom("Testing from iOS") // TODO: Add UI for this one
+            }
           } label: {
             HStack(spacing: 8) {
               Image("plus")
@@ -90,79 +95,164 @@ struct SettingsView: View {
               
               Spacer()
               
-              Text("\(numberOfRooms) Rooms")
+              Text("\(roomService.rooms.count) Rooms")
                 .font(.caption2)
                 .foregroundColor(.textPrimary)
             }
             .padding(.horizontal)
             
-            HStack(alignment: .center, spacing: 0) {
-              Image("inactive.comment")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 16, height: 16)
-                .padding(.trailing, 5)
+            ForEach(roomService.rooms, id: \.self) { room in
+              HStack(alignment: .center, spacing: 0) {
+                Button {
+                  Task {
+                    print("Joining room \(room)")
+                    await roomService.joinOrJoinRoom(room)
+                  }
+                } label: {
+                  Image("inactive.comment")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 16, height: 16)
+                    .padding(.trailing, 5)
+                    .foregroundStyle(room == roomService.currentRoom ? .brand : .secondary)
+                  
+                  Text(room)
+                    .font(.subheadline)
+                    .foregroundColor(room == roomService.currentRoom ? .brand : .textPrimary)
+                }
+
+                Spacer()
+              }
+              .padding(.horizontal, 60)
+              .padding(.bottom, 2)
+            }
+          }
+          
+          // MARK: - Private Session Section
+          if let code = wsService.currentSessionCode {
+            // In private session: show code and End Session
+            VStack(alignment: .leading) {
+              HStack(alignment: .center, spacing: 0) {
+                Image("code")
+                  .renderingMode(.template)
+                  .resizable()
+                  .scaledToFit()
+                  .frame(width: 16, height: 16)
+                  .padding(.trailing, 5)
+                
+                Text("Code")
+                  .font(.subheadline)
+                  .foregroundColor(.textPrimary)
+              }
+              
+              ZStack(alignment: .center) {
+                RoundedRectangle(cornerRadius: 10)
+                  .fill(.inputBackground)
+                  .padding(.horizontal)
+                
+                Text(code)
+                  .font(.system(size: 18, weight: .medium, design: .monospaced))
+                  .foregroundColor(.textPrimary)
+                  .padding(.vertical, 14)
+              }
+              
+              HStack(alignment: .center, spacing: 16) {
+                Spacer()
+                // Copy Button
+                Button {
+                  UIPasteboard.general.string = code
+                } label: {
+                  Image("copy")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 50, height: 50)
+                    .background(
+                      RoundedRectangle(cornerRadius: 12)
+                        .fill(AppColors.Brand.brand)
+                    )
+                }
+                .buttonStyle(.plain)
+                
+                // QR Button
+                Button {
+                  // Show QR sheet
+                } label: {
+                  Image("qrcode")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white)
+                    .frame(width: 50, height: 50)
+                    .background(
+                      RoundedRectangle(cornerRadius: 12)
+                        .fill(AppColors.Brand.brand)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Spacer()
+              }
+            }
+            .padding(.top, 22)
+            .padding(.horizontal)
+
+          } else {
+            // Not in private session: show Create and Join
+            VStack(spacing: 8) {
+              Button {
+                Task {
+                  do {
+                    let code = try await sessionService.getNewSessionCode()
+                    await wsService.setupPrivateSession(code)
+                    await wsService.connect()
+                    await roomService.listRooms()
+                    await userService.getUsername()
+                  } catch {
+                    print("Cannot get the session code \(error)")
+                  }
+                }
+              } label: {
+                HStack(spacing: 8) {
+                  Image("plus")
+                    .renderingMode(.template)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 24, height: 24)
+                  Text("Start Private Chat")
+                    .font(.headline)
+                }
                 .foregroundStyle(.brand)
-              
-              Text("main")
-                .font(.subheadline)
-                .foregroundColor(.brand)
-              
-              Spacer()
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
+                .background(
+                  RoundedRectangle(cornerRadius: 8)
+                    .stroke(.brand, lineWidth: 0.8)
+                )
+              }
+              .buttonStyle(.plain)
+
+              Button {
+                print("Join private chat tapped")
+              } label: {
+                HStack(spacing: 8) {
+                  Text("Join Private Chat")
+                    .font(.headline)
+                }
+                .foregroundStyle(.brand)
+                .padding(.horizontal, 14)
+                .padding(.vertical, 8)
+                .frame(maxWidth: .infinity)
+                .background(
+                  RoundedRectangle(cornerRadius: 8)
+                    .stroke(.brand, lineWidth: 0.8)
+                )
+              }
+              .buttonStyle(.plain)
             }
-            .padding(.horizontal, 60)
-            .padding(.vertical, 8)
+            .padding(.horizontal)
+            .padding(.top, 22)
+            .padding(.bottom, 44)
           }
-          
-          // MARK: - Start Private Chat Button
-          Button {
-            print("Start private chat tapped")
-          } label: {
-            HStack(spacing: 8) {
-              Image("plus")
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .frame(width: 24, height: 24)
-              
-              Text("Start Private Chat")
-                .font(.headline)
-            }
-            .foregroundStyle(.brand)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity)
-            .background(
-              RoundedRectangle(cornerRadius: 8)
-                .stroke(.brand, lineWidth: 0.8)
-            )
-          }
-          .buttonStyle(.plain)
-          .padding(.horizontal)
-          .padding(.top, 44)
-          .padding(.bottom, 8)
-          
-          // MARK: - Join Private Chat Button
-          Button {
-            print("Join private chat tapped")
-          } label: {
-            HStack(spacing: 8) {
-              Text("Join Private Chat")
-                .font(.headline)
-            }
-            .foregroundStyle(.brand)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 8)
-            .frame(maxWidth: .infinity)
-            .background(
-              RoundedRectangle(cornerRadius: 8)
-                .stroke(.brand, lineWidth: 0.8)
-            )
-          }
-          .buttonStyle(.plain)
-          .padding(.horizontal)
-          .padding(.bottom, 44)
           
           // MARK: - Members
           VStack {
@@ -180,35 +270,40 @@ struct SettingsView: View {
               
               Spacer()
               
-              Text("\(numberOfMembers) Online Now")
+              Text("\(roomService.members.filter { $0 != userService.user }.count) Online Now")
                 .font(.caption2)
                 .foregroundColor(.textPrimary)
             }
             .padding(.horizontal)
             
-            HStack(alignment: .center, spacing: 0) {
-              if numberOfMembers < 1 {
+            Group {
+              let others = roomService.members.filter { $0 != userService.user }
+              if others.isEmpty {
                 Text("No one is online right now")
                   .font(.subheadline)
                   .foregroundColor(.textPrimary)
                   .fontWeight(.bold)
               } else {
-                Circle().fill(.green).frame(width: 14, height: 14)
-                  .padding(.trailing, 6)
-                
-                Text("John Doe")
-                  .font(.subheadline)
-                  .foregroundColor(.textPrimary)
-                
-                Spacer()
-                
-                Image("link")
-                  .renderingMode(.template)
-                  .resizable()
-                  .scaledToFit()
-                  .frame(width: 16, height: 16)
-                  .padding(.trailing, 5)
-                  .foregroundStyle(.textSecondary)
+                ForEach(others, id: \.self) { member in
+                  HStack(alignment: .center, spacing: 0) {
+                    Circle().fill(.green).frame(width: 14, height: 14)
+                      .padding(.trailing, 6)
+
+                    Text(member)
+                      .font(.subheadline)
+                      .foregroundColor(.textPrimary)
+
+                    Spacer()
+
+                    Image("link")
+                      .renderingMode(.template)
+                      .resizable()
+                      .scaledToFit()
+                      .frame(width: 16, height: 16)
+                      .padding(.trailing, 5)
+                      .foregroundStyle(.textSecondary)
+                  }
+                }
               }
             }
             .padding(.horizontal)
@@ -219,6 +314,34 @@ struct SettingsView: View {
       }
       
       Spacer()
+
+      // MARK: - Leave Private Session
+      if let code = wsService.currentSessionCode, !code.isEmpty {
+        
+        Button {
+          wsService.disconnect(manual: true)
+          Task {
+            await wsService.connect(sessionCode: nil)
+            await roomService.listRooms()
+            await userService.getUsername()
+          }
+          dismiss()
+        } label: {
+          HStack(spacing: 8) {
+            Image(systemName: "xmark")
+              .font(.system(size: 14, weight: .regular))
+              .frame(width: 32, height: 32)
+            
+            Text("Leave Session")
+              .font(.headline)
+          }
+          .foregroundStyle(.red)
+          .padding(.horizontal, 14)
+          .padding(.vertical, 8)
+          .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.plain)
+      }
       
       // MARK: - Social Icons
       Divider()
@@ -304,5 +427,10 @@ struct SettingsView: View {
 }
 
 #Preview {
-  SettingsView()
+  SettingsView(
+    roomService: AppServices.shared.roomService,
+    userService: AppServices.shared.userService,
+    wsService: AppServices.shared.wsService,
+    sessionService: AppServices.shared.sessionService
+  )
 }

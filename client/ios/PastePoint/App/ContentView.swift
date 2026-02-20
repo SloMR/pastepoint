@@ -33,7 +33,12 @@ struct ContentView: View {
     .ignoresSafeArea(.keyboard, edges: .bottom)
     .sheet(isPresented: $showSettings) {
       NavigationStack {
-        SettingsView()
+        SettingsView(
+          roomService: services.roomService,
+          userService: services.userService,
+          wsService: services.wsService,
+          sessionService: services.sessionService
+        )
       }
     }
     .task {
@@ -94,4 +99,5 @@ struct RoomContentView: View {
 
 #Preview {
   ContentView()
+    .environmentObject(AppServices.shared)
 }
