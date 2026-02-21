@@ -7,11 +7,8 @@ import SwiftUI
 
 struct SettingsView: View {
   @Environment(\.dismiss) private var dismiss
-  @ObservedObject var roomService: RoomService
-  @ObservedObject var userService: UserService
-  @ObservedObject var wsService: WebSocketConnectionService
-  @ObservedObject var sessionService: SessionService
-
+  @EnvironmentObject private var services: AppServices
+  
   @State private var privacyURLToShow: IdentifiableURL?
   
   private var avatar: some View {
@@ -28,7 +25,7 @@ struct SettingsView: View {
       HStack(alignment: .center, spacing: 0) {
         avatar
         
-        Text(userService.user)
+        Text(services.userService.user)
           .font(.title3)
           .foregroundColor(.textPrimary)
         
@@ -52,7 +49,7 @@ struct SettingsView: View {
           Button {
             print("Create new room tapped")
             Task {
-              await roomService.joinOrJoinRoom("Testing from iOS") // TODO: Add UI for this one
+              await services.roomService.joinOrCreateRoom("Testing from iOS") // TODO: Add UI for this one
             }
           } label: {
             HStack(spacing: 8) {
@@ -95,18 +92,18 @@ struct SettingsView: View {
               
               Spacer()
               
-              Text("\(roomService.rooms.count) Rooms")
+              Text("\(services.roomService.rooms.count) Rooms")
                 .font(.caption2)
                 .foregroundColor(.textPrimary)
             }
             .padding(.horizontal)
             
-            ForEach(roomService.rooms, id: \.self) { room in
+            ForEach(services.roomService.rooms, id: \.self) { room in
               HStack(alignment: .center, spacing: 0) {
                 Button {
                   Task {
                     print("Joining room \(room)")
-                    await roomService.joinOrJoinRoom(room)
+                    await services.roomService.joinOrCreateRoom(room)
                   }
                 } label: {
                   Image("inactive.comment")
@@ -115,13 +112,13 @@ struct SettingsView: View {
                     .scaledToFit()
                     .frame(width: 16, height: 16)
                     .padding(.trailing, 5)
-                    .foregroundStyle(room == roomService.currentRoom ? .brand : .secondary)
+                    .foregroundStyle(room == services.roomService.currentRoom ? .brand : .secondary)
                   
                   Text(room)
                     .font(.subheadline)
-                    .foregroundColor(room == roomService.currentRoom ? .brand : .textPrimary)
+                    .foregroundColor(room == services.roomService.currentRoom ? .brand : .textPrimary)
                 }
-
+                
                 Spacer()
               }
               .padding(.horizontal, 60)
@@ -130,7 +127,7 @@ struct SettingsView: View {
           }
           
           // MARK: - Private Session Section
-          if let code = wsService.currentSessionCode {
+          if let code = services.wsService.currentSessionCode {
             // In private session: show code and End Session
             VStack(alignment: .leading) {
               HStack(alignment: .center, spacing: 0) {
@@ -188,24 +185,24 @@ struct SettingsView: View {
                     )
                 }
                 .buttonStyle(.plain)
-
+                
                 Spacer()
               }
             }
             .padding(.top, 22)
             .padding(.horizontal)
-
+            
           } else {
             // Not in private session: show Create and Join
             VStack(spacing: 8) {
               Button {
                 Task {
                   do {
-                    let code = try await sessionService.getNewSessionCode()
-                    await wsService.setupPrivateSession(code)
-                    await wsService.connect()
-                    await roomService.listRooms()
-                    await userService.getUsername()
+                    let code = try await services.sessionService.getNewSessionCode()
+                    await services.wsService.setupPrivateSession(code)
+                    await services.wsService.connect()
+                    await services.roomService.listRooms()
+                    await services.userService.getUsername()
                   } catch {
                     print("Cannot get the session code \(error)")
                   }
@@ -230,7 +227,7 @@ struct SettingsView: View {
                 )
               }
               .buttonStyle(.plain)
-
+              
               Button {
                 print("Join private chat tapped")
               } label: {
@@ -270,14 +267,14 @@ struct SettingsView: View {
               
               Spacer()
               
-              Text("\(roomService.members.filter { $0 != userService.user }.count) Online Now")
+              Text("\(services.roomService.members.filter { $0 != services.userService.user }.count) Online Now")
                 .font(.caption2)
                 .foregroundColor(.textPrimary)
             }
             .padding(.horizontal)
             
             Group {
-              let others = roomService.members.filter { $0 != userService.user }
+              let others = services.roomService.members.filter { $0 != services.userService.user }
               if others.isEmpty {
                 Text("No one is online right now")
                   .font(.subheadline)
@@ -288,13 +285,13 @@ struct SettingsView: View {
                   HStack(alignment: .center, spacing: 0) {
                     Circle().fill(.green).frame(width: 14, height: 14)
                       .padding(.trailing, 6)
-
+                    
                     Text(member)
                       .font(.subheadline)
                       .foregroundColor(.textPrimary)
-
+                    
                     Spacer()
-
+                    
                     Image("link")
                       .renderingMode(.template)
                       .resizable()
@@ -314,18 +311,17 @@ struct SettingsView: View {
       }
       
       Spacer()
-
+      
       // MARK: - Leave Private Session
-      if let code = wsService.currentSessionCode, !code.isEmpty {
+      if let code = services.wsService.currentSessionCode, !code.isEmpty {
         
         Button {
-          wsService.disconnect(manual: true)
+          services.wsService.disconnect(manual: true)
           Task {
-            await wsService.connect(sessionCode: nil)
-            await roomService.listRooms()
-            await userService.getUsername()
+            await services.wsService.connect(sessionCode: nil)
+            await services.roomService.listRooms()
+            await services.userService.getUsername()
           }
-          dismiss()
         } label: {
           HStack(spacing: 8) {
             Image(systemName: "xmark")
@@ -427,10 +423,6 @@ struct SettingsView: View {
 }
 
 #Preview {
-  SettingsView(
-    roomService: AppServices.shared.roomService,
-    userService: AppServices.shared.userService,
-    wsService: AppServices.shared.wsService,
-    sessionService: AppServices.shared.sessionService
-  )
+  SettingsView()
+    .environmentObject(AppServices.shared)
 }

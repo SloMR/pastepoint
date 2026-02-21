@@ -13,8 +13,7 @@ struct CreateSessionResponse: Decodable {
 @MainActor
 final class SessionService: ObservableObject {
   public func getNewSessionCode() async throws -> String {
-    let urlString = "https://10.10.50.107:9000/create-session"
-    guard let url = URL(string: urlString) else {
+    guard let url = URL(string: "\(AppEnvironment.httpBaseURL)/create-session") else {
       throw SessionError.invalidURL
     }
     
@@ -41,8 +40,8 @@ final class SessionService: ObservableObject {
   
   static func sanitizeSessionCode(_ code: String) -> String {
     let allowed = CharacterSet.alphanumerics
-    let filteredScalars = code.unicodeScalars.filter { allowed.contains($0) }
-    return String(String.UnicodeScalarView(filteredScalars))
+    let scalars = code.unicodeScalars.filter { allowed.contains($0) }
+    return String(String.UnicodeScalarView(scalars))
   }
   
   static func isValidSessionCode(_ code: String) -> Bool {
@@ -57,9 +56,8 @@ enum SessionError: LocalizedError {
   case serverError
   var errorDescription: String? {
     switch self {
-    case .invalidURL: return "Invalid session URL"
-    case .serverError: return "Failed to create session"
+    case .invalidURL:   return "Invalid session URL"
+    case .serverError:  return "Failed to create session"
     }
   }
 }
-

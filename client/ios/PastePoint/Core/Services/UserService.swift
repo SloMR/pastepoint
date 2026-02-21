@@ -6,36 +6,42 @@
 import Foundation
 import Combine
 
-
+@MainActor
 final class UserService: ObservableObject {
-  @Published var user: String = ""
+  @Published public var user: String = ""
   
   private let wsService: WebSocketConnectionService
   private var cancellables = Set<AnyCancellable>()
+  private static let nameRegex = try? NSRegularExpression(pattern: "\\[SystemName]\\s*(.*?)$")
   
   init(wsService: WebSocketConnectionService) {
     self.wsService = wsService
-
-    wsService.$systemMessage
+    
+    wsService.systemMessage
       .receive(on: DispatchQueue.main)
       .sink { [weak self] message in
-        guard let message = message, !message.isEmpty else { return }
         self?.handleSystemMessage(message)
+      }
+      .store(in: &cancellables)
+    
+    wsService.didReconnect
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in
+        Task { await self?.getUsername() }
       }
       .store(in: &cancellables)
   }
   
-  func getUsername() async {
+  public func getUsername() async {
     await wsService.send("[UserCommand] /name")
   }
   
   private func handleSystemMessage(_ message: String) {
-    guard message.contains("[SystemName]") else { return }
-    let pattern = "\\[SystemName]\\s*(.*?)$"
-    guard let regex = try? NSRegularExpression(pattern: pattern),
+    guard message.contains("[SystemName]"),
+          let regex = UserService.nameRegex,
           let match = regex.firstMatch(in: message, range: NSRange(message.startIndex..., in: message)),
           let range = Range(match.range(at: 1), in: message) else { return }
-    let userName = String(message[range]).trimmingCharacters(in: .whitespaces)
-    user = userName
+
+    user = String(message[range]).trimmingCharacters(in: .whitespaces)
   }
 }

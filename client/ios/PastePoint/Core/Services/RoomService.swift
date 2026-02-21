@@ -8,30 +8,36 @@ import Combine
 
 @MainActor
 final class RoomService: ObservableObject {
-  @Published var rooms: [String] = []
-  @Published var members: [String] = []
-  @Published var currentRoom: String = ""
+  @Published public var rooms: [String] = []
+  @Published public var members: [String] = []
+  @Published public var currentRoom: String = ""
   
   private var cancellables = Set<AnyCancellable>()
   private let wsService: WebSocketConnectionService
   
   init(wsService: WebSocketConnectionService) {
     self.wsService = wsService
-
-    wsService.$systemMessage
+    
+    wsService.systemMessage
       .receive(on: DispatchQueue.main)
       .sink { [weak self] message in
-        guard let message = message, !message.isEmpty else { return }
         self?.handleSystemMessage(message)
+      }
+      .store(in: &cancellables)
+    
+    wsService.didReconnect
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in
+        Task { await self?.listRooms() }
       }
       .store(in: &cancellables)
   }
   
-  func listRooms() async {
+  public func listRooms() async {
     await wsService.send("[UserCommand] /list")
   }
   
-  func joinOrJoinRoom(_ room: String) async {
+  public func joinOrCreateRoom(_ room: String) async {
     guard !room.isEmpty, room != currentRoom else { return }
     await wsService.send("[UserCommand] /join \(room)")
     currentRoom = room
@@ -41,24 +47,21 @@ final class RoomService: ObservableObject {
   private func handleSystemMessage(_ message: String) {
     if message.contains("[SystemRooms]") {
       if let range = message.range(of: "\\[SystemRooms]\\s*(.*)$", options: .regularExpression) {
-        let rest = String(message[range])
+        let rest   = String(message[range])
         let prefix = "[SystemRooms] "
-        let list = rest.hasPrefix(prefix) ? String(rest.dropFirst(prefix.count)) : rest
-        let roomsList = list.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-        rooms = Array(roomsList)
+        let list   = rest.hasPrefix(prefix) ? String(rest.dropFirst(prefix.count)) : rest
+        rooms = list.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
       }
     } else if message.contains("[SystemMembers]") {
       if let range = message.range(of: "\\[SystemMembers]\\s*(.*)$", options: .regularExpression) {
-        let rest = String(message[range])
+        let rest   = String(message[range])
         let prefix = "[SystemMembers] "
-        let list = rest.hasPrefix(prefix) ? String(rest.dropFirst(prefix.count)) : rest
-        let membersList = list.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
-        members = Array(membersList)
+        let list   = rest.hasPrefix(prefix) ? String(rest.dropFirst(prefix.count)) : rest
+        members = list.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
       }
     } else if message.contains("[SystemJoin]") {
       if let range = message.range(of: "\\[SystemJoin]\\s*(\\S+)\\s*$", options: .regularExpression) {
-        let roomPart = String(message[range])
-        let parts = roomPart.split(separator: " ")
+        let parts = String(message[range]).split(separator: " ")
         if let last = parts.last {
           currentRoom = String(last)
           Task { await self.listRooms() }
