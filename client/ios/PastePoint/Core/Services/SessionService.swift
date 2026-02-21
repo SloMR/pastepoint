@@ -13,7 +13,7 @@ struct CreateSessionResponse: Decodable {
 @MainActor
 final class SessionService: ObservableObject {
   public func getNewSessionCode() async throws -> String {
-    guard let url = URL(string: "\(AppEnvironment.httpBaseURL)/create-session") else {
+    guard let url = URL(string: "https://\(AppEnvironment.apiUrl)/create-session") else {
       throw SessionError.invalidURL
     }
     
