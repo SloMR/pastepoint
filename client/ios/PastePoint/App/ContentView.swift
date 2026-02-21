@@ -9,7 +9,6 @@ import SwiftUI
 
 struct ContentView: View {
   @AppStorage(AppColors.Scheme.storageKey) private var colorSchemeRaw: String = AppColors.Scheme.default
-  @Environment(\.scenePhase) var phase
   @EnvironmentObject private var services: AppServices
 
   @State private var showSettings = false
@@ -33,47 +32,18 @@ struct ContentView: View {
     .ignoresSafeArea(.keyboard, edges: .bottom)
     .sheet(isPresented: $showSettings) {
       NavigationStack {
-        SettingsView(
-          roomService: services.roomService,
-          userService: services.userService,
-          wsService: services.wsService,
-          sessionService: services.sessionService
-        )
+        SettingsView()
       }
     }
     .task {
-      await connectIfNeeded()
+      await services.handleForeground()
     }
-    .onReceive(services.wsService.$message) { msg in
-      if let msg = msg, !msg.isEmpty {
-        print("User message:", msg)
-      }
+    .onReceive(services.wsService.message) { msg in
+      print("User message:", msg)
     }
-    .onReceive(services.wsService.$signalMessage) { sig in
-      guard let sig = sig else { return }
+    .onReceive(services.wsService.signalMessage) { sig in
       print("Signal: \(sig.type.rawValue) | from: \(sig.from) → to: \(sig.to)")
     }
-    .onChange(of: phase) { _, newPhase in
-      if newPhase == .background {
-        services.wsService.disconnect(manual: false)
-      }
-      if newPhase == .active {
-        Task { await connectIfNeeded() }
-      }
-    }
-  }
-  
-  private func connectIfNeeded() async {
-    guard !services.wsService.isConnected else { return }
-    if let sessionCode = services.wsService.currentSessionCode,
-       !sessionCode.isEmpty {
-      await services.wsService.connect(sessionCode: sessionCode)
-    } else {
-      await services.wsService.connect()
-    }
-
-    await services.roomService.listRooms()
-    await services.userService.getUsername()
   }
 }
 
