@@ -19,7 +19,6 @@ final class InsecureTLSDelegate: NSObject, URLSessionDelegate {
       completionHandler(.performDefaultHandling, nil)
       return
     }
-    
     completionHandler(.useCredential, URLCredential(trust: trust))
   }
 }
@@ -30,28 +29,34 @@ private let sessionCodeStorageKey = "session_code"
 @MainActor
 final class WebSocketConnectionService: ObservableObject {
   
-  // MARK: - Properties
+  // MARK: - Connection State
   
-  @Published var message: String?
-  @Published var systemMessage: String?
-  @Published var signalMessage: SignalMessage?
+  @Published private(set) var isConnected  = false
+  @Published private(set) var isConnecting = false
+  
+  // MARK: - Message Subjects
+  
+  let message       = PassthroughSubject<String, Never>()
+  let systemMessage = PassthroughSubject<String, Never>()
+  let signalMessage = PassthroughSubject<SignalMessage, Never>()
+  let didReconnect  = PassthroughSubject<Void, Never>()
+  
+  // MARK: - Properties
   
   private var task: URLSessionWebSocketTask?
   private var receiveTask: Task<Void, Never>?
+  
   private var pingTask: Task<Void, Never>?
+  private let pingInterval: Duration = .seconds(30)
   
   @Published private(set) var sessionCode: String?
-  private var isConnecting = false
-  private var manualDisconnect = false
-  var currentSessionCode: String? { sessionCode }
+  public var currentSessionCode: String? { sessionCode }
   
+  private var manualDisconnect = false
   private var reconnectAttempts = 0
   private let maxReconnectAttempts = 5
-  private var reconnectDelay: Double = 1
-  private let maxReconnectDelay: Double = 30
-  public var isConnected: Bool {
-    task?.state == .running
-  }
+  private let baseReconnectDelaySec: Double = 1
+  private let maxReconnectDelaySec:  Double = 30
   
   // MARK: - Session Code
   
@@ -60,7 +65,7 @@ final class WebSocketConnectionService: ObservableObject {
   }
   
   private func saveSessionCode(_ code: String?) {
-    if let code = code {
+    if let code {
       UserDefaults.standard.set(code, forKey: sessionCodeStorageKey)
     } else {
       UserDefaults.standard.removeObject(forKey: sessionCodeStorageKey)
@@ -77,47 +82,54 @@ final class WebSocketConnectionService: ObservableObject {
       print("Private session code is not valid: \(code)")
       return
     }
-    if (self.sessionCode != nil) {
-      self.disconnect(manual: true)
+    if sessionCode != nil {
+      disconnect(manual: true)
     }
-    let sanitizedCode = SessionService.sanitizeSessionCode(code)
-    saveSessionCode(sanitizedCode)
+    saveSessionCode(SessionService.sanitizeSessionCode(code))
   }
   
   // MARK: - Connect
   
   func connect(sessionCode code: String? = nil, isReconnectAttempt: Bool = false) async {
-    if isConnecting {
+    guard !isConnecting else {
       print("Already connecting — ignored")
       return
     }
     
     let effectiveCode = code ?? sessionCode ?? getSessionCodeFromStorage()
+    
     if isConnected, sessionCode == effectiveCode {
       print("Already connected to same session")
       return
     }
     
-    if isConnected {
+    // Tear down any task before opening a new one.
+    if task != nil {
       teardownConnection()
       try? await Task.sleep(for: .milliseconds(200)) // TODO: Remove this one
     }
-
+    
     isConnecting = true
     manualDisconnect = false
     sessionCode = effectiveCode
-    if let effectiveCode = effectiveCode {
+    if let effectiveCode {
       saveSessionCode(effectiveCode)
     }
     
-    let urlString = "wss://10.10.50.107:9000/ws\(effectiveCode.map { "/\($0)" } ?? "")"
+    // Reset the retry counter on every intentional (non-reconnect) connect so
+    // that NWPathMonitor / foreground transitions always get a fresh 5-attempt window.
+    if !isReconnectAttempt {
+      reconnectAttempts = 0
+    }
+    
+    let urlString = "wss://\(AppEnvironment.apiUrl)/ws\(effectiveCode.map { "/\($0)" } ?? "")"
     guard let url = URL(string: urlString) else {
-      print("Invalid WS URL")
+      print("Invalid WS URL: \(urlString)")
       isConnecting = false
       return
     }
     
-    print("Connecting \(urlString)")
+    print("Connecting to \(urlString)")
     
 #if DEBUG
     let session = URLSession(
@@ -128,47 +140,54 @@ final class WebSocketConnectionService: ObservableObject {
 #else
     let session = URLSession(configuration: .default)
 #endif
-
+    
     task = session.webSocketTask(with: url)
     task?.resume()
     
-    await startReceiveLoop()
-    await startPingLoop()
-    
-    if !isReconnectAttempt {
-      reconnectAttempts = 0
-      reconnectDelay = 1
-    }
+    isConnected = true
     isConnecting = false
+    
+    startReceiveLoop()
+    startPingLoop()
+    
+    if isReconnectAttempt {
+      didReconnect.send()
+    }
   }
   
   // MARK: - Receive Loop
   
-  private func startReceiveLoop() async {
+  private func startReceiveLoop() {
     receiveTask?.cancel()
-    
     receiveTask = Task {
       while !Task.isCancelled {
         do {
-          let msg = try await task?.receive()
+          guard let msg = try await task?.receive() else { break }
+          
+          // Any successful receive confirms the connection is alive —
+          // reset the retry counter so future drops get a fresh window.
+          reconnectAttempts = 0
           
           switch msg {
           case .string(let text):
             handleIncoming(text)
-            
           case .data(let data):
-            print("Data recived \(data.count) bytes")
-            
-          case .some(let blob):
-            print("Unknown data recived \(blob)")
-            
-          case .none:
+            print("Binary frame received: \(data.count) bytes (ignored)")
+          @unknown default:
+            break
+          }
+        } catch {
+          guard !Task.isCancelled else { break }
+
+          if isPermanentError(error) {
+            print("Session code invalid or expired — falling back to public session")
+            clearSessionCode()
+            teardownConnection()
+            await connect(sessionCode: nil, isReconnectAttempt: false)
             break
           }
           
-        } catch {
-          print("Receive failed \(error.localizedDescription)")
-          guard !Task.isCancelled else { break }
+          print("Receive error: \(error.localizedDescription)")
           await scheduleReconnect()
           break
         }
@@ -176,27 +195,35 @@ final class WebSocketConnectionService: ObservableObject {
     }
   }
   
+  private func isPermanentError(_ error: Error) -> Bool {
+    (error as? URLError)?.code == .badServerResponse
+  }
+  
   // MARK: - Message Routing
   
   private func handleIncoming(_ text: String) {
-    let message = text.trimmingCharacters(in: .whitespacesAndNewlines)
+    let msg = text.trimmingCharacters(in: .whitespacesAndNewlines)
     
-    if message.hasPrefix("[SignalMessage]") {
-      let json = message.replacingOccurrences(of: "[SignalMessage]", with: "").trimmingCharacters(in: .whitespaces)
-      guard let dict = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
-            let sig = SignalMessage(from: dict) else { return }
-      signalMessage = sig
-    } else if isSystemMessage(message: message) {
-      systemMessage = message
+    if msg.hasPrefix("[SignalMessage]") {
+      let json = msg
+        .replacingOccurrences(of: "[SignalMessage]", with: "")
+        .trimmingCharacters(in: .whitespaces)
+      guard
+        let dict = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
+        let sig  = SignalMessage(from: dict)
+      else { return }
+      signalMessage.send(sig)
+    } else if isSystemMessage(msg) {
+      systemMessage.send(msg)
     } else {
-      self.message = message
+      message.send(msg)
     }
   }
   
-  private func isSystemMessage(message msg: String) -> Bool {
+  private func isSystemMessage(_ msg: String) -> Bool {
     msg.contains("[SystemMessage]") ||
-    msg.contains("[SystemJoin]") ||
-    msg.contains("[SystemRooms]") ||
+    msg.contains("[SystemJoin]")    ||
+    msg.contains("[SystemRooms]")   ||
     msg.contains("[SystemMembers]") ||
     msg.contains("[SystemName]")
   }
@@ -213,38 +240,39 @@ final class WebSocketConnectionService: ObservableObject {
   }
   
   func sendSignal(_ obj: Any) async {
-    guard let data = try? JSONSerialization.data(withJSONObject: obj),
-          let json = String(data: data, encoding: .utf8)
+    guard
+      let data = try? JSONSerialization.data(withJSONObject: obj),
+      let json = String(data: data, encoding: .utf8)
     else { return }
     
     await send("[SignalMessage] \(json)")
   }
   
-  // MARK: - Ping Heartbeat
+  // MARK: - Ping / Heartbeat
   
-  private func startPingLoop() async {
-    let oldTask = pingTask
-    pingTask = nil
-    oldTask?.cancel()
-    if let oldTask {
-      await oldTask.value
-    }
+  private func startPingLoop() {
+    pingTask?.cancel()
 
     pingTask = Task {
-      while isConnected {
+      while !Task.isCancelled, isConnected {
         do {
-          try await Task.sleep(for: .seconds(10))
-          guard !Task.isCancelled else { break }
-          print("Sending Ping...")
-          task?.sendPing { error in
-            if let error = error {
-              print("Ping failed: \(error.localizedDescription)")
-            } else {
-              print("Pong received, connection is healthy")
+          try await Task.sleep(for: pingInterval)
+          guard !Task.isCancelled, isConnected else { break }
+          
+          task?.sendPing { [weak self] error in
+            guard let self else { return }
+            if let error {
+              print("Ping failed: \(error.localizedDescription) — triggering reconnect")
+
+              // sendPing callback fires on an arbitrary queue; hop to MainActor.
+              Task { @MainActor in
+                guard self.isConnected, !self.isConnecting else { return }
+                self.teardownConnection()
+                await self.scheduleReconnect()
+              }
             }
           }
         } catch {
-          print("Ping failed: \(error.localizedDescription)")
           break
         }
       }
@@ -254,10 +282,15 @@ final class WebSocketConnectionService: ObservableObject {
   // MARK: - Teardown
   
   private func teardownConnection() {
+    isConnected  = false
+    isConnecting = false
+
     receiveTask?.cancel()
     receiveTask = nil
+
     pingTask?.cancel()
     pingTask = nil
+
     task?.cancel(with: .goingAway, reason: nil)
     task = nil
   }
@@ -265,32 +298,33 @@ final class WebSocketConnectionService: ObservableObject {
   // MARK: - Reconnect
   
   private func scheduleReconnect() async {
-    guard !manualDisconnect else { return }
+    isConnected = false
+    guard !manualDisconnect, !isConnecting else { return }
     
     reconnectAttempts += 1
-    
-    if reconnectAttempts > maxReconnectAttempts {
-      print("Max reconnect reached")
+    guard reconnectAttempts <= maxReconnectAttempts else {
+      print("Max reconnect attempts (\(maxReconnectAttempts)) reached — giving up")
       return
     }
     
-    let delay = min(reconnectDelay * pow(2, Double(reconnectAttempts-1)),
-                    maxReconnectDelay)
-    
-    print("Reconnect in \(delay)s")
+    let delay = min(
+      baseReconnectDelaySec * pow(2.0, Double(reconnectAttempts - 1)),
+      maxReconnectDelaySec
+    )
+    print("Reconnecting in \(Int(delay))s (attempt \(reconnectAttempts)/\(maxReconnectAttempts))")
     
     try? await Task.sleep(for: .seconds(delay))
+    guard !manualDisconnect else { return }
+    
     await connect(sessionCode: sessionCode, isReconnectAttempt: true)
   }
   
   // MARK: - Disconnect
   
   func disconnect(manual: Bool = true) {
-    print("Disconnecting from the WebSocket")
+    print("Disconnecting (manual: \(manual))")
     manualDisconnect = manual
-    if manual {
-      clearSessionCode()
-    }
+    if manual { clearSessionCode() }
     teardownConnection()
   }
 }
