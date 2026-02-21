@@ -1,9 +1,9 @@
 use actix::{Handler, MessageResult};
 
 use crate::{
+    ChatMessage, JoinRoom, LeaveRoom, ListRooms, WS_PREFIX_SIGNAL_MESSAGE, WS_PREFIX_SYSTEM_JOIN,
+    WsChatServer, WsChatSession,
     message::{CleanupSession, RelaySignalMessage, ValidateAndRelaySignal},
-    ChatMessage, JoinRoom, LeaveRoom, ListRooms, WsChatServer, WsChatSession,
-    WS_PREFIX_SIGNAL_MESSAGE, WS_PREFIX_SYSTEM_JOIN,
 };
 
 impl Handler<JoinRoom> for WsChatServer {
@@ -26,50 +26,50 @@ impl Handler<LeaveRoom> for WsChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: LeaveRoom, _ctx: &mut Self::Context) {
-        if let Some(rooms) = self.rooms.get_mut(&msg.0) {
-            if let Some(room) = rooms.get_mut(&msg.1) {
-                room.remove(&msg.2);
+        if let Some(rooms) = self.rooms.get_mut(&msg.0)
+            && let Some(room) = rooms.get_mut(&msg.1)
+        {
+            room.remove(&msg.2);
 
-                if room.is_empty() && msg.1 != "main" {
-                    rooms.remove(&msg.1);
-                    log::debug!(
-                        target: "Websocket",
-                        "Room '{}' removed from session {}",
-                        msg.1,
-                        msg.0
-                    );
-                }
-
-                let all_empty = rooms.values().all(|r| r.is_empty());
-                if all_empty {
-                    self.rooms.remove(&msg.0);
-                    log::debug!(
-                        target: "Websocket",
-                        "All rooms in session {} are empty, removing session",
-                        msg.0
-                    );
-                } else {
-                    self.remove_empty_rooms(&msg.0);
-                }
-
-                self.broadcast_room_list(&msg.0);
-
-                if self.rooms.contains_key(&msg.0) {
-                    self.broadcast_room_members(&msg.0, &msg.1);
-                }
-
+            if room.is_empty() && msg.1 != "main" {
+                rooms.remove(&msg.1);
                 log::debug!(
                     target: "Websocket",
-                    "User {} in {} left room {}. Rooms: {:?}",
-                    msg.2,
-                    msg.0,
+                    "Room '{}' removed from session {}",
                     msg.1,
-                    self.rooms
-                        .values()
-                        .map(|r| r.keys().cloned().collect::<Vec<String>>())
-                        .collect::<Vec<Vec<String>>>()
+                    msg.0
                 );
             }
+
+            let all_empty = rooms.values().all(|r| r.is_empty());
+            if all_empty {
+                self.rooms.remove(&msg.0);
+                log::debug!(
+                    target: "Websocket",
+                    "All rooms in session {} are empty, removing session",
+                    msg.0
+                );
+            } else {
+                self.remove_empty_rooms(&msg.0);
+            }
+
+            self.broadcast_room_list(&msg.0);
+
+            if self.rooms.contains_key(&msg.0) {
+                self.broadcast_room_members(&msg.0, &msg.1);
+            }
+
+            log::debug!(
+                target: "Websocket",
+                "User {} in {} left room {}. Rooms: {:?}",
+                msg.2,
+                msg.0,
+                msg.1,
+                self.rooms
+                    .values()
+                    .map(|r| r.keys().cloned().collect::<Vec<String>>())
+                    .collect::<Vec<Vec<String>>>()
+            );
         }
     }
 }

@@ -1,8 +1,8 @@
 use crate::{
-    session_store::SessionData, ServerConfig, ServerError, SessionStore, CONTENT_TYPE_TEXT_PLAIN,
-    MIN_USER_AGENT_LENGTH, SESSION_CODE_LENGTH,
+    CONTENT_TYPE_TEXT_PLAIN, MIN_USER_AGENT_LENGTH, SESSION_CODE_LENGTH, ServerConfig, ServerError,
+    SessionStore, session_store::SessionData,
 };
-use actix_web::{get, http::header, web, Error, HttpRequest, HttpResponse, Responder};
+use actix_web::{Error, HttpRequest, HttpResponse, Responder, get, http::header, web};
 use serde_json::json;
 use uuid::Uuid;
 
