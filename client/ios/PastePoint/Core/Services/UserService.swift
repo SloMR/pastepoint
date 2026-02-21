@@ -37,11 +37,20 @@ final class UserService: ObservableObject {
   }
   
   private func handleSystemMessage(_ message: String) {
-    guard message.contains("[SystemName]"),
-          let regex = UserService.nameRegex,
-          let match = regex.firstMatch(in: message, range: NSRange(message.startIndex..., in: message)),
-          let range = Range(match.range(at: 1), in: message) else { return }
-
+    guard message.contains("[SystemName]") else { return }
+    guard let regex = UserService.nameRegex else {
+      print("handleSystemMessage: nameRegex failed to initialize")
+      return
+    }
+    guard let match = regex.firstMatch(in: message, range: NSRange(message.startIndex..., in: message)) else {
+      print("handleSystemMessage: no [SystemName] match in: \(message)")
+      return
+    }
+    guard let range = Range(match.range(at: 1), in: message) else {
+      print("handleSystemMessage: capture group out of range in: \(message)")
+      return
+    }
     user = String(message[range]).trimmingCharacters(in: .whitespaces)
+    print("Username updated: \(user)")
   }
 }

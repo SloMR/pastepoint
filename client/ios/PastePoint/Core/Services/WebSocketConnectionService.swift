@@ -189,11 +189,20 @@ final class WebSocketConnectionService: ObservableObject {
       let json = msg
         .replacingOccurrences(of: "[SignalMessage]", with: "")
         .trimmingCharacters(in: .whitespaces)
-      guard
-        let dict = try? JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any],
-        let sig  = SignalMessage(from: dict)
-      else { return }
-      signalMessage.send(sig)
+      do {
+        let obj = try JSONSerialization.jsonObject(with: Data(json.utf8))
+        guard let dict = obj as? [String: Any] else {
+          print("handleIncoming: signal JSON is not a dictionary")
+          return
+        }
+        guard let sig = SignalMessage(from: dict) else {
+          print("handleIncoming: malformed SignalMessage — missing required fields in: \(json)")
+          return
+        }
+        signalMessage.send(sig)
+      } catch {
+        print("handleIncoming: JSON parse error: \(error.localizedDescription)")
+      }
     } else if isSystemMessage(msg) {
       systemMessage.send(msg)
     } else {
@@ -217,16 +226,24 @@ final class WebSocketConnectionService: ObservableObject {
       return
     }
     
-    try? await task?.send(.string(text))
+    do {
+      try await task?.send(.string(text))
+    } catch {
+      print("Send error: \(error.localizedDescription)")
+    }
   }
   
   func sendSignal(_ obj: Any) async {
-    guard
-      let data = try? JSONSerialization.data(withJSONObject: obj),
-      let json = String(data: data, encoding: .utf8)
-    else { return }
-    
-    await send("[SignalMessage] \(json)")
+    do {
+      let data = try JSONSerialization.data(withJSONObject: obj)
+      guard let json = String(data: data, encoding: .utf8) else {
+        print("sendSignal: failed to encode JSON as UTF-8 string")
+        return
+      }
+      await send("[SignalMessage] \(json)")
+    } catch {
+      print("sendSignal: JSON serialization failed: \(error.localizedDescription)")
+    }
   }
   
   // MARK: - Ping / Heartbeat
@@ -254,6 +271,7 @@ final class WebSocketConnectionService: ObservableObject {
             }
           }
         } catch {
+          print("Ping loop interrupted: \(error.localizedDescription)")
           break
         }
       }

@@ -36,13 +36,18 @@ final class AppServices: ObservableObject {
 
   public func handleForeground() async {
     isInBackground = false
-    guard !wsService.isConnected else { return }
+    guard !wsService.isConnected else {
+      print("handleForeground — already connected, skipping")
+      return
+    }
+    print("handleForeground — connecting")
     await wsService.connect(sessionCode: wsService.currentSessionCode)
     await roomService.listRooms()
     await userService.getUsername()
   }
 
   public func handleBackground() {
+    print("handleBackground — disconnecting")
     isInBackground = true
     wsService.disconnect(manual: false)
   }
@@ -54,9 +59,11 @@ final class AppServices: ObservableObject {
   /// while the network was down, then the network came back.
   private func startNetworkMonitoring() {
     networkMonitor.pathUpdateHandler = { [weak self] path in
+      print("Network path updated: \(path.status)")
       guard path.status == .satisfied else { return }
       Task { @MainActor [weak self] in
         guard let self, !self.isInBackground else { return }
+        print("Network restored — triggering reconnect")
         await self.handleForeground()
       }
     }

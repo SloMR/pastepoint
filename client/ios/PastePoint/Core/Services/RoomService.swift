@@ -38,7 +38,15 @@ final class RoomService: ObservableObject {
   }
   
   public func joinOrCreateRoom(_ room: String) async {
-    guard !room.isEmpty, room != currentRoom else { return }
+    guard !room.isEmpty else {
+      print("joinOrCreateRoom: room name is empty — skipped")
+      return
+    }
+    guard room != currentRoom else {
+      print("joinOrCreateRoom: already in room '\(room)' — skipped")
+      return
+    }
+    print("Joining room: \(room)")
     await wsService.send("[UserCommand] /join \(room)")
     currentRoom = room
     await listRooms()
@@ -46,27 +54,38 @@ final class RoomService: ObservableObject {
   
   private func handleSystemMessage(_ message: String) {
     if message.contains("[SystemRooms]") {
-      if let range = message.range(of: "\\[SystemRooms]\\s*(.*)$", options: .regularExpression) {
-        let rest   = String(message[range])
-        let prefix = "[SystemRooms] "
-        let list   = rest.hasPrefix(prefix) ? String(rest.dropFirst(prefix.count)) : rest
-        rooms = list.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+      guard let range = message.range(of: "\\[SystemRooms]\\s*(.*)$", options: .regularExpression) else {
+        print("handleSystemMessage: failed to parse [SystemRooms] message: \(message)")
+        return
       }
+      let rest   = String(message[range])
+      let prefix = "[SystemRooms] "
+      let list   = rest.hasPrefix(prefix) ? String(rest.dropFirst(prefix.count)) : rest
+      rooms = list.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+      print("Rooms updated: \(rooms)")
     } else if message.contains("[SystemMembers]") {
-      if let range = message.range(of: "\\[SystemMembers]\\s*(.*)$", options: .regularExpression) {
-        let rest   = String(message[range])
-        let prefix = "[SystemMembers] "
-        let list   = rest.hasPrefix(prefix) ? String(rest.dropFirst(prefix.count)) : rest
-        members = list.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+      guard let range = message.range(of: "\\[SystemMembers]\\s*(.*)$", options: .regularExpression) else {
+        print("handleSystemMessage: failed to parse [SystemMembers] message: \(message)")
+        return
       }
+      let rest   = String(message[range])
+      let prefix = "[SystemMembers] "
+      let list   = rest.hasPrefix(prefix) ? String(rest.dropFirst(prefix.count)) : rest
+      members = list.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }
+      print("Members updated: \(members)")
     } else if message.contains("[SystemJoin]") {
-      if let range = message.range(of: "\\[SystemJoin]\\s*(\\S+)\\s*$", options: .regularExpression) {
-        let parts = String(message[range]).split(separator: " ")
-        if let last = parts.last {
-          currentRoom = String(last)
-          Task { await self.listRooms() }
-        }
+      guard let range = message.range(of: "\\[SystemJoin]\\s*(\\S+)\\s*$", options: .regularExpression) else {
+        print("handleSystemMessage: failed to parse [SystemJoin] message: \(message)")
+        return
       }
+      let parts = String(message[range]).split(separator: " ")
+      guard let last = parts.last else {
+        print("handleSystemMessage: [SystemJoin] had no room name in: \(message)")
+        return
+      }
+      currentRoom = String(last)
+      print("Joined room: \(currentRoom)")
+      Task { await self.listRooms() }
     }
   }
 }
