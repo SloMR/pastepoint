@@ -41,23 +41,8 @@ impl Handler<LeaveRoom> for WsChatServer {
                 );
             }
 
-            let all_empty = rooms.values().all(|r| r.is_empty());
-            if all_empty {
-                self.rooms.remove(&msg.0);
-                log::debug!(
-                    target: "Websocket",
-                    "All rooms in session {} are empty, removing session",
-                    msg.0
-                );
-            } else {
-                self.remove_empty_rooms(&msg.0);
-            }
-
             self.broadcast_room_list(&msg.0);
-
-            if self.rooms.contains_key(&msg.0) {
-                self.broadcast_room_members(&msg.0, &msg.1);
-            }
+            self.broadcast_room_members(&msg.0, &msg.1);
 
             log::debug!(
                 target: "Websocket",
