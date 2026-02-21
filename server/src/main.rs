@@ -1,11 +1,11 @@
 use actix_cors::Cors;
 use actix_governor::{Governor, GovernorConfigBuilder};
 use actix_http::KeepAlive;
-use actix_web::{middleware::Logger, web::Data, App, HttpServer};
+use actix_web::{App, HttpServer, middleware::Logger, web::Data};
 use openssl::ssl::{SslAcceptor, SslFiletype, SslMethod};
 use server::{
-    chat_ws, create_session, health, index, private_chat_ws, ServerConfig, SessionStore,
-    CORS_MAX_AGE, KEEP_ALIVE_INTERVAL,
+    CORS_MAX_AGE, KEEP_ALIVE_INTERVAL, ServerConfig, SessionStore, chat_ws, create_session, health,
+    index, private_chat_ws,
 };
 use std::io::Result;
 

@@ -1,20 +1,20 @@
 use crate::{
+    HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, SessionStore, WS_PREFIX_SIGNAL_MESSAGE,
+    WS_PREFIX_SYSTEM_ERROR, WS_PREFIX_SYSTEM_NAME, WS_PREFIX_SYSTEM_ROOMS, WS_PREFIX_USER_COMMAND,
+    WS_PREFIX_USER_DISCONNECTED,
     consts::MAX_SIGNAL_SIZE,
     error::ServerError,
     message::{
         JoinRoom, LeaveRoom, ListRooms, ValidateAndRelaySignal, WsChatServer, WsChatSession,
     },
-    SessionStore, HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, WS_PREFIX_SIGNAL_MESSAGE,
-    WS_PREFIX_SYSTEM_ERROR, WS_PREFIX_SYSTEM_NAME, WS_PREFIX_SYSTEM_ROOMS, WS_PREFIX_USER_COMMAND,
-    WS_PREFIX_USER_DISCONNECTED,
 };
 use actix::prelude::*;
 use actix_web_actors::ws;
 use fake::{
-    faker::name::{en::FirstName, en::LastName},
     Fake,
+    faker::name::{en::FirstName, en::LastName},
 };
-use rand::{rng, Rng};
+use rand::{Rng, rng};
 use serde_json::Value;
 use std::time::Instant;
 
@@ -193,17 +193,17 @@ impl WsChatSession {
 
     pub fn start_heartbeat(&self, ctx: &mut ws::WebsocketContext<Self>) {
         ctx.run_interval(HEARTBEAT_INTERVAL, |act, ctx| {
-            if let Some(last) = act.last_heartbeat {
-                if Instant::now().duration_since(last) > HEARTBEAT_TIMEOUT {
-                    log::debug!(
-                        target: "Websocket",
-                        "Heartbeat failed for user {}, disconnecting!",
-                        act.name
-                    );
-                    act.handle_user_disconnect();
-                    ctx.stop();
-                    return;
-                }
+            if let Some(last) = act.last_heartbeat
+                && Instant::now().duration_since(last) > HEARTBEAT_TIMEOUT
+            {
+                log::debug!(
+                    target: "Websocket",
+                    "Heartbeat failed for user {}, disconnecting!",
+                    act.name
+                );
+                act.handle_user_disconnect();
+                ctx.stop();
+                return;
             }
             log::debug!(target: "Websocket", "Sending heartbeat to user {}", act.name);
             ctx.ping(b"");

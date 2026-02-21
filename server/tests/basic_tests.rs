@@ -1,9 +1,9 @@
 use actix::prelude::*;
 use actix_cors::Cors;
-use actix_web::{http::StatusCode, test, web, App};
+use actix_web::{App, http::StatusCode, test, web};
 use bytes::Bytes;
 use server::{
-    chat_ws, health, index, private_chat_ws, ChatMessage, ServerConfig, SessionStore, WsChatServer,
+    ChatMessage, ServerConfig, SessionStore, WsChatServer, chat_ws, health, index, private_chat_ws,
 };
 
 #[actix_rt::test]
@@ -176,13 +176,15 @@ async fn test_join_leave_room() {
         client_name.to_string(),
     );
 
-    assert!(server
-        .rooms
-        .get(session_id)
-        .unwrap()
-        .get(room_name)
-        .unwrap()
-        .contains_key(&id));
+    assert!(
+        server
+            .rooms
+            .get(session_id)
+            .unwrap()
+            .get(room_name)
+            .unwrap()
+            .contains_key(&id)
+    );
 }
 
 #[actix_rt::test]

@@ -1,7 +1,7 @@
 use crate::common::init_test_server;
 use awc::{
-    ws::{Frame, Message},
     Client,
+    ws::{Frame, Message},
 };
 use futures_util::{SinkExt, StreamExt};
 use std::time::Duration;

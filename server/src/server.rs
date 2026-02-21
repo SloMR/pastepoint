@@ -1,10 +1,10 @@
 use crate::{
-    message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer},
     CLEANUP_INTERVAL, WS_PREFIX_SYSTEM_MEMBERS, WS_PREFIX_SYSTEM_ROOMS,
+    message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer},
 };
 use actix::prelude::*;
-use rand::{rng, Rng};
-use std::collections::{hash_map::Entry::Vacant, HashMap};
+use rand::{Rng, rng};
+use std::collections::{HashMap, hash_map::Entry::Vacant};
 
 impl WsChatServer {
     pub fn take_room(&mut self, session_id: &str, room_name: &str) -> Option<Room> {
@@ -25,23 +25,25 @@ impl WsChatServer {
     ) -> usize {
         let id = id.unwrap_or_else(|| rng().random_range(0..usize::MAX));
 
-        if let Some(room) = self.rooms.get_mut(session_id) {
-            if let Some(existing_room) = room.get_mut(room_name) {
-                return if let Vacant(e) = existing_room.entry(id) {
-                    log::debug!(target: "Websocket", "Adding client to room: {room_name}");
-                    e.insert(ClientMetadata {
-                        recipient: client,
-                        name,
-                    });
-                    id
-                } else {
-                    log::debug!(
-                        target: "Websocket",
-                        "Client {id} already in room: {room_name}, skipping addition"
-                    );
-                    id
-                };
-            }
+        if let Some(room) = self.rooms.get_mut(session_id)
+            && let Some(existing_room) = room.get_mut(room_name)
+        {
+            return if let Vacant(e) = existing_room.entry(id) {
+                log::debug!(target: "Websocket", "Adding client to room: {}", room_name);
+                e.insert(ClientMetadata {
+                    recipient: client,
+                    name,
+                });
+                id
+            } else {
+                log::debug!(
+                    target: "Websocket",
+                    "Client {} already in room: {}, skipping addition",
+                    id,
+                    room_name
+                );
+                id
+            };
         }
 
         let mut room: Room = HashMap::new();
@@ -122,31 +124,32 @@ impl WsChatServer {
     }
 
     pub fn broadcast_room_members(&self, session_id: &str, room_name: &str) {
-        if let Some(users) = self.rooms.get(session_id) {
-            if let Some(room) = users.get(room_name) {
-                let member_list: Vec<String> = room
-                    .values()
-                    .map(|client_metadata| client_metadata.name.clone())
-                    .collect();
-                log::debug!(
-                    target: "Websocket",
-                    "Broadcasting members of room {room_name}: {member_list:?}"
-                );
-                let member_message =
-                    format!("{} {}", WS_PREFIX_SYSTEM_MEMBERS, member_list.join(", "));
+        if let Some(users) = self.rooms.get(session_id)
+            && let Some(room) = users.get(room_name)
+        {
+            let member_list: Vec<String> = room
+                .values()
+                .map(|client_metadata| client_metadata.name.clone())
+                .collect();
+            log::debug!(
+                target: "Websocket",
+                "Broadcasting members of room {}: {:?}",
+                room_name,
+                member_list
+            );
+            let member_message = format!("{} {}", WS_PREFIX_SYSTEM_MEMBERS, member_list.join(", "));
 
-                for client_metadata in room.values() {
-                    if client_metadata
-                        .recipient
-                        .try_send(ChatMessage(member_message.clone()))
-                        .is_err()
-                    {
-                        log::debug!(
-                            target: "Websocket",
-                            "Failed to send member list to client {}, client may have disconnected",
-                            client_metadata.name
-                        );
-                    }
+            for client_metadata in room.values() {
+                if client_metadata
+                    .recipient
+                    .try_send(ChatMessage(member_message.clone()))
+                    .is_err()
+                {
+                    log::debug!(
+                        target: "Websocket",
+                        "Failed to send member list to client {}, client may have disconnected",
+                        client_metadata.name
+                    );
                 }
             }
         }

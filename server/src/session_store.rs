@@ -1,17 +1,17 @@
 use crate::{
-    message::CleanupSession, ServerConfig, WsChatServer, WsChatSession, CONTENT_TYPE_TEXT_PLAIN,
-    MAX_FRAME_SIZE, SAFE_CHARSET, SESSION_EXPIRATION_TIME,
+    CONTENT_TYPE_TEXT_PLAIN, MAX_FRAME_SIZE, SAFE_CHARSET, SESSION_EXPIRATION_TIME, ServerConfig,
+    WsChatServer, WsChatSession, message::CleanupSession,
 };
 use actix::SystemService;
 use actix_rt::{spawn, task, time};
-use actix_web::{web::Payload, Error, HttpRequest, HttpResponse};
+use actix_web::{Error, HttpRequest, HttpResponse, web::Payload};
 use actix_web_actors::ws as actix_actor_ws;
-use rand::{rng, Rng};
+use rand::{Rng, rng};
 use std::{
     collections::{HashMap, HashSet},
     sync::{
-        atomic::{AtomicUsize, Ordering},
         Arc, Mutex,
+        atomic::{AtomicUsize, Ordering},
     },
 };
 use uuid::Uuid;

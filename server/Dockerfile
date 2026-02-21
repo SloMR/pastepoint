@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.5
 # Stage 1: Build the Rust app
-FROM rust:1.88.0-slim AS builder
+FROM rust:1.93.1-slim AS builder
 WORKDIR /usr/src/app
 
 ARG RUST_BUILD_MODE=release
