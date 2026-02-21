@@ -40,6 +40,12 @@ export class ChatService implements IChatService {
     this.wsService.systemMessages$.subscribe((message) => {
       this.handleSystemMessage(message);
     });
+
+    // The server assigns a new random name on every WebSocket connection.
+    // After an automatic reconnect we must re-request the current name.
+    this.wsService.reconnected$.subscribe(() => {
+      this.getUsername();
+    });
   }
 
   /**

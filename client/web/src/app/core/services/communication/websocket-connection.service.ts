@@ -1,5 +1,5 @@
 import { Inject, Injectable, PLATFORM_ID, OnDestroy } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
 import { NGXLogger } from 'ngx-logger';
@@ -42,6 +42,10 @@ export class WebSocketConnectionService implements OnDestroy {
   public messages$ = new BehaviorSubject<string>('');
   public systemMessages$ = new BehaviorSubject<string>('');
   public signalMessages$ = new BehaviorSubject<unknown>(null);
+
+  /** Fires once after a successful automatic reconnect. Services subscribe
+   *  to this to refresh stale state (e.g. username) without polling. */
+  public reconnected$ = new Subject<void>();
 
   /**
    * ==========================================================
@@ -169,6 +173,9 @@ export class WebSocketConnectionService implements OnDestroy {
 
       this.socket.onopen = () => {
         this.logger.info('connect', 'WebSocket connected');
+        if (this.reconnectAttempts > 0) {
+          this.reconnected$.next();
+        }
         this.reconnectAttempts = 0;
         this.reconnectDelay = 1000;
         this.isConnecting = false;
