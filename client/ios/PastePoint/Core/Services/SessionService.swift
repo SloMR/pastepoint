@@ -12,6 +12,8 @@ struct CreateSessionResponse: Decodable {
 
 @MainActor
 final class SessionService: ObservableObject {
+  public static let sessionCodeStorageKey: String = "session_code"
+
   public func getNewSessionCode() async throws -> String {
     guard let url = URL(string: "https://\(AppEnvironment.apiUrl)/create-session") else {
       throw SessionError.invalidURL
@@ -20,7 +22,7 @@ final class SessionService: ObservableObject {
 #if DEBUG
     let session = URLSession(
       configuration: .default,
-      delegate: InsecureTLSDelegate(),
+      delegate: InsecureSession(),
       delegateQueue: nil
     )
     let (data, response) = try await session.data(from: url)

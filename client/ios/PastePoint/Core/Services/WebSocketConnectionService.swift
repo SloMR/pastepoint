@@ -7,25 +7,6 @@ import Foundation
 import SwiftUI
 import Combine
 
-#if DEBUG
-final class InsecureTLSDelegate: NSObject, URLSessionDelegate {
-  
-  func urlSession(
-    _ session: URLSession,
-    didReceive challenge: URLAuthenticationChallenge,
-    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
-  ) {
-    guard let trust = challenge.protectionSpace.serverTrust else {
-      completionHandler(.performDefaultHandling, nil)
-      return
-    }
-    completionHandler(.useCredential, URLCredential(trust: trust))
-  }
-}
-#endif
-
-private let sessionCodeStorageKey = "session_code"
-
 @MainActor
 final class WebSocketConnectionService: ObservableObject {
   
@@ -61,20 +42,20 @@ final class WebSocketConnectionService: ObservableObject {
   // MARK: - Session Code
   
   private func getSessionCodeFromStorage() -> String? {
-    UserDefaults.standard.string(forKey: sessionCodeStorageKey)
+    UserDefaults.standard.string(forKey: SessionService.sessionCodeStorageKey)
   }
   
   private func saveSessionCode(_ code: String?) {
     if let code {
-      UserDefaults.standard.set(code, forKey: sessionCodeStorageKey)
+      UserDefaults.standard.set(code, forKey: SessionService.sessionCodeStorageKey)
     } else {
-      UserDefaults.standard.removeObject(forKey: sessionCodeStorageKey)
+      UserDefaults.standard.removeObject(forKey: SessionService.sessionCodeStorageKey)
     }
   }
   
   private func clearSessionCode() {
     sessionCode = nil
-    UserDefaults.standard.removeObject(forKey: sessionCodeStorageKey)
+    UserDefaults.standard.removeObject(forKey: SessionService.sessionCodeStorageKey)
   }
   
   public func setupPrivateSession(_ code: String) async {
@@ -134,7 +115,7 @@ final class WebSocketConnectionService: ObservableObject {
 #if DEBUG
     let session = URLSession(
       configuration: .default,
-      delegate: InsecureTLSDelegate(),
+      delegate: InsecureSession(),
       delegateQueue: nil
     )
 #else
