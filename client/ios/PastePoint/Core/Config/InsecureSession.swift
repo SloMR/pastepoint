@@ -7,17 +7,17 @@ import Foundation
 
 #if DEBUG
 final class InsecureSession: NSObject, URLSessionDelegate {
-  
-  func urlSession(
-    _ session: URLSession,
-    didReceive challenge: URLAuthenticationChallenge,
-    completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
-  ) {
-    guard let trust = challenge.protectionSpace.serverTrust else {
-      completionHandler(.performDefaultHandling, nil)
-      return
+
+    func urlSession(
+        _ session: URLSession,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void,
+    ) {
+        guard let trust = challenge.protectionSpace.serverTrust else {
+            completionHandler(.performDefaultHandling, nil)
+            return
+        }
+        completionHandler(.useCredential, URLCredential(trust: trust))
     }
-    completionHandler(.useCredential, URLCredential(trust: trust))
-  }
 }
 #endif

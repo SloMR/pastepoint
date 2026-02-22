@@ -8,63 +8,63 @@ import SwiftUI
 // MARK: - Root
 
 struct ContentView: View {
-  @AppStorage(AppColors.Scheme.storageKey) private var colorSchemeRaw: String = AppColors.Scheme.default
-  @EnvironmentObject private var services: AppServices
+    @AppStorage(AppColors.Scheme.storageKey) private var colorSchemeRaw: String = AppColors.Scheme.default
+    @EnvironmentObject private var services: AppServices
 
-  @State private var showSettings = false
+    @State private var showSettings = false
 
-  var body: some View {
-    VStack(spacing: 0) {
-      ChatHeaderView(
-        onMenuTap: { showSettings = true },
-        onThemeTap: { colorSchemeRaw = AppColors.Scheme.next(after: colorSchemeRaw) }
-      )
-      Divider()
+    var body: some View {
+        VStack(spacing: 0) {
+            ChatHeaderView(
+                onMenuTap: { showSettings = true },
+                onThemeTap: { colorSchemeRaw = AppColors.Scheme.next(after: colorSchemeRaw) },
+            )
+            Divider()
 
-      RoomContentView()
+            RoomContentView()
 
-      MessageInputBar()
-        .padding(.horizontal, 16)
-        .padding(.vertical, 12)
+            MessageInputBar()
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+        }
+        .background(AppColors.Background.background)
+        .preferredColorScheme(AppColors.Scheme.colorScheme(from: colorSchemeRaw))
+        .ignoresSafeArea(.keyboard, edges: .bottom)
+        .sheet(isPresented: $showSettings) {
+            NavigationStack {
+                SettingsView()
+            }
+        }
+        .onReceive(services.wsService.message) { msg in
+            print("User message:", msg)
+        }
+        .onReceive(services.wsService.signalMessage) { sig in
+            print("Signal: \(sig.type.rawValue) | from: \(sig.from) → to: \(sig.to)")
+        }
     }
-    .background(AppColors.Background.background)
-    .preferredColorScheme(AppColors.Scheme.colorScheme(from: colorSchemeRaw))
-    .ignoresSafeArea(.keyboard, edges: .bottom)
-    .sheet(isPresented: $showSettings) {
-      NavigationStack {
-        SettingsView()
-      }
-    }
-    .onReceive(services.wsService.message) { msg in
-      print("User message:", msg)
-    }
-    .onReceive(services.wsService.signalMessage) { sig in
-      print("Signal: \(sig.type.rawValue) | from: \(sig.from) → to: \(sig.to)")
-    }
-  }
 }
 
 // MARK: - Main Content Switcher
 
 struct RoomContentView: View {
-  @State private var hasMessages: Bool = true
+    @State private var hasMessages: Bool = true
 
-  var body: some View {
-    Group {
-      if hasMessages {
-        ChatView()
-      } else {
-        WelcomeView()
-      }
+    var body: some View {
+        Group {
+            if hasMessages {
+                ChatView()
+            } else {
+                WelcomeView()
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(AppColors.Background.background)
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(AppColors.Background.background)
-  }
 }
 
 // MARK: - Preview
 
 #Preview {
-  ContentView()
-    .environmentObject(AppServices.shared)
+    ContentView()
+        .environmentObject(AppServices.shared)
 }

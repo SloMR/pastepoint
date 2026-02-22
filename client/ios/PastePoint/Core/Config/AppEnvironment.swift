@@ -6,9 +6,9 @@
 import Foundation
 
 enum AppEnvironment {
-  #if DEBUG
-  static let apiUrl   = "127.0.0.1:9000"
-  #else
-  static let apiUrl = "pastepoint.com"
-  #endif
+#if DEBUG
+    static let apiUrl = "127.0.0.1:9000"
+#else
+    static let apiUrl = "pastepoint.com"
+#endif
 }
