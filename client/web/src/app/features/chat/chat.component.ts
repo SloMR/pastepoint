@@ -1194,6 +1194,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (room !== this.currentRoom) {
       this.ngZone.run(() => {
         this.roomService.joinRoom(room);
+        this.roomService.listRooms();
         this.currentRoom = room;
         this.isMenuOpen = false;
         this.toaster.success(this.translate.instant('ROOM_JOINED_SUCCESS', { roomName: room }));

@@ -6,19 +6,19 @@
 import SwiftUI
 
 struct NumberBadge: View {
-  let number: Int
+    let number: Int
 
-  var body: some View {
-    Text("\(number)")
-      .font(.caption2)
-      .fontWeight(.medium)
-      .foregroundStyle(.white)
-      .frame(width: 18, height: 18)
-      .background(.brand)
-      .clipShape(Circle())
-  }
+    var body: some View {
+        Text("\(number)")
+            .font(.caption2)
+            .fontWeight(.medium)
+            .foregroundStyle(.white)
+            .frame(width: 18, height: 18)
+            .background(.brand)
+            .clipShape(Circle())
+    }
 }
 
 #Preview {
-  NumberBadge(number: 1)
+    NumberBadge(number: 1)
 }

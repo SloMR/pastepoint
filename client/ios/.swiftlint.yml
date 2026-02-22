@@ -1,0 +1,44 @@
+excluded:
+  - PastePoint.xcodeproj
+  - PastePointTests
+  - PastePointUITests
+
+# ── Thresholds ────────────────────────────────────────────────────────────────
+line_length:
+  warning: 140
+  error: 200
+  ignores_comments: true
+  ignores_urls: true
+
+file_length:
+  warning: 500
+  error: 800
+
+type_body_length:
+  warning: 400
+  error: 600
+
+function_body_length:
+  warning: 80
+  error: 120
+
+# ── Disabled rules ────────────────────────────────────────────────────────────
+disabled_rules:
+  - todo # TODOs are tracked in code; not a lint error
+
+# ── Identifier name exceptions ────────────────────────────────────────────────
+identifier_name:
+  min_length: 2 # allow 2-char names like `vc`, `to`, `id`
+  excluded:
+    - id
+    - to
+    - vc
+    - db
+    - ok
+    - x
+    - y
+
+type_name:
+  min_length: 2 # allow e.g. QR
+  excluded:
+    - QR
