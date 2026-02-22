@@ -35,9 +35,6 @@ struct ContentView: View {
         SettingsView()
       }
     }
-    .task {
-      await services.handleForeground()
-    }
     .onReceive(services.wsService.message) { msg in
       print("User message:", msg)
     }

@@ -20,7 +20,7 @@ final class WebSocketConnectionService: ObservableObject {
   let message       = PassthroughSubject<String, Never>()
   let systemMessage = PassthroughSubject<String, Never>()
   let signalMessage = PassthroughSubject<SignalMessage, Never>()
-  let didReconnect  = PassthroughSubject<Void, Never>()
+  let didConnect    = PassthroughSubject<Void, Never>()
   
   // MARK: - Properties
   
@@ -84,10 +84,9 @@ final class WebSocketConnectionService: ObservableObject {
       return
     }
     
-    // Tear down any task before opening a new one.
+    // Tear down any existing task before opening a new one.
     if task != nil {
       teardownConnection()
-      try? await Task.sleep(for: .milliseconds(200)) // TODO: Remove this one
     }
     
     isConnecting = true
@@ -124,15 +123,26 @@ final class WebSocketConnectionService: ObservableObject {
     
     task = session.webSocketTask(with: url)
     task?.resume()
-    
-    isConnected = true
-    isConnecting = false
-    
+
     startReceiveLoop()
     startPingLoop()
-    
-    if isReconnectAttempt {
-      didReconnect.send()
+
+    // Keep isConnecting = true until the handshake ping returns so that
+    // concurrent handleForeground() calls stay blocked during this window.
+    let capturedTask = task
+    capturedTask?.sendPing { [weak self] error in
+      Task { @MainActor [weak self] in
+        guard let self, self.task === capturedTask else { return }
+        self.isConnecting = false
+        if let error {
+          print("Connection handshake ping failed: \(error.localizedDescription)")
+          self.teardownConnection()
+          await self.scheduleReconnect()
+        } else {
+          self.isConnected = true
+          self.didConnect.send()
+        }
+      }
     }
   }
   
@@ -221,8 +231,8 @@ final class WebSocketConnectionService: ObservableObject {
   // MARK: - Send
   
   func send(_ text: String) async {
-    guard isConnected else {
-      print("Send failed — socket not open")
+    guard task != nil else {
+      print("Send failed — no active socket task")
       return
     }
     
@@ -252,7 +262,7 @@ final class WebSocketConnectionService: ObservableObject {
     pingTask?.cancel()
 
     pingTask = Task {
-      while !Task.isCancelled, isConnected {
+      while !Task.isCancelled {
         do {
           try await Task.sleep(for: pingInterval)
           guard !Task.isCancelled, isConnected else { break }

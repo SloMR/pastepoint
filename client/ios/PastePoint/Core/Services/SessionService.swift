@@ -36,7 +36,7 @@ final class SessionService: ObservableObject {
     }
     
     let decoded = try JSONDecoder().decode(CreateSessionResponse.self, from: data)
-    print("Private Session Code: \(decoded.code)")
+    print("Private session code received successfully with: \(decoded.code)")
     return decoded.code
   }
   

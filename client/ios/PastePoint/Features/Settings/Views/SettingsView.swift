@@ -106,19 +106,22 @@ struct SettingsView: View {
                     await services.roomService.joinOrCreateRoom(room)
                   }
                 } label: {
-                  Image("inactive.comment")
-                    .renderingMode(.template)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 16, height: 16)
-                    .padding(.trailing, 5)
-                    .foregroundStyle(room == services.roomService.currentRoom ? .brand : .secondary)
-                  
-                  Text(room)
-                    .font(.subheadline)
-                    .foregroundColor(room == services.roomService.currentRoom ? .brand : .textPrimary)
+                  HStack(spacing: 5) {
+                    Image("inactive.comment")
+                      .renderingMode(.template)
+                      .resizable()
+                      .scaledToFit()
+                      .frame(width: 16, height: 16)
+                      .foregroundStyle(room == services.roomService.currentRoom ? .brand : .secondary)
+
+                    Text(room)
+                      .font(.subheadline)
+                      .foregroundColor(room == services.roomService.currentRoom ? .brand : .textPrimary)
+                  }
+                  .contentShape(Rectangle())
                 }
-                
+                .buttonStyle(.plain)
+
                 Spacer()
               }
               .padding(.horizontal, 60)

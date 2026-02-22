@@ -24,7 +24,7 @@ final class UserService: ObservableObject {
       }
       .store(in: &cancellables)
     
-    wsService.didReconnect
+    wsService.didConnect
       .receive(on: DispatchQueue.main)
       .sink { [weak self] _ in
         Task { await self?.getUsername() }

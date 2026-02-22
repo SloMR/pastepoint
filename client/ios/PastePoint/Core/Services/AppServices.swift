@@ -36,14 +36,12 @@ final class AppServices: ObservableObject {
 
   public func handleForeground() async {
     isInBackground = false
-    guard !wsService.isConnected else {
-      print("handleForeground — already connected, skipping")
+    guard !wsService.isConnected, !wsService.isConnecting else {
+      print("handleForeground — already connected or connecting, skipping")
       return
     }
     print("handleForeground — connecting")
     await wsService.connect(sessionCode: wsService.currentSessionCode)
-    await roomService.listRooms()
-    await userService.getUsername()
   }
 
   public func handleBackground() {
