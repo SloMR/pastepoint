@@ -21,7 +21,7 @@ permissions:
   pull-requests: read
 
 env:
-  DESTINATION: 'platform=iOS Simulator,name=iPhone 16'
+  DESTINATION: 'platform=iOS Simulator,name=iPhone 16,arch=arm64'
   DERIVED_DATA: ${{ github.workspace }}/client/ios/build
 
 jobs:
@@ -40,13 +40,23 @@ jobs:
         id: xcode
         run: echo "version=$(xcodebuild -version | head -1 | sed 's/Xcode //')" >> "$GITHUB_OUTPUT"
 
-      - name: Cache Xcode DerivedData
+      - name: Cache SwiftPM
+        uses: actions/cache@v4
+        with:
+          path: |
+            ${{ env.DERIVED_DATA }}/SourcePackages
+            ~/Library/Caches/org.swift.swiftpm
+          key: ${{ runner.os }}-spm-${{ steps.xcode.outputs.version }}-${{ hashFiles('client/ios/PastePoint.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+          restore-keys: |
+            ${{ runner.os }}-spm-${{ steps.xcode.outputs.version }}-
+
+      - name: Cache DerivedData
         uses: actions/cache@v4
         with:
           path: ${{ env.DERIVED_DATA }}
-          key: ${{ runner.os }}-xcode-${{ steps.xcode.outputs.version }}-${{ hashFiles('client/ios/**') }}
+          key: ${{ runner.os }}-dd-${{ steps.xcode.outputs.version }}-${{ hashFiles('client/ios/PastePoint.xcodeproj/project.pbxproj') }}
           restore-keys: |
-            ${{ runner.os }}-xcode-${{ steps.xcode.outputs.version }}-
+            ${{ runner.os }}-dd-${{ steps.xcode.outputs.version }}-
 
       - name: Clear stale module cache
         run: |
@@ -57,6 +67,14 @@ jobs:
         run: |
           xcrun simctl list devices available
           xcrun simctl boot "iPhone 16" || true
+
+      - name: Resolve Swift Package Dependencies
+        working-directory: client/ios
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project PastePoint.xcodeproj \
+            -scheme PastePoint \
+            -derivedDataPath '${{ env.DERIVED_DATA }}'
 
       - name: Build for Testing
         working-directory: client/ios

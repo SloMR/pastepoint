@@ -4,12 +4,15 @@
 //
 
 import Combine
+import Logging
 import Network
 import SwiftUI
 import UIKit
 
 @MainActor
 final class AppServices: ObservableObject {
+    private let logger = Logger(label: "App")
+
     let wsService: WebSocketConnectionService
     let sessionService: SessionService
     let userService: UserService
@@ -37,15 +40,15 @@ final class AppServices: ObservableObject {
     func handleForeground() async {
         isInBackground = false
         guard !wsService.isConnected, !wsService.isConnecting else {
-            print("handleForeground — already connected or connecting, skipping")
+            logger.debug("handleForeground — already connected or connecting, skipping")
             return
         }
-        print("handleForeground — connecting")
+        logger.info("handleForeground — connecting")
         await wsService.connect(sessionCode: wsService.currentSessionCode)
     }
 
     func handleBackground() {
-        print("handleBackground — disconnecting")
+        logger.info("handleBackground — disconnecting")
         isInBackground = true
         wsService.disconnect(manual: false)
     }
@@ -57,11 +60,11 @@ final class AppServices: ObservableObject {
     /// while the network was down, then the network came back.
     private func startNetworkMonitoring() {
         networkMonitor.pathUpdateHandler = { [weak self] path in
-            print("Network path updated: \(path.status)")
+            self?.logger.debug("Network path updated: \(path.status)")
             guard path.status == .satisfied else { return }
             Task { @MainActor [weak self] in
                 guard let self, !self.isInBackground else { return }
-                print("Network restored — triggering reconnect")
+                self.logger.info("Network restored — triggering reconnect")
                 await self.handleForeground()
             }
         }
