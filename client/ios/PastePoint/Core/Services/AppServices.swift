@@ -64,7 +64,7 @@ final class AppServices: ObservableObject {
             guard path.status == .satisfied else { return }
             Task { @MainActor [weak self] in
                 guard let self, !self.isInBackground else { return }
-                logger.info("Network restored — triggering reconnect")
+                self.logger.info("Network restored — triggering reconnect")
                 await self.handleForeground()
             }
         }

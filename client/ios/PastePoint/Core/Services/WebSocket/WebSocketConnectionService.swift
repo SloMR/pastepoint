@@ -137,7 +137,7 @@ final class WebSocketConnectionService: ObservableObject {
                 guard let self, self.task === capturedTask else { return }
                 self.isConnecting = false
                 if let error {
-                    logger.warning("Connection handshake ping failed: \(error.localizedDescription)")
+                    self.logger.warning("Connection handshake ping failed: \(error.localizedDescription)")
                     self.teardownConnection()
                     await self.scheduleReconnect()
                 } else {

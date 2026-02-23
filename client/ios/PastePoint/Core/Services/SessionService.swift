@@ -41,6 +41,7 @@ final class SessionService: ObservableObject {
         }
 
         let decoded = try JSONDecoder().decode(CreateSessionResponse.self, from: data)
+        // TODO: Remove this log before release.
         logger.debug("Private session code received successfully with: \(decoded.code)")
         return decoded.code
     }
