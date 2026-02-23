@@ -5,10 +5,12 @@
 
 import Combine
 import Foundation
+import Logging
 import SwiftUI
 
 @MainActor
 final class WebSocketConnectionService: ObservableObject {
+    private let logger = Logger(label: "WebSocket")
 
     // MARK: - Connection State
 
@@ -60,7 +62,7 @@ final class WebSocketConnectionService: ObservableObject {
 
     func setupPrivateSession(_ code: String) async {
         guard SessionService.isValidSessionCode(code) else {
-            print("Private session code is not valid: \(code)")
+            logger.warning("Private session code is not valid: \(code)")
             return
         }
         if sessionCode != nil {
@@ -73,14 +75,14 @@ final class WebSocketConnectionService: ObservableObject {
 
     func connect(sessionCode code: String? = nil, isReconnectAttempt: Bool = false) async {
         guard !isConnecting else {
-            print("Already connecting — ignored")
+            logger.debug("Already connecting — ignored")
             return
         }
 
         let effectiveCode = code ?? sessionCode ?? getSessionCodeFromStorage()
 
         if isConnected, sessionCode == effectiveCode {
-            print("Already connected to same session")
+            logger.debug("Already connected to same session")
             return
         }
 
@@ -104,12 +106,12 @@ final class WebSocketConnectionService: ObservableObject {
 
         let urlString = "wss://\(AppEnvironment.apiUrl)/ws\(effectiveCode.map { "/\($0)" } ?? "")"
         guard let url = URL(string: urlString) else {
-            print("Invalid WS URL: \(urlString)")
+            logger.error("Invalid WS URL: \(urlString)")
             isConnecting = false
             return
         }
 
-        print("Connecting to \(urlString)")
+        logger.info("Connecting to \(urlString)")
 
 #if DEBUG
         let session = URLSession(
@@ -135,7 +137,7 @@ final class WebSocketConnectionService: ObservableObject {
                 guard let self, self.task === capturedTask else { return }
                 self.isConnecting = false
                 if let error {
-                    print("Connection handshake ping failed: \(error.localizedDescription)")
+                    logger.warning("Connection handshake ping failed: \(error.localizedDescription)")
                     self.teardownConnection()
                     await self.scheduleReconnect()
                 } else {
@@ -163,7 +165,7 @@ final class WebSocketConnectionService: ObservableObject {
                     case .string(let text):
                         handleIncoming(text)
                     case .data(let data):
-                        print("Binary frame received: \(data.count) bytes (ignored)")
+                        logger.debug("Binary frame received: \(data.count) bytes (ignored)")
                     @unknown default:
                         break
                     }
@@ -171,14 +173,14 @@ final class WebSocketConnectionService: ObservableObject {
                     guard !Task.isCancelled else { break }
 
                     if isPermanentError(error) {
-                        print("Session code invalid or expired — falling back to public session")
+                        logger.warning("Session code invalid or expired — falling back to public session")
                         clearSessionCode()
                         teardownConnection()
                         await connect(sessionCode: nil, isReconnectAttempt: false)
                         break
                     }
 
-                    print("Receive error: \(error.localizedDescription)")
+                    logger.error("Receive error: \(error.localizedDescription)")
                     await scheduleReconnect()
                     break
                 }
@@ -202,16 +204,16 @@ final class WebSocketConnectionService: ObservableObject {
             do {
                 let obj = try JSONSerialization.jsonObject(with: Data(json.utf8))
                 guard let dict = obj as? [String: Any] else {
-                    print("handleIncoming: signal JSON is not a dictionary")
+                    logger.warning("handleIncoming: signal JSON is not a dictionary")
                     return
                 }
                 guard let sig = SignalMessage(from: dict) else {
-                    print("handleIncoming: malformed SignalMessage — missing required fields in: \(json)")
+                    logger.warning("handleIncoming: malformed SignalMessage — missing required fields in: \(json)")
                     return
                 }
                 signalMessage.send(sig)
             } catch {
-                print("handleIncoming: JSON parse error: \(error.localizedDescription)")
+                logger.error("handleIncoming: JSON parse error: \(error.localizedDescription)")
             }
         } else if isSystemMessage(msg) {
             systemMessage.send(msg)
@@ -232,14 +234,14 @@ final class WebSocketConnectionService: ObservableObject {
 
     func send(_ text: String) async {
         guard task != nil else {
-            print("Send failed — no active socket task")
+            logger.warning("Send failed — no active socket task")
             return
         }
 
         do {
             try await task?.send(.string(text))
         } catch {
-            print("Send error: \(error.localizedDescription)")
+            logger.error("Send error: \(error.localizedDescription)")
         }
     }
 
@@ -247,12 +249,12 @@ final class WebSocketConnectionService: ObservableObject {
         do {
             let data = try JSONSerialization.data(withJSONObject: obj)
             guard let json = String(data: data, encoding: .utf8) else {
-                print("sendSignal: failed to encode JSON as UTF-8 string")
+                logger.error("sendSignal: failed to encode JSON as UTF-8 string")
                 return
             }
             await send("[SignalMessage] \(json)")
         } catch {
-            print("sendSignal: JSON serialization failed: \(error.localizedDescription)")
+            logger.error("sendSignal: JSON serialization failed: \(error.localizedDescription)")
         }
     }
 
@@ -270,7 +272,7 @@ final class WebSocketConnectionService: ObservableObject {
                     task?.sendPing { [weak self] error in
                         guard let self else { return }
                         if let error {
-                            print("Ping failed: \(error.localizedDescription) — triggering reconnect")
+                            logger.warning("Ping failed: \(error.localizedDescription) — triggering reconnect")
 
                             // sendPing callback fires on an arbitrary queue; hop to MainActor.
                             Task { @MainActor in
@@ -281,7 +283,7 @@ final class WebSocketConnectionService: ObservableObject {
                         }
                     }
                 } catch {
-                    print("Ping loop interrupted: \(error.localizedDescription)")
+                    logger.debug("Ping loop interrupted: \(error.localizedDescription)")
                     break
                 }
             }
@@ -312,7 +314,7 @@ final class WebSocketConnectionService: ObservableObject {
 
         reconnectAttempts += 1
         guard reconnectAttempts <= maxReconnectAttempts else {
-            print("Max reconnect attempts (\(maxReconnectAttempts)) reached — giving up")
+            logger.warning("Max reconnect attempts (\(maxReconnectAttempts)) reached — giving up")
             return
         }
 
@@ -320,7 +322,7 @@ final class WebSocketConnectionService: ObservableObject {
             baseReconnectDelaySec * pow(2.0, Double(reconnectAttempts - 1)),
             maxReconnectDelaySec,
         )
-        print("Reconnecting in \(Int(delay))s (attempt \(reconnectAttempts)/\(maxReconnectAttempts))")
+        logger.info("Reconnecting in \(Int(delay))s (attempt \(reconnectAttempts)/\(maxReconnectAttempts))")
 
         try? await Task.sleep(for: .seconds(delay))
         guard !manualDisconnect else { return }
@@ -331,7 +333,7 @@ final class WebSocketConnectionService: ObservableObject {
     // MARK: - Disconnect
 
     func disconnect(manual: Bool = true) {
-        print("Disconnecting (manual: \(manual))")
+        logger.info("Disconnecting (manual: \(manual))")
         manualDisconnect = manual
         if manual { clearSessionCode() }
         teardownConnection()
