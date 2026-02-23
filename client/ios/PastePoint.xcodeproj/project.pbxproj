@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		4C099FD52F4CE70800E71A3D /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 4C099FD42F4CE70800E71A3D /* Logging */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		4C23270E2F1ECB1C005FED3A /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -66,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4C099FD52F4CE70800E71A3D /* Logging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -126,6 +131,7 @@
 			);
 			name = PastePoint;
 			packageProductDependencies = (
+				4C099FD42F4CE70800E71A3D /* Logging */,
 			);
 			productName = PastePoint;
 			productReference = 4C2327002F1ECB1B005FED3A /* PastePoint.app */;
@@ -209,6 +215,9 @@
 			);
 			mainGroup = 4C2326F72F1ECB1A005FED3A;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				4C099FD32F4CE70800E71A3D /* XCRemoteSwiftPackageReference "swift-log" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4C2327012F1ECB1B005FED3A /* Products */;
 			projectDirPath = "";
@@ -606,6 +615,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		4C099FD32F4CE70800E71A3D /* XCRemoteSwiftPackageReference "swift-log" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-log";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.10.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		4C099FD42F4CE70800E71A3D /* Logging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 4C099FD32F4CE70800E71A3D /* XCRemoteSwiftPackageReference "swift-log" */;
+			productName = Logging;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 4C2326F82F1ECB1B005FED3A /* Project object */;
 }
