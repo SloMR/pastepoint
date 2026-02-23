@@ -53,7 +53,7 @@ struct AppLogHandler: LogHandler {
         }
     }
 
-    private nonisolated func emoji(for level: Logging.Logger.Level) -> String {
+    private func emoji(for level: Logging.Logger.Level) -> String {
         switch level {
         case .trace: return "⚪️"
         case .debug: return "🔵"
