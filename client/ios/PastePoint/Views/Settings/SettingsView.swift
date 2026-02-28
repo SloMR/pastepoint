@@ -3,11 +3,13 @@
 //  SPDX-License-Identifier: GPL-3.0-only
 //
 
+import Logging
 import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var services: AppServices
+    private let logger = Logger(label: "SettingsView")
 
     @State private var privacyURLToShow: IdentifiableURL?
 
@@ -50,7 +52,7 @@ struct SettingsView: View {
                     // MARK: - Create New Room Button
 
                     Button {
-                        print("Create new room tapped")
+                        logger.info("Create new room tapped")
                         Task {
                             await services.roomService.joinOrCreateRoom("Testing from iOS") // TODO: Add UI for this one
                         }
@@ -106,7 +108,7 @@ struct SettingsView: View {
                             HStack(alignment: .center, spacing: 0) {
                                 Button {
                                     Task {
-                                        print("Joining room \(room)")
+                                        logger.info("Joining room \(room)")
                                         await services.roomService.joinOrCreateRoom(room)
                                     }
                                 } label: {
@@ -212,7 +214,7 @@ struct SettingsView: View {
                                         await services.roomService.listRooms()
                                         await services.userService.getUsername()
                                     } catch {
-                                        print("Cannot get the session code \(error)")
+                                        logger.error("Cannot get the session code \(error)")
                                     }
                                 }
                             } label: {
@@ -237,7 +239,7 @@ struct SettingsView: View {
                             .buttonStyle(.plain)
 
                             Button {
-                                print("Join private chat tapped")
+                                logger.info("Join private chat tapped")
                             } label: {
                                 HStack(spacing: 8) {
                                     Text("Join Private Chat")

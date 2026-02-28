@@ -3,9 +3,12 @@
 //  SPDX-License-Identifier: GPL-3.0-only
 //
 
+import Logging
 import SwiftUI
 
 struct MessageInputBar: View {
+    private let logger = Logger(label: "MessageInputBar")
+
     @State private var message = ""
 
     var body: some View {
@@ -19,7 +22,7 @@ struct MessageInputBar: View {
             HStack(alignment: .center) {
 
                 Button {
-                    print("Attachments Button Clicked")
+                    logger.info("Attachments Button Clicked")
                 } label: {
                     Image("link")
                         .renderingMode(.template)
@@ -33,7 +36,7 @@ struct MessageInputBar: View {
                 Spacer()
 
                 Button {
-                    print("Send Button Clicked")
+                    logger.info("Send Button Clicked")
                 } label: {
                     HStack(spacing: 8) {
                         Text("Send")

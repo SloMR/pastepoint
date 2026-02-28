@@ -3,10 +3,13 @@
 //  SPDX-License-Identifier: GPL-3.0-only
 //
 
+import Logging
 import SwiftUI
 
 struct ChatHeaderView: View {
     @Environment(\.colorScheme) private var colorScheme
+    private let logger = Logger(label: "ChatHeaderView")
+
     var onMenuTap: (() -> Void)?
     var onThemeTap: (() -> Void)?
 
@@ -24,7 +27,7 @@ struct ChatHeaderView: View {
 
                 // Language
                 Button("AR") {
-                    print("Language Button Clicked")
+                    logger.info("Language Button Clicked")
                 }
                 .foregroundStyle(.brand)
                 .font(.headline)
