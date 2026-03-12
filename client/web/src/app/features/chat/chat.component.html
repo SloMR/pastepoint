@@ -1790,7 +1790,7 @@
                     alt="Emoji"
                     title="Open emoji picker"
                     class="h-5 w-5 cursor-pointer"
-                    (mouseenter)="isEmojiPickerVisible = true"
+                    (mouseenter)="openEmojiPicker()"
                     (mouseleave)="handleEmojiIconMouseLeave()"
                     loading="lazy"
                     width="20"
@@ -1832,13 +1832,11 @@
               (mouseenter)="isHoveringOverPicker = true"
               (mouseleave)="isHoveringOverPicker = false; isEmojiPickerVisible = false"
             >
-              <emoji-mart
+              <emoji-picker
                 *ngIf="isEmojiPickerVisible || isHoveringOverPicker"
-                class="emoji-mart"
-                (emojiSelect)="addEmoji($event)"
-                [darkMode]="isDarkMode"
-                title="Choose your emoji"
-              ></emoji-mart>
+                [class.dark]="isDarkMode"
+                (emoji-click)="addEmoji($event)"
+              ></emoji-picker>
             </div>
           </div>
         </form>

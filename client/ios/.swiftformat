@@ -59,8 +59,6 @@
 --rules redundantParens
 --rules redundantPattern
 --rules redundantPublic
---rules redundantSelf           # remove `self.` where Swift does not require it
-  --self remove
 --rules semicolons
 --rules void
 
