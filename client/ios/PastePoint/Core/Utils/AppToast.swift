@@ -48,7 +48,7 @@ struct ToastItem: Identifiable {
 
 // MARK: - Toast View Modifier
 
-private let toastOptions = SimpleToastOptions(
+@MainActor private let toastOptions = SimpleToastOptions(
     alignment: .top,
     hideAfter: 3,
     animation: .spring,
