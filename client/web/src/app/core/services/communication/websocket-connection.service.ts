@@ -5,7 +5,11 @@ import { Router } from '@angular/router';
 import { NGXLogger } from 'ngx-logger';
 import { isPlatformBrowser } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import { SESSION_CODE_KEY, WS_PREFIX_KEEP_ALIVE, WS_KEEP_ALIVE_INTERVAL_MS } from '../../../utils/constants';
+import {
+  SESSION_CODE_KEY,
+  WS_PREFIX_KEEP_ALIVE,
+  WS_KEEP_ALIVE_INTERVAL_MS,
+} from '../../../utils/constants';
 import { HotToastService } from '@ngneat/hot-toast';
 @Injectable({
   providedIn: 'root',
