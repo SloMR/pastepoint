@@ -118,15 +118,15 @@ final class WebSocketConnectionService: ObservableObject {
         let capturedTask = task
         capturedTask?.sendPing { [weak self] error in
             Task { @MainActor [weak self] in
-                guard let self, self.task === capturedTask else { return }
-                self.isConnecting = false
+                guard let self, task === capturedTask else { return }
+                isConnecting = false
                 if let error {
-                    self.logger.warning("Connection handshake ping failed: \(error.localizedDescription)")
-                    self.teardownConnection()
-                    await self.scheduleReconnect()
+                    logger.warning("Connection handshake ping failed: \(error.localizedDescription)")
+                    teardownConnection()
+                    await scheduleReconnect()
                 } else {
-                    self.isConnected = true
-                    self.didConnect.send()
+                    isConnected = true
+                    didConnect.send()
                 }
             }
         }

@@ -60,12 +60,12 @@ struct WelcomeView: View {
                     OnboardingSteps(steps: [
                         "Share your session code with people you want to invite",
                         "Wait for members to join the session",
-                        "Start chatting and sharing files!"
+                        "Start chatting and sharing files!",
                     ])
                 } else {
                     OnboardingSteps(steps: [
                         "Invite others on the same network to join this room",
-                        "Start the conversation by sending a message"
+                        "Start the conversation by sending a message",
                     ])
                 }
 

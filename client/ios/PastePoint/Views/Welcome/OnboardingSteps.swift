@@ -27,6 +27,6 @@ struct OnboardingSteps: View {
 #Preview {
     OnboardingSteps(steps: [
         "Invite others on the same network to join this room",
-        "Start the conversation by sending a message"
+        "Start the conversation by sending a message",
     ])
 }

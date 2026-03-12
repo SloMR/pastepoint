@@ -40,10 +40,10 @@ struct ToastItem: Identifiable {
     let message: String
     let style: ToastStyle
 
-    static func success(_ message: String) -> ToastItem { .init(message: message, style: .success) }
-    static func error(_ message: String) -> ToastItem { .init(message: message, style: .error) }
-    static func warning(_ message: String) -> ToastItem { .init(message: message, style: .warning) }
-    static func info(_ message: String) -> ToastItem { .init(message: message, style: .info) }
+    static func success(_ message: String) -> Self { .init(message: message, style: .success) }
+    static func error(_ message: String) -> Self { .init(message: message, style: .error) }
+    static func warning(_ message: String) -> Self { .init(message: message, style: .warning) }
+    static func info(_ message: String) -> Self { .init(message: message, style: .info) }
 }
 
 // MARK: - Toast View Modifier

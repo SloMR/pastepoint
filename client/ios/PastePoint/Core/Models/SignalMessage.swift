@@ -26,10 +26,10 @@ struct SignalMessage {
             let to = dict["to"] as? String,
             let type = SignalMessageType(rawValue: typeRaw) else { return nil }
         self.type = type
-        self.data = dict["data"]
+        data = dict["data"]
         self.from = from
         self.to = to
-        self.sequence = dict["sequence"] as? Int
+        sequence = dict["sequence"] as? Int
     }
 
     init(type: SignalMessageType, data: Any, from: String, to: String, sequence: Int? = nil) {

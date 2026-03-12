@@ -16,7 +16,7 @@ struct AppLogHandler: LogHandler {
 
     init(label: String) {
         self.label = label
-        self.osLogger = os.Logger(subsystem: "com.pastepoint", category: label)
+        osLogger = os.Logger(subsystem: "com.pastepoint", category: label)
     }
 
     subscript(metadataKey key: String) -> Logging.Logger.Metadata.Value? {
