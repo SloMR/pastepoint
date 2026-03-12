@@ -1,7 +1,7 @@
 use crate::{
-    HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, SessionStore, WS_PREFIX_SIGNAL_MESSAGE,
-    WS_PREFIX_SYSTEM_ERROR, WS_PREFIX_SYSTEM_NAME, WS_PREFIX_SYSTEM_ROOMS, WS_PREFIX_USER_COMMAND,
-    WS_PREFIX_USER_DISCONNECTED,
+    HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, SessionStore, WS_PREFIX_KEEP_ALIVE,
+    WS_PREFIX_SIGNAL_MESSAGE, WS_PREFIX_SYSTEM_ERROR, WS_PREFIX_SYSTEM_NAME,
+    WS_PREFIX_SYSTEM_ROOMS, WS_PREFIX_USER_COMMAND, WS_PREFIX_USER_DISCONNECTED,
     consts::MAX_SIGNAL_SIZE,
     error::ServerError,
     message::{
@@ -242,6 +242,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
                 } else if msg.starts_with(WS_PREFIX_USER_DISCONNECTED) {
                     log::debug!(target: "Websocket","Received disconnect command");
                     self.handle_user_disconnect();
+                } else if msg.starts_with(WS_PREFIX_KEEP_ALIVE) {
+                    // Client-side keepalive ping
+                    log::debug!(target: "Websocket", "Keep-alive from {}", self.name);
                 } else {
                     log::debug!(target: "Websocket","Unknown command: {msg}");
                     ctx.text(format!(
