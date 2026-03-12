@@ -43,21 +43,8 @@ final class WebSocketConnectionService: ObservableObject {
 
     // MARK: - Session Code
 
-    private func getSessionCodeFromStorage() -> String? {
-        UserDefaults.standard.string(forKey: SessionService.sessionCodeStorageKey)
-    }
-
-    private func saveSessionCode(_ code: String?) {
-        if let code {
-            UserDefaults.standard.set(code, forKey: SessionService.sessionCodeStorageKey)
-        } else {
-            UserDefaults.standard.removeObject(forKey: SessionService.sessionCodeStorageKey)
-        }
-    }
-
     private func clearSessionCode() {
         sessionCode = nil
-        UserDefaults.standard.removeObject(forKey: SessionService.sessionCodeStorageKey)
     }
 
     func setupPrivateSession(_ code: String) async {
@@ -68,7 +55,7 @@ final class WebSocketConnectionService: ObservableObject {
         if sessionCode != nil {
             disconnect(manual: true)
         }
-        saveSessionCode(SessionService.sanitizeSessionCode(code))
+        sessionCode = SessionService.sanitizeSessionCode(code)
     }
 
     // MARK: - Connect
@@ -79,7 +66,7 @@ final class WebSocketConnectionService: ObservableObject {
             return
         }
 
-        let effectiveCode = code ?? sessionCode ?? getSessionCodeFromStorage()
+        let effectiveCode = code ?? sessionCode
 
         if isConnected, sessionCode == effectiveCode {
             logger.debug("Already connected to same session")
@@ -94,9 +81,6 @@ final class WebSocketConnectionService: ObservableObject {
         isConnecting = true
         manualDisconnect = false
         sessionCode = effectiveCode
-        if let effectiveCode {
-            saveSessionCode(effectiveCode)
-        }
 
         // Reset the retry counter on every intentional (non-reconnect) connect so
         // that NWPathMonitor / foreground transitions always get a fresh 5-attempt window.

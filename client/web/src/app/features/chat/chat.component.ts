@@ -53,7 +53,7 @@ import {
   THEME_PREFERENCE_KEY,
   PREVIEW_MIME_TYPE,
 } from '../../utils/constants';
-import { PickerComponent } from '@ctrl/ngx-emoji-mart';
+import type { EmojiClickEvent } from 'emoji-picker-element/shared';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session/session.service';
 import packageJson from '../../../../package.json';
@@ -85,7 +85,6 @@ import { DeviceDetectorService } from 'ngx-device-detector';
     UpperCasePipe,
     DatePipe,
     DecimalPipe,
-    PickerComponent,
     TranslateModule,
     NgStyle,
     NgOptimizedImage,
@@ -217,6 +216,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     private previewService: PreviewService,
     private fileSizePipe: FileSizePipe,
     private deviceDetectorService: DeviceDetectorService,
+    private elementRef: ElementRef,
     @Inject(TranslateService) protected translate: TranslateService,
     @Inject(PLATFORM_ID) private platformId: object
   ) {}
@@ -230,6 +230,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   ngOnInit(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      import('emoji-picker-element');
+    }
+
     if (!isPlatformBrowser(this.platformId)) {
       this.route.paramMap.subscribe((params) => {
         const privateSession = params.get('code');
@@ -1765,19 +1769,47 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Inserts the selected emoji into the current message text.
    * ==========================================================
    */
-  protected addEmoji(event: { emoji: { native: string } }): void {
-    if (event.emoji.native) {
-      this.ngZone.run(() => {
-        this.message += event.emoji.native;
-        this.isEmojiPickerVisible = false;
-        this.cdr.detectChanges();
-        this.emojiPickerTimeout = setTimeout(() => {
-          if (this.messageInput?.nativeElement) {
-            this.messageInput.nativeElement.focus();
-          }
-        }, 100);
-      });
-    }
+  protected addEmoji(event: EmojiClickEvent): void {
+    const { emoji, skinTone } = event.detail;
+    if (!('unicode' in emoji)) return;
+
+    const unicode =
+      skinTone && emoji.skins?.[skinTone - 1]?.unicode
+        ? emoji.skins[skinTone - 1].unicode
+        : emoji.unicode;
+
+    this.ngZone.run(() => {
+      this.message += unicode;
+      this.cdr.detectChanges();
+    });
+  }
+
+  protected openEmojiPicker(): void {
+    this.isEmojiPickerVisible = true;
+    // Inject scrollbar styles into the picker's shadow root after it renders.
+    setTimeout(() => this.injectEmojiPickerScrollbarStyles());
+  }
+
+  private injectEmojiPickerScrollbarStyles(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const picker = this.elementRef.nativeElement.querySelector('emoji-picker') as HTMLElement & {
+      shadowRoot: ShadowRoot | null;
+    };
+    if (!picker?.shadowRoot || picker.shadowRoot.querySelector('#pp-scrollbar')) return;
+
+    const style = document.createElement('style');
+    style.id = 'pp-scrollbar';
+    style.textContent = `
+      .tabpanel { scrollbar-width: thin; scrollbar-color: rgba(125,211,252,.5) transparent; }
+      .tabpanel::-webkit-scrollbar { width: 4px; }
+      .tabpanel::-webkit-scrollbar-track { background: transparent; }
+      .tabpanel::-webkit-scrollbar-thumb { background: rgba(125,211,252,.5); border-radius: 9999px; }
+      :host(.dark) .tabpanel { scrollbar-color: rgba(75,85,99,.6) transparent; }
+      :host(.dark) .tabpanel::-webkit-scrollbar-thumb { background: rgba(75,85,99,.6); }
+      .nav { overflow-x: auto; scrollbar-width: none; }
+      .nav::-webkit-scrollbar { display: none; }
+    `;
+    picker.shadowRoot.appendChild(style);
   }
 
   /**

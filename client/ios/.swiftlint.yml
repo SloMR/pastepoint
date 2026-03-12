@@ -22,13 +22,57 @@ function_body_length:
   warning: 80
   error: 120
 
+# ── Opt-in rules ──────────────────────────────────────────────────────────────
+# These are off by default; enabling the ones that match Xcode 26 warnings
+# and Swift 6 best practices.
+opt_in_rules:
+  # Collections & predicates
+  - contains_over_filter_count          # prefer contains over filter().count > 0
+  - contains_over_filter_is_empty       # prefer contains over filter().isEmpty
+  - contains_over_first_not_nil         # prefer contains over first(where:) != nil
+  - first_where                         # prefer first(where:) over filter().first
+  - last_where                          # prefer last(where:) over filter().last
+  - flatmap_over_map_reduce             # prefer flatMap over map+reduce
+  - reduce_into                         # prefer reduce(into:) for performance
+
+  # Optionals & safety
+  - force_unwrapping                    # warn on ! unwraps; use guard/if-let
+  - optional_enum_case_matching         # match optional enum without binding it
+  - discouraged_optional_boolean        # prefer non-optional Bool where possible
+
+  # Swift 6 / concurrency
+  - strict_fileprivate                  # fileprivate only when accessed from another type in same file
+
+  # Idioms
+  - empty_count                         # prefer isEmpty over count == 0
+  - empty_string                        # prefer isEmpty over == ""
+  - implicit_return                     # omit return in single-expression closures/functions
+  - prefer_self_in_static_references   # use Self instead of the type name in static contexts
+  - prefer_zero_over_explicit_init      # prefer .zero over CGPoint(x: 0, y: 0) etc.
+  - sorted_first_last                   # prefer min()/max() over sorted().first/last
+  - toggle_bool                         # prefer x.toggle() over x = !x
+  - unavailable_function                # mark unimplemented functions with fatalError
+  - unowned_variable_capture            # warn on unowned captures that could be weak
+
+  # Formatting (matches Xcode 26 style warnings)
+  - closure_end_indentation             # closing brace of closure matches opening line
+  - closure_spacing                     # spaces inside closure braces: { expr }
+  - collection_alignment                # align collection elements to opening bracket
+  - operator_usage_whitespace           # spaces around operators in expressions
+  - return_arrow_whitespace             # space around -> in function signatures
+  - multiline_arguments                 # arguments on separate lines when wrapped
+  - multiline_parameters                # parameters on separate lines when wrapped
+  - trailing_closure                    # use trailing closure syntax where possible
+  - unneeded_parentheses_in_closure_argument  # remove parens around single closure param
+
 # ── Disabled rules ────────────────────────────────────────────────────────────
 disabled_rules:
-  - todo # TODOs are tracked in code; not a lint error
+  - todo                          # TODOs are tracked in code; not a lint error
+  - trailing_comma                # handled by SwiftFormat
 
 # ── Identifier name exceptions ────────────────────────────────────────────────
 identifier_name:
-  min_length: 2 # allow 2-char names like `vc`, `to`, `id`
+  min_length: 2
   excluded:
     - id
     - to
@@ -39,6 +83,19 @@ identifier_name:
     - y
 
 type_name:
-  min_length: 2 # allow e.g. QR
+  min_length: 2
   excluded:
     - QR
+
+# ── Rule-specific config ──────────────────────────────────────────────────────
+force_unwrapping:
+  severity: warning              # warning not error — some callsites are justified
+
+implicit_return:
+  included:
+    - closure
+    - getter
+
+multiline_arguments:
+  first_argument_location: next_line   # matches Xcode 26 before-first wrap style
+  only_enforce_after_first_closure_on_first_line: true

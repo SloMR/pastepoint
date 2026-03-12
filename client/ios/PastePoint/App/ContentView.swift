@@ -3,6 +3,7 @@
 //  SPDX-License-Identifier: GPL-3.0-only
 //
 
+import Logging
 import SwiftUI
 
 // MARK: - Root
@@ -10,8 +11,10 @@ import SwiftUI
 struct ContentView: View {
     @AppStorage(AppColors.Scheme.storageKey) private var colorSchemeRaw: String = AppColors.Scheme.default
     @EnvironmentObject private var services: AppServices
+    private let logger = Logger(label: "ContentView")
 
     @State private var showSettings = false
+    @State private var toast: ToastItem?
 
     var body: some View {
         VStack(spacing: 0) {
@@ -36,18 +39,26 @@ struct ContentView: View {
             }
         }
         .onReceive(services.wsService.message) { msg in
-            print("User message:", msg)
+            logger.info("User message: \(msg)")
         }
         .onReceive(services.wsService.signalMessage) { sig in
-            print("Signal: \(sig.type.rawValue) | from: \(sig.from) → to: \(sig.to)")
+            logger.debug("Signal: \(sig.type.rawValue) | from: \(sig.from) → to: \(sig.to)")
         }
+        .onChange(of: services.wsService.isConnected) { wasConnected, connected in
+            if connected {
+                toast = wasConnected ? .success("Reconnected") : .success("Connected")
+            } else if wasConnected {
+                toast = .warning("Connection lost")
+            }
+        }
+        .appToast(item: $toast)
     }
 }
 
 // MARK: - Main Content Switcher
 
 struct RoomContentView: View {
-    @State private var hasMessages: Bool = true
+    @State private var hasMessages: Bool = false
 
     var body: some View {
         Group {

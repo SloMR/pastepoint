@@ -3,9 +3,12 @@
 //  SPDX-License-Identifier: GPL-3.0-only
 //
 
+import Logging
 import SwiftUI
 
 struct MessageInputBar: View {
+    private let logger = Logger(label: "MessageInputBar")
+
     @State private var message = ""
 
     var body: some View {
@@ -18,8 +21,9 @@ struct MessageInputBar: View {
 
             HStack(alignment: .center) {
 
+                // TODO: Implement attachment picker; add toast = .error("...") on failure
                 Button {
-                    print("Attachments Button Clicked")
+                    logger.info("Attachments Button Clicked")
                 } label: {
                     Image("link")
                         .renderingMode(.template)
@@ -32,8 +36,9 @@ struct MessageInputBar: View {
 
                 Spacer()
 
+                // TODO: Implement message send via WebSocket; add toast = .error("Failed to send message") on failure
                 Button {
-                    print("Send Button Clicked")
+                    logger.info("Send Button Clicked")
                 } label: {
                     HStack(spacing: 8) {
                         Text("Send")

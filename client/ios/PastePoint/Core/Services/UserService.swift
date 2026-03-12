@@ -41,7 +41,7 @@ final class UserService: ObservableObject {
 
     private func handleSystemMessage(_ message: String) {
         guard message.contains("[SystemName]") else { return }
-        guard let regex = UserService.nameRegex else {
+        guard let regex = Self.nameRegex else {
             logger.error("handleSystemMessage: nameRegex failed to initialize")
             return
         }

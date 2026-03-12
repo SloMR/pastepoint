@@ -1,27 +1,53 @@
 --swift-version 6.2
---language-mode 5
+--language-mode 6
 
-# The following are the set of enabled rules.
---rules andOperator
---rules anyObjectProtocol
---rules blankLinesAroundMark
---rules blankLinesBetweenChainedFunctions
---rules blankLinesBetweenScopes
---rules braces
---rules consecutiveBlankLines
---rules consecutiveSpaces
---rules consistentSwitchCaseSpacing
---rules docCommentsBeforeModifiers
---rules duplicateImports
---rules elseOnSameLine
---rules emptyExtensions
---rules enumNamespaces
+# ── Indentation ───────────────────────────────────────────────────────────────
 --rules indent
   --ifdef outdent
   --indent 4
+  --xcodeindentation enabled   # match Xcode switch/case indentation style
+
+# ── Braces & Spacing ──────────────────────────────────────────────────────────
+--rules braces
+--rules elseOnSameLine
+--rules spaceAroundBraces
+--rules spaceAroundComments
+--rules spaceAroundGenerics
+--rules spaceAroundOperators
+  --operator-func no-space
+  --ranges no-space
+--rules spaceAroundParens
+--rules spaceInsideBraces
+--rules spaceInsideBrackets
+--rules spaceInsideComments
+--rules spaceInsideParens
+--rules consecutiveSpaces
+--rules consecutiveBlankLines
+--rules blankLinesAroundMark
+--rules blankLinesBetweenChainedFunctions
+--rules blankLinesBetweenScopes
 --rules linebreakAtEndOfFile
---rules modifierOrder
---rules modifiersOnSameLine
+--rules trailingSpace
+
+# ── Wrapping ──────────────────────────────────────────────────────────────────
+# allow-partial-wrapping true matches Xcode's behaviour: Xcode wraps when
+# the line exceeds the limit but does not force ALL arguments onto new lines
+# when only some would exceed it.
+--rules wrapArguments
+  --wrap-arguments before-first
+  --wrap-collections before-first
+  --wrap-parameters before-first
+  --wrap-conditions before-first
+  --call-site-paren balanced
+  --closing-paren balanced
+  --allow-partial-wrapping true
+--rules wrapAttributes
+  --func-attributes prev-line
+  --type-attributes prev-line
+--rules wrapEnumCases
+--rules wrapMultilineStatementBraces
+
+# ── Redundant / Cleanup ───────────────────────────────────────────────────────
 --rules redundantBreak
 --rules redundantEquatable
 --rules redundantFileprivate
@@ -34,35 +60,23 @@
 --rules redundantPattern
 --rules redundantPublic
 --rules semicolons
+--rules void
+
+# ── Idioms & Quality ──────────────────────────────────────────────────────────
+--rules andOperator
+--rules anyObjectProtocol
+--rules consistentSwitchCaseSpacing
+--rules docCommentsBeforeModifiers
+--rules duplicateImports
+--rules emptyExtensions
+--rules enumNamespaces
+--rules isEmpty                 # prefer .isEmpty over == ""  /  count == 0
+--rules modifierOrder
+--rules modifiersOnSameLine
+--rules preferForLoop           # prefer for-in over forEach where possible
 --rules singlePropertyPerLine
 --rules sortImports
   --import-grouping testable-last
 --rules sortTypealiases
---rules spaceAroundBraces
---rules spaceAroundComments
---rules spaceAroundGenerics
---rules spaceAroundOperators
-  --operator-func no-space
-  --ranges no-space
---rules spaceAroundParens
---rules spaceInsideBraces
---rules spaceInsideBrackets
---rules spaceInsideComments
---rules spaceInsideParens
 --rules strongifiedSelf
 --rules trailingCommas
---rules trailingSpace
---rules void
---rules wrapArguments
-  --allow-partial-wrapping false
-  --wrap-arguments before-first
-  --wrap-collections before-first
-  --wrap-parameters before-first
-  --wrap-conditions before-first
-  --call-site-paren balanced
-  --closing-paren balanced
---rules wrapAttributes
-  --func-attributes prev-line
-  --type-attributes prev-line
---rules wrapEnumCases
---rules wrapMultilineStatementBraces

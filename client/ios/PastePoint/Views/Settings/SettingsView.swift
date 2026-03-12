@@ -3,13 +3,16 @@
 //  SPDX-License-Identifier: GPL-3.0-only
 //
 
+import Logging
 import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var services: AppServices
+    private let logger = Logger(label: "SettingsView")
 
     @State private var privacyURLToShow: IdentifiableURL?
+    @State private var toast: ToastItem?
 
     private var avatar: some View {
         Image("group")
@@ -33,13 +36,18 @@ struct SettingsView: View {
                 Spacer()
 
                 Button { dismiss() } label: {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 18, weight: .regular))
-                        .foregroundStyle(.textPrimary)
-                        .frame(width: 42, height: 42)
-                        .background(.ultraThinMaterial)
-                        .clipShape(Circle())
+                    ZStack {
+                        Circle()
+                            .fill(Color(UIColor.tertiarySystemFill))
+                            .frame(width: 36, height: 36)
+
+                        Image(systemName: "xmark")
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color(UIColor.secondaryLabel))
+                    }
+                    .contentShape(Circle())
                 }
+                .buttonStyle(.plain)
             }
             .padding()
 
@@ -50,9 +58,10 @@ struct SettingsView: View {
                     // MARK: - Create New Room Button
 
                     Button {
-                        print("Create new room tapped")
+                        logger.info("Create new room tapped")
                         Task {
                             await services.roomService.joinOrCreateRoom("Testing from iOS") // TODO: Add UI for this one
+                            toast = .success("Room created")
                         }
                     } label: {
                         HStack(spacing: 8) {
@@ -106,8 +115,9 @@ struct SettingsView: View {
                             HStack(alignment: .center, spacing: 0) {
                                 Button {
                                     Task {
-                                        print("Joining room \(room)")
+                                        logger.info("Joining room \(room)")
                                         await services.roomService.joinOrCreateRoom(room)
+                                        toast = .info("Joined \(room)")
                                     }
                                 } label: {
                                     HStack(spacing: 5) {
@@ -167,6 +177,7 @@ struct SettingsView: View {
                                 // Copy Button
                                 Button {
                                     UIPasteboard.general.string = code
+                                    toast = .success("Code copied to clipboard")
                                 } label: {
                                     Image("copy")
                                         .font(.system(size: 18, weight: .medium))
@@ -180,6 +191,7 @@ struct SettingsView: View {
                                 .buttonStyle(.plain)
 
                                 // QR Button
+                                // TODO: Present QR sheet for session code sharing; add toast = .error("Failed to generate QR") on failure
                                 Button {
                                     // Show QR sheet
                                 } label: {
@@ -211,8 +223,10 @@ struct SettingsView: View {
                                         await services.wsService.connect()
                                         await services.roomService.listRooms()
                                         await services.userService.getUsername()
+                                        toast = .success("Private session started")
                                     } catch {
-                                        print("Cannot get the session code \(error)")
+                                        logger.error("Cannot get the session code \(error)")
+                                        toast = .error("Failed to start private session")
                                     }
                                 }
                             } label: {
@@ -236,8 +250,10 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.plain)
 
+                            // TODO: Implement join-by-code flow (prompt for session code input);
+                            // add toast = .success("Joined private session") on success, toast = .error("Invalid code") on failure
                             Button {
-                                print("Join private chat tapped")
+                                logger.info("Join private chat tapped")
                             } label: {
                                 HStack(spacing: 8) {
                                     Text("Join Private Chat")
@@ -331,6 +347,7 @@ struct SettingsView: View {
                         await services.wsService.connect(sessionCode: nil)
                         await services.roomService.listRooms()
                         await services.userService.getUsername()
+                        toast = .info("Left private session")
                     }
                 } label: {
                     HStack(spacing: 8) {
@@ -433,6 +450,7 @@ struct SettingsView: View {
         .sheet(item: $privacyURLToShow) { identifiableURL in
             SafariView(url: identifiableURL.url)
         }
+        .appToast(item: $toast)
     }
 }
 

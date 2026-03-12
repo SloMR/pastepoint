@@ -6,20 +6,17 @@
 import SwiftUI
 
 struct OnboardingSteps: View {
+    let steps: [String]
+
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(alignment: .center, spacing: 12) {
-                NumberBadge(number: 1)
-                Text("Invite others on the same network to join this room")
-                    .font(.caption2)
-                    .foregroundStyle(.textPrimary)
-            }
-
-            HStack(alignment: .center, spacing: 12) {
-                NumberBadge(number: 2)
-                Text("Start the conversation by sending a message")
-                    .font(.caption2)
-                    .foregroundStyle(.textPrimary)
+            ForEach(Array(steps.enumerated()), id: \.offset) { index, step in
+                HStack(alignment: .center, spacing: 12) {
+                    NumberBadge(number: index + 1)
+                    Text(step)
+                        .font(.caption2)
+                        .foregroundStyle(.textPrimary)
+                }
             }
         }
         .padding(.horizontal, 22)
@@ -28,5 +25,8 @@ struct OnboardingSteps: View {
 }
 
 #Preview {
-    OnboardingSteps()
+    OnboardingSteps(steps: [
+        "Invite others on the same network to join this room",
+        "Start the conversation by sending a message",
+    ])
 }
