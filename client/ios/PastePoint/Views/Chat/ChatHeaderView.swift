@@ -26,6 +26,7 @@ struct ChatHeaderView: View {
             HStack(spacing: 10) {
 
                 // Language
+                // TODO: Implement language switching; add toast = .success("Language changed") on change
                 Button("AR") {
                     logger.info("Language Button Clicked")
                 }

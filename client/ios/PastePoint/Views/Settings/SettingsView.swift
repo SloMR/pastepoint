@@ -191,6 +191,7 @@ struct SettingsView: View {
                                 .buttonStyle(.plain)
 
                                 // QR Button
+                                // TODO: Present QR sheet for session code sharing; add toast = .error("Failed to generate QR") on failure
                                 Button {
                                     // Show QR sheet
                                 } label: {
@@ -249,6 +250,8 @@ struct SettingsView: View {
                             }
                             .buttonStyle(.plain)
 
+                            // TODO: Implement join-by-code flow (prompt for session code input);
+                            // add toast = .success("Joined private session") on success, toast = .error("Invalid code") on failure
                             Button {
                                 logger.info("Join private chat tapped")
                             } label: {

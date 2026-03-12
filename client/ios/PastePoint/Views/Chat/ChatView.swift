@@ -6,14 +6,18 @@
 import SwiftUI
 
 struct ChatView: View {
-    @State var isPrivateRoom: Bool = false
+    @EnvironmentObject private var services: AppServices
+
+    private var isPrivate: Bool {
+        services.wsService.currentSessionCode != nil
+    }
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
 
                 // Room header row
-                ChatHeader(isPrivate: isPrivateRoom)
+                ChatHeader(isPrivate: isPrivate)
 
                 // Chat bubbles (merged from ChatView)
                 VStack(spacing: 16) {

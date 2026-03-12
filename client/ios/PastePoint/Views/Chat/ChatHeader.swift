@@ -6,11 +6,12 @@
 import SwiftUI
 
 struct ChatHeader: View {
+    @Environment(\.colorScheme) private var colorScheme
     let isPrivate: Bool
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(isPrivate ? "lock" : "users")
+            Image(isPrivate ? (colorScheme == .dark ? "lock.light" : "lock.dark") : "users")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 22, height: 22)

@@ -21,6 +21,7 @@ struct MessageInputBar: View {
 
             HStack(alignment: .center) {
 
+                // TODO: Implement attachment picker; add toast = .error("...") on failure
                 Button {
                     logger.info("Attachments Button Clicked")
                 } label: {
@@ -35,6 +36,7 @@ struct MessageInputBar: View {
 
                 Spacer()
 
+                // TODO: Implement message send via WebSocket; add toast = .error("Failed to send message") on failure
                 Button {
                     logger.info("Send Button Clicked")
                 } label: {
