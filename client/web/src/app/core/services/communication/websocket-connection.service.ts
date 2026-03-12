@@ -204,6 +204,8 @@ export class WebSocketConnectionService implements OnDestroy {
 
       this.socket.onclose = (event) => {
         this.isConnecting = false;
+        this.stopKeepAlive();
+        this.socket = undefined;
 
         // Only treat 1006 as an invalid session if it's not the first attempt
         if (event.code === 1006 && this.reconnectAttempts > 0) {
@@ -235,6 +237,8 @@ export class WebSocketConnectionService implements OnDestroy {
       this.socket.onerror = (error) => {
         this.logger.error('connect', 'WebSocket error: ' + error);
         this.isConnecting = false;
+        this.stopKeepAlive();
+        this.socket = undefined;
         if (this.reconnectAttempts === 0 && !this.manualDisconnect) {
           this.toaster.error(this.translate.instant('SERVER_CONNECTION_FAILED'));
         }
@@ -244,6 +248,8 @@ export class WebSocketConnectionService implements OnDestroy {
   }
 
   private scheduleReconnect(): void {
+    this.stopKeepAlive();
+
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
     }
