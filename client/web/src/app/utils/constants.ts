@@ -13,6 +13,10 @@ export const HEARTBEAT_TIMEOUT_DESKTOP_SEC = 120;
 export const HEARTBEAT_INTERVAL_MOBILE_SEC = 1;
 export const HEARTBEAT_TIMEOUT_MOBILE_SEC = 2;
 
+// WebSocket keepalive — sent every 25 seconds to prevent idle timeouts on the server and intermediate proxies
+export const WS_PREFIX_KEEP_ALIVE = '[KeepAlive]';
+export const WS_KEEP_ALIVE_INTERVAL_MS = 25_000;
+
 // Local storage keys
 export const SESSION_CODE_KEY = 'session_code';
 export const LANGUAGE_PREFERENCE_KEY = 'language_preference';
@@ -47,7 +51,7 @@ export const RTC_SIGNALING_STATES = {
   STABLE: 'stable',
 } as const;
 
-export const ICE_SERVERS = [
+export const ICE_SERVERS: RTCIceServer[] = [
   // Google STUN servers
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },

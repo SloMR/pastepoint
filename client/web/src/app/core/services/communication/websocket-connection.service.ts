@@ -5,7 +5,7 @@ import { Router } from '@angular/router';
 import { NGXLogger } from 'ngx-logger';
 import { isPlatformBrowser } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
-import { SESSION_CODE_KEY } from '../../../utils/constants';
+import { SESSION_CODE_KEY, WS_PREFIX_KEEP_ALIVE, WS_KEEP_ALIVE_INTERVAL_MS } from '../../../utils/constants';
 import { HotToastService } from '@ngneat/hot-toast';
 @Injectable({
   providedIn: 'root',
@@ -26,6 +26,7 @@ export class WebSocketConnectionService implements OnDestroy {
   private reconnectDelay = 1000;
   private maxReconnectDelay = 30000;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+  private keepAliveTimer: ReturnType<typeof setInterval> | null = null;
   private manualDisconnect = false;
   private isConnecting = false;
 
@@ -113,6 +114,7 @@ export class WebSocketConnectionService implements OnDestroy {
    * Used for bfcache support
    */
   private temporaryDisconnect(): void {
+    this.stopKeepAlive();
     if (this.reconnectTimer) {
       clearTimeout(this.reconnectTimer);
       this.reconnectTimer = null;
@@ -179,6 +181,7 @@ export class WebSocketConnectionService implements OnDestroy {
         this.reconnectAttempts = 0;
         this.reconnectDelay = 1000;
         this.isConnecting = false;
+        this.startKeepAlive();
         resolve();
       };
 
@@ -288,6 +291,7 @@ export class WebSocketConnectionService implements OnDestroy {
   }
 
   public disconnect(isManual = true): void {
+    this.stopKeepAlive();
     if (isManual) {
       this.manualDisconnect = true;
       this.clearSessionCode();
@@ -353,11 +357,29 @@ export class WebSocketConnectionService implements OnDestroy {
     return this.socket !== undefined && this.socket.readyState === WebSocket.OPEN;
   }
 
+  private startKeepAlive(): void {
+    this.stopKeepAlive();
+    this.keepAliveTimer = setInterval(() => {
+      if (this.socket?.readyState === WebSocket.OPEN) {
+        this.socket.send(WS_PREFIX_KEEP_ALIVE);
+      }
+    }, WS_KEEP_ALIVE_INTERVAL_MS);
+  }
+
+  private stopKeepAlive(): void {
+    if (this.keepAliveTimer !== null) {
+      clearInterval(this.keepAliveTimer);
+      this.keepAliveTimer = null;
+    }
+  }
+
   /**
    * Clean up resources when service is destroyed
    */
   ngOnDestroy(): void {
     if (isPlatformBrowser(this.platformId)) {
+      this.stopKeepAlive();
+
       // Remove event listeners
       window.removeEventListener('pagehide', this.pageHideListener ?? (() => {}));
       window.removeEventListener('pageshow', this.pageShowListener ?? (() => {}));
