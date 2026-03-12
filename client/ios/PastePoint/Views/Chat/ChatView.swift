@@ -45,4 +45,5 @@ struct ChatView: View {
 
 #Preview {
     ChatView()
+      .environmentObject(AppServices.shared)
 }

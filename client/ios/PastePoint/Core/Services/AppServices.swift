@@ -64,8 +64,8 @@ final class AppServices: ObservableObject {
             guard path.status == .satisfied else { return }
             Task { @MainActor [weak self] in
                 guard let self, !self.isInBackground else { return }
-                logger.info("Network restored — triggering reconnect")
-                await handleForeground()
+                self.logger.info("Network restored — triggering reconnect")
+                await self.handleForeground()
             }
         }
         networkMonitor.start(queue: DispatchQueue(label: "com.pastepoint.NetworkMonitor"))
