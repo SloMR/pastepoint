@@ -7,9 +7,9 @@ ARG NPM_BUILD_CONFIG=docker
 # Copy package.json and package-lock.json first for better caching
 COPY client/web/package*.json ./
 
-# Use npm ci for consistent installs and clean up cache
+# Use npm ci for consistent installs
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci && npm cache clean --force
+    npm ci
 
 # Copy application code
 COPY client/web/ ./
@@ -27,12 +27,17 @@ RUN apk add --no-cache wget=1.25.0-r0
 # Copy built artifacts & package files
 COPY --from=builder /usr/src/app/dist /usr/src/app/dist
 COPY --from=builder /usr/src/app/package*.json ./
-COPY --from=builder /usr/src/app/package-lock.json ./
 
-# Install only prod deps and clean npm cache
+# Install only prod deps and clean up unnecessary files
 RUN --mount=type=cache,target=/root/.npm \
-    npm ci --only=production && npm cache clean --force && \
-    rm -rf /tmp/* /usr/src/app/node_modules/.cache
+    npm ci --omit=dev && \
+    rm -rf /tmp/* /usr/src/app/node_modules/.cache && \
+    (find node_modules -type f \( \
+      -name "*.md" -o -name "*.map" -o -name "*.ts" -o \
+      -name "LICENSE*" -o -name "CHANGELOG*" -o -name "README*" -o \
+      -name ".editorconfig" -o -name ".eslintrc*" -o -name ".npmignore" -o \
+      -name "tsconfig*.json" -o -name ".package-lock.json" \
+    \) -delete 2>/dev/null || true)
 
 # Create a non-root user
 USER node
@@ -65,20 +70,17 @@ COPY nginx/includes/ /etc/nginx/includes/
 
 # Copy the entrypoint script and make it executable
 COPY docker-entrypoint.sh /
+
+# Set permissions and create directories
 RUN chmod +x /docker-entrypoint.sh && \
     chown nginx:nginx /docker-entrypoint.sh && \
-    chown nginx:nginx /etc/nginx/conf.d/default.conf.template
-
-# Create directories and set appropriate permissions for the nginx user
-RUN mkdir -p /var/cache/nginx/web_temp /var/run/nginx /var/log/nginx && \
+    chown nginx:nginx /etc/nginx/conf.d/default.conf.template && \
+    mkdir -p /var/cache/nginx/web_temp /var/run/nginx /var/log/nginx && \
     touch /var/run/nginx.pid && \
-    chown -R nginx:nginx /var/cache/nginx && \
-    chown -R nginx:nginx /var/log/nginx && \
-    chown -R nginx:nginx /var/run/nginx && \
+    chown -R nginx:nginx /var/cache/nginx /var/log/nginx /var/run/nginx \
+      /usr/share/nginx/html /etc/nginx/conf.d && \
     chown nginx:nginx /var/run/nginx.pid && \
-    chmod 644 /var/run/nginx.pid && \
-    chown -R nginx:nginx /usr/share/nginx/html && \
-    chown -R nginx:nginx /etc/nginx/conf.d
+    chmod 644 /var/run/nginx.pid
 
 # Expose HTTPS port
 EXPOSE 443

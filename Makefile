@@ -3,16 +3,22 @@
 
 .PHONY: dev prod down stop logs certs help
 
+# Export BuildKit for better caching and parallel builds
+export DOCKER_BUILDKIT=1
+export COMPOSE_DOCKER_CLI_BUILD=1
+
 # Production environment (default)
 prod:
 	@echo "Starting production environment..."
-	docker compose up --build --force-recreate -d
+	docker compose build --parallel
+	docker compose up --force-recreate -d
 	@echo "Production services are starting. View logs with: make logs"
 
 # Development environment
 dev:
 	@echo "Starting development environment..."
-	docker compose --env-file .env.development up --build --force-recreate -d
+	docker compose --env-file .env.development build --parallel
+	docker compose --env-file .env.development up --force-recreate -d
 	@echo "Development services are starting. View logs with: make logs"
 
 # Stop and remove PastePoint containers

@@ -8,28 +8,48 @@ client/web/node_modules
 # Ignore build directories
 server/target
 client/web/dist
+client/web/.angular
+
+# Ignore iOS client
+client/ios
+
+# Ignore scripts
 scripts
+
+# Ignore certificates
+certs
 
 # Ignore environment files
 .env
 .env.local
+.env.*
 
 # Ignore Docker-related files
 server/Dockerfile
 client/web/Dockerfile
 docker-compose.yml
+Makefile
 
 # Ignore Git-related files
 .git
 .gitignore
+CONTRIBUTING.md
+LICENSE
+*.md
+
+# Ignore CI/CD
+.github
 
 # Ignore IDE-specific files
 .vscode
 .idea
-.github
 .editorconfig
 .clippy.toml
 .rustfmt.toml
+
+# Ignore test/coverage files
+client/web/coverage
+client/web/karma.conf.js
 
 # Ignore OS-specific files
 .hg
@@ -38,3 +58,4 @@ docker-compose.yml
 ._darcs
 BitKeeper
 CVS
+**/.DS_Store
