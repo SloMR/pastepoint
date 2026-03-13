@@ -1,22 +1,19 @@
 # syntax=docker/dockerfile:1.5
-# Stage 1: Build the Rust app
-FROM rust:1.93.1-slim AS builder
+# Stage 1: Build the Rust app (Alpine for musl-linked binary)
+FROM rust:1.93.1-alpine AS builder
 WORKDIR /usr/src/app
 
 ARG RUST_BUILD_MODE=release
 
-# Install build dependencies
-# hadolint ignore=DL3008
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-  --mount=type=cache,target=/var/lib/apt,sharing=locked \
-  apt-get update && apt-get install -y --no-install-recommends \
-  libssl-dev \
-  pkg-config \
-  && rm -rf /var/lib/apt/lists/*
+# Install build dependencies (Alpine/musl)
+RUN apk add --no-cache openssl-dev openssl-libs-static musl-dev pkgconf
+
+# Statically link OpenSSL so runtime image doesn't need libssl
+ENV OPENSSL_STATIC=1 OPENSSL_NO_VENDOR=1
 
 # Copy the Cargo.toml and Cargo.lock files
 COPY server/Cargo.toml server/Cargo.lock ./
-COPY ../rust-toolchain rust-toolchain
+COPY rust-toolchain rust-toolchain
 
 # Create an empty lib.rs and main.rs to allow cargo to build dependencies
 RUN mkdir -p src && echo "fn main() {}" > src/main.rs
@@ -48,17 +45,12 @@ RUN --mount=type=cache,target=/usr/local/cargo/registry \
   fi
 
 # Stage 2: Create a minimal runtime image
-FROM debian:stable-slim
+FROM alpine:3.21
 
 WORKDIR /usr/local/bin
 
-# Install only runtime dependencies (not build dependencies)
-# hadolint ignore=DL3008
-RUN apt-get update && apt-get install -y --no-install-recommends \
-  ca-certificates \
-  libssl3 \
-  curl \
-  && rm -rf /var/lib/apt/lists/*
+# Install only runtime dependencies
+RUN apk add --no-cache ca-certificates wget
 
 # Copy only the built binary from the builder stage
 COPY --from=builder /usr/src/app/server_bin .
@@ -67,12 +59,12 @@ COPY --from=builder /usr/src/app/server_bin .
 COPY server/config ./config
 
 # Create a non-root user
-RUN useradd -m appuser
+RUN adduser -D appuser
 USER appuser
 
 # Add healthcheck
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl --fail http://localhost:9000/health || exit 1
+  CMD wget --spider -q http://localhost:9000/health || exit 1
 
 # Set the command to run the binary
 CMD ["./server_bin"]
