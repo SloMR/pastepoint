@@ -6,6 +6,7 @@ WORKDIR /usr/src/app
 ARG RUST_BUILD_MODE=release
 
 # Install build dependencies (Alpine/musl)
+# hadolint ignore=DL3018
 RUN apk add --no-cache openssl-dev openssl-libs-static musl-dev pkgconf
 
 # Statically link OpenSSL so runtime image doesn't need libssl
@@ -15,7 +16,7 @@ ENV OPENSSL_STATIC=1 OPENSSL_NO_VENDOR=1
 COPY server/Cargo.toml server/Cargo.lock ./
 COPY rust-toolchain rust-toolchain
 
-# Create an empty lib.rs and main.rs to allow cargo to build dependencies
+# Create an empty main.rs to allow cargo to build dependencies
 RUN mkdir -p src && echo "fn main() {}" > src/main.rs
 
 # Build dependencies
@@ -50,6 +51,7 @@ FROM alpine:3.21
 WORKDIR /usr/local/bin
 
 # Install only runtime dependencies
+# hadolint ignore=DL3018
 RUN apk add --no-cache ca-certificates wget
 
 # Copy only the built binary from the builder stage

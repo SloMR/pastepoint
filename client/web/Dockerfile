@@ -32,12 +32,12 @@ COPY --from=builder /usr/src/app/package*.json ./
 RUN --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev && \
     rm -rf /tmp/* /usr/src/app/node_modules/.cache && \
-    find node_modules -type f \( \
+    (find node_modules -type f \( \
       -name "*.md" -o -name "*.map" -o -name "*.ts" -o \
       -name "LICENSE*" -o -name "CHANGELOG*" -o -name "README*" -o \
       -name ".editorconfig" -o -name ".eslintrc*" -o -name ".npmignore" -o \
       -name "tsconfig*.json" -o -name ".package-lock.json" \
-    \) -delete 2>/dev/null; true
+    \) -delete 2>/dev/null || true)
 
 # Create a non-root user
 USER node
