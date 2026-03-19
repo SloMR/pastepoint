@@ -39,7 +39,10 @@ pub struct SessionStore {
 impl SessionStore {
     /// Returns true if the private session code has been marked expired.
     fn is_code_expired(&self, key: &str) -> bool {
-        self.expired_private_codes.lock().unwrap().contains(key)
+        self.expired_private_codes
+            .lock()
+            .expect("lock poisoned")
+            .contains(key)
     }
 
     /// Looks up (or creates) a session UUID for the given key.
@@ -218,8 +221,10 @@ impl SessionStore {
                                     store_clone.key_to_session.lock().expect("lock poisoned");
 
                                 if map.remove(&key_clone).is_some() {
-                                    let mut expired =
-                                        store_clone.expired_private_codes.lock().unwrap();
+                                    let mut expired = store_clone
+                                        .expired_private_codes
+                                        .lock()
+                                        .expect("lock poisoned");
                                     expired.insert(key_clone.clone());
                                     log::debug!("Private session code {key_clone} expired");
                                 }
