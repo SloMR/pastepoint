@@ -11,8 +11,8 @@ validate_ip() {
         return 1
     fi
     local IFS='.'
-    read -r a b c d <<< "$ip"
-    (( a <= 255 && b <= 255 && c <= 255 && d <= 255 ))
+    read -r a b c d <<<"$ip"
+    ((a <= 255 && b <= 255 && c <= 255 && d <= 255))
 }
 
 # Escape replacement string for sed (handles \, &, and delimiter |)
