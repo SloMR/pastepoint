@@ -61,9 +61,6 @@ export class MetaInitService {
 
     // Set WebSite schema for sitelinks
     this.metaService.setStructuredData(this.getWebSiteStructuredData(), 'website-structured-data');
-
-    // Set FAQ schema for rich results
-    this.metaService.setStructuredData(this.getFAQStructuredData(), 'faq-structured-data');
   }
 
   //=============================================================================
@@ -204,52 +201,5 @@ export class MetaInitService {
     };
   }
 
-  private getFAQStructuredData(): StructuredData {
-    return {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: [
-        {
-          '@type': 'Question',
-          name: 'Is PastePoint free?',
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: 'Yes, PastePoint is completely free and open-source under the GPL-3.0 license. No subscriptions, no hidden fees.',
-          },
-        },
-        {
-          '@type': 'Question',
-          name: 'How secure is PastePoint?',
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: 'PastePoint uses WebRTC with DTLS and SRTP protocols for end-to-end encryption. Files transfer directly between devices — nothing is stored on any server.',
-          },
-        },
-        {
-          '@type': 'Question',
-          name: 'Does PastePoint store my files?',
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: 'No. PastePoint operates entirely peer-to-peer. Your files, messages, and session data are never stored on any server.',
-          },
-        },
-        {
-          '@type': 'Question',
-          name: 'Do I need to create an account?',
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: 'No account is needed. Just open PastePoint and start sharing files and messages immediately.',
-          },
-        },
-        {
-          '@type': 'Question',
-          name: 'How does peer-to-peer file sharing work in PastePoint?',
-          acceptedAnswer: {
-            '@type': 'Answer',
-            text: 'PastePoint uses WebRTC to establish a direct connection between devices. A signaling server coordinates the initial handshake, then files transfer directly between peers with no intermediary.',
-          },
-        },
-      ],
-    };
-  }
+
 }
