@@ -146,6 +146,7 @@ export class MetaInitService {
       alternateName: ['Paste Point', 'pastepoint', 'paste point'],
       url: 'https://pastepoint.com',
       applicationCategory: 'CommunicationApplication',
+      applicationSubCategory: 'Peer-to-peer file sharing and encrypted messaging',
       operatingSystem: 'Web',
       description:
         'PastePoint (Paste Point) is a secure peer-to-peer file sharing and encrypted messaging solution. Transfer files directly with end-to-end encryption, no cloud storage or accounts required.',
@@ -160,6 +161,7 @@ export class MetaInitService {
       ],
       screenshot: 'https://pastepoint.com/assets/pastepoint-screenshot.png',
       softwareVersion: '0.14.0',
+      logo: 'https://pastepoint.com/assets/pastepoint-og-image.png',
       offers: {
         '@type': 'Offer',
         price: '0',
@@ -170,6 +172,25 @@ export class MetaInitService {
         name: 'PastePoint',
         url: 'https://pastepoint.com',
       },
+      publisher: {
+        '@type': 'Organization',
+        name: 'PastePoint',
+        url: 'https://pastepoint.com',
+        logo: 'https://pastepoint.com/assets/pastepoint-og-image.png',
+      },
+      potentialAction: {
+        '@type': 'SendAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: 'https://pastepoint.com/',
+        },
+        description: 'Send encrypted messages and files instantly via PastePoint',
+      },
+      sameAs: [
+        'https://twitter.com/pastepoint',
+        'https://github.com/SloMR/pastepoint',
+        'https://www.linkedin.com/in/sulaiman-alromaih-845700202/',
+      ],
     };
   }
 
