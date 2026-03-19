@@ -1152,10 +1152,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           status === FileTransferStatus.ACCEPTED
             ? this.translate.instant('FILE_TRANSFER_ACCEPTED')
             : this.translate.instant('FILE_TRANSFER_DECLINED');
+        const fileSizeLabel = this.fileSizePipe.transform(msg.fileTransfer.fileSize, 2);
 
         return {
           ...msg,
-          text: `${this.truncateFilename(msg.fileTransfer.fileName)} - ${statusText}`,
+          text: `${this.truncateFilename(msg.fileTransfer.fileName)} (${fileSizeLabel}) - ${statusText}`,
           fileTransfer: {
             ...msg.fileTransfer,
             status,
