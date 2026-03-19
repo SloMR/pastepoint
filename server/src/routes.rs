@@ -1,6 +1,6 @@
 use crate::{
     CONTENT_TYPE_TEXT_PLAIN, MIN_USER_AGENT_LENGTH, SESSION_CODE_LENGTH, ServerConfig, ServerError,
-    SessionStore, session_store::SessionData,
+    SessionStore, consts::MAX_SESSIONS, session_store::SessionData,
 };
 use actix_web::{Error, HttpRequest, HttpResponse, Responder, get, http::header, web};
 use serde_json::json;
@@ -44,6 +44,15 @@ pub async fn create_session(store: web::Data<SessionStore>) -> Result<HttpRespon
                 return Err(ServerError::InternalServerError);
             }
         };
+        if map.len() >= MAX_SESSIONS {
+            log::warn!(
+                target: "Websocket",
+                "Max sessions limit reached ({MAX_SESSIONS}), rejecting session creation"
+            );
+            return Err(ServerError::BadRequest(
+                "Server capacity reached. Try again later.".to_string(),
+            ));
+        }
         map.insert(
             code.clone(),
             SessionData {

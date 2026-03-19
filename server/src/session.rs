@@ -2,7 +2,7 @@ use crate::{
     HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT, SessionStore, WS_PREFIX_KEEP_ALIVE,
     WS_PREFIX_SIGNAL_MESSAGE, WS_PREFIX_SYSTEM_ERROR, WS_PREFIX_SYSTEM_NAME,
     WS_PREFIX_SYSTEM_ROOMS, WS_PREFIX_USER_COMMAND, WS_PREFIX_USER_DISCONNECTED,
-    consts::MAX_SIGNAL_SIZE,
+    consts::{MAX_SIGNAL_SIZE, MAX_WS_MESSAGES_PER_SEC},
     error::ServerError,
     message::{
         JoinRoom, LeaveRoom, ListRooms, ValidateAndRelaySignal, WsChatServer, WsChatSession,
@@ -16,7 +16,7 @@ use fake::{
 };
 use rand::{Rng, rng};
 use serde_json::Value;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 impl WsChatSession {
     pub fn new(session_id: &str, auto_join: bool, session_store: SessionStore) -> Self {
@@ -33,6 +33,8 @@ impl WsChatSession {
             auto_join,
             session_store,
             last_heartbeat: None,
+            message_count: 0,
+            rate_limit_reset: Instant::now() + Duration::from_secs(1),
         }
     }
 
@@ -117,8 +119,15 @@ impl WsChatSession {
             }
             "/join" => {
                 if let Some(room_name) = args {
-                    log::debug!(target: "Websocket", "Received join command for room '{room_name}'");
-                    self.join_room(room_name, ctx);
+                    let room_name = room_name.trim();
+                    if !WsChatServer::is_valid_room_name(room_name) {
+                        ctx.text(format!(
+                            "{WS_PREFIX_SYSTEM_ERROR} Invalid room name. Must be 1-64 characters, alphanumeric, hyphens, underscores, or spaces only."
+                        ));
+                    } else {
+                        log::debug!(target: "Websocket", "Received join command for room '{room_name}'");
+                        self.join_room(room_name, ctx);
+                    }
                 } else {
                     ctx.text(format!("{WS_PREFIX_SYSTEM_ERROR} Room name is required"));
                 }
@@ -228,6 +237,21 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
 
         match msg {
             ws::Message::Text(text) => {
+                let now = Instant::now();
+                if now > self.rate_limit_reset {
+                    self.message_count = 0;
+                    self.rate_limit_reset = now + Duration::from_secs(1);
+                }
+                self.message_count += 1;
+                if self.message_count > MAX_WS_MESSAGES_PER_SEC {
+                    log::warn!(
+                        target: "Websocket",
+                        "Rate limit exceeded for user {}, dropping message",
+                        self.name
+                    );
+                    return;
+                }
+
                 let msg = text.trim();
                 log::debug!(target: "Websocket", "Received message: '{msg}'");
                 if msg.starts_with(WS_PREFIX_SIGNAL_MESSAGE) {

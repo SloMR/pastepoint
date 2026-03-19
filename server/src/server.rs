@@ -1,5 +1,6 @@
 use crate::{
     CLEANUP_INTERVAL, WS_PREFIX_SYSTEM_MEMBERS, WS_PREFIX_SYSTEM_ROOMS,
+    consts::{MAX_ROOMS_PER_SESSION, MAX_SESSIONS},
     message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer},
 };
 use actix::prelude::*;
@@ -7,6 +8,15 @@ use rand::{Rng, rng};
 use std::collections::{HashMap, hash_map::Entry::Vacant};
 
 impl WsChatServer {
+    pub fn is_valid_room_name(name: &str) -> bool {
+        let trimmed = name.trim();
+        !trimmed.is_empty()
+            && trimmed.len() <= 64
+            && trimmed
+                .chars()
+                .all(|c| c.is_alphanumeric() || c == '-' || c == '_' || c == ' ')
+    }
+
     pub fn take_room(&mut self, session_id: &str, room_name: &str) -> Option<Room> {
         log::debug!(target: "Websocket","Getting room: {room_name}");
         let session_id = self.rooms.get_mut(session_id)?;
@@ -22,7 +32,7 @@ impl WsChatServer {
         id: Option<usize>,
         client: Client,
         name: String,
-    ) -> usize {
+    ) -> Option<usize> {
         let id = id.unwrap_or_else(|| rng().random_range(0..usize::MAX));
 
         if let Some(room) = self.rooms.get_mut(session_id)
@@ -34,7 +44,7 @@ impl WsChatServer {
                     recipient: client,
                     name,
                 });
-                id
+                Some(id)
             } else {
                 log::debug!(
                     target: "Websocket",
@@ -42,8 +52,26 @@ impl WsChatServer {
                     id,
                     room_name
                 );
-                id
+                Some(id)
             };
+        }
+
+        if let Some(rooms) = self.rooms.get(session_id)
+            && rooms.len() >= MAX_ROOMS_PER_SESSION
+        {
+            log::warn!(
+                target: "Websocket",
+                "Session {session_id} exceeded max rooms limit ({MAX_ROOMS_PER_SESSION})"
+            );
+            return None;
+        }
+
+        if !self.rooms.contains_key(session_id) && self.rooms.len() >= MAX_SESSIONS {
+            log::warn!(
+                target: "Websocket",
+                "Max sessions limit reached ({MAX_SESSIONS}), rejecting new session"
+            );
+            return None;
         }
 
         let mut room: Room = HashMap::new();
@@ -61,7 +89,7 @@ impl WsChatServer {
             .insert(room_name.to_owned(), room);
 
         self.broadcast_room_list(session_id);
-        id
+        Some(id)
     }
 
     pub fn send_join_message(
@@ -211,7 +239,13 @@ impl WsChatServer {
         false
     }
 
-    pub fn relay_message_to_user(&self, to_user: &str, message: ChatMessage, from_user: &str) {
+    pub fn relay_message_to_user(
+        &self,
+        session_id: &str,
+        to_user: &str,
+        message: ChatMessage,
+        from_user: &str,
+    ) {
         if to_user == from_user {
             log::debug!(
                 target: "Websocket",
@@ -220,11 +254,10 @@ impl WsChatServer {
             return;
         }
 
-        for rooms in self.rooms.values() {
+        if let Some(rooms) = self.rooms.get(session_id) {
             for room in rooms.values() {
                 for client in room.values() {
                     if client.name == to_user {
-                        // try_send returns a Result
                         if let Err(e) = client.recipient.try_send(message) {
                             log::error!(
                                 target: "Websocket",
@@ -244,7 +277,7 @@ impl WsChatServer {
 
         log::debug!(
             target: "Websocket",
-            "Could not find target user {to_user} to relay message from {from_user}"
+            "Could not find target user {to_user} in session {session_id} to relay message from {from_user}"
         );
     }
 }
