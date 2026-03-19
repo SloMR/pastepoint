@@ -44,11 +44,7 @@ export function app(): express.Express {
 
   // Our Universal express-engine
   const commonEngine = new CommonEngine({
-    allowedHosts: [
-      'localhost',
-      'ssr_server',
-      process.env['SERVER_NAME'] || '',
-    ].filter(Boolean),
+    allowedHosts: ['localhost', 'ssr_server', process.env['SERVER_NAME'] || ''].filter(Boolean),
   });
 
   server.set('view engine', 'html');

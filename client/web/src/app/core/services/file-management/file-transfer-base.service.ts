@@ -60,7 +60,7 @@ export class FileTransferBaseService {
 
   protected sanitizeFileName(name: string): string {
     // Strip path separators and null bytes
-    let sanitized = name.replace(/[\/\\:\*\?"<>\|]/g, '_').replace(/\0/g, '');
+    let sanitized = name.replace(/[/\\:*?"<>|]/g, '_').replace(/\0/g, '');
     // Truncate to reasonable length
     if (sanitized.length > 255) {
       const ext = sanitized.lastIndexOf('.');
