@@ -200,7 +200,11 @@ export class FileDownloadService extends FileTransferBaseService {
           `File integrity verified for ${fileDownload.fileId} ✓`
         );
       } catch (e) {
-        this.logger.warn('assembleAndDownloadFile', `Failed to verify file hash: ${e}`);
+        this.logger.warn(
+          'assembleAndDownloadFile',
+          `Failed to verify file hash: ${e instanceof Error ? e.message : String(e)}`,
+          e
+        );
       }
     }
 

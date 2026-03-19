@@ -338,7 +338,8 @@ export class WebRTCCommunicationService {
         } catch (e) {
           this.logger.error(
             'handleDataChannelMessage',
-            `Failed to parse data channel message from ${targetUser}: ${e}`
+            `Failed to parse data channel message from ${targetUser}: ${e instanceof Error ? e.message : String(e)}`,
+            e
           );
           return;
         }

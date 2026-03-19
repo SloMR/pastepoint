@@ -46,10 +46,16 @@ export class RoomService implements IRoomService {
   }
 
   public joinRoom(room: string): void {
-    const sanitizedRoom = room.replace(/[^a-zA-Z0-9\-_ ]/g, '').substring(0, 64);
+    const sanitizedRoom = room
+      .replace(/[^a-zA-Z0-9\-_ ]/g, '')
+      .trim()
+      .substring(0, 64);
+    if (!sanitizedRoom) {
+      this.logger.warn('joinRoom', `Room name is empty after sanitization: ${room}`);
+      return;
+    }
     if (sanitizedRoom !== this.currentRoom) {
       this.wsService.send(`[UserCommand] /join ${sanitizedRoom}`);
-      this.currentRoom = sanitizedRoom;
     } else {
       this.logger.warn('joinRoom', `Already in room: ${room}`);
     }
