@@ -2,7 +2,7 @@ use std::time::Duration;
 
 // WebSocket frame and message size limits
 pub const MAX_FRAME_SIZE: usize = 64 * 1024;
-pub const MAX_SIGNAL_SIZE: usize = 1024 * 1024;
+pub const MAX_SIGNAL_SIZE: usize = 128 * 1024;
 
 // Security limits
 pub const MAX_ROOMS_PER_SESSION: usize = 50;
