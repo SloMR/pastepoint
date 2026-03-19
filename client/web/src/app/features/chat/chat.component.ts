@@ -915,7 +915,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       newWindow: true,
       className: linkClasses,
       stripPrefix: false,
-      sanitizeHtml: false,
+      sanitizeHtml: true,
     });
 
     const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, textWithLinks);

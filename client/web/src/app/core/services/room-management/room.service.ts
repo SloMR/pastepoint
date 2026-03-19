@@ -46,9 +46,10 @@ export class RoomService implements IRoomService {
   }
 
   public joinRoom(room: string): void {
-    if (room !== this.currentRoom) {
-      this.wsService.send(`[UserCommand] /join ${room}`);
-      this.currentRoom = room;
+    const sanitizedRoom = room.replace(/[^a-zA-Z0-9\-_ ]/g, '').substring(0, 64);
+    if (sanitizedRoom !== this.currentRoom) {
+      this.wsService.send(`[UserCommand] /join ${sanitizedRoom}`);
+      this.currentRoom = sanitizedRoom;
     } else {
       this.logger.warn('joinRoom', `Already in room: ${room}`);
     }
