@@ -37,6 +37,12 @@
   "START_CHATTING": "Start chatting and sharing files!",
   "INVITE_OTHERS_PUBLIC": "Invite others on the same network to join this room",
   "START_CONVERSATION": "Start the conversation by sending a message",
+  "FEATURE_ENCRYPTED": "End-to-end encrypted",
+  "FEATURE_NO_CLOUD": "No cloud storage",
+  "FEATURE_ANY_FILE": "Any file type & size",
+  "FEATURE_NO_ACCOUNT": "No account needed",
+  "FEATURE_LOCAL_SPEED": "Local network speed",
+  "FEATURE_FREE": "Free & open source",
 
   "_SESSION_CODE_SECTION": "==== SESSION CODE ====",
   "CODE": "Code",

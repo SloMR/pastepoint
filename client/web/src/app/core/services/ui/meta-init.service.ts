@@ -58,6 +58,9 @@ export class MetaInitService {
 
     // Set structured data for the application
     this.metaService.setStructuredData(this.getApplicationStructuredData(), 'app-structured-data');
+
+    // Set WebSite schema for sitelinks
+    this.metaService.setStructuredData(this.getWebSiteStructuredData(), 'website-structured-data');
   }
 
   //=============================================================================
@@ -107,13 +110,6 @@ export class MetaInitService {
       // Viewport configuration for responsive design
       viewport: 'width=device-width, initial-scale=1.0',
 
-      // Cache control settings
-      cacheControl: {
-        pragma: 'no-cache',
-        cacheControl: 'no-cache, must-revalidate',
-        expires: '0',
-      },
-
       // Open Graph metadata
       og: {
         type: 'website',
@@ -147,6 +143,7 @@ export class MetaInitService {
       alternateName: ['Paste Point', 'pastepoint', 'paste point'],
       url: 'https://pastepoint.com',
       applicationCategory: 'CommunicationApplication',
+      applicationSubCategory: 'Peer-to-peer file sharing and encrypted messaging',
       operatingSystem: 'Web',
       description:
         'PastePoint (Paste Point) is a secure peer-to-peer file sharing and encrypted messaging solution. Transfer files directly with end-to-end encryption, no cloud storage or accounts required.',
@@ -160,36 +157,47 @@ export class MetaInitService {
         'Local network optimization',
       ],
       screenshot: 'https://pastepoint.com/assets/pastepoint-screenshot.png',
-      softwareVersion: '1.0.0',
+      softwareVersion: '0.14.0',
+      logo: 'https://pastepoint.com/assets/pastepoint-og-image.png',
       offers: {
         '@type': 'Offer',
         price: '0',
         priceCurrency: 'USD',
-      },
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: '4.9',
-        reviewCount: '150',
       },
       author: {
         '@type': 'Organization',
         name: 'PastePoint',
         url: 'https://pastepoint.com',
       },
-      itemListElement: [
-        {
-          '@type': 'ListItem',
-          position: 1,
-          name: 'Home',
-          item: 'https://pastepoint.com/',
+      publisher: {
+        '@type': 'Organization',
+        name: 'PastePoint',
+        url: 'https://pastepoint.com',
+        logo: 'https://pastepoint.com/assets/pastepoint-og-image.png',
+      },
+      potentialAction: {
+        '@type': 'SendAction',
+        target: {
+          '@type': 'EntryPoint',
+          urlTemplate: 'https://pastepoint.com/',
         },
-        {
-          '@type': 'ListItem',
-          position: 2,
-          name: 'Private Sessions',
-          item: 'https://pastepoint.com/private',
-        },
+        description: 'Send encrypted messages and files instantly via PastePoint',
+      },
+      sameAs: [
+        'https://twitter.com/pastepoint',
+        'https://github.com/SloMR/pastepoint',
+        'https://www.linkedin.com/in/sulaiman-alromaih-845700202/',
       ],
+    };
+  }
+
+  private getWebSiteStructuredData(): StructuredData {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'PastePoint',
+      alternateName: ['Paste Point', 'pastepoint'],
+      url: 'https://pastepoint.com',
     };
   }
 }
