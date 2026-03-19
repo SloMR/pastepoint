@@ -194,8 +194,13 @@ export class WebSocketConnectionService implements OnDestroy {
           const message = ev.data.trim();
 
           if (message.startsWith('[SignalMessage]')) {
-            const signalMessage = JSON.parse(message.replace('[SignalMessage]', '').trim());
-            this.signalMessages$.next(signalMessage);
+            try {
+              const signalMessage = JSON.parse(message.replace('[SignalMessage]', '').trim());
+              this.signalMessages$.next(signalMessage);
+            } catch (e) {
+              this.logger.error('connect', `Failed to parse signal message: ${e}`);
+              return;
+            }
           } else if (this.isSystemMessage(message)) {
             this.systemMessages$.next(message);
           } else {
