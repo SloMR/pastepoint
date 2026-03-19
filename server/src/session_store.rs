@@ -225,9 +225,6 @@ impl SessionStore {
                                         .expired_private_codes
                                         .lock()
                                         .expect("lock poisoned");
-                                    if expired.len() > 10_000 {
-                                        expired.clear();
-                                    }
                                     expired.insert(key_clone.clone());
                                     log::debug!("Private session code {key_clone} expired");
                                 }
