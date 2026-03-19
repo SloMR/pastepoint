@@ -43,7 +43,13 @@ export function app(): express.Express {
   server.use(compression());
 
   // Our Universal express-engine
-  const commonEngine = new CommonEngine();
+  const commonEngine = new CommonEngine({
+    allowedHosts: [
+      'localhost',
+      'ssr_server',
+      process.env['SERVER_NAME'] || '',
+    ].filter(Boolean),
+  });
 
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
