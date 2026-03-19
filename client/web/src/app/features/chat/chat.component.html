@@ -1382,7 +1382,9 @@
                     class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
                   >
                     <img
-                      [src]="isDarkMode ? '/icons/file-unknown-white.svg' : '/icons/file-unknown.svg'"
+                      [src]="
+                        isDarkMode ? '/icons/file-unknown-white.svg' : '/icons/file-unknown.svg'
+                      "
                       alt="Any file"
                       class="h-4 w-4 shrink-0"
                       width="16"
@@ -1413,9 +1415,7 @@
                   >
                     <img
                       [src]="
-                        isDarkMode
-                          ? '/icons/arrows-up-down-light.svg'
-                          : '/icons/arrows-up-down.svg'
+                        isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'
                       "
                       alt="Fast"
                       class="h-4 w-4 shrink-0"

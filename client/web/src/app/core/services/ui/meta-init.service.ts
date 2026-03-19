@@ -200,6 +200,4 @@ export class MetaInitService {
       url: 'https://pastepoint.com',
     };
   }
-
-
 }
