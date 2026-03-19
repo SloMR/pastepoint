@@ -7,7 +7,12 @@ PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # Function to validate IP address format
 validate_ip() {
     local ip=$1
-    [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]
+    if [[ ! $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+        return 1
+    fi
+    local IFS='.'
+    read -r a b c d <<<"$ip"
+    ((a <= 255 && b <= 255 && c <= 255 && d <= 255))
 }
 
 # Escape replacement string for sed (handles \, &, and delimiter |)

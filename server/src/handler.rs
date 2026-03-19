@@ -1,8 +1,8 @@
 use actix::{Handler, MessageResult};
 
 use crate::{
-    ChatMessage, JoinRoom, LeaveRoom, ListRooms, WS_PREFIX_SIGNAL_MESSAGE, WS_PREFIX_SYSTEM_JOIN,
-    WsChatServer, WsChatSession,
+    ChatMessage, JoinRoom, LeaveRoom, ListRooms, WS_PREFIX_SIGNAL_MESSAGE, WS_PREFIX_SYSTEM_ERROR,
+    WS_PREFIX_SYSTEM_JOIN, WsChatServer, WsChatSession,
     message::{CleanupSession, RelaySignalMessage, ValidateAndRelaySignal},
 };
 
@@ -12,13 +12,26 @@ impl Handler<JoinRoom> for WsChatServer {
     fn handle(&mut self, msg: JoinRoom, _ctx: &mut Self::Context) -> Self::Result {
         let JoinRoom(session_id, room_name, client_name, client) = msg;
 
-        let id =
-            self.add_client_to_room(&session_id, &room_name, None, client, client_name.clone());
-        let join_msg = format!("{client_name} {WS_PREFIX_SYSTEM_JOIN} {room_name}");
-
-        self.send_join_message(&session_id, &room_name, &join_msg, id);
-        self.broadcast_room_members(&session_id, &room_name);
-        MessageResult(id)
+        match self.add_client_to_room(
+            &session_id,
+            &room_name,
+            None,
+            client.clone(),
+            client_name.clone(),
+        ) {
+            Some(id) => {
+                let join_msg = format!("{client_name} {WS_PREFIX_SYSTEM_JOIN} {room_name}");
+                self.send_join_message(&session_id, &room_name, &join_msg, id);
+                self.broadcast_room_members(&session_id, &room_name);
+                MessageResult(id)
+            }
+            None => {
+                let _ = client.try_send(ChatMessage(format!(
+                    "{WS_PREFIX_SYSTEM_ERROR} Room limit or session limit reached"
+                )));
+                MessageResult(0)
+            }
+        }
     }
 }
 
@@ -85,7 +98,12 @@ impl Handler<RelaySignalMessage> for WsChatServer {
     type Result = ();
 
     fn handle(&mut self, msg: RelaySignalMessage, _ctx: &mut Self::Context) {
-        let RelaySignalMessage { from, to, message } = msg;
+        let RelaySignalMessage {
+            session_id,
+            from,
+            to,
+            message,
+        } = msg;
 
         if from == to {
             log::debug!(
@@ -95,21 +113,7 @@ impl Handler<RelaySignalMessage> for WsChatServer {
             return;
         }
 
-        for rooms in self.rooms.values() {
-            for room in rooms.values() {
-                for client in room.values() {
-                    if client.name == to {
-                        if client.recipient.try_send(message.clone()).is_err() {
-                            log::debug!(
-                                target: "Websocket",
-                                "Failed to relay signal to '{to}', client may have disconnected"
-                            );
-                        }
-                        return;
-                    }
-                }
-            }
-        }
+        self.relay_message_to_user(&session_id, &to, message, &from);
     }
 }
 
@@ -141,6 +145,6 @@ impl Handler<ValidateAndRelaySignal> for WsChatServer {
         }
 
         let relay_msg = ChatMessage(format!("{} {}", WS_PREFIX_SIGNAL_MESSAGE, msg.payload));
-        self.relay_message_to_user(&msg.to_user, relay_msg, &msg.from_user);
+        self.relay_message_to_user(&msg.session_id, &msg.to_user, relay_msg, &msg.from_user);
     }
 }

@@ -168,13 +168,15 @@ async fn test_join_leave_room() {
     let dummy_actor = DummyActor.start();
     let client_recipient = dummy_actor.recipient();
 
-    let id = server.add_client_to_room(
-        session_id,
-        room_name,
-        None,
-        client_recipient,
-        client_name.to_string(),
-    );
+    let id = server
+        .add_client_to_room(
+            session_id,
+            room_name,
+            None,
+            client_recipient,
+            client_name.to_string(),
+        )
+        .expect("Failed to add client to room");
 
     assert!(
         server

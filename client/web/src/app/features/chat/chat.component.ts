@@ -915,7 +915,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       newWindow: true,
       className: linkClasses,
       stripPrefix: false,
-      sanitizeHtml: false,
+      sanitizeHtml: true,
     });
 
     const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, textWithLinks);
@@ -1152,10 +1152,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           status === FileTransferStatus.ACCEPTED
             ? this.translate.instant('FILE_TRANSFER_ACCEPTED')
             : this.translate.instant('FILE_TRANSFER_DECLINED');
+        const fileSizeLabel = this.fileSizePipe.transform(msg.fileTransfer.fileSize, 2);
 
         return {
           ...msg,
-          text: `${this.truncateFilename(msg.fileTransfer.fileName)} - ${statusText}`,
+          text: `${this.truncateFilename(msg.fileTransfer.fileName)} (${fileSizeLabel}) - ${statusText}`,
           fileTransfer: {
             ...msg.fileTransfer,
             status,

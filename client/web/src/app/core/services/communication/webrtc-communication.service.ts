@@ -332,7 +332,17 @@ export class WebRTCCommunicationService {
   private handleDataChannelMessage(data: unknown, targetUser: string): void {
     this.zone.run(() => {
       if (typeof data === 'string') {
-        const message: DataChannelMessage = JSON.parse(data);
+        let message: DataChannelMessage;
+        try {
+          message = JSON.parse(data);
+        } catch (e) {
+          this.logger.error(
+            'handleDataChannelMessage',
+            `Failed to parse data channel message from ${targetUser}: ${e instanceof Error ? e.message : String(e)}`,
+            e
+          );
+          return;
+        }
         switch (message.type) {
           case DATA_CHANNEL_MESSAGE_TYPES.CHAT: {
             let chatMsg = message.payload as ChatMessage;

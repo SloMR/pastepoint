@@ -34,6 +34,7 @@ function findProjectRoot(startPath: string): string {
 // The Express app is exported so that it can be used by serverless Functions.
 export function app(): express.Express {
   const server = express();
+  server.set('trust proxy', 1);
   const serverDistFolder = dirname(fileURLToPath(import.meta.url));
   const browserDistFolder = resolve(serverDistFolder, '../browser');
   const indexHtml = join(serverDistFolder, 'index.server.html');
@@ -42,7 +43,9 @@ export function app(): express.Express {
   server.use(compression());
 
   // Our Universal express-engine
-  const commonEngine = new CommonEngine();
+  const commonEngine = new CommonEngine({
+    allowedHosts: ['localhost', 'ssr_server', process.env['SERVER_NAME'] || ''].filter(Boolean),
+  });
 
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);

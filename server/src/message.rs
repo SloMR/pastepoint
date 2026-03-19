@@ -10,7 +10,6 @@ pub struct WsChatServer {
     pub rooms: HashMap<String, HashMap<String, Room>>, // session_id -> room_name -> clients
 }
 
-#[derive(Default, Clone)]
 pub struct WsChatSession {
     pub session_id: String,              // session id
     pub id: usize,                       // client id
@@ -19,6 +18,8 @@ pub struct WsChatSession {
     pub auto_join: bool,                 // flag to control auto-join
     pub session_store: SessionStore,     // reference to SessionStore
     pub last_heartbeat: Option<Instant>, // last heartbeat time
+    pub message_count: usize,            // rate limiting: messages in current window
+    pub rate_limit_reset: Instant,       // rate limiting: when to reset counter
 }
 
 pub struct ClientMetadata {
@@ -54,8 +55,9 @@ pub struct ListRooms(pub String /* session_id */);
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct RelaySignalMessage {
-    pub(crate) from: String,         // session_id
-    pub(crate) to: String,           // session_id
+    pub(crate) session_id: String,   // session_id
+    pub(crate) from: String,         // from user
+    pub(crate) to: String,           // to user
     pub(crate) message: ChatMessage, // signal message
 }
 

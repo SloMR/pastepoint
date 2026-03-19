@@ -2,15 +2,17 @@
 set -e
 
 CERT_DIR="../certs"
-mkdir -p $CERT_DIR
+LOCAL_IP="${1:-127.0.0.1}"
+mkdir -p "$CERT_DIR"
 
-# Generate proper CA-signed cert (example for Let's Encrypt)
-# Replace with your actual certbot command in production
+# Generate self-signed cert for development
+# Usage: ./generate-certs.sh [local-ip]
+# Example: ./generate-certs.sh 192.168.1.100
 openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
-    -keyout $CERT_DIR/key.pem \
-    -out $CERT_DIR/cert.pem \
-    -subj "/C=US/ST=State/L=City/O=Company/CN=localhost" \
-    -addext "subjectAltName=DNS:localhost,DNS:localhost"
+    -keyout "$CERT_DIR/key.pem" \
+    -out "$CERT_DIR/cert.pem" \
+    -subj "/C=US/ST=State/L=City/O=PastePoint/CN=localhost" \
+    -addext "subjectAltName=DNS:localhost,IP:127.0.0.1,IP:${LOCAL_IP}"
 
 # Set secure permissions
 OWNER_USER="${USER:-$(id -un)}"

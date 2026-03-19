@@ -200,7 +200,11 @@ export class FileDownloadService extends FileTransferBaseService {
           `File integrity verified for ${fileDownload.fileId} ✓`
         );
       } catch (e) {
-        this.logger.warn('assembleAndDownloadFile', `Failed to verify file hash: ${e}`);
+        this.logger.warn(
+          'assembleAndDownloadFile',
+          `Failed to verify file hash: ${e instanceof Error ? e.message : String(e)}`,
+          e
+        );
       }
     }
 
@@ -208,7 +212,7 @@ export class FileDownloadService extends FileTransferBaseService {
     const receivedBlob = new Blob(orderedChunks, { type: blobType || undefined });
     const downloadUrl = URL.createObjectURL(receivedBlob);
     const timestamp = new Date().toISOString().split('T')[0];
-    const fileName = fileDownload.fileName || `downloaded_file_${timestamp}`;
+    const fileName = this.sanitizeFileName(fileDownload.fileName) || `downloaded_file_${timestamp}`;
 
     // Clear the orderedChunks array to help GC
     orderedChunks.length = 0;

@@ -1,6 +1,6 @@
 use crate::{
     CONTENT_TYPE_TEXT_PLAIN, MIN_USER_AGENT_LENGTH, SESSION_CODE_LENGTH, ServerConfig, ServerError,
-    SessionStore, session_store::SessionData,
+    SessionStore, consts::MAX_SESSIONS, session_store::SessionData,
 };
 use actix_web::{Error, HttpRequest, HttpResponse, Responder, get, http::header, web};
 use serde_json::json;
@@ -32,7 +32,6 @@ pub async fn health() -> impl Responder {
 #[get("/create-session")]
 pub async fn create_session(store: web::Data<SessionStore>) -> Result<HttpResponse, ServerError> {
     let code = SessionStore::generate_random_code(SESSION_CODE_LENGTH);
-    // Insert the new session without calling get_or_create_session_uuid.
     let new_uuid = Uuid::new_v4();
     {
         let mut map = match store.key_to_session.lock() {
@@ -45,6 +44,15 @@ pub async fn create_session(store: web::Data<SessionStore>) -> Result<HttpRespon
                 return Err(ServerError::InternalServerError);
             }
         };
+        if map.len() >= MAX_SESSIONS {
+            log::warn!(
+                target: "Websocket",
+                "Max sessions limit reached ({MAX_SESSIONS}), rejecting session creation"
+            );
+            return Err(ServerError::BadRequest(
+                "Server capacity reached. Try again later.".to_string(),
+            ));
+        }
         map.insert(
             code.clone(),
             SessionData {
@@ -75,7 +83,9 @@ pub async fn chat_ws(
 
     let ip_str = get_client_ip(&req, is_dev_mode)
         .map_err(|e| ServerError::BadRequest(format!("Failed to get client IP: {e}")))?;
-    check_suspicious_connection(&req, &ip_str);
+    if check_suspicious_connection(&req, &ip_str) {
+        return Err(ServerError::Forbidden);
+    }
 
     let session_key = create_session_key(&req, &ip_str);
 
@@ -160,7 +170,7 @@ fn create_session_key(req: &HttpRequest, ip_str: &str) -> String {
 }
 
 // Helper function to check for suspicious connections
-fn check_suspicious_connection(req: &HttpRequest, ip_str: &str) {
+fn check_suspicious_connection(req: &HttpRequest, ip_str: &str) -> bool {
     let user_agent = req
         .headers()
         .get("User-Agent")
@@ -168,8 +178,10 @@ fn check_suspicious_connection(req: &HttpRequest, ip_str: &str) {
         .unwrap_or("unknown");
 
     if user_agent.len() < MIN_USER_AGENT_LENGTH || user_agent.to_lowercase().contains("bot") {
-        log::error!(target: "Websocket", "Suspicious connection attempt - IP: {ip_str}, UA: {user_agent}");
+        log::warn!(target: "Websocket", "Suspicious connection rejected - IP: {ip_str}, UA: {user_agent}");
+        return true;
     }
+    false
 }
 
 // Helper function to validate WebSocket connection headers

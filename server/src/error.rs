@@ -10,6 +10,8 @@ pub enum ServerError {
     NotFound,
     #[display("Bad Request: {}", _0)]
     BadRequest(String),
+    #[display("Forbidden")]
+    Forbidden,
     #[display("Index out of bounds")]
     IndexOutOfBounds,
     #[display("Chunk Missing")]
@@ -34,6 +36,9 @@ impl ResponseError for ServerError {
             ServerError::BadRequest(ref message) => HttpResponse::BadRequest()
                 .content_type(CONTENT_TYPE_TEXT_PLAIN)
                 .body(message.clone()),
+            ServerError::Forbidden => HttpResponse::Forbidden()
+                .content_type(CONTENT_TYPE_TEXT_PLAIN)
+                .body("Forbidden"),
             ServerError::IndexOutOfBounds => HttpResponse::BadRequest()
                 .content_type(CONTENT_TYPE_TEXT_PLAIN)
                 .body("Index out of bounds"),
