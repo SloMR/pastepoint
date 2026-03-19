@@ -12,11 +12,5 @@ Disallow: /404
 Disallow: /ws/
 Disallow: /create-session
 
-# Crawl delay for politeness
-Crawl-delay: 1
-
 # Sitemap location
 Sitemap: https://pastepoint.com/sitemap.xml
-
-# Host directive for search engines
-Host: https://pastepoint.com

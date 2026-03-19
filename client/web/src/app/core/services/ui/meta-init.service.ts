@@ -58,6 +58,12 @@ export class MetaInitService {
 
     // Set structured data for the application
     this.metaService.setStructuredData(this.getApplicationStructuredData(), 'app-structured-data');
+
+    // Set WebSite schema for sitelinks
+    this.metaService.setStructuredData(this.getWebSiteStructuredData(), 'website-structured-data');
+
+    // Set FAQ schema for rich results
+    this.metaService.setStructuredData(this.getFAQStructuredData(), 'faq-structured-data');
   }
 
   //=============================================================================
@@ -107,13 +113,6 @@ export class MetaInitService {
       // Viewport configuration for responsive design
       viewport: 'width=device-width, initial-scale=1.0',
 
-      // Cache control settings
-      cacheControl: {
-        pragma: 'no-cache',
-        cacheControl: 'no-cache, must-revalidate',
-        expires: '0',
-      },
-
       // Open Graph metadata
       og: {
         type: 'website',
@@ -160,34 +159,74 @@ export class MetaInitService {
         'Local network optimization',
       ],
       screenshot: 'https://pastepoint.com/assets/pastepoint-screenshot.png',
-      softwareVersion: '1.0.0',
+      softwareVersion: '0.14.0',
       offers: {
         '@type': 'Offer',
         price: '0',
         priceCurrency: 'USD',
-      },
-      aggregateRating: {
-        '@type': 'AggregateRating',
-        ratingValue: '4.9',
-        reviewCount: '150',
       },
       author: {
         '@type': 'Organization',
         name: 'PastePoint',
         url: 'https://pastepoint.com',
       },
-      itemListElement: [
+    };
+  }
+
+  private getWebSiteStructuredData(): StructuredData {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'PastePoint',
+      alternateName: ['Paste Point', 'pastepoint'],
+      url: 'https://pastepoint.com',
+    };
+  }
+
+  private getFAQStructuredData(): StructuredData {
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: [
         {
-          '@type': 'ListItem',
-          position: 1,
-          name: 'Home',
-          item: 'https://pastepoint.com/',
+          '@type': 'Question',
+          name: 'Is PastePoint free?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'Yes, PastePoint is completely free and open-source under the GPL-3.0 license. No subscriptions, no hidden fees.',
+          },
         },
         {
-          '@type': 'ListItem',
-          position: 2,
-          name: 'Private Sessions',
-          item: 'https://pastepoint.com/private',
+          '@type': 'Question',
+          name: 'How secure is PastePoint?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'PastePoint uses WebRTC with DTLS and SRTP protocols for end-to-end encryption. Files transfer directly between devices — nothing is stored on any server.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Does PastePoint store my files?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'No. PastePoint operates entirely peer-to-peer. Your files, messages, and session data are never stored on any server.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'Do I need to create an account?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'No account is needed. Just open PastePoint and start sharing files and messages immediately.',
+          },
+        },
+        {
+          '@type': 'Question',
+          name: 'How does peer-to-peer file sharing work in PastePoint?',
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: 'PastePoint uses WebRTC to establish a direct connection between devices. A signaling server coordinates the initial handshake, then files transfer directly between peers with no intermediary.',
+          },
         },
       ],
     };

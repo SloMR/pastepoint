@@ -37,6 +37,12 @@
   "START_CHATTING": "ابدأ التحدث وشارك الملفات!",
   "INVITE_OTHERS_PUBLIC": "إدعِ أشخاص آخرين على نفس شبكة للانضمام إلى هذه الغرفة",
   "START_CONVERSATION": "ابدأ التحدث بإرسال رسالة",
+  "FEATURE_ENCRYPTED": "تشفير من طرف إلى طرف",
+  "FEATURE_NO_CLOUD": "بدون تخزين سحابي",
+  "FEATURE_ANY_FILE": "أي نوع وحجم ملف",
+  "FEATURE_NO_ACCOUNT": "بدون إنشاء حساب",
+  "FEATURE_LOCAL_SPEED": "سرعة الشبكة المحلية",
+  "FEATURE_FREE": "مجاني ومفتوح المصدر",
 
   "_SESSION_CODE_SECTION": "==== SESSION CODE ====",
   "CODE": "الرمز",

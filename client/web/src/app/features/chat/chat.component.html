@@ -1346,6 +1346,104 @@
                     </div>
                   </div>
                 </div>
+                <!-- Feature Highlights -->
+                <div class="grid grid-cols-2 gap-2 sm:gap-3 w-full mt-2">
+                  <div
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                  >
+                    <img
+                      [src]="isDarkMode ? '/icons/lock-white.svg' : '/icons/lock.svg'"
+                      alt="Encrypted"
+                      class="h-4 w-4 shrink-0"
+                      width="16"
+                      height="16"
+                    />
+                    <span
+                      class="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-expoArabic"
+                      >{{ 'FEATURE_ENCRYPTED' | translate }}</span
+                    >
+                  </div>
+                  <div
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                  >
+                    <img
+                      [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
+                      alt="No cloud"
+                      class="h-4 w-4 shrink-0"
+                      width="16"
+                      height="16"
+                    />
+                    <span
+                      class="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-expoArabic"
+                      >{{ 'FEATURE_NO_CLOUD' | translate }}</span
+                    >
+                  </div>
+                  <div
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                  >
+                    <img
+                      [src]="isDarkMode ? '/icons/file-unknown-white.svg' : '/icons/file-unknown.svg'"
+                      alt="Any file"
+                      class="h-4 w-4 shrink-0"
+                      width="16"
+                      height="16"
+                    />
+                    <span
+                      class="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-expoArabic"
+                      >{{ 'FEATURE_ANY_FILE' | translate }}</span
+                    >
+                  </div>
+                  <div
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                  >
+                    <img
+                      [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+                      alt="No account"
+                      class="h-4 w-4 shrink-0"
+                      width="16"
+                      height="16"
+                    />
+                    <span
+                      class="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-expoArabic"
+                      >{{ 'FEATURE_NO_ACCOUNT' | translate }}</span
+                    >
+                  </div>
+                  <div
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                  >
+                    <img
+                      [src]="
+                        isDarkMode
+                          ? '/icons/arrows-up-down-light.svg'
+                          : '/icons/arrows-up-down.svg'
+                      "
+                      alt="Fast"
+                      class="h-4 w-4 shrink-0"
+                      width="16"
+                      height="16"
+                    />
+                    <span
+                      class="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-expoArabic"
+                      >{{ 'FEATURE_LOCAL_SPEED' | translate }}</span
+                    >
+                  </div>
+                  <div
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                  >
+                    <img
+                      [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
+                      alt="Open source"
+                      class="h-4 w-4 shrink-0"
+                      width="16"
+                      height="16"
+                    />
+                    <span
+                      class="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 font-expoArabic"
+                      >{{ 'FEATURE_FREE' | translate }}</span
+                    >
+                  </div>
+                </div>
+
                 <!-- Decorative Elements -->
                 <div
                   class="flex items-center justify-center space-x-2 opacity-50"
@@ -2142,7 +2240,7 @@
       (click)="closePopup('qr')"
     >
       <div
-        class="w-full rounded-2xl rounded-b-none bg-white px-6 py-6 animate-slide-up dark:bg-baseDark sm:w-[320px] sm:rounded-b-2xl sm:px-6 sm:pb-6"
+        class="w-full rounded-2xl rounded-b-none bg-white px-6 py-6 animate-slide-up dark:bg-baseDark sm:w-[380px] sm:rounded-b-2xl sm:px-6 sm:pb-6"
         (click)="$event.stopPropagation()"
       >
         <div class="flex w-full flex-col gap-4">
@@ -2175,7 +2273,7 @@
                 <!-- Loading spinner -->
                 <div
                   *ngIf="isGeneratingQRCode"
-                  class="flex items-center justify-center w-[180px] h-[180px]"
+                  class="flex items-center justify-center w-[250px] h-[250px] sm:w-[300px] sm:h-[300px]"
                 >
                   <svg
                     aria-hidden="true"

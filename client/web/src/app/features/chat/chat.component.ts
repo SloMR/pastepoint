@@ -1512,9 +1512,9 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       const canvas = document.createElement('canvas');
       await QRCode.toCanvas(canvas, sessionUrl, {
-        width: isMobile ? 180 : 220,
-        margin: 4,
-        errorCorrectionLevel: 'M',
+        width: isMobile ? 250 : 300,
+        margin: 2,
+        errorCorrectionLevel: 'L',
         color: {
           dark: '#000000',
           light: '#FFFFFF',
