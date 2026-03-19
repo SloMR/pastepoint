@@ -58,6 +58,22 @@ export class FileTransferBaseService {
     return `${user}-${fileId}`;
   }
 
+  protected sanitizeFileName(name: string): string {
+    // Strip path separators and null bytes
+    let sanitized = name.replace(/[\/\\:\*\?"<>\|]/g, '_').replace(/\0/g, '');
+    // Truncate to reasonable length
+    if (sanitized.length > 255) {
+      const ext = sanitized.lastIndexOf('.');
+      if (ext > 0) {
+        const extension = sanitized.substring(ext);
+        sanitized = sanitized.substring(0, 255 - extension.length) + extension;
+      } else {
+        sanitized = sanitized.substring(0, 255);
+      }
+    }
+    return sanitized || 'download';
+  }
+
   // =============== WebRTC Communication Methods ===============
   /**
    * Sends a message to a target user

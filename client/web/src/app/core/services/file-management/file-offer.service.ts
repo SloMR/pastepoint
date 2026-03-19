@@ -36,7 +36,8 @@ export class FileOfferService extends FileTransferBaseService {
     previewDataUrl?: string;
     previewMime?: string;
   }): Promise<void> {
-    const { fromUser, fileId, fileName, fileSize, fileHash, previewDataUrl, previewMime } = offer;
+    const { fromUser, fileId, fileSize, fileHash, previewDataUrl, previewMime } = offer;
+    const fileName = this.sanitizeFileName(offer.fileName);
 
     let fileTransfers = await this.getIncomingFileTransfers(fromUser);
     if (!fileTransfers) {
