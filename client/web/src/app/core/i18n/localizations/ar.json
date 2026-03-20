@@ -18,7 +18,7 @@
   "CREATE_A_NEW_ROOM": "أنشئ غرفة جديدة",
   "ENTER_ROOM_NAME": "أدخل اسم الغرفة",
   "ROOM_NAME_PLACEHOLDER": "اسم الغرفة",
-  "ROOM_NAME_DESCRIPTION": "يمكنك ترك الاسم فارغًا وسنقوم بإنشائه تلقائيًا",
+  "ROOM_NAME_DESCRIPTION": "أدخل اسم الغرفة التي تريد الانضمام إليها أو إنشاؤها.",
   "ROOM_JOINED_SUCCESS": "تم الانضمام إلى الغرفة {{roomName}}.",
 
   "_SESSIONS_SECTION": "==== SESSIONS ====",
