@@ -39,20 +39,6 @@ struct SettingsView: View {
                     .foregroundColor(.textPrimary)
 
                 Spacer()
-
-                Button { dismiss() } label: {
-                    ZStack {
-                        Circle()
-                            .fill(Color(UIColor.tertiarySystemFill))
-                            .frame(width: 36, height: 36)
-
-                        Image(systemName: "xmark")
-                            .font(.system(size: 13, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color(UIColor.secondaryLabel))
-                    }
-                    .contentShape(Circle())
-                }
-                .buttonStyle(.plain)
             }
             .padding()
 

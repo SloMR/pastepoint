@@ -24,6 +24,7 @@ enum AppColors {
         static let background = Color("background")
         static let surface = Color("surface")
         static let contentArea = Color("contentArea")
+        static let stepCard = Color("stepCard")
         static let message = Color("messageBackground")
         static let input = Color("inputBackground")
     }

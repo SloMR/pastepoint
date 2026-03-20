@@ -15,8 +15,6 @@ struct CreateSessionResponse: Decodable {
 final class SessionService: ObservableObject {
     private let logger = Logger(label: "Session")
 
-    static let sessionCodeStorageKey: String = "session_code"
-
     func getNewSessionCode() async throws -> String {
         guard let url = URL(string: "https://\(AppEnvironment.apiUrl)/create-session") else {
             throw SessionError.invalidURL
