@@ -8,7 +8,7 @@ import SwiftUI
 
 struct SettingsRoomsSection: View {
     @EnvironmentObject private var services: AppServices
-    @Binding var toast: ToastItem?
+    @Binding var toasts: [ToastItem]
 
     private let logger = Logger(label: "SettingsRoomsSection")
 
@@ -40,7 +40,7 @@ struct SettingsRoomsSection: View {
                         Task {
                             logger.info("Joining room \(room)")
                             await services.roomService.joinOrCreateRoom(room)
-                            toast = .info("Joined \(room)")
+                            toasts.append(.info("Joined \(room)"))
                         }
                     } label: {
                         HStack(spacing: 5) {

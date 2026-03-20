@@ -8,7 +8,7 @@ import SwiftUI
 
 struct SettingsPrivateSessionSection: View {
     @EnvironmentObject private var services: AppServices
-    @Binding var toast: ToastItem?
+    @Binding var toasts: [ToastItem]
 
     private let logger = Logger(label: "SettingsPrivateSessionSection")
 
@@ -52,7 +52,7 @@ struct SettingsPrivateSessionSection: View {
                 // Copy Button
                 Button {
                     UIPasteboard.general.string = code
-                    toast = .success("Code copied to clipboard")
+                    toasts.append(.success("Code copied to clipboard"))
                 } label: {
                     Image("copy")
                         .font(.system(size: 18, weight: .medium))
@@ -93,15 +93,16 @@ struct SettingsPrivateSessionSection: View {
             Button {
                 Task {
                     do {
+                        logger.info("Start private session button tapped")
                         let code = try await services.sessionService.getNewSessionCode()
                         await services.wsService.setupPrivateSession(code)
                         await services.wsService.connect()
                         await services.roomService.listRooms()
                         await services.userService.getUsername()
-                        toast = .success("Private session started")
+                        toasts.append(.success("Private session started"))
                     } catch {
                         logger.error("Cannot get the session code \(error)")
-                        toast = .error("Failed to start private session")
+                        toasts.append(.error("Failed to start private session"))
                     }
                 }
             } label: {
@@ -128,7 +129,7 @@ struct SettingsPrivateSessionSection: View {
             // TODO: Implement join-by-code flow (prompt for session code input);
             // add toast = .success("Joined private session") on success, toast = .error("Invalid code") on failure
             Button {
-                logger.info("Join private chat tapped")
+                logger.info("Join private session button tapped")
             } label: {
                 HStack(spacing: 8) {
                     Text("Join Private Chat")

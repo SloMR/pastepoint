@@ -8,7 +8,6 @@
 
 /* Begin PBXBuildFile section */
 		4C099FD52F4CE70800E71A3D /* Logging in Frameworks */ = {isa = PBXBuildFile; productRef = 4C099FD42F4CE70800E71A3D /* Logging */; };
-		4C099FDE2F4CF34500E71A3D /* SimpleToast in Frameworks */ = {isa = PBXBuildFile; productRef = 4C099FDD2F4CF34500E71A3D /* SimpleToast */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -71,7 +70,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				4C099FDE2F4CF34500E71A3D /* SimpleToast in Frameworks */,
 				4C099FD52F4CE70800E71A3D /* Logging in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -134,7 +132,6 @@
 			name = PastePoint;
 			packageProductDependencies = (
 				4C099FD42F4CE70800E71A3D /* Logging */,
-				4C099FDD2F4CF34500E71A3D /* SimpleToast */,
 			);
 			productName = PastePoint;
 			productReference = 4C2327002F1ECB1B005FED3A /* PastePoint.app */;
@@ -220,7 +217,6 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				4C099FD32F4CE70800E71A3D /* XCRemoteSwiftPackageReference "swift-log" */,
-				4C099FDC2F4CF34500E71A3D /* XCRemoteSwiftPackageReference "SimpleToast" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 4C2327012F1ECB1B005FED3A /* Products */;
@@ -649,14 +645,6 @@
 				minimumVersion = 1.10.1;
 			};
 		};
-		4C099FDC2F4CF34500E71A3D /* XCRemoteSwiftPackageReference "SimpleToast" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/sanzaru/SimpleToast.git";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.12.0;
-			};
-		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -664,11 +652,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 4C099FD32F4CE70800E71A3D /* XCRemoteSwiftPackageReference "swift-log" */;
 			productName = Logging;
-		};
-		4C099FDD2F4CF34500E71A3D /* SimpleToast */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 4C099FDC2F4CF34500E71A3D /* XCRemoteSwiftPackageReference "SimpleToast" */;
-			productName = SimpleToast;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

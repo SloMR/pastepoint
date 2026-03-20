@@ -15,7 +15,7 @@ struct ContentView: View {
     private let logger = Logger(label: "ContentView")
 
     @State private var showSettings = false
-    @State private var toast: ToastItem?
+    @State private var toasts: [ToastItem] = []
 
     var body: some View {
         VStack(spacing: 0) {
@@ -47,12 +47,12 @@ struct ContentView: View {
         }
         .onChange(of: services.wsService.isConnected) { wasConnected, connected in
             if connected {
-                toast = wasConnected ? .success("Reconnected") : .success("Connected")
+                toasts.append(wasConnected ? .success("Reconnected") : .success("Connected"))
             } else if wasConnected {
-                toast = .warning("Connection lost")
+                toasts.append(.warning("Connection lost"))
             }
         }
-        .appToast(item: $toast)
+        .appToast(items: $toasts)
     }
 }
 

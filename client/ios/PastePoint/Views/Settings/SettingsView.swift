@@ -9,10 +9,11 @@ import SwiftUI
 struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject private var services: AppServices
+
     private let logger = Logger(label: "SettingsView")
 
     @State private var privacyURLToShow: IdentifiableURL?
-    @State private var toast: ToastItem?
+    @State private var toasts: [ToastItem] = []
 
     private var avatar: some View {
         Image("group")
@@ -90,7 +91,7 @@ struct SettingsView: View {
 
                     // MARK: - Chat Rooms
 
-                    SettingsRoomsSection(toast: $toast)
+                    SettingsRoomsSection(toasts: $toasts)
 
                     // MARK: - Private Session
 
@@ -144,7 +145,7 @@ struct SettingsView: View {
         .sheet(item: $privacyURLToShow) { identifiableURL in
             SafariView(url: identifiableURL.url)
         }
-        .appToast(item: $toast)
+        .appToast(items: $toasts)
     }
 }
 
