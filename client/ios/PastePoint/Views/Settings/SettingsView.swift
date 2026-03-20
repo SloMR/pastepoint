@@ -11,6 +11,7 @@ struct SettingsView: View {
     @EnvironmentObject private var services: AppServices
 
     private let logger = Logger(label: "SettingsView")
+    var onSessionJoin: (() -> Void)?
 
     @State private var privacyURLToShow: IdentifiableURL?
     @State private var toasts: [ToastItem] = []
@@ -95,7 +96,7 @@ struct SettingsView: View {
 
                     // MARK: - Private Session
 
-                    SettingsPrivateSessionSection(toast: $toast)
+                    SettingsPrivateSessionSection(toasts: $toasts, onSessionJoin: onSessionJoin)
 
                     // MARK: - Members
 

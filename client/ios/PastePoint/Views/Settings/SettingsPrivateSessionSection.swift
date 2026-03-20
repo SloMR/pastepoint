@@ -10,13 +10,25 @@ struct SettingsPrivateSessionSection: View {
     @EnvironmentObject private var services: AppServices
     @Binding var toasts: [ToastItem]
 
+    @State private var isQRCodeSheetPresented: Bool = false
+    @State private var isJoinPrivateSessionPresented: Bool = false
+
     private let logger = Logger(label: "SettingsPrivateSessionSection")
+    var onSessionJoin: (() -> Void)?
 
     var body: some View {
-        if let code = services.wsService.currentSessionCode {
-            activeSessionView(code: code)
-        } else {
-            joinOrStartView
+        Group {
+            if let code = services.wsService.currentSessionCode {
+                activeSessionView(code: code)
+            } else {
+                joinOrStartView
+            }
+        }
+        .sheet(isPresented: $isQRCodeSheetPresented) {
+            SettingsQRCode()
+        }
+        .sheet(isPresented: $isJoinPrivateSessionPresented) {
+            SettingsJoinPrivate(onSessionJoin: onSessionJoin)
         }
     }
 
@@ -66,9 +78,9 @@ struct SettingsPrivateSessionSection: View {
                 .buttonStyle(.plain)
 
                 // QR Button
-                // TODO: Present QR sheet for session code sharing; add toast = .error("Failed to generate QR") on failure
                 Button {
                     // Show QR sheet
+                    isQRCodeSheetPresented = true
                 } label: {
                     Image("qrcode")
                         .font(.system(size: 18, weight: .medium))
@@ -126,10 +138,9 @@ struct SettingsPrivateSessionSection: View {
             }
             .buttonStyle(.plain)
 
-            // TODO: Implement join-by-code flow (prompt for session code input);
-            // add toast = .success("Joined private session") on success, toast = .error("Invalid code") on failure
             Button {
                 logger.info("Join private session button tapped")
+                isJoinPrivateSessionPresented = true
             } label: {
                 HStack(spacing: 8) {
                     Text("Join Private Chat")

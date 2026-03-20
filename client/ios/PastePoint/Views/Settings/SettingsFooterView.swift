@@ -76,5 +76,8 @@ struct SettingsFooterView: View {
                 .foregroundColor(.textPrimary)
                 .padding(.vertical, 4)
         }
+        .sheet(item: $privacyURLToShow) { identifiableURL in
+            SafariView(url: identifiableURL.url)
+        }
     }
 }
