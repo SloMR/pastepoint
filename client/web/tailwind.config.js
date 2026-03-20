@@ -35,6 +35,7 @@ module.exports = {
         // Background colors
         pageBackground: '#F9FAFB', // Light page background
         contentArea: '#f7f7fc', // Main content area background
+        stepCard: '#e8edf2', // Welcome step/feature card background
         messageBackground: '#F0F2F5', // Message bubble background (light)
         inputBackground: '#E5E7EB', // Input/form backgrounds
 
