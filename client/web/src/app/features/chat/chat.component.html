@@ -466,7 +466,6 @@
       >
         <!-- MARK: - Mobile User Info -->
         <div
-          *ngIf="userService.user"
           class="flex w-full items-center justify-between gap-2 px-4 py-8"
         >
           <!-- avatar + name -->
@@ -480,8 +479,13 @@
               width="40"
               height="40"
             />
-            <p class="truncate text-base font-expoArabicMedium text-content dark:text-white">
-              {{ userService.user }}
+            <p
+              class="truncate text-base font-expoArabicMedium"
+              [class.text-content]="userService.user"
+              [class.dark:text-white]="userService.user"
+              [class.text-gray-400]="!userService.user"
+            >
+              {{ userService.user || 'Connecting…' }}
             </p>
           </div>
 
@@ -1161,9 +1165,14 @@
       </div>
 
       <!-- user info -->
-      <div *ngIf="userService.user" class="hidden items-center gap-2 md:flex">
-        <p class="text-base font-expoArabicMedium text-content dark:text-white">
-          {{ userService.user }}
+      <div class="hidden items-center gap-2 md:flex">
+        <p
+          class="text-base font-expoArabicMedium"
+          [class.text-content]="userService.user"
+          [class.dark:text-white]="userService.user"
+          [class.text-gray-400]="!userService.user"
+        >
+          {{ userService.user || 'Connecting…' }}
         </p>
         <img
           src="/icons/Group.svg"
