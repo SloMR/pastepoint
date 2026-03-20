@@ -15,6 +15,7 @@ struct SettingsView: View {
     var onSessionJoin: (() -> Void)?
 
     @State private var isLeaveSessionSheetPresented: Bool = false
+    @State private var isJoinRoomSheetPresented: Bool = false
     @State private var privacyURLToShow: IdentifiableURL?
     @State private var toasts: [ToastItem] = []
 
@@ -63,10 +64,7 @@ struct SettingsView: View {
 
                     Button {
                         logger.info("Create new room tapped")
-                        Task {
-                            await services.roomService.joinOrCreateRoom("Testing from iOS") // TODO: Add UI for this one
-                            toast = .success("Room created")
-                        }
+                        isJoinRoomSheetPresented = true
                     } label: {
                         HStack(spacing: 8) {
                             Image("plus")
@@ -159,6 +157,10 @@ struct SettingsView: View {
         .sheet(isPresented: $isLeaveSessionSheetPresented) {
             SettingsLeaveSession(onSessionLeft: onSessionLeft)
         }
+        .sheet(isPresented: $isJoinRoomSheetPresented) {
+            SettingsJoinRoom {
+                toasts.append(.success("Room created/joined successfully!"))
+            }
         }
         .appToast(items: $toasts)
     }
