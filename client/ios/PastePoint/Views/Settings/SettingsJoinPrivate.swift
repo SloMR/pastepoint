@@ -16,6 +16,7 @@ struct SettingsJoinPrivate: View {
 
     @State private var sessionCode: String = ""
     @State private var sheetHeight: CGFloat = 320
+    @State private var isScannerPresented: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -27,15 +28,28 @@ struct SettingsJoinPrivate: View {
                         .font(.subheadline)
                         .foregroundStyle(.textPrimary)
 
-                    TextField("Session code", text: $sessionCode)
-                        .textFieldStyle(.plain)
-                        .font(.body)
-                        .foregroundStyle(.textPrimary)
-                        .autocorrectionDisabled()
-                        .textInputAutocapitalization(.never)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 12)
-                        .background(AppColors.Background.input, in: RoundedRectangle(cornerRadius: 8))
+                    HStack(spacing: 0) {
+                        TextField("Session code", text: $sessionCode)
+                            .textFieldStyle(.plain)
+                            .font(.body)
+                            .foregroundStyle(.textPrimary)
+                            .autocorrectionDisabled()
+                            .textInputAutocapitalization(.never)
+                            .padding(.leading, 14)
+                            .padding(.vertical, 12)
+
+                        Button {
+                            isScannerPresented = true
+                        } label: {
+                            Image(systemName: "camera.viewfinder")
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundStyle(AppColors.Brand.brand)
+                                .frame(width: 44, height: 44)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.trailing, 4)
+                    }
+                    .background(AppColors.Background.input, in: RoundedRectangle(cornerRadius: 8))
 
                     Text("Enter the code to join a private chat.")
                         .font(.caption)
@@ -120,5 +134,11 @@ struct SettingsJoinPrivate: View {
         .presentationDetents([.height(sheetHeight)])
         .presentationDragIndicator(.visible)
         .presentationBackground(AppColors.Background.background)
+        .fullScreenCover(isPresented: $isScannerPresented) {
+            SettingsScanQRCode { scannedCode in
+                sessionCode = scannedCode
+                Task { await joinSession(code: scannedCode) }
+            }
+        }
     }
 }
