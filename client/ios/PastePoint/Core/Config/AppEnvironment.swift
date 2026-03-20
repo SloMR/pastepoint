@@ -8,7 +8,7 @@ import Foundation
 enum AppEnvironment {
 #if DEBUG
   static let host = "127.0.0.1"
-  static let wsPort = 9000
+  static let wsPort: Int? = 9000
 #else
   static let host = "pastepoint.com"
   static let wsPort: Int? = nil
