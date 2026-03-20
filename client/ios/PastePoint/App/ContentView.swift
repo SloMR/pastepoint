@@ -60,24 +60,6 @@ struct ContentView: View {
   }
 }
 
-// MARK: - Main Content Switcher
-
-struct RoomContentView: View {
-  @State private var hasMessages: Bool = false
-
-  var body: some View {
-    Group {
-      if hasMessages {
-        ChatView()
-      } else {
-        WelcomeView()
-      }
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .background(AppColors.Background.background)
-  }
-}
-
 // MARK: - Preview
 
 #Preview {
