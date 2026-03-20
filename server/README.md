@@ -1,4 +1,4 @@
-# 🔧 PastePoint Server (Rust Backend)
+# PastePoint Server (Rust Backend)
 
 The PastePoint server is a high-performance Rust-based backend built with Actix Web, providing WebSocket-based file sharing and communication services for local networks. Features comprehensive session management, WebRTC signaling, and secure file transfer capabilities.
 
@@ -6,7 +6,7 @@ The PastePoint server is a high-performance Rust-based backend built with Actix 
 [![OpenSSL](https://img.shields.io/badge/OpenSSL-0.10-yellow)](https://www.openssl.org/)
 [![Rust](https://img.shields.io/badge/Rust-Backend-orange)](https://www.rust-lang.org/)
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 - **Framework**: [Actix Web](https://actix.rs/) - High-performance async web framework
 - **WebSockets**: Native Actix WebSocket support
@@ -16,24 +16,24 @@ The PastePoint server is a high-performance Rust-based backend built with Actix 
 - **Rate Limiting**: [Actix-governor](https://github.com/AaronErhardt/actix-governor) for request throttling
 - **Logging**: Built-in logging with configurable levels
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 server/
-├── 📁 src/                        # Source code
-├── 📁 config/                     # Configuration files
+├── src/                           # Source code
+├── config/                        # Configuration files
 │   ├── development.toml           # Development configuration
 │   ├── production.toml            # Production configuration
 │   └── docker-dev.toml            # Docker development config
-├── 📁 tests/                      # Tests
-├── 📁 target/                     # Rust build artifacts
+├── tests/                         # Tests
+├── target/                        # Rust build artifacts
 ├── Cargo.toml                     # Project dependencies
 ├── Cargo.lock                     # Dependency lock file
 ├── Dockerfile                     # Docker configuration
 └── README.md                      # Project documentation
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -68,7 +68,7 @@ server/
    RUST_BUILD_MODE=debug cargo run
    ```
 
-## ⚙️ Configuration
+## Configuration
 
 ### Configuration Files
 
@@ -76,7 +76,7 @@ server/
 - `config/production.toml`: Production environment settings
 - `config/docker-dev.toml`: Docker development environment settings
 
-## 🧪 Testing
+## Testing
 
 ### Run all tests:
 
@@ -96,7 +96,7 @@ cargo test test_name
 cargo test -- --nocapture
 ```
 
-## 🔧 Development Guide
+## Development Guide
 
 ### Code Quality
 
@@ -114,7 +114,7 @@ cargo build
 cargo build --release
 ```
 
-## 🔒 Security Features
+## Security Features
 
 - **TLS/SSL**: Full SSL/TLS support with configurable certificates
 - **Rate Limiting**: Configurable request throttling with Actix-governor
@@ -123,7 +123,7 @@ cargo build --release
 - **Session Management**: Secure UUID-based session handling
 - **WebSocket Security**: Secure WebSocket connections with proper authentication
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -157,15 +157,15 @@ cargo build --release
    cargo build
    ```
 
-## 🤝 Contributing
+## Contributing
 
 - [Contributing](../CONTRIBUTING.md)
 
-## 📜 License
+## License
 
 This project is licensed under the GPL-3.0 License. See the [LICENSE](../LICENSE) file for details.
 
-## 🔗 Related Documentation
+## Related Documentation
 
 - [Main project readme](../README.md)
 - [Client readme](../client/web/README.md)

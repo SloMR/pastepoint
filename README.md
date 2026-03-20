@@ -12,11 +12,11 @@
 
 PastePoint is a secure, feature-rich file-sharing service designed for local networks. It enables users to share files and communicate efficiently through peer-to-peer WebRTC connections. Built with a Rust-based backend using Actix Web and an Angular frontend with SSR support, PastePoint prioritizes security, performance, and usability.
 
-## ⚠️ Usage Disclaimer
+## Usage Disclaimer
 
-- 📜 [Disclaimer](DISCLAIMER.md)
+- [Disclaimer](DISCLAIMER.md)
 
-## 🌟 Features
+## Features
 
 ### Core Features:
 
@@ -44,23 +44,23 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
   - Runs seamlessly on Linux, macOS, and Windows with Dockerized support
   - Responsive design for mobile and desktop
 
-### **Developer Experience**
+### Developer Experience
 
-- 🐳 Full Docker integration
-- 📦 Isolated microservices architecture
-- 🔧 Configurable environments (dev/prod)
-- ✅ Comprehensive test suites
+- Full Docker integration
+- Isolated microservices architecture
+- Configurable environments (dev/prod)
+- Comprehensive test suites
 
-### **Performance & SEO**
+### Performance & SEO
 
-- 🚀 Server-Side Rendering (SSR) for improved initial load time
-- 🔍 Complete SEO optimization with metadata, sitemap, and robots.txt
-- 📦 Response compression for faster page loads
-- 🎯 Static asset optimization with proper caching headers
+- Server-Side Rendering (SSR) for improved initial load time
+- Complete SEO optimization with metadata, sitemap, and robots.txt
+- Response compression for faster page loads
+- Static asset optimization with proper caching headers
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-### **Server** (Rust)
+### Server (Rust)
 
 [![Actix](https://img.shields.io/badge/Actix-4.7-blue)](https://actix.rs/)
 [![OpenSSL](https://img.shields.io/badge/OpenSSL-0.10-yellow)](https://www.openssl.org/)
@@ -70,7 +70,7 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 - **Utilities**: UUID generation, Serde serialization
 - **Rate Limiting**: Actix-governor for request throttling
 
-### **Clients**
+### Clients
 
 #### Web (Angular)
 
@@ -85,7 +85,7 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 - **WebRTC**: Native WebRTC API for file transfers
 - **Notifications**: Hot-toast for real-time feedback
 
-### **Infrastructure**
+### Infrastructure
 
 [![Nginx](https://img.shields.io/badge/Nginx-Reverse_Proxy-green)](https://nginx.org)
 [![Docker](https://img.shields.io/badge/Docker-24.0-blue)](https://www.docker.com)
@@ -101,13 +101,13 @@ PastePoint is a secure, feature-rich file-sharing service designed for local net
 
 ```
 pastepoint/
-├── 📁 client/                      # Frontend clients
-│   ├── 📁 web/                      # Angular SSR frontend
-│   ├── 📁 ios/                      # iOS client (WIP)
-│   └── 📁 android/                  # Android client (WIP)
-├── 📁 server/                      # Rust backend with WebSockets
-├── 📁 nginx/                       # Reverse proxy & SSL termination
-├── 📁 scripts/                     # Development & deployment scripts
+├── client/                         # Frontend clients
+│   ├── web/                        # Angular SSR frontend
+│   ├── ios/                        # iOS client (WIP)
+│   └── android/                    # Android client (WIP)
+├── server/                         # Rust backend with WebSockets
+├── nginx/                          # Reverse proxy & SSL termination
+├── scripts/                        # Development & deployment scripts
 ├── docker-compose.yml              # Multi-container orchestration
 ├── .nvmrc                          # Node.js version specification
 ├── rust-toolchain                  # Rust toolchain specification
@@ -117,13 +117,13 @@ pastepoint/
 
 #### Server (Rust):
 
-- 📦 [Server readme](server/README.md)
+- [Server readme](server/README.md)
 
 #### Clients:
 
 ##### Web (Angular):
 
-- 🌐 [Web readme](client/web/README.md)
+- [Web readme](client/web/README.md)
 
 ##### iOS:
 
@@ -154,9 +154,9 @@ pastepoint/
   - `common_rate_limiting.conf`: Rate limiting status codes
   - `common_ssl.conf`: SSL/TLS settings
 
-## 🔧 Development Guide
+## Development Guide
 
-### 🚀 Quick Start
+### Quick Start
 
 ### Prerequisites:
 
@@ -202,25 +202,25 @@ pastepoint/
    ```
 
 5. Access PastePoint:
-   - 🔗 Frontend:
+   - Frontend:
      - Localhost: [https://localhost](https://localhost)
      - Local Network: `https://<your-local-ip>`
-   - 🔌 Server API:
+   - Server API:
      - Localhost: [https://localhost:9000](https://localhost:9000)
      - Local Network: `https://<your-local-ip>:9000`
 
-## 🤝 Contributing
+## Contributing
 
 - [Contributing](CONTRIBUTING.md)
 
-## 🚨 Troubleshooting
+## Troubleshooting
 
 **Common Issues**:
 
 1. **SSL Certificate Errors**
    Run: `./scripts/generate-certs.sh`
 
-## 🔒 Security Considerations
+## Security Considerations
 
 - **Certificate Management**:
 
@@ -232,14 +232,14 @@ pastepoint/
   - No data is stored permanently on servers
   - Session data is cleared on server restart or leaving the session
 
-## 📜 License
+## License
 
 This project is licensed under the GPL-3.0 License. See the [LICENSE](LICENSE) file for details.
 
-## 📬 Contact
+## Contact
 
 For issues or feature requests:
 
-- [🐙 GitHub Issues](https://github.com/SloMR/pastepoint/issues)
-- [📧 sulaimanromaih@gmail.com](mailto:sulaimanromaih@gmail.com)
-- [🌐 LinkedIn](https://www.linkedin.com/in/sulaiman-alromaih-845700202/)
+- [GitHub Issues](https://github.com/SloMR/pastepoint/issues)
+- [sulaimanromaih@gmail.com](mailto:sulaimanromaih@gmail.com)
+- [LinkedIn](https://www.linkedin.com/in/sulaiman-alromaih-845700202/)

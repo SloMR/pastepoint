@@ -1,4 +1,4 @@
-# 🌐 PastePoint Client (Angular Frontend)
+# PastePoint Client (Angular Frontend)
 
 The PastePoint client is a modern Angular application with Server-Side Rendering (SSR) support, providing an intuitive interface for file sharing and communication on local networks. Features WebRTC file transfer capabilities, real-time chat, and comprehensive user experience enhancements.
 
@@ -6,7 +6,7 @@ The PastePoint client is a modern Angular application with Server-Side Rendering
 [![Tailwind](https://img.shields.io/badge/Tailwind-3.4-blue)](https://tailwindcss.com/)
 [![Flowbite](https://img.shields.io/badge/Flowbite-3.0-cyan)](https://flowbite.com/)
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Development Tools
 
@@ -18,42 +18,42 @@ The PastePoint client is a modern Angular application with Server-Side Rendering
 - **WebRTC**: Native WebRTC API for peer-to-peer file transfers
 - **Notifications**: Hot-toast for real-time user feedback
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 web/
-├── 📁 src/
-│   ├── 📁 app/
-│   │   ├── 📁 core/
-│   │   │   ├── 📁 i18n/           # Internationalization
-│   │   │   ├── 📁 services/       # Core services
-│   │   │   │   ├── 📁 communication/    # WebRTC, WebSocket, Chat
-│   │   │   │   ├── 📁 file-management/  # File transfer services
-│   │   │   │   ├── 📁 ui/              # Theme, Language services
-│   │   │   │   ├── 📁 user-management/ # User services
-│   │   │   │   └── 📁 migration/       # App migration
-│   │   │   └── 📁 interfaces/     # TypeScript interfaces
-│   │   ├── 📁 features/           # Features such as chat, file sharing, etc.
-│   │   ├── 📁 utils/              # Utility functions
-│   │   ├── 📁 testing/            # Test utilities
+├── src/
+│   ├── app/
+│   │   ├── core/
+│   │   │   ├── i18n/           # Internationalization
+│   │   │   ├── services/       # Core services
+│   │   │   │   ├── communication/    # WebRTC, WebSocket, Chat
+│   │   │   │   ├── file-management/  # File transfer services
+│   │   │   │   ├── ui/              # Theme, Language services
+│   │   │   │   ├── user-management/ # User services
+│   │   │   │   └── migration/       # App migration
+│   │   │   └── interfaces/     # TypeScript interfaces
+│   │   ├── features/           # Features such as chat, file sharing, etc.
+│   │   ├── utils/              # Utility functions
+│   │   ├── testing/            # Test utilities
 │   │   ├── app.component.*        # Root component
 │   │   ├── app.routes.ts          # Application routes
 │   │   └── app.config.*           # App configuration
-│   ├── 📁 environments/           # Environment configs
+│   ├── environments/           # Environment configs
 │   ├── index.html                 # Main HTML file
 │   ├── main.ts                    # Application entry point
 │   ├── server.ts                  # SSR server
 │   └── styles.css                 # Global styles
-├── 📁 public/                     # Static assets
-│   ├── 📁 assets/                 # Assets
+├── public/                     # Static assets
+│   ├── assets/                 # Assets
 │   │   ├── favicon.*              # Favicon files
 │   │   ├── pastepoint-*.svg       # Logo files
 │   │   └── *.png                  # App icons
-│   ├── 📁 fonts/                  # Custom fonts
-│   ├── 📁 icons/                  # SVG icons
+│   ├── fonts/                  # Custom fonts
+│   ├── icons/                  # SVG icons
 │   └── site.webmanifest           # Web app manifest
-├── 📁 dist/                       # Build output
-├── 📁 node_modules/               # Dependencies
+├── dist/                       # Build output
+├── node_modules/               # Dependencies
 ├── package.json                   # Project dependencies
 ├── angular.json                   # Angular CLI config
 ├── tailwind.config.js             # Tailwind CSS config
@@ -62,7 +62,7 @@ web/
 └── README.md                      # Project documentation
 ```
 
-## 🚀 Quick Start
+## Quick Start
 
 ### Prerequisites
 
@@ -93,7 +93,7 @@ web/
 4. **Open browser**:
    Navigate to `http://localhost:4200`
 
-## ⚙️ Configuration
+## Configuration
 
 ### Environment Files
 
@@ -122,7 +122,7 @@ Key configurations in `angular.json`:
 - **Asset optimization**: Image and font optimization
 - **Service worker**: PWA configuration
 
-## 🧪 Testing
+## Testing
 
 ### Unit Tests
 
@@ -150,7 +150,7 @@ npm run lint:fix
 npm run format
 ```
 
-## 🎨 Styling and Theming
+## Styling and Theming
 
 ### Tailwind CSS Configuration
 
@@ -171,7 +171,7 @@ Flowbite components are integrated for:
 - Toast notifications
 - Loading indicators
 
-## 🌐 Internationalization (i18n)
+## Internationalization (i18n)
 
 ### Supported Languages
 
@@ -197,7 +197,7 @@ constructor(private translate: TranslateService) {}
 this.translate.instant('WELCOME');
 ```
 
-## 🔧 Development Guide
+## Development Guide
 
 ### Adding New Features
 
@@ -220,7 +220,7 @@ this.translate.instant('WELCOME');
 - **Prettier**: Consistent code formatting
 - **Conventional Commits**: Standardized commit messages
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Common Issues
 
@@ -238,15 +238,15 @@ this.translate.instant('WELCOME');
    - Verify SSL certificates are valid
    - Check CORS configuration
 
-## 🤝 Contributing
+## Contributing
 
 - [Contributing](../../CONTRIBUTING.md)
 
-## 📜 License
+## License
 
 This project is licensed under the GPL-3.0 License. See the [LICENSE](../../LICENSE) file for details.
 
-## 🔗 Related Documentation
+## Related Documentation
 
 - [Main project readme](../../README.md)
 - [Server readme](../../server/README.md)
