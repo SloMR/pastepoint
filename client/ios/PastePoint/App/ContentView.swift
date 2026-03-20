@@ -53,7 +53,7 @@ struct ContentView: View {
         }
         .onChange(of: services.wsService.isConnected) { wasConnected, connected in
             guard !services.wsService.isLeavingSession else { return }
-            if connected {
+            if connected, !showSettings {
                 toasts.append(wasConnected ? .success("Reconnected") : .success("Connected"))
             } else if wasConnected {
                 toasts.append(.warning("Connection lost"))
