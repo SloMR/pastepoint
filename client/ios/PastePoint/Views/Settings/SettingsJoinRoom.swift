@@ -138,7 +138,11 @@ struct SettingsJoinRoom: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   SettingsJoinRoom()
     .environmentObject(AppServices.preview)
 }
+#endif

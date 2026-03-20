@@ -43,7 +43,11 @@ struct ChatView: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   ChatView()
     .environmentObject(AppServices.preview)
 }
+#endif

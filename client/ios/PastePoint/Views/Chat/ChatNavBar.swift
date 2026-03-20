@@ -77,6 +77,10 @@ struct ChatNavBar: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   ChatNavBar()
 }
+#endif

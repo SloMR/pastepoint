@@ -105,7 +105,11 @@ struct SettingsLeaveSession: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   SettingsLeaveSession()
     .environmentObject(AppServices.preview)
 }
+#endif

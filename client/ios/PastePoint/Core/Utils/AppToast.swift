@@ -166,6 +166,10 @@ private struct ToastPreview: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   ToastPreview()
 }
+#endif

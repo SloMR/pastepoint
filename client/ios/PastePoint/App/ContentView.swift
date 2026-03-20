@@ -66,7 +66,9 @@ struct ContentView: View {
 
 // MARK: - Preview
 
+#if DEBUG
 #Preview {
   ContentView()
     .environmentObject(AppServices.preview)
 }
+#endif

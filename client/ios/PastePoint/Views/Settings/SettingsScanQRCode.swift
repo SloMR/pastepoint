@@ -288,8 +288,12 @@ struct SettingsScanQRCode: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   SettingsScanQRCode { code in
     print("Scanned: \(code)")
   }
 }
+#endif

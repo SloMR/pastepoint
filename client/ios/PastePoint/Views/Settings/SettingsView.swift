@@ -155,7 +155,11 @@ struct SettingsView: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   SettingsView()
     .environmentObject(AppServices.preview)
 }
+#endif

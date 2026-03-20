@@ -27,6 +27,10 @@ struct ChatRoomHeader: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   ChatRoomHeader(isPrivate: false)
 }
+#endif
