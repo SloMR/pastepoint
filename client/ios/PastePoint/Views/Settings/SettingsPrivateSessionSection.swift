@@ -12,6 +12,7 @@ struct SettingsPrivateSessionSection: View {
 
     @State private var isQRCodeSheetPresented: Bool = false
     @State private var isJoinPrivateSessionPresented: Bool = false
+    @State private var isStarting: Bool = false
 
     private let logger = Logger(label: "SettingsPrivateSessionSection")
     var onSessionJoin: (() -> Void)?
@@ -104,27 +105,39 @@ struct SettingsPrivateSessionSection: View {
         VStack(spacing: 8) {
             Button {
                 Task {
+                    isStarting = true
                     do {
                         logger.info("Start private session button tapped")
                         let code = try await services.sessionService.getNewSessionCode()
                         await services.wsService.setupPrivateSession(code)
-                        await services.wsService.connect()
-                        await services.roomService.listRooms()
-                        await services.userService.getUsername()
+                        isStarting = false
                         toasts.append(.success("Private session started"))
+                        Task {
+                            await services.wsService.connect()
+                            await services.roomService.listRooms()
+                            await services.userService.getUsername()
+                        }
                     } catch {
+                        isStarting = false
                         logger.error("Cannot get the session code \(error)")
                         toasts.append(.error("Failed to start private session"))
                     }
                 }
             } label: {
                 HStack(spacing: 8) {
-                    Image("plus")
-                        .renderingMode(.template)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 24, height: 24)
-                    Text("Start Private Chat")
+                    if isStarting {
+                        ProgressView()
+                            .progressViewStyle(.circular)
+                            .tint(.brand)
+                            .scaleEffect(0.85)
+                    } else {
+                        Image("plus")
+                            .renderingMode(.template)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 24, height: 24)
+                    }
+                    Text(isStarting ? "Starting…" : "Start Private Chat")
                         .font(.headline)
                 }
                 .foregroundStyle(.brand)
@@ -137,6 +150,7 @@ struct SettingsPrivateSessionSection: View {
                 )
             }
             .buttonStyle(.plain)
+            .disabled(isStarting)
 
             Button {
                 logger.info("Join private session button tapped")
@@ -156,6 +170,7 @@ struct SettingsPrivateSessionSection: View {
                 )
             }
             .buttonStyle(.plain)
+            .disabled(isStarting)
         }
         .padding(.horizontal)
         .padding(.top, 22)

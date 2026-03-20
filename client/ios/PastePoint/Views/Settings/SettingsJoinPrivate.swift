@@ -17,6 +17,7 @@ struct SettingsJoinPrivate: View {
     @State private var sessionCode: String = ""
     @State private var sheetHeight: CGFloat = 320
     @State private var isScannerPresented: Bool = false
+    @State private var isJoining: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -59,27 +60,25 @@ struct SettingsJoinPrivate: View {
                 // Buttons
                 HStack(spacing: 12) {
                     Button {
-                        logger.info("User joining private session with code: \(sessionCode)")
-                        let code = sessionCode.trimmingCharacters(in: .whitespacesAndNewlines)
-                        Task {
-                            await services.wsService.setupPrivateSession(code)
-                            await services.wsService.connect()
-                            await services.roomService.listRooms()
-                            await services.userService.getUsername()
-                            logger.info("Successfully joined private session")
-                            dismiss()
-                            onSessionJoin?()
-                        }
+                        Task { await joinSession(code: sessionCode) }
                     } label: {
-                        Text("Done")
-                            .fontWeight(.semibold)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .foregroundStyle(.white)
-                            .background(AppColors.Brand.brand, in: Capsule())
+                        HStack(spacing: 8) {
+                            if isJoining {
+                                ProgressView()
+                                    .progressViewStyle(.circular)
+                                    .tint(.white)
+                                    .scaleEffect(0.85)
+                            }
+                            Text(isJoining ? "Joining…" : "Done")
+                                .fontWeight(.semibold)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .foregroundStyle(.white)
+                        .background(AppColors.Brand.brand, in: Capsule())
                     }
                     .buttonStyle(.plain)
-                    .disabled(sessionCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(sessionCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isJoining)
                     .opacity(sessionCode.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? 0.6 : 1)
 
                     Button {
@@ -95,6 +94,7 @@ struct SettingsJoinPrivate: View {
                             .overlay(Capsule().stroke(AppColors.Brand.brand, lineWidth: 1.5))
                     }
                     .buttonStyle(.plain)
+                    .disabled(isJoining)
                 }
             }
             .padding(24)
@@ -139,6 +139,22 @@ struct SettingsJoinPrivate: View {
                 sessionCode = scannedCode
                 Task { await joinSession(code: scannedCode) }
             }
+        }
+    }
+
+    private func joinSession(code: String) async {
+        let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        logger.info("Joining private session with code: \(trimmed)")
+        isJoining = true
+        await services.wsService.setupPrivateSession(trimmed)
+        await services.wsService.connect()
+        isJoining = false
+        dismiss()
+        onSessionJoin?()
+        Task {
+            await services.roomService.listRooms()
+            await services.userService.getUsername()
         }
     }
 }
