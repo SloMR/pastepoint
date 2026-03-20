@@ -17,18 +17,18 @@ struct ChatView: View {
             VStack(alignment: .leading, spacing: 0) {
 
                 // Room header row
-                ChatHeader(isPrivate: isPrivate)
+                ChatRoomHeader(isPrivate: isPrivate)
 
                 // Chat bubbles (merged from ChatView)
                 VStack(spacing: 16) {
-                    MessageBubble(
+                    ChatMessageBubble(
                         alignment: .leading,
                         name: "Garry Schulist",
                         time: "9:04 PM",
                         text: "Hello",
                     )
 
-                    MessageBubble(
+                    ChatMessageBubble(
                         alignment: .trailing,
                         name: "Gwen Kuphal",
                         time: "9:05 PM",

@@ -6,9 +6,9 @@
 import Logging
 import SwiftUI
 
-struct ChatHeaderView: View {
+struct ChatNavBar: View {
     @Environment(\.colorScheme) private var colorScheme
-    private let logger = Logger(label: "ChatHeaderView")
+    private let logger = Logger(label: "ChatNavBar")
 
     var onMenuTap: (() -> Void)?
     var onThemeTap: (() -> Void)?
@@ -78,5 +78,5 @@ struct ChatHeaderView: View {
 }
 
 #Preview {
-    ChatHeaderView()
+    ChatNavBar()
 }

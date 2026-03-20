@@ -10,7 +10,7 @@ enum MessageAlignment {
     case trailing // Outgoing messages (right in LTR, left in RTL)
 }
 
-struct MessageBubble: View {
+struct ChatMessageBubble: View {
     let alignment: MessageAlignment
     let name: String
     let time: String
@@ -86,14 +86,14 @@ struct MessageBubble: View {
 }
 
 #Preview {
-    MessageBubble(
+    ChatMessageBubble(
         alignment: .leading,
         name: "Garry Schulist",
         time: "9:04 PM",
         text: "Hello",
     )
 
-    MessageBubble(
+    ChatMessageBubble(
         alignment: .trailing,
         name: "Gwen Kuphal",
         time: "9:05 PM",

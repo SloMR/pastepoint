@@ -5,7 +5,7 @@
 
 import SwiftUI
 
-struct ChatHeader: View {
+struct ChatRoomHeader: View {
     @Environment(\.colorScheme) private var colorScheme
     let isPrivate: Bool
 
@@ -28,5 +28,5 @@ struct ChatHeader: View {
 }
 
 #Preview {
-    ChatHeader(isPrivate: false)
+    ChatRoomHeader(isPrivate: false)
 }

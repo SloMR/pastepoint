@@ -6,8 +6,8 @@
 import Logging
 import SwiftUI
 
-struct MessageInputBar: View {
-    private let logger = Logger(label: "MessageInputBar")
+struct ChatInputBar: View {
+    private let logger = Logger(label: "ChatInputBar")
 
     @State private var message = ""
 
@@ -75,5 +75,5 @@ struct MessageInputBar: View {
 }
 
 #Preview {
-    MessageInputBar()
+    ChatInputBar()
 }

@@ -11,6 +11,7 @@ import SwiftUI
 struct ContentView: View {
     @AppStorage(AppColors.Scheme.storageKey) private var colorSchemeRaw: String = AppColors.Scheme.default
     @EnvironmentObject private var services: AppServices
+
     private let logger = Logger(label: "ContentView")
 
     @State private var showSettings = false
@@ -18,7 +19,7 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ChatHeaderView(
+            ChatNavBar(
                 onMenuTap: { showSettings = true },
                 onThemeTap: { colorSchemeRaw = AppColors.Scheme.next(after: colorSchemeRaw) },
             )
@@ -26,7 +27,7 @@ struct ContentView: View {
 
             RoomContentView()
 
-            MessageInputBar()
+            ChatInputBar()
                 .padding(.horizontal, 16)
                 .padding(.vertical, 12)
         }
