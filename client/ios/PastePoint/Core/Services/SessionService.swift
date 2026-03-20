@@ -16,6 +16,10 @@ final class SessionService: ObservableObject {
   private let logger = Logger(label: "Session")
 
   func getNewSessionCode() async throws -> String {
+#if DEBUG
+    if AppBuildInfo.isXcodePreview { return "PREVIEW1AB" }
+#endif
+
     guard let url = URL(string: "https://\(AppEnvironment.apiUrl)/create-session") else {
       throw SessionError.invalidURL
     }

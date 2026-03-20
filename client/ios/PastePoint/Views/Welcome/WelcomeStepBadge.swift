@@ -19,6 +19,10 @@ struct WelcomeStepBadge: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   WelcomeStepBadge(number: 1)
 }
+#endif

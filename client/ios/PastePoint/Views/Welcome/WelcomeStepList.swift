@@ -30,6 +30,9 @@ struct WelcomeStepList: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   WelcomeStepList(steps: [
     "Invite others on the same network to join this room",
@@ -37,3 +40,4 @@ struct WelcomeStepList: View {
   ])
   .padding()
 }
+#endif

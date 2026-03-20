@@ -175,3 +175,12 @@ struct SettingsJoinPrivate: View {
     }
   }
 }
+
+// MARK: - Preview
+
+#if DEBUG
+#Preview {
+  SettingsJoinPrivate()
+    .environmentObject(AppServices.preview)
+}
+#endif

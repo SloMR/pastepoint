@@ -85,6 +85,9 @@ struct ChatMessageBubble: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   ChatMessageBubble(
     alignment: .leading,
@@ -100,3 +103,4 @@ struct ChatMessageBubble: View {
     text: "Hi",
   )
 }
+#endif

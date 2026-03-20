@@ -287,3 +287,13 @@ struct SettingsScanQRCode: View {
     .ignoresSafeArea()
   }
 }
+
+// MARK: - Preview
+
+#if DEBUG
+#Preview {
+  SettingsScanQRCode { code in
+    print("Scanned: \(code)")
+  }
+}
+#endif

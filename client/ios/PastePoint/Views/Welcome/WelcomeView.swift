@@ -124,7 +124,11 @@ struct WelcomeView: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   WelcomeView()
-    .environmentObject(AppServices.shared)
+    .environmentObject(AppServices.preview)
 }
+#endif

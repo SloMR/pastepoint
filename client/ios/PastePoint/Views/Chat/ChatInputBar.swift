@@ -74,6 +74,10 @@ struct ChatInputBar: View {
   }
 }
 
+// MARK: - Preview
+
+#if DEBUG
 #Preview {
   ChatInputBar()
 }
+#endif

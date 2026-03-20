@@ -25,8 +25,31 @@ env:
   DERIVED_DATA: ${{ github.workspace }}/client/ios/build
 
 jobs:
+  lint:
+    name: SwiftLint & SwiftFormat
+    runs-on: macos-26
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install SwiftLint & SwiftFormat
+        run: brew install swiftlint swiftformat
+
+      - name: SwiftLint
+        working-directory: client/ios
+        run: swiftlint lint --strict --reporter github-actions-logging
+
+      - name: SwiftFormat (check only)
+        working-directory: client/ios
+        run: swiftformat --lint .
+
   build:
     name: Build and Test iOS Client
+    needs: lint
     runs-on: macos-26
     timeout-minutes: 25
 

@@ -137,3 +137,12 @@ struct SettingsJoinRoom: View {
     .presentationBackground(AppColors.Background.background)
   }
 }
+
+// MARK: - Preview
+
+#if DEBUG
+#Preview {
+  SettingsJoinRoom()
+    .environmentObject(AppServices.preview)
+}
+#endif

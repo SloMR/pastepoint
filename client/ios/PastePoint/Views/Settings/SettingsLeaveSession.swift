@@ -104,3 +104,12 @@ struct SettingsLeaveSession: View {
     .presentationBackground(AppColors.Background.background)
   }
 }
+
+// MARK: - Preview
+
+#if DEBUG
+#Preview {
+  SettingsLeaveSession()
+    .environmentObject(AppServices.preview)
+}
+#endif

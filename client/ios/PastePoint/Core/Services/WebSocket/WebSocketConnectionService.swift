@@ -60,6 +60,10 @@ final class WebSocketConnectionService: ObservableObject {
   // MARK: - Connect
 
   func connect(sessionCode code: String? = nil, isReconnectAttempt: Bool = false) async {
+#if DEBUG
+    guard !AppBuildInfo.isXcodePreview else { return }
+#endif
+
     guard !isConnecting else {
       logger.debug("Already connecting — ignored")
       isLeavingSession = false
@@ -219,6 +223,10 @@ final class WebSocketConnectionService: ObservableObject {
   // MARK: - Send
 
   func send(_ text: String) async {
+#if DEBUG
+    guard !AppBuildInfo.isXcodePreview else { return }
+#endif
+
     guard task != nil else {
       logger.warning("Send failed — no active socket task")
       return
