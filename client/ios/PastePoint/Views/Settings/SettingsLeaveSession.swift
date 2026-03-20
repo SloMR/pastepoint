@@ -34,6 +34,7 @@ struct SettingsLeaveSession: View {
                             await services.roomService.listRooms()
                             await services.userService.getUsername()
                             logger.info("Successfully left private session")
+                            dismiss()
                             onSessionLeft?()
                         }
                     } label: {

@@ -11,7 +11,6 @@ struct SettingsView: View {
     @EnvironmentObject private var services: AppServices
 
     private let logger = Logger(label: "SettingsView")
-    var onSessionLeft: (() -> Void)?
     var onSessionJoin: (() -> Void)?
 
     @State private var isLeaveSessionSheetPresented: Bool = false
@@ -141,11 +140,15 @@ struct SettingsView: View {
             }
         }
         .sheet(isPresented: $isLeaveSessionSheetPresented) {
-            SettingsLeaveSession(onSessionLeft: onSessionLeft)
+          SettingsLeaveSession(onSessionLeft: {
+            logger.info("User left a private session")
+            toasts.append(.info("Left private session"))
+          })
         }
         .sheet(isPresented: $isJoinRoomSheetPresented) {
             SettingsJoinRoom {
-                toasts.append(.success("Room created/joined successfully!"))
+              logger.info("User created a room")
+                toasts.append(.success("Room created successfully!"))
             }
         }
         .appToast(items: $toasts)

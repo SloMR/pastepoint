@@ -36,10 +36,7 @@ struct ContentView: View {
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .sheet(isPresented: $showSettings) {
             NavigationStack {
-                SettingsView(onSessionLeft: {
-                    showSettings = false
-                    toasts.append(.info("Left private session"))
-                }, onSessionJoin: {
+                SettingsView(onSessionJoin: {
                     showSettings = false
                     toasts.append(.success("Private session joined"))
                 })
