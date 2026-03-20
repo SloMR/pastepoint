@@ -71,11 +71,13 @@ update_file "$PROJECT_ROOT/.env.development" "SERVER_NAME=127.0.0.1" "SERVER_NAM
 update_file "$PROJECT_ROOT/.env.development" "HOST=127.0.0.1" "HOST=0.0.0.0"
 
 # Update client environments
-update_file "$PROJECT_ROOT/client/web/src/environments/environment.ts" "apiUrl: '127.0.0.1:9000'" "apiUrl: '$local_ip:9000'"
-
 escaped_ip="$(escape_sed_replacement "$local_ip")"
 
-# docker-dev and iOS use regex to match any current IP (not a fixed default)
+# Use regex to match any current IP so the script is idempotent across runs
+sed_in_place "s|apiUrl: '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*:9000'|apiUrl: '$escaped_ip:9000'|g" \
+    "$PROJECT_ROOT/client/web/src/environments/environment.ts"
+echo "Updated environment.ts"
+
 sed_in_place "s|apiUrl: '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*'|apiUrl: '$escaped_ip'|g" \
     "$PROJECT_ROOT/client/web/src/environments/environment.docker-dev.ts"
 echo "Updated environment.docker-dev.ts"
