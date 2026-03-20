@@ -3,6 +3,7 @@
 //  SPDX-License-Identifier: GPL-3.0-only
 //
 
+import AVFoundation
 import Logging
 import SwiftUI
 import Vision
@@ -170,99 +171,21 @@ struct SettingsScanQRCode: View {
 
   private let cutoutSize: CGFloat = 240
   @State private var bracketScale: CGFloat = 1.0
+  @State private var cameraPermission: AVAuthorizationStatus = CameraPermission.status
 
   var onCodeScanned: (String) -> Void
 
   var body: some View {
     if DataScannerViewController.isSupported {
-      ZStack {
-        // Camera feed
-        QRCodeScannerRepresentable { code in
-          UINotificationFeedbackGenerator().notificationOccurred(.success)
-          logger.info("QR code scanned successfully")
-          onCodeScanned(code)
-          dismiss()
-        }
-        .ignoresSafeArea()
-
-        // Dimming overlay with clear cutout
-        ScannerDimmingOverlay(cutoutSize: cutoutSize)
-
-        // Animated corner brackets
-        ViewfinderBracketsShape()
-          .stroke(AppColors.Brand.brand, style: StrokeStyle(lineWidth: 3, lineCap: .round))
-          .frame(width: cutoutSize, height: cutoutSize)
-          .scaleEffect(bracketScale)
-          .animation(
-            .easeInOut(duration: 1.8).repeatForever(autoreverses: true),
-            value: bracketScale,
-          )
-          .onAppear { bracketScale = 1.04 }
-
-        // UI chrome
-        VStack(spacing: 0) {
-          // Header with gradient fade
-          HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 3) {
-              Text("Scan QR Code")
-                .font(.headline)
-                .foregroundStyle(.white)
-              Text("Join a private session")
-                .font(.caption)
-                .foregroundStyle(.white.opacity(0.65))
-            }
-            Spacer()
-            Button { dismiss() } label: {
-              ZStack {
-                Circle()
-                  .fill(.ultraThinMaterial)
-                  .frame(width: 36, height: 36)
-                Image(systemName: "xmark")
-                  .font(.system(size: 13, weight: .bold, design: .rounded))
-                  .foregroundStyle(.white)
-              }
-              .contentShape(Circle())
-            }
-            .buttonStyle(.plain)
-          }
-          .padding(.horizontal, 24)
-          .padding(.top, 56)
-          .padding(.bottom, 24)
-          .background(
-            LinearGradient(
-              colors: [.black.opacity(0.65), .clear],
-              startPoint: .top,
-              endPoint: .bottom,
-            ),
-          )
-
-          Spacer()
-
-          // Bottom instruction card
-          HStack(spacing: 12) {
-            Image(systemName: "qrcode.viewfinder")
-              .font(.system(size: 22, weight: .medium))
-              .foregroundStyle(AppColors.Brand.brand)
-            Text("Point your camera at a PastePoint QR code")
-              .font(.subheadline)
-              .foregroundStyle(.white)
-              .fixedSize(horizontal: false, vertical: true)
-          }
-          .padding(.horizontal, 20)
-          .padding(.vertical, 16)
-          .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
-          .padding(.horizontal, 32)
-          .padding(.bottom, 56)
-          .background(
-            LinearGradient(
-              colors: [.clear, .black.opacity(0.5)],
-              startPoint: .top,
-              endPoint: .bottom,
-            ),
-          )
-        }
+      switch cameraPermission {
+      case .authorized:
+        scannerView
+      case .notDetermined:
+        Color.black.ignoresSafeArea()
+          .task { cameraPermission = await CameraPermission.request() }
+      default:
+        CameraPermissionDeniedView()
       }
-      .ignoresSafeArea()
     } else {
       ZStack(alignment: .topTrailing) {
         ContentUnavailableView(
@@ -270,15 +193,14 @@ struct SettingsScanQRCode: View {
           systemImage: "camera.slash",
           description: Text("QR scanning is not supported on this device."),
         )
-
         Button { dismiss() } label: {
           ZStack {
             Circle()
-              .fill(Color(UIColor.tertiarySystemFill))
+              .fill(.white.opacity(0.2))
               .frame(width: 36, height: 36)
             Image(systemName: "xmark")
               .font(.system(size: 13, weight: .bold, design: .rounded))
-              .foregroundStyle(Color(UIColor.secondaryLabel))
+              .foregroundStyle(.white)
           }
           .contentShape(Circle())
         }
@@ -287,5 +209,81 @@ struct SettingsScanQRCode: View {
         .padding(.top, 56)
       }
     }
+  }
+
+  private var scannerView: some View {
+    ZStack {
+      // Camera feed
+      QRCodeScannerRepresentable { code in
+        UINotificationFeedbackGenerator().notificationOccurred(.success)
+        logger.info("QR code scanned successfully")
+        onCodeScanned(code)
+        dismiss()
+      }
+      .ignoresSafeArea()
+
+      // Dimming overlay with clear cutout
+      ScannerDimmingOverlay(cutoutSize: cutoutSize)
+
+      // Animated corner brackets
+      ViewfinderBracketsShape()
+        .stroke(AppColors.Brand.brand, style: StrokeStyle(lineWidth: 3, lineCap: .round))
+        .frame(width: cutoutSize, height: cutoutSize)
+        .scaleEffect(bracketScale)
+        .animation(
+          .easeInOut(duration: 1.8).repeatForever(autoreverses: true),
+          value: bracketScale,
+        )
+        .onAppear { bracketScale = 1.04 }
+
+      // UI chrome
+      VStack(spacing: 0) {
+        // Close button
+        HStack {
+          Spacer()
+          Button { dismiss() } label: {
+            ZStack {
+              Circle()
+                .fill(.ultraThinMaterial)
+                .frame(width: 36, height: 36)
+              Image(systemName: "xmark")
+                .font(.system(size: 13, weight: .bold, design: .rounded))
+                .foregroundStyle(.white)
+            }
+            .contentShape(Circle())
+          }
+          .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 24)
+        .padding(.top, 56)
+        .padding(.bottom, 24)
+
+        Spacer()
+
+        // Bottom instruction card
+        HStack(spacing: 12) {
+          Image(systemName: "qrcode.viewfinder")
+            .font(.system(size: 22, weight: .medium))
+            .foregroundStyle(AppColors.Brand.brand)
+          Text("Point your camera at a PastePoint QR code")
+            .font(.subheadline)
+            .foregroundStyle(.white)
+            .fixedSize(horizontal: false, vertical: true)
+        }
+        .padding(.horizontal, 20)
+        .padding(.vertical, 16)
+        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding(.horizontal, 32)
+        .padding(.bottom, 56)
+        .background(
+          LinearGradient(
+            colors: [.clear, .black.opacity(0.5)],
+            startPoint: .top,
+            endPoint: .bottom,
+          ),
+        )
+      }
+    }
+    .ignoresSafeArea()
   }
 }
