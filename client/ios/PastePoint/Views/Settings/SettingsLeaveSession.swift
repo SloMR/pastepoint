@@ -104,3 +104,8 @@ struct SettingsLeaveSession: View {
     .presentationBackground(AppColors.Background.background)
   }
 }
+
+#Preview {
+  SettingsLeaveSession()
+    .environmentObject(AppServices.preview)
+}

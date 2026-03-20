@@ -175,3 +175,8 @@ struct SettingsJoinPrivate: View {
     }
   }
 }
+
+#Preview {
+  SettingsJoinPrivate()
+    .environmentObject(AppServices.preview)
+}
