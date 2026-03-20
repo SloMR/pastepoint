@@ -14,9 +14,17 @@ struct AppLogHandler: LogHandler {
   var metadata: Logging.Logger.Metadata = [:]
   var logLevel: Logging.Logger.Level = .debug
 
+#if DEBUG
+  private let isPreview: Bool
+#endif
+
   init(label: String) {
     self.label = label
     osLogger = os.Logger(subsystem: "com.pastepoint", category: label)
+
+#if DEBUG
+    isPreview = ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1"
+#endif
   }
 
   subscript(metadataKey key: String) -> Logging.Logger.Metadata.Value? {
@@ -36,6 +44,13 @@ struct AppLogHandler: LogHandler {
   ) {
     let filename = URL(fileURLWithPath: file).lastPathComponent
     let entry = "\(emoji(for: level)) \(filename):\(line) [\(function)]: \(message)"
+
+#if DEBUG
+    if isPreview {
+      print(entry)
+      return
+    }
+#endif
 
     switch level {
     case .trace, .debug:

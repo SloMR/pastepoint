@@ -33,14 +33,46 @@ final class AppServices: ObservableObject {
     userService = UserService(wsService: wsService)
     roomService = RoomService(wsService: wsService)
 
+#if DEBUG
+    guard !AppBuildInfo.isXcodePreview else {
+      forwardServiceChanges()
+      return
+    }
+#endif
+
     startNetworkMonitoring()
     startTerminationObserver()
     forwardServiceChanges()
   }
 
+#if DEBUG
+  /// Preview-only: no WebSocket connection, no network monitoring, no lifecycle observers.
+  private init(preview _: Bool) {
+    wsService = WebSocketConnectionService()
+    sessionService = SessionService()
+    userService = UserService(wsService: wsService)
+    roomService = RoomService(wsService: wsService)
+    forwardServiceChanges()
+  }
+
+  static var preview: AppServices {
+    AppLogging.bootstrap()
+    let services = AppServices(preview: true)
+    services.userService.user = "Alice"
+    services.roomService.rooms = ["General", "Random", "Dev"]
+    services.roomService.currentRoom = "General"
+    services.roomService.members = ["Alice", "Bob", "Charlie"]
+    return services
+  }
+#endif
+
   // MARK: - App Lifecycle
 
   func handleForeground() async {
+#if DEBUG
+    guard !AppBuildInfo.isXcodePreview else { return }
+#endif
+
     isInBackground = false
     guard !wsService.isConnected, !wsService.isConnecting, !isForegroundHandling else {
       logger.debug("handleForeground — already connected or connecting, skipping")

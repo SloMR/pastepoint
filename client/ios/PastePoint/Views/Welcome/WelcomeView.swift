@@ -126,5 +126,5 @@ struct WelcomeView: View {
 
 #Preview {
   WelcomeView()
-    .environmentObject(AppServices.shared)
+    .environmentObject(AppServices.preview)
 }

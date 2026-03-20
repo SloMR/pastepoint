@@ -157,5 +157,5 @@ struct SettingsView: View {
 
 #Preview {
   SettingsView()
-    .environmentObject(AppServices.shared)
+    .environmentObject(AppServices.preview)
 }

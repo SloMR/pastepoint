@@ -3,7 +3,6 @@
 //  SPDX-License-Identifier: GPL-3.0-only
 //
 
-import Logging
 import SwiftUI
 
 @main
@@ -13,11 +12,7 @@ struct PastePointApp: App {
   @StateObject private var services = AppServices.shared
 
   init() {
-#if DEBUG
-    LoggingSystem.bootstrap(AppLogHandler.init)
-#else
-    LoggingSystem.bootstrap(SwiftLogNoOpLogHandler.init)
-#endif
+    AppLogging.bootstrap()
   }
 
   var body: some Scene {

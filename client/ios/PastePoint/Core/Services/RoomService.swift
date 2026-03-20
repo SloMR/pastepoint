@@ -52,6 +52,14 @@ final class RoomService: ObservableObject {
     logger.info("Joining room: \(room)")
     await wsService.send("[UserCommand] /join \(room)")
     currentRoom = room
+
+#if DEBUG
+    if AppBuildInfo.isXcodePreview {
+      if !rooms.contains(room) { rooms.append(room) }
+      return
+    }
+#endif
+
     await listRooms()
   }
 

@@ -68,5 +68,5 @@ struct ContentView: View {
 
 #Preview {
   ContentView()
-    .environmentObject(AppServices.shared)
+    .environmentObject(AppServices.preview)
 }
