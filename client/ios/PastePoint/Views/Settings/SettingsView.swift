@@ -11,8 +11,10 @@ struct SettingsView: View {
     @EnvironmentObject private var services: AppServices
 
     private let logger = Logger(label: "SettingsView")
+    var onSessionLeft: (() -> Void)?
     var onSessionJoin: (() -> Void)?
 
+    @State private var isLeaveSessionSheetPresented: Bool = false
     @State private var privacyURLToShow: IdentifiableURL?
     @State private var toasts: [ToastItem] = []
 
@@ -110,13 +112,7 @@ struct SettingsView: View {
 
             if let code = services.wsService.currentSessionCode, !code.isEmpty {
                 Button {
-                    services.wsService.disconnect(manual: true)
-                    Task {
-                        await services.wsService.connect(sessionCode: nil)
-                        await services.roomService.listRooms()
-                        await services.userService.getUsername()
-                        toast = .info("Left private session")
-                    }
+                    isLeaveSessionSheetPresented = true
                 } label: {
                     HStack(spacing: 8) {
                         Image(systemName: "xmark")
@@ -143,8 +139,26 @@ struct SettingsView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(AppColors.Background.surface)
-        .sheet(item: $privacyURLToShow) { identifiableURL in
-            SafariView(url: identifiableURL.url)
+        .navigationTitle("Settings")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                if #available(iOS 26, *) {
+                    Button(role: .close) {
+                        dismiss()
+                    }
+                } else {
+                    Button(action: { dismiss() }, label: {
+                        Image(systemName: "xmark")
+                            .font(.body.bold())
+                            .foregroundStyle(.secondary)
+                    })
+                }
+            }
+        }
+        .sheet(isPresented: $isLeaveSessionSheetPresented) {
+            SettingsLeaveSession(onSessionLeft: onSessionLeft)
+        }
         }
         .appToast(items: $toasts)
     }

@@ -36,7 +36,13 @@ struct ContentView: View {
         .ignoresSafeArea(.keyboard, edges: .bottom)
         .sheet(isPresented: $showSettings) {
             NavigationStack {
-                SettingsView()
+                SettingsView(onSessionLeft: {
+                    showSettings = false
+                    toasts.append(.info("Left private session"))
+                }, onSessionJoin: {
+                    showSettings = false
+                    toasts.append(.success("Private session joined"))
+                })
             }
         }
         .onReceive(services.wsService.message) { msg in
@@ -46,6 +52,7 @@ struct ContentView: View {
             logger.debug("Signal: \(sig.type.rawValue) | from: \(sig.from) → to: \(sig.to)")
         }
         .onChange(of: services.wsService.isConnected) { wasConnected, connected in
+            guard !services.wsService.isLeavingSession else { return }
             if connected {
                 toasts.append(wasConnected ? .success("Reconnected") : .success("Connected"))
             } else if wasConnected {

@@ -16,6 +16,7 @@ final class WebSocketConnectionService: ObservableObject {
 
     @Published private(set) var isConnected = false
     @Published private(set) var isConnecting = false
+    @Published private(set) var isLeavingSession = false
 
     // MARK: - Message Subjects
 
@@ -52,9 +53,7 @@ final class WebSocketConnectionService: ObservableObject {
             logger.warning("Private session code is not valid: \(code)")
             return
         }
-        if sessionCode != nil {
-            disconnect(manual: true)
-        }
+        disconnect(manual: true)
         sessionCode = SessionService.sanitizeSessionCode(code)
     }
 
@@ -63,6 +62,7 @@ final class WebSocketConnectionService: ObservableObject {
     func connect(sessionCode code: String? = nil, isReconnectAttempt: Bool = false) async {
         guard !isConnecting else {
             logger.debug("Already connecting — ignored")
+            isLeavingSession = false
             return
         }
 
@@ -70,6 +70,7 @@ final class WebSocketConnectionService: ObservableObject {
 
         if isConnected, sessionCode == effectiveCode {
             logger.debug("Already connected to same session")
+            isLeavingSession = false
             return
         }
 
@@ -120,6 +121,7 @@ final class WebSocketConnectionService: ObservableObject {
             Task { @MainActor [weak self] in
                 guard let self, self.task === capturedTask else { return }
                 self.isConnecting = false
+                self.isLeavingSession = false
                 if let error {
                     self.logger.warning("Connection handshake ping failed: \(error.localizedDescription)")
                     self.teardownConnection()
@@ -319,7 +321,10 @@ final class WebSocketConnectionService: ObservableObject {
     func disconnect(manual: Bool = true) {
         logger.info("Disconnecting (manual: \(manual))")
         manualDisconnect = manual
-        if manual { clearSessionCode() }
+        if manual {
+            isLeavingSession = true
+            clearSessionCode()
+        }
         teardownConnection()
     }
 }
