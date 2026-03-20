@@ -9,51 +9,51 @@ import Logging
 
 @MainActor
 final class UserService: ObservableObject {
-    private let logger = Logger(label: "User")
+  private let logger = Logger(label: "User")
 
-    @Published var user: String = ""
+  @Published var user: String = ""
 
-    private let wsService: WebSocketConnectionService
-    private var cancellables = Set<AnyCancellable>()
-    private static let nameRegex = try? NSRegularExpression(pattern: "\\[SystemName]\\s*(.*?)$")
+  private let wsService: WebSocketConnectionService
+  private var cancellables = Set<AnyCancellable>()
+  private static let nameRegex = try? NSRegularExpression(pattern: "\\[SystemName]\\s*(.*?)$")
 
-    init(wsService: WebSocketConnectionService) {
-        self.wsService = wsService
+  init(wsService: WebSocketConnectionService) {
+    self.wsService = wsService
 
-        wsService.systemMessage
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] message in
-                self?.handleSystemMessage(message)
-            }
-            .store(in: &cancellables)
+    wsService.systemMessage
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] message in
+        self?.handleSystemMessage(message)
+      }
+      .store(in: &cancellables)
 
-        wsService.didConnect
-            .receive(on: DispatchQueue.main)
-            .sink { [weak self] _ in
-                Task { await self?.getUsername() }
-            }
-            .store(in: &cancellables)
+    wsService.didConnect
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] _ in
+        Task { await self?.getUsername() }
+      }
+      .store(in: &cancellables)
+  }
+
+  func getUsername() async {
+    await wsService.send("[UserCommand] /name")
+  }
+
+  private func handleSystemMessage(_ message: String) {
+    guard message.contains("[SystemName]") else { return }
+    guard let regex = Self.nameRegex else {
+      logger.error("handleSystemMessage: nameRegex failed to initialize")
+      return
     }
-
-    func getUsername() async {
-        await wsService.send("[UserCommand] /name")
+    guard let match = regex.firstMatch(in: message, range: NSRange(message.startIndex..., in: message)) else {
+      logger.warning("handleSystemMessage: no [SystemName] match in: \(message)")
+      return
     }
-
-    private func handleSystemMessage(_ message: String) {
-        guard message.contains("[SystemName]") else { return }
-        guard let regex = Self.nameRegex else {
-            logger.error("handleSystemMessage: nameRegex failed to initialize")
-            return
-        }
-        guard let match = regex.firstMatch(in: message, range: NSRange(message.startIndex..., in: message)) else {
-            logger.warning("handleSystemMessage: no [SystemName] match in: \(message)")
-            return
-        }
-        guard let range = Range(match.range(at: 1), in: message) else {
-            logger.warning("handleSystemMessage: capture group out of range in: \(message)")
-            return
-        }
-        user = String(message[range]).trimmingCharacters(in: .whitespaces)
-        logger.debug("Username updated: \(user)")
+    guard let range = Range(match.range(at: 1), in: message) else {
+      logger.warning("handleSystemMessage: capture group out of range in: \(message)")
+      return
     }
+    user = String(message[range]).trimmingCharacters(in: .whitespaces)
+    logger.debug("Username updated: \(user)")
+  }
 }

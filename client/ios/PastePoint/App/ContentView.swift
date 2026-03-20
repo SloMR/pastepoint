@@ -9,73 +9,64 @@ import SwiftUI
 // MARK: - Root
 
 struct ContentView: View {
-    @AppStorage(AppColors.Scheme.storageKey) private var colorSchemeRaw: String = AppColors.Scheme.default
-    @EnvironmentObject private var services: AppServices
-    private let logger = Logger(label: "ContentView")
+  @AppStorage(AppColors.Scheme.storageKey) private var colorSchemeRaw: String = AppColors.Scheme.default
+  @EnvironmentObject private var services: AppServices
 
-    @State private var showSettings = false
-    @State private var toast: ToastItem?
+  private let logger = Logger(label: "ContentView")
 
-    var body: some View {
-        VStack(spacing: 0) {
-            ChatHeaderView(
-                onMenuTap: { showSettings = true },
-                onThemeTap: { colorSchemeRaw = AppColors.Scheme.next(after: colorSchemeRaw) },
-            )
-            Divider()
+  @State private var showSettings = false
+  @State private var toasts: [ToastItem] = []
 
-            RoomContentView()
+  var body: some View {
+    VStack(spacing: 0) {
+      ChatNavBar(
+        onMenuTap: { showSettings = true },
+        onThemeTap: { colorSchemeRaw = AppColors.Scheme.next(after: colorSchemeRaw) },
+      )
+      Divider()
 
-            MessageInputBar()
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
-        }
-        .background(AppColors.Background.background)
-        .preferredColorScheme(AppColors.Scheme.colorScheme(from: colorSchemeRaw))
-        .ignoresSafeArea(.keyboard, edges: .bottom)
-        .sheet(isPresented: $showSettings) {
-            NavigationStack {
-                SettingsView()
-            }
-        }
-        .onReceive(services.wsService.message) { msg in
-            logger.info("User message: \(msg)")
-        }
-        .onReceive(services.wsService.signalMessage) { sig in
-            logger.debug("Signal: \(sig.type.rawValue) | from: \(sig.from) → to: \(sig.to)")
-        }
-        .onChange(of: services.wsService.isConnected) { wasConnected, connected in
-            if connected {
-                toast = wasConnected ? .success("Reconnected") : .success("Connected")
-            } else if wasConnected {
-                toast = .warning("Connection lost")
-            }
-        }
-        .appToast(item: $toast)
+      if services.localNetworkDenied {
+        NetworkPermissionBanner { services.clearLocalNetworkDenied() }
+      }
+
+      ChatContainerView()
+
+      ChatInputBar()
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
     }
-}
-
-// MARK: - Main Content Switcher
-
-struct RoomContentView: View {
-    @State private var hasMessages: Bool = false
-
-    var body: some View {
-        Group {
-            if hasMessages {
-                ChatView()
-            } else {
-                WelcomeView()
-            }
+    .background(AppColors.Background.background)
+    .preferredColorScheme(AppColors.Scheme.colorScheme(from: colorSchemeRaw))
+    .ignoresSafeArea(.keyboard, edges: .bottom)
+    .sheet(isPresented: $showSettings) {
+      NavigationStack {
+        SettingsView {
+          showSettings = false
+          toasts.append(.success("Private session joined"))
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(AppColors.Background.background)
+      }
     }
+    .onReceive(services.wsService.message) { msg in
+      logger.info("User message: \(msg)")
+    }
+    .onReceive(services.wsService.signalMessage) { sig in
+      logger.debug("Signal: \(sig.type.rawValue) | from: \(sig.from) → to: \(sig.to)")
+    }
+    .onChange(of: services.wsService.isConnected) { wasConnected, connected in
+      guard !services.wsService.isLeavingSession else { return }
+      if connected, !showSettings {
+        toasts.append(wasConnected ? .success("Reconnected") : .success("Connected"))
+      } else if wasConnected {
+        toasts.append(.warning("Connection lost"))
+      }
+    }
+    .appToast(items: $toasts)
+  }
 }
 
 // MARK: - Preview
 
 #Preview {
-    ContentView()
-        .environmentObject(AppServices.shared)
+  ContentView()
+    .environmentObject(AppServices.shared)
 }

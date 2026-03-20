@@ -21,13 +21,13 @@ permissions:
   pull-requests: read
 
 env:
-  DESTINATION: 'platform=iOS Simulator,name=iPhone 16,arch=arm64'
+  DESTINATION: 'platform=iOS Simulator,name=iPhone 17 Pro,arch=arm64'
   DERIVED_DATA: ${{ github.workspace }}/client/ios/build
 
 jobs:
   build:
     name: Build and Test iOS Client
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 25
 
     steps:
@@ -66,7 +66,7 @@ jobs:
       - name: Boot iOS Simulator
         run: |
           xcrun simctl list devices available
-          xcrun simctl boot "iPhone 16" || true
+          xcrun simctl boot "iPhone 17 Pro" || true
 
       - name: Resolve Swift Package Dependencies
         working-directory: client/ios

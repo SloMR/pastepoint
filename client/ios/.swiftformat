@@ -3,9 +3,9 @@
 
 # ── Indentation ───────────────────────────────────────────────────────────────
 --rules indent
-  --ifdef outdent
-  --indent 4
-  --xcodeindentation enabled   # match Xcode switch/case indentation style
+--ifdef outdent
+--indent 2
+--xcodeindentation enabled   # match Xcode switch/case indentation style
 
 # ── Braces & Spacing ──────────────────────────────────────────────────────────
 --rules braces
@@ -14,8 +14,8 @@
 --rules spaceAroundComments
 --rules spaceAroundGenerics
 --rules spaceAroundOperators
-  --operator-func no-space
-  --ranges no-space
+--operator-func no-space
+--ranges no-space
 --rules spaceAroundParens
 --rules spaceInsideBraces
 --rules spaceInsideBrackets
@@ -34,16 +34,16 @@
 # the line exceeds the limit but does not force ALL arguments onto new lines
 # when only some would exceed it.
 --rules wrapArguments
-  --wrap-arguments before-first
-  --wrap-collections before-first
-  --wrap-parameters before-first
-  --wrap-conditions before-first
-  --call-site-paren balanced
-  --closing-paren balanced
-  --allow-partial-wrapping true
+--wrap-arguments before-first
+--wrap-collections before-first
+--wrap-parameters before-first
+--wrap-conditions before-first
+--call-site-paren balanced
+--closing-paren balanced
+--allow-partial-wrapping true
 --rules wrapAttributes
-  --func-attributes prev-line
-  --type-attributes prev-line
+--func-attributes prev-line
+--type-attributes prev-line
 --rules wrapEnumCases
 --rules wrapMultilineStatementBraces
 
@@ -76,7 +76,7 @@
 --rules preferForLoop           # prefer for-in over forEach where possible
 --rules singlePropertyPerLine
 --rules sortImports
-  --import-grouping testable-last
+--import-grouping testable-last
 --rules sortTypealiases
 --rules strongifiedSelf
 --rules trailingCommas

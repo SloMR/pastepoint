@@ -466,7 +466,6 @@
       >
         <!-- MARK: - Mobile User Info -->
         <div
-          *ngIf="userService.user"
           class="flex w-full items-center justify-between gap-2 px-4 py-8"
         >
           <!-- avatar + name -->
@@ -480,8 +479,13 @@
               width="40"
               height="40"
             />
-            <p class="truncate text-base font-expoArabicMedium text-content dark:text-white">
-              {{ userService.user }}
+            <p
+              class="truncate text-base font-expoArabicMedium"
+              [class.text-content]="userService.user"
+              [class.dark:text-white]="userService.user"
+              [class.text-gray-400]="!userService.user"
+            >
+              {{ userService.user || 'Connecting…' }}
             </p>
           </div>
 
@@ -1078,7 +1082,7 @@
   <div class="flex-1 flex flex-col w-full md:max-w-[calc(100%-286px)] dark:bg-baseDark">
     <!-- MARK: - Header -->
     <div
-      class="flex w-full items-center justify-between border-b px-4 h-[88px] border-borderLight dark:border-b-surfaceDark md:px-8 sticky top-0 z-50 bg-white dark:bg-baseDark"
+      class="flex w-full items-center justify-between border-b px-4 h-[88px] border-borderLight dark:border-b-surfaceDark md:px-8 sticky top-0 z-50 bg-contentArea dark:bg-baseDark"
     >
       <div class="flex w-full items-center justify-start py-8 md:hidden">
         <a routerLink="/" title="Home">
@@ -1161,9 +1165,14 @@
       </div>
 
       <!-- user info -->
-      <div *ngIf="userService.user" class="hidden items-center gap-2 md:flex">
-        <p class="text-base font-expoArabicMedium text-content dark:text-white">
-          {{ userService.user }}
+      <div class="hidden items-center gap-2 md:flex">
+        <p
+          class="text-base font-expoArabicMedium"
+          [class.text-content]="userService.user"
+          [class.dark:text-white]="userService.user"
+          [class.text-gray-400]="!userService.user"
+        >
+          {{ userService.user || 'Connecting…' }}
         </p>
         <img
           src="/icons/Group.svg"
@@ -1274,7 +1283,7 @@
                     </div>
                     <div class="flex flex-col space-y-1 sm:space-y-2 text-sm font-expoArabic">
                       <div
-                        class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                        class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
                       >
                         <div
                           class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand dark:bg-brandDark flex items-center justify-center text-white text-xs font-bold"
@@ -1286,7 +1295,7 @@
                         }}</span>
                       </div>
                       <div
-                        class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                        class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
                       >
                         <div
                           class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand dark:bg-brandDark flex items-center justify-center text-white text-xs font-bold"
@@ -1298,7 +1307,7 @@
                         }}</span>
                       </div>
                       <div
-                        class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                        class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
                       >
                         <div
                           class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand dark:bg-brandDark flex items-center justify-center text-white text-xs font-bold"
@@ -1320,7 +1329,7 @@
                     </div>
                     <div class="flex flex-col space-y-1 sm:space-y-2 text-sm font-expoArabic">
                       <div
-                        class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                        class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
                       >
                         <div
                           class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand dark:bg-brandDark flex items-center justify-center text-white text-xs font-bold"
@@ -1332,7 +1341,7 @@
                         }}</span>
                       </div>
                       <div
-                        class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                        class="flex items-center gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
                       >
                         <div
                           class="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-brand dark:bg-brandDark flex items-center justify-center text-white text-xs font-bold"
@@ -1349,7 +1358,7 @@
                 <!-- Feature Highlights -->
                 <div class="grid grid-cols-2 gap-2 sm:gap-3 w-full mt-2">
                   <div
-                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
                   >
                     <img
                       [src]="isDarkMode ? '/icons/lock-white.svg' : '/icons/lock.svg'"
@@ -1364,7 +1373,7 @@
                     >
                   </div>
                   <div
-                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
                   >
                     <img
                       [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
@@ -1379,7 +1388,7 @@
                     >
                   </div>
                   <div
-                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
                   >
                     <img
                       [src]="
@@ -1396,7 +1405,7 @@
                     >
                   </div>
                   <div
-                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
                   >
                     <img
                       [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
@@ -1411,7 +1420,7 @@
                     >
                   </div>
                   <div
-                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
                   >
                     <img
                       [src]="
@@ -1428,7 +1437,7 @@
                     >
                   </div>
                   <div
-                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-gray-50 dark:bg-gray-800"
+                    class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
                   >
                     <img
                       [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
@@ -1943,7 +1952,7 @@
 
     <!-- MARK: - Footer -->
     <div
-      class="hidden w-full items-center justify-between border-t bg-white px-8 text-center h-[58px] border-borderLight dark:bg-baseDark dark:border-surfaceDark md:flex"
+      class="hidden w-full items-center justify-between border-t bg-contentArea px-8 text-center h-[58px] border-borderLight dark:bg-baseDark dark:border-surfaceDark md:flex"
     >
       <p class="text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
         {{ 'COPYRIGHT_NOTICE' | translate }}

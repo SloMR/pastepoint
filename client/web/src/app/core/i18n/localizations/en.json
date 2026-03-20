@@ -18,7 +18,7 @@
   "CREATE_A_NEW_ROOM": "Create a Room",
   "ENTER_ROOM_NAME": "Room Name",
   "ROOM_NAME_PLACEHOLDER": "Type a room name",
-  "ROOM_NAME_DESCRIPTION": "Leave it empty if you want a random name",
+  "ROOM_NAME_DESCRIPTION": "Enter a name for the room you want to join or create.",
   "ROOM_JOINED_SUCCESS": "Joined {{roomName}} room.",
 
   "_SESSIONS_SECTION": "==== SESSIONS ====",

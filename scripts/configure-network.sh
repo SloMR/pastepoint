@@ -70,8 +70,21 @@ done
 update_file "$PROJECT_ROOT/.env.development" "SERVER_NAME=127.0.0.1" "SERVER_NAME=$local_ip"
 update_file "$PROJECT_ROOT/.env.development" "HOST=127.0.0.1" "HOST=0.0.0.0"
 
-# Update client environment
-update_file "$PROJECT_ROOT/client/web/src/environments/environment.ts" "apiUrl: '127.0.0.1:9000'" "apiUrl: '$local_ip:9000'"
+# Update client environments
+escaped_ip="$(escape_sed_replacement "$local_ip")"
+
+# Use regex to match any current IP so the script is idempotent across runs
+sed_in_place "s|apiUrl: '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*:9000'|apiUrl: '$escaped_ip:9000'|g" \
+    "$PROJECT_ROOT/client/web/src/environments/environment.ts"
+echo "Updated environment.ts"
+
+sed_in_place "s|apiUrl: '[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*'|apiUrl: '$escaped_ip'|g" \
+    "$PROJECT_ROOT/client/web/src/environments/environment.docker-dev.ts"
+echo "Updated environment.docker-dev.ts"
+
+sed_in_place "s|static let host = \"[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*\"|static let host = \"$escaped_ip\"|g" \
+    "$PROJECT_ROOT/client/ios/PastePoint/Core/Config/AppEnvironment.swift"
+echo "Updated AppEnvironment.swift"
 
 # Update server configurations
 update_file "$PROJECT_ROOT/server/config/development.toml" "cors_allowed_origins = \"https://127.0.0.1\"" "cors_allowed_origins = \"https://$local_ip\""
