@@ -107,32 +107,56 @@ private struct ViewfinderBracketsShape: Shape {
 
   func path(in rect: CGRect) -> Path {
     var path = Path()
-    let r = cornerRadius
-    let l = bracketLength
+    let cr = cornerRadius
+    let bl = bracketLength
 
     // Top-left
-    path.move(to: CGPoint(x: rect.minX, y: rect.minY + l))
-    path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + r))
-    path.addArc(center: CGPoint(x: rect.minX + r, y: rect.minY + r), radius: r, startAngle: .degrees(180), endAngle: .degrees(270), clockwise: false)
-    path.addLine(to: CGPoint(x: rect.minX + l, y: rect.minY))
+    path.move(to: CGPoint(x: rect.minX, y: rect.minY + bl))
+    path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + cr))
+    path.addArc(
+      center: CGPoint(x: rect.minX + cr, y: rect.minY + cr),
+      radius: cr,
+      startAngle: .degrees(180),
+      endAngle: .degrees(270),
+      clockwise: false,
+    )
+    path.addLine(to: CGPoint(x: rect.minX + bl, y: rect.minY))
 
     // Top-right
-    path.move(to: CGPoint(x: rect.maxX - l, y: rect.minY))
-    path.addLine(to: CGPoint(x: rect.maxX - r, y: rect.minY))
-    path.addArc(center: CGPoint(x: rect.maxX - r, y: rect.minY + r), radius: r, startAngle: .degrees(270), endAngle: .degrees(0), clockwise: false)
-    path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + l))
+    path.move(to: CGPoint(x: rect.maxX - bl, y: rect.minY))
+    path.addLine(to: CGPoint(x: rect.maxX - cr, y: rect.minY))
+    path.addArc(
+      center: CGPoint(x: rect.maxX - cr, y: rect.minY + cr),
+      radius: cr,
+      startAngle: .degrees(270),
+      endAngle: .degrees(0),
+      clockwise: false,
+    )
+    path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY + bl))
 
     // Bottom-right
-    path.move(to: CGPoint(x: rect.maxX, y: rect.maxY - l))
-    path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - r))
-    path.addArc(center: CGPoint(x: rect.maxX - r, y: rect.maxY - r), radius: r, startAngle: .degrees(0), endAngle: .degrees(90), clockwise: false)
-    path.addLine(to: CGPoint(x: rect.maxX - l, y: rect.maxY))
+    path.move(to: CGPoint(x: rect.maxX, y: rect.maxY - bl))
+    path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY - cr))
+    path.addArc(
+      center: CGPoint(x: rect.maxX - cr, y: rect.maxY - cr),
+      radius: cr,
+      startAngle: .degrees(0),
+      endAngle: .degrees(90),
+      clockwise: false,
+    )
+    path.addLine(to: CGPoint(x: rect.maxX - bl, y: rect.maxY))
 
     // Bottom-left
-    path.move(to: CGPoint(x: rect.minX + l, y: rect.maxY))
-    path.addLine(to: CGPoint(x: rect.minX + r, y: rect.maxY))
-    path.addArc(center: CGPoint(x: rect.minX + r, y: rect.maxY - r), radius: r, startAngle: .degrees(90), endAngle: .degrees(180), clockwise: false)
-    path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - l))
+    path.move(to: CGPoint(x: rect.minX + bl, y: rect.maxY))
+    path.addLine(to: CGPoint(x: rect.minX + cr, y: rect.maxY))
+    path.addArc(
+      center: CGPoint(x: rect.minX + cr, y: rect.maxY - cr),
+      radius: cr,
+      startAngle: .degrees(90),
+      endAngle: .degrees(180),
+      clockwise: false,
+    )
+    path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - bl))
 
     return path
   }
