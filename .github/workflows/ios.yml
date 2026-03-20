@@ -21,13 +21,13 @@ permissions:
   pull-requests: read
 
 env:
-  DESTINATION: 'platform=iOS Simulator,name=iPhone 16,arch=arm64'
+  DESTINATION: 'platform=iOS Simulator,name=iPhone 16 Pro,arch=arm64'
   DERIVED_DATA: ${{ github.workspace }}/client/ios/build
 
 jobs:
   build:
     name: Build and Test iOS Client
-    runs-on: macos-latest
+    runs-on: macos-26
     timeout-minutes: 25
 
     steps:
