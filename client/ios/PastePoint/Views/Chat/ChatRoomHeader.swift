@@ -6,27 +6,27 @@
 import SwiftUI
 
 struct ChatRoomHeader: View {
-    @Environment(\.colorScheme) private var colorScheme
-    let isPrivate: Bool
+  @Environment(\.colorScheme) private var colorScheme
+  let isPrivate: Bool
 
-    var body: some View {
-        HStack(spacing: 10) {
-            Image(isPrivate ? (colorScheme == .dark ? "lock.light" : "lock.dark") : "users")
-                .resizable()
-                .scaledToFit()
-                .frame(width: 22, height: 22)
+  var body: some View {
+    HStack(spacing: 10) {
+      Image(isPrivate ? (colorScheme == .dark ? "lock.light" : "lock.dark") : "users")
+        .resizable()
+        .scaledToFit()
+        .frame(width: 22, height: 22)
 
-            Text(isPrivate ? "Private Room" : "Public Room")
-                .font(.title2)
-                .foregroundStyle(.textPrimary)
-                .fontWeight(.semibold)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 18)
-        .padding(.bottom, 22)
+      Text(isPrivate ? "Private Room" : "Public Room")
+        .font(.title2)
+        .foregroundStyle(.textPrimary)
+        .fontWeight(.semibold)
     }
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.top, 18)
+    .padding(.bottom, 22)
+  }
 }
 
 #Preview {
-    ChatRoomHeader(isPrivate: false)
+  ChatRoomHeader(isPrivate: false)
 }

@@ -6,19 +6,19 @@
 import SwiftUI
 
 struct WelcomeStepBadge: View {
-    let number: Int
+  let number: Int
 
-    var body: some View {
-        Text("\(number)")
-            .font(.caption)
-            .fontWeight(.semibold)
-            .foregroundStyle(.white)
-            .frame(width: 26, height: 26)
-            .background(.brand)
-            .clipShape(Circle())
-    }
+  var body: some View {
+    Text("\(number)")
+      .font(.caption)
+      .fontWeight(.semibold)
+      .foregroundStyle(.white)
+      .frame(width: 26, height: 26)
+      .background(.brand)
+      .clipShape(Circle())
+  }
 }
 
 #Preview {
-    WelcomeStepBadge(number: 1)
+  WelcomeStepBadge(number: 1)
 }
