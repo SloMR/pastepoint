@@ -24,18 +24,14 @@ enum AppBuildInfo {
 // MARK: - Logging Bootstrap
 
 enum AppLogging {
-  private static var bootstrapped = false
-
-  /// Bootstraps the logging system exactly once per process.
-  /// Safe to call from both `PastePointApp.init()` and `AppServices.preview`.
-  static func bootstrap() {
-    guard !bootstrapped else { return }
-    bootstrapped = true
-
+  private static let once: Void = {
 #if DEBUG
     LoggingSystem.bootstrap(AppLogHandler.init)
 #else
     LoggingSystem.bootstrap(SwiftLogNoOpLogHandler.init)
 #endif
-  }
+  }()
+
+  /// Bootstraps the logging system exactly once per process. Thread-safe.
+  static func bootstrap() { _ = once }
 }
