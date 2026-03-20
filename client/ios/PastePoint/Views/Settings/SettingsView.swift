@@ -33,9 +33,9 @@ struct SettingsView: View {
       HStack(alignment: .center, spacing: 0) {
         avatar
 
-        Text(services.userService.user)
+        Text(services.userService.user.isEmpty ? "Connecting…" : services.userService.user)
           .font(.title3)
-          .foregroundColor(.textPrimary)
+          .foregroundColor(services.userService.user.isEmpty ? .textSecondary : .textPrimary)
 
         Spacer()
       }

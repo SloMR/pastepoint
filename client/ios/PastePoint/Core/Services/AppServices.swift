@@ -20,7 +20,10 @@ final class AppServices: ObservableObject {
 
   static let shared = AppServices()
 
+  @Published private(set) var localNetworkDenied = false
+
   private var isInBackground = false
+  private var isForegroundHandling = false
   private let networkMonitor = NWPathMonitor()
   private var cancellables = Set<AnyCancellable>()
 
@@ -39,12 +42,25 @@ final class AppServices: ObservableObject {
 
   func handleForeground() async {
     isInBackground = false
-    guard !wsService.isConnected, !wsService.isConnecting else {
+    guard !wsService.isConnected, !wsService.isConnecting, !isForegroundHandling else {
       logger.debug("handleForeground — already connected or connecting, skipping")
+      return
+    }
+    isForegroundHandling = true
+    defer { isForegroundHandling = false }
+    let denied = await LocalNetworkPermission.isDenied()
+    localNetworkDenied = denied
+    guard !denied else {
+      logger.warning("handleForeground — local network permission denied, skipping connect")
+      wsService.disconnect(manual: true)
       return
     }
     logger.info("handleForeground — connecting")
     await wsService.connect(sessionCode: wsService.currentSessionCode)
+  }
+
+  func clearLocalNetworkDenied() {
+    localNetworkDenied = false
   }
 
   func handleBackground() {

@@ -25,7 +25,11 @@ struct ContentView: View {
       )
       Divider()
 
-      RoomContentView()
+      if services.localNetworkDenied {
+        NetworkPermissionBanner { services.clearLocalNetworkDenied() }
+      }
+
+      ChatContainerView()
 
       ChatInputBar()
         .padding(.horizontal, 16)
