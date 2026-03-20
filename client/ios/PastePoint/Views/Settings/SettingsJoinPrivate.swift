@@ -18,6 +18,7 @@ struct SettingsJoinPrivate: View {
   @State private var sheetHeight: CGFloat = 320
   @State private var isScannerPresented: Bool = false
   @State private var isJoining: Bool = false
+  @State private var toasts: [ToastItem] = []
 
   var body: some View {
     NavigationStack {
@@ -38,6 +39,16 @@ struct SettingsJoinPrivate: View {
               .textInputAutocapitalization(.never)
               .padding(.leading, 14)
               .padding(.vertical, 12)
+
+            if !sessionCode.isEmpty {
+              Button { sessionCode = "" } label: {
+                Image(systemName: "xmark.circle.fill")
+                  .font(.system(size: 16))
+                  .foregroundStyle(.textSecondary)
+                  .frame(width: 36, height: 44)
+              }
+              .buttonStyle(.plain)
+            }
 
             Button {
               isScannerPresented = true
@@ -134,6 +145,7 @@ struct SettingsJoinPrivate: View {
     .presentationDetents([.height(sheetHeight)])
     .presentationDragIndicator(.visible)
     .presentationBackground(AppColors.Background.background)
+    .appToast(items: $toasts)
     .fullScreenCover(isPresented: $isScannerPresented) {
       SettingsScanQRCode { scannedCode in
         sessionCode = scannedCode
@@ -145,6 +157,11 @@ struct SettingsJoinPrivate: View {
   private func joinSession(code: String) async {
     let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
     guard !trimmed.isEmpty else { return }
+    guard SessionService.isValidSessionCode(trimmed) else {
+      logger.warning("Invalid session code entered: \(trimmed)")
+      toasts.append(.error("Invalid session code"))
+      return
+    }
     logger.info("Joining private session with code: \(trimmed)")
     isJoining = true
     await services.wsService.setupPrivateSession(trimmed)

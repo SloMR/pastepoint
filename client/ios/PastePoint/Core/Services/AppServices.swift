@@ -52,7 +52,7 @@ final class AppServices: ObservableObject {
     localNetworkDenied = denied
     guard !denied else {
       logger.warning("handleForeground — local network permission denied, skipping connect")
-      wsService.disconnect(manual: true)
+      wsService.disconnect(manual: false)
       return
     }
     logger.info("handleForeground — connecting")

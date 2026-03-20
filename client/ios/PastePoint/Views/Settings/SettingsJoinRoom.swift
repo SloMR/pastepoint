@@ -33,17 +33,30 @@ struct SettingsJoinRoom: View {
             .font(.subheadline)
             .foregroundStyle(.textPrimary)
 
-          TextField("Room name", text: $roomName)
-            .textFieldStyle(.plain)
-            .font(.body)
-            .foregroundStyle(.textPrimary)
-            .autocorrectionDisabled()
-            .textInputAutocapitalization(.never)
-            .padding(.horizontal, 14)
-            .padding(.vertical, 12)
-            .background(AppColors.Background.input, in: RoundedRectangle(cornerRadius: 8))
+          HStack(spacing: 0) {
+            TextField("Room name", text: $roomName)
+              .textFieldStyle(.plain)
+              .font(.body)
+              .foregroundStyle(.textPrimary)
+              .autocorrectionDisabled()
+              .textInputAutocapitalization(.never)
+              .padding(.leading, 14)
+              .padding(.vertical, 12)
 
-          Text("Leave it empty if you want a random name.")
+            if !roomName.isEmpty {
+              Button { roomName = "" } label: {
+                Image(systemName: "xmark.circle.fill")
+                  .font(.system(size: 16))
+                  .foregroundStyle(.textSecondary)
+                  .frame(width: 36, height: 44)
+              }
+              .buttonStyle(.plain)
+              .padding(.trailing, 8)
+            }
+          }
+          .background(AppColors.Background.input, in: RoundedRectangle(cornerRadius: 8))
+
+          Text("Enter a name for the room you want to join or create.")
             .font(.caption)
             .foregroundStyle(.textSecondary)
         }
