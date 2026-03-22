@@ -18,10 +18,10 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    name: Build and Test Server
+  lint:
+    name: Rustfmt & Clippy
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
@@ -46,13 +46,41 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-cargo-
 
-      - name: Rust Format Check
+      - name: Rustfmt
         run: cargo fmt -- --check
         working-directory: server
 
-      - name: Clippy Lints
+      - name: Clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
         working-directory: server
+
+  build:
+    name: Build and Test Server
+    needs: lint
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.93.1
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            server/target
+          key: ${{ runner.os }}-cargo-${{ hashFiles('server/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-
 
       - name: Run Tests
         run: cargo test --all --verbose

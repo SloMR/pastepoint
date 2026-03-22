@@ -196,11 +196,11 @@ struct SettingsScanQRCode: View {
         Button { dismiss() } label: {
           ZStack {
             Circle()
-              .fill(.white.opacity(0.2))
+              .fill(Color(.systemGray5))
               .frame(width: 36, height: 36)
             Image(systemName: "xmark")
               .font(.system(size: 13, weight: .bold, design: .rounded))
-              .foregroundStyle(.white)
+              .foregroundStyle(.secondary)
           }
           .contentShape(Circle())
         }
