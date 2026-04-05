@@ -1,5 +1,5 @@
-import { Inject, Injectable } from '@angular/core';
-import { DOCUMENT } from '@angular/common';
+import { Injectable, DOCUMENT, inject } from '@angular/core';
+
 import { Meta, Title } from '@angular/platform-browser';
 import { MetaConfig, StructuredData } from '../../../utils/constants';
 
@@ -7,11 +7,9 @@ import { MetaConfig, StructuredData } from '../../../utils/constants';
   providedIn: 'root',
 })
 export class MetaService {
-  constructor(
-    @Inject(DOCUMENT) private document: Document,
-    private meta: Meta,
-    private titleService: Title
-  ) {}
+  private document = inject<Document>(DOCUMENT);
+  private meta = inject(Meta);
+  private titleService = inject(Title);
 
   //=============================================================================
   // PUBLIC API: Primary methods for metadata updates

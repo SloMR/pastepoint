@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { WebRTCService } from '../communication/webrtc.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
@@ -12,15 +12,15 @@ import { FileTransferBaseService } from './file-transfer-base.service';
   providedIn: 'root',
 })
 export class FileTransferService implements IFileTransferService {
+  private webrtcService = inject(WebRTCService);
+  private translate = inject<TranslateService>(TranslateService);
+  private logger = inject(NGXLogger);
+  private fileUploadService = inject(FileUploadService);
+  private fileDownloadService = inject(FileDownloadService);
+  private fileOfferService = inject(FileOfferService);
+
   // =============== Constructor ===============
-  constructor(
-    private webrtcService: WebRTCService,
-    @Inject(TranslateService) private translate: TranslateService,
-    private logger: NGXLogger,
-    private fileUploadService: FileUploadService,
-    private fileDownloadService: FileDownloadService,
-    private fileOfferService: FileOfferService
-  ) {
+  constructor() {
     this.webrtcService.incomingFileChunk$.subscribe(
       async ({ fromUser, fileId, chunkIndex, totalChunks, chunk, isValid }) => {
         await this.fileDownloadService.handleDataChunk(

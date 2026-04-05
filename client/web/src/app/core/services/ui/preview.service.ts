@@ -1,4 +1,4 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { PREVIEW_MIME_TYPE, PREVIEW_QUALITY } from '../../../utils/constants';
 
@@ -6,14 +6,14 @@ import { PREVIEW_MIME_TYPE, PREVIEW_QUALITY } from '../../../utils/constants';
   providedIn: 'root',
 })
 export class PreviewService {
+  private platformId = inject(PLATFORM_ID);
+
   private pdfJsLoaded = false;
   private pdfjsLib: any | null = null;
 
   private static readonly PDFJS_CDN_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149';
   private static readonly PDFJS_LIB_URL = `${PreviewService.PDFJS_CDN_BASE}/pdf.min.mjs`;
   private static readonly PDFJS_WORKER_URL = `${PreviewService.PDFJS_CDN_BASE}/pdf.worker.min.mjs`;
-
-  constructor(@Inject(PLATFORM_ID) private platformId: object) {}
 
   private async ensurePdfJsLoaded(): Promise<void> {
     if (this.pdfJsLoaded) return;
@@ -34,7 +34,9 @@ export class PreviewService {
       this.pdfjsLib = pdfjsLib;
       this.pdfJsLoaded = true;
     } catch (e) {
-      throw new Error(`Failed to load pdf.js from CDN: ${(e as Error)?.message || e}`);
+      throw new Error(`Failed to load pdf.js from CDN: ${(e as Error)?.message || e}`, {
+        cause: e,
+      });
     }
   }
 

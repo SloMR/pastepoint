@@ -1,4 +1,4 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { WebRTCService } from './webrtc.service';
 import { UserService } from '../user-management/user.service';
@@ -11,6 +11,12 @@ import { NGXLogger } from 'ngx-logger';
   providedIn: 'root',
 })
 export class ChatService implements IChatService {
+  private wsService = inject(WebSocketConnectionService);
+  private webrtcService = inject(WebRTCService);
+  private userService = inject(UserService);
+  private logger = inject(NGXLogger);
+  private ngZone = inject(NgZone);
+
   /**
    * ==========================================================
    * PROPERTIES & OBSERVABLES
@@ -26,13 +32,7 @@ export class ChatService implements IChatService {
    * Dependency injection and subscription setup
    * ==========================================================
    */
-  constructor(
-    private wsService: WebSocketConnectionService,
-    private webrtcService: WebRTCService,
-    private userService: UserService,
-    private logger: NGXLogger,
-    private ngZone: NgZone
-  ) {
+  constructor() {
     this.webrtcService.chatMessages$.subscribe((message) => {
       this.handleUserMessage(message);
     });

@@ -18,7 +18,7 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { LoggerModule } from 'ngx-logger';
 import { environment } from '../environments/environment';
 import { DatePipe } from '@angular/common';
-import { provideHotToastConfig } from '@ngneat/hot-toast';
+import { provideHotToastConfig } from '@ngxpert/hot-toast';
 
 // Theme initialization function
 export function initializeTheme(themeService: ThemeService): () => Promise<void> {
@@ -56,7 +56,7 @@ export const appConfig: ApplicationConfig = {
       reverseOrder: true,
       style: {
         borderRadius: '20px',
-        zIndex: 99999,
+        zIndex: '99999',
         whiteSpace: 'normal',
         wordBreak: 'break-word',
       },
@@ -64,7 +64,7 @@ export const appConfig: ApplicationConfig = {
     // Initialize translation module with in-memory loader
     importProvidersFrom(
       TranslateModule.forRoot({
-        defaultLanguage: 'en',
+        fallbackLang: 'en',
         loader: {
           provide: TranslateLoader,
           useClass: InMemoryTranslateLoader,

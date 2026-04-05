@@ -1,4 +1,4 @@
-import { Injectable, NgZone, PLATFORM_ID, Inject } from '@angular/core';
+import { Injectable, NgZone, PLATFORM_ID, inject } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import {
   BUFFERED_AMOUNT_LOW_THRESHOLD,
@@ -9,7 +9,7 @@ import {
   DataChannelMessage,
 } from '../../../utils/constants';
 import { NGXLogger } from 'ngx-logger';
-import { HotToastService } from '@ngneat/hot-toast';
+import { HotToastService } from '@ngxpert/hot-toast';
 import { TranslateService } from '@ngx-translate/core';
 import { decodeChunk } from '../../../utils/chunk-protocol';
 
@@ -17,6 +17,12 @@ import { decodeChunk } from '../../../utils/chunk-protocol';
   providedIn: 'root',
 })
 export class WebRTCCommunicationService {
+  private zone = inject(NgZone);
+  private logger = inject(NGXLogger);
+  private toaster = inject(HotToastService);
+  private translate = inject(TranslateService);
+  private platformId = inject(PLATFORM_ID);
+
   // =============== Properties ===============
 
   // Public Subjects
@@ -49,14 +55,6 @@ export class WebRTCCommunicationService {
   private dataChannels = new Map<string, RTCDataChannel>();
   private messageQueues = new Map<string, (DataChannelMessage | ArrayBuffer)[]>();
   private connectionTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
-
-  constructor(
-    private zone: NgZone,
-    private logger: NGXLogger,
-    private toaster: HotToastService,
-    private translate: TranslateService,
-    @Inject(PLATFORM_ID) private platformId: object
-  ) {}
 
   // =============== Public Methods ===============
 

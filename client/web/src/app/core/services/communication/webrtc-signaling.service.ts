@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { UserService } from '../user-management/user.service';
 import {
@@ -16,12 +16,19 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { WebRTCCommunicationService } from './webrtc-communication.service';
-import { HotToastService } from '@ngneat/hot-toast';
+import { HotToastService } from '@ngxpert/hot-toast';
 
 @Injectable({
   providedIn: 'root',
 })
 export class WebRTCSignalingService {
+  private wsService = inject(WebSocketConnectionService);
+  private userService = inject(UserService);
+  private toaster = inject(HotToastService);
+  private translate = inject<TranslateService>(TranslateService);
+  private logger = inject(NGXLogger);
+  private communicationService = inject(WebRTCCommunicationService);
+
   // =============== Properties ===============
   private peerConnections = new Map<string, RTCPeerConnection>();
   private reconnectAttempts = new Map<string, number>();
@@ -34,14 +41,7 @@ export class WebRTCSignalingService {
   private stateMismatchTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   private collectedCandidates = new Map<string, RTCIceCandidate[]>();
 
-  constructor(
-    private wsService: WebSocketConnectionService,
-    private userService: UserService,
-    private toaster: HotToastService,
-    @Inject(TranslateService) private translate: TranslateService,
-    private logger: NGXLogger,
-    private communicationService: WebRTCCommunicationService
-  ) {
+  constructor() {
     this.initializeSignalMessageHandler();
     this.communicationService.dataChannelClosed$.subscribe((targetUser) => {
       if (this.wsService.isConnected() && this.peerConnections.has(targetUser)) {

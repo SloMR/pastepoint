@@ -1,10 +1,10 @@
 import {
   Injectable,
-  Inject,
   PLATFORM_ID,
   TransferState,
   makeStateKey,
   StateKey,
+  inject,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
@@ -17,6 +17,11 @@ import { NGXLogger } from 'ngx-logger';
   providedIn: 'root',
 })
 export class LanguageService implements ILanguageService {
+  private platformId = inject(PLATFORM_ID);
+  private transferState = inject(TransferState);
+  private translateService = inject(TranslateService);
+  private logger = inject(NGXLogger);
+
   /**
    * ==========================================================
    * CONSTANTS
@@ -25,19 +30,6 @@ export class LanguageService implements ILanguageService {
    */
   private readonly LANGUAGE_STATE_KEY: StateKey<string> =
     makeStateKey<string>(LANGUAGE_PREFERENCE_KEY);
-
-  /**
-   * ==========================================================
-   * CONSTRUCTOR
-   * Dependency injection
-   * ==========================================================
-   */
-  constructor(
-    @Inject(PLATFORM_ID) private platformId: object,
-    private transferState: TransferState,
-    private translateService: TranslateService,
-    private logger: NGXLogger
-  ) {}
 
   /**
    * ==========================================================

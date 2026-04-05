@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Observable, of } from 'rxjs';
-import { ToastConfig } from '@ngneat/hot-toast';
+import { ToastConfig } from '@ngxpert/hot-toast';
 
 @Injectable()
 export class MockHotToastService {

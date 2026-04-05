@@ -34,7 +34,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.css", "node_modules/@ngneat/hot-toast/src/styles/styles.css"],
+            "styles": ["src/styles.css", "node_modules/@ngxpert/hot-toast/src/styles/styles.css"],
             "scripts": [],
             "server": "src/main.server.ts",
             "prerender": true,
@@ -173,7 +173,7 @@
                 "input": "public"
               }
             ],
-            "styles": ["src/styles.css", "node_modules/@ngneat/hot-toast/src/styles/styles.css"],
+            "styles": ["src/styles.css", "node_modules/@ngxpert/hot-toast/src/styles/styles.css"],
             "scripts": [],
             "karmaConfig": "karma.conf.cjs"
           }
@@ -190,5 +190,31 @@
   "cli": {
     "schematicCollections": ["@angular-eslint/schematics"],
     "analytics": false
+  },
+  "schematics": {
+    "@schematics/angular:component": {
+      "type": "component"
+    },
+    "@schematics/angular:directive": {
+      "type": "directive"
+    },
+    "@schematics/angular:service": {
+      "type": "service"
+    },
+    "@schematics/angular:guard": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:interceptor": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:module": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:pipe": {
+      "typeSeparator": "."
+    },
+    "@schematics/angular:resolver": {
+      "typeSeparator": "."
+    }
   }
 }

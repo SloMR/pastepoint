@@ -1,4 +1,4 @@
-import { Inject, Injectable, PLATFORM_ID, OnDestroy } from '@angular/core';
+import { Injectable, PLATFORM_ID, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
@@ -10,11 +10,17 @@ import {
   WS_PREFIX_KEEP_ALIVE,
   WS_KEEP_ALIVE_INTERVAL_MS,
 } from '../../../utils/constants';
-import { HotToastService } from '@ngneat/hot-toast';
+import { HotToastService } from '@ngxpert/hot-toast';
 @Injectable({
   providedIn: 'root',
 })
 export class WebSocketConnectionService implements OnDestroy {
+  private router = inject(Router);
+  private logger = inject(NGXLogger);
+  private toaster = inject(HotToastService);
+  private translate = inject<TranslateService>(TranslateService);
+  private platformId = inject(PLATFORM_ID);
+
   /**
    * ==========================================================
    * PRIVATE PROPERTIES
@@ -58,13 +64,7 @@ export class WebSocketConnectionService implements OnDestroy {
    * Dependency injection
    * ==========================================================
    */
-  constructor(
-    private router: Router,
-    private logger: NGXLogger,
-    private toaster: HotToastService,
-    @Inject(TranslateService) private translate: TranslateService,
-    @Inject(PLATFORM_ID) private platformId: object
-  ) {
+  constructor() {
     if (isPlatformBrowser(this.platformId)) {
       this.setupBFCacheHandlers();
     }

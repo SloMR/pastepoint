@@ -1,11 +1,13 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { environment } from '../../../../environments/environment';
 
 @Injectable({
   providedIn: 'root',
 })
 export class SessionService {
+  private http = inject(HttpClient);
+
   /**
    * ==========================================================
    * PROPERTIES
@@ -13,14 +15,6 @@ export class SessionService {
    * ==========================================================
    */
   private baseUrl = `https://${environment.apiUrl}`;
-
-  /**
-   * ==========================================================
-   * CONSTRUCTOR
-   * Dependency injection
-   * ==========================================================
-   */
-  constructor(private http: HttpClient) {}
 
   /**
    * ==========================================================

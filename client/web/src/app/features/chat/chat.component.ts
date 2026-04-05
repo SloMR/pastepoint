@@ -5,12 +5,12 @@ import {
   Component,
   CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
-  Inject,
   NgZone,
   OnDestroy,
   OnInit,
   PLATFORM_ID,
   ViewChild,
+  inject,
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import {
@@ -18,8 +18,6 @@ import {
   DecimalPipe,
   isPlatformBrowser,
   NgClass,
-  NgForOf,
-  NgIf,
   NgOptimizedImage,
   NgStyle,
   UpperCasePipe,
@@ -63,7 +61,7 @@ import { MetaService } from '../../core/services/ui/meta.service';
 import { LanguageService } from '../../core/services/ui/language.service';
 import { LanguageCode } from '../../core/i18n/translate-loader';
 import { Router } from '@angular/router';
-import { HotToastService } from '@ngneat/hot-toast';
+import { HotToastService } from '@ngxpert/hot-toast';
 import * as QRCode from 'qrcode';
 import { SecurityContext } from '@angular/core';
 import { PreviewService } from '../../core/services/ui/preview.service';
@@ -79,8 +77,6 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 @Component({
   selector: 'app-chat',
   imports: [
-    NgIf,
-    NgForOf,
     FormsModule,
     UpperCasePipe,
     DatePipe,
@@ -99,6 +95,32 @@ import { DeviceDetectorService } from 'ngx-device-detector';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
+  userService = inject(UserService);
+  private chatService = inject(ChatService);
+  private roomService = inject(RoomService);
+  private fileTransferService = inject(FileTransferService);
+  private webrtcService = inject(WebRTCService);
+  private wsConnectionService = inject(WebSocketConnectionService);
+  private themeService = inject(ThemeService);
+  private languageService = inject(LanguageService);
+  private cdr = inject(ChangeDetectorRef);
+  private ngZone = inject(NgZone);
+  private toaster = inject(HotToastService);
+  private flowbiteService = inject(FlowbiteService);
+  private sessionService = inject(SessionService);
+  private route = inject(ActivatedRoute);
+  private logger = inject(NGXLogger);
+  private migrationService = inject(MigrationService);
+  private metaService = inject(MetaService);
+  private router = inject(Router);
+  private sanitizer = inject(DomSanitizer);
+  private previewService = inject(PreviewService);
+  private fileSizePipe = inject(FileSizePipe);
+  private deviceDetectorService = inject(DeviceDetectorService);
+  private elementRef = inject(ElementRef);
+  protected translate = inject<TranslateService>(TranslateService);
+  private platformId = inject(PLATFORM_ID);
+
   /**
    * ==========================================================
    * PUBLIC PROPERTIES
@@ -185,41 +207,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('messageTextarea', { static: false }) messageTextarea!: ElementRef;
   @ViewChild('qrCodeContainer', { static: false }) qrCodeContainer!: ElementRef;
   @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>;
-
-  /**
-   * ==========================================================
-   * CONSTRUCTOR
-   * Dependency injection, TranslateService setup, and any
-   * other initial tasks that run before ngOnInit.
-   * ==========================================================
-   */
-  constructor(
-    public userService: UserService,
-    private chatService: ChatService,
-    private roomService: RoomService,
-    private fileTransferService: FileTransferService,
-    private webrtcService: WebRTCService,
-    private wsConnectionService: WebSocketConnectionService,
-    private themeService: ThemeService,
-    private languageService: LanguageService,
-    private cdr: ChangeDetectorRef,
-    private ngZone: NgZone,
-    private toaster: HotToastService,
-    private flowbiteService: FlowbiteService,
-    private sessionService: SessionService,
-    private route: ActivatedRoute,
-    private logger: NGXLogger,
-    private migrationService: MigrationService,
-    private metaService: MetaService,
-    private router: Router,
-    private sanitizer: DomSanitizer,
-    private previewService: PreviewService,
-    private fileSizePipe: FileSizePipe,
-    private deviceDetectorService: DeviceDetectorService,
-    private elementRef: ElementRef,
-    @Inject(TranslateService) protected translate: TranslateService,
-    @Inject(PLATFORM_ID) private platformId: object
-  ) {}
 
   /**
    * ==========================================================
@@ -895,16 +882,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     let processedText = escapeHtml(text);
     processedText = processedText.replace(/\n/g, '<br>');
 
-    let linkClasses = '';
-    if (isMyMessage) {
-      if (isDarkMode) {
-        linkClasses = 'text-blue-400 hover:text-blue-800 underline break-all';
-      } else {
-        linkClasses = 'text-blue-600 hover:text-blue-400 underline break-all';
-      }
-    } else {
-      linkClasses = 'text-blue-200 hover:text-blue-500 underline break-all';
-    }
+    const linkClasses = isMyMessage
+      ? isDarkMode
+        ? 'text-blue-400 hover:text-blue-800 underline break-all'
+        : 'text-blue-600 hover:text-blue-400 underline break-all'
+      : 'text-blue-200 hover:text-blue-500 underline break-all';
 
     const textWithLinks = Autolinker.link(processedText, {
       urls: true,

@@ -1,4 +1,4 @@
-import { Component, Inject, OnInit, PLATFORM_ID, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, PLATFORM_ID, ChangeDetectionStrategy, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
 import { MetaInitService } from './core/services/ui/meta-init.service';
@@ -11,12 +11,10 @@ import { MetaInitService } from './core/services/ui/meta-init.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements OnInit {
-  title = 'PastePoint';
+  private platformId = inject(PLATFORM_ID);
+  private metaInitService = inject(MetaInitService);
 
-  constructor(
-    @Inject(PLATFORM_ID) private platformId: object,
-    private metaInitService: MetaInitService
-  ) {}
+  title = 'PastePoint';
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {

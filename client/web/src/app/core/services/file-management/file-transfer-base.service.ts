@@ -1,4 +1,4 @@
-import { Inject, Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 import { WebRTCService } from '../communication/webrtc.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
@@ -7,12 +7,18 @@ import { FileDownload, FileUpload, FileTransferStatus } from '../../../utils/con
 import { BehaviorSubject } from 'rxjs';
 import { Mutex } from 'async-mutex';
 import { DataChannelMessage } from '../../../utils/constants';
-import { HotToastService } from '@ngneat/hot-toast';
+import { HotToastService } from '@ngxpert/hot-toast';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FileTransferBaseService {
+  protected webrtcService = inject(WebRTCService);
+  protected toaster = inject(HotToastService);
+  protected translate = inject<TranslateService>(TranslateService);
+  protected logger = inject(NGXLogger);
+  protected ngZone = inject(NgZone);
+
   // =============== Static Properties ===============
   // Make BehaviorSubjects static so they're shared across all services
   public static activeUploads$ = new BehaviorSubject<FileUpload[]>([]);
@@ -31,15 +37,6 @@ export class FileTransferBaseService {
   private static activeUploadsMutex = new Mutex();
   private static activeDownloadsMutex = new Mutex();
   private static incomingFileOffersMutex = new Mutex();
-
-  // =============== Constructor ===============
-  constructor(
-    protected webrtcService: WebRTCService,
-    protected toaster: HotToastService,
-    @Inject(TranslateService) protected translate: TranslateService,
-    protected logger: NGXLogger,
-    protected ngZone: NgZone
-  ) {}
 
   // =============== Utility Methods ===============
   /**
