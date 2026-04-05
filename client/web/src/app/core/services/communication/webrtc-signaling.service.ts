@@ -167,7 +167,10 @@ export class WebRTCSignalingService {
       };
       dataChannel.onclose = () => {
         this.connectionLocks.delete(targetUser);
-        if (this.wsService.isConnected() && this.peerConnections.get(targetUser) === peerConnection) {
+        if (
+          this.wsService.isConnected() &&
+          this.peerConnections.get(targetUser) === peerConnection
+        ) {
           this.closePeerConnection(targetUser, true);
           this.handleDisconnection(targetUser);
         }
@@ -1040,7 +1043,10 @@ export class WebRTCSignalingService {
       };
       dataChannel.onclose = () => {
         this.connectionLocks.delete(targetUser);
-        if (this.wsService.isConnected() && this.peerConnections.get(targetUser) === peerConnection) {
+        if (
+          this.wsService.isConnected() &&
+          this.peerConnections.get(targetUser) === peerConnection
+        ) {
           this.closePeerConnection(targetUser, true);
           this.handleDisconnection(targetUser);
         }
