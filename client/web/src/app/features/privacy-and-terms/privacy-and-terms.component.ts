@@ -1,4 +1,4 @@
-import { Component, Inject, ChangeDetectorRef, PLATFORM_ID, OnInit } from '@angular/core';
+import { Component, ChangeDetectorRef, PLATFORM_ID, OnInit, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';

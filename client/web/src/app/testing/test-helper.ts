@@ -10,7 +10,7 @@ import {
 import { MockHotToastService } from './mock-toastr.service';
 import { MockTranslateService } from './mock-translate.service';
 import { of } from 'rxjs';
-import { HotToastService } from '@ngneat/hot-toast';
+import { HotToastService } from '@ngxpert/hot-toast';
 
 // Mock translate loader - This is still used for TranslateModule configuration
 export class MockTranslateLoader implements TranslateLoader {

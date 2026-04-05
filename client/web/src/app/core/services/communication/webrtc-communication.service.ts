@@ -1,4 +1,4 @@
-import { Injectable, NgZone, PLATFORM_ID, Inject } from '@angular/core';
+import { Injectable, NgZone, PLATFORM_ID, inject } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import {
   BUFFERED_AMOUNT_LOW_THRESHOLD,
@@ -9,7 +9,7 @@ import {
   DataChannelMessage,
 } from '../../../utils/constants';
 import { NGXLogger } from 'ngx-logger';
-import { HotToastService } from '@ngneat/hot-toast';
+import { HotToastService } from '@ngxpert/hot-toast';
 import { TranslateService } from '@ngx-translate/core';
 import { decodeChunk } from '../../../utils/chunk-protocol';
 

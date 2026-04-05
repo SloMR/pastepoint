@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { WebSocketConnectionService } from './websocket-connection.service';
 import { UserService } from '../user-management/user.service';
 import {
@@ -16,7 +16,7 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { WebRTCCommunicationService } from './webrtc-communication.service';
-import { HotToastService } from '@ngneat/hot-toast';
+import { HotToastService } from '@ngxpert/hot-toast';
 
 @Injectable({
   providedIn: 'root',

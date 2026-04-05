@@ -1,10 +1,10 @@
 import {
   Injectable,
-  Inject,
   PLATFORM_ID,
   TransferState,
   makeStateKey,
   StateKey,
+  inject,
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';

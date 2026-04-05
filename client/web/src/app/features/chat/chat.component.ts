@@ -5,12 +5,12 @@ import {
   Component,
   CUSTOM_ELEMENTS_SCHEMA,
   ElementRef,
-  Inject,
   NgZone,
   OnDestroy,
   OnInit,
   PLATFORM_ID,
   ViewChild,
+  inject,
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import {

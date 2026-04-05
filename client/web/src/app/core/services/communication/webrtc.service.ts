@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { ChatMessage, DataChannelMessage } from '../../../utils/constants';
 import { IWebRTCService } from '../../interfaces/webrtc.interface';

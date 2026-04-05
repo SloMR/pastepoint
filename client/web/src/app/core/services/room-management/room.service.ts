@@ -1,4 +1,4 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import { WebSocketConnectionService } from '../communication/websocket-connection.service';
 import { NGXLogger } from 'ngx-logger';

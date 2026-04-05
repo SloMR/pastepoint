@@ -1,4 +1,4 @@
-import { Inject, Injectable, PLATFORM_ID, OnDestroy } from '@angular/core';
+import { Injectable, PLATFORM_ID, OnDestroy, inject } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { Router } from '@angular/router';
@@ -10,7 +10,7 @@ import {
   WS_PREFIX_KEEP_ALIVE,
   WS_KEEP_ALIVE_INTERVAL_MS,
 } from '../../../utils/constants';
-import { HotToastService } from '@ngneat/hot-toast';
+import { HotToastService } from '@ngxpert/hot-toast';
 @Injectable({
   providedIn: 'root',
 })

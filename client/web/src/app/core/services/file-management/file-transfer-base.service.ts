@@ -1,4 +1,4 @@
-import { Inject, Injectable, NgZone } from '@angular/core';
+import { Injectable, NgZone, inject } from '@angular/core';
 import { WebRTCService } from '../communication/webrtc.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
@@ -7,7 +7,7 @@ import { FileDownload, FileUpload, FileTransferStatus } from '../../../utils/con
 import { BehaviorSubject } from 'rxjs';
 import { Mutex } from 'async-mutex';
 import { DataChannelMessage } from '../../../utils/constants';
-import { HotToastService } from '@ngneat/hot-toast';
+import { HotToastService } from '@ngxpert/hot-toast';
 
 @Injectable({
   providedIn: 'root',
