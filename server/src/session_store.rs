@@ -6,7 +6,7 @@ use actix::SystemService;
 use actix_rt::{spawn, task, time};
 use actix_web::{Error, HttpRequest, HttpResponse, web::Payload};
 use actix_web_actors::ws as actix_actor_ws;
-use rand::{Rng, rng};
+use rand::{RngExt, rng};
 use std::{
     collections::{HashMap, HashSet},
     sync::{
