@@ -5,13 +5,7 @@ import { isPlatformBrowser } from '@angular/common';
   providedIn: 'root',
 })
 export class FlowbiteService {
-  /**
-   * ==========================================================
-   * CONSTRUCTOR
-   * Dependency injection
-   * ==========================================================
-   */
-  constructor(@Inject(PLATFORM_ID) private platformId: object) {}
+  private platformId = inject(PLATFORM_ID);
 
   /**
    * ==========================================================

@@ -15,6 +15,12 @@ import { HotToastService } from '@ngxpert/hot-toast';
   providedIn: 'root',
 })
 export class WebSocketConnectionService implements OnDestroy {
+  private router = inject(Router);
+  private logger = inject(NGXLogger);
+  private toaster = inject(HotToastService);
+  private translate = inject<TranslateService>(TranslateService);
+  private platformId = inject(PLATFORM_ID);
+
   /**
    * ==========================================================
    * PRIVATE PROPERTIES
@@ -58,13 +64,7 @@ export class WebSocketConnectionService implements OnDestroy {
    * Dependency injection
    * ==========================================================
    */
-  constructor(
-    private router: Router,
-    private logger: NGXLogger,
-    private toaster: HotToastService,
-    @Inject(TranslateService) private translate: TranslateService,
-    @Inject(PLATFORM_ID) private platformId: object
-  ) {
+  constructor() {
     if (isPlatformBrowser(this.platformId)) {
       this.setupBFCacheHandlers();
     }

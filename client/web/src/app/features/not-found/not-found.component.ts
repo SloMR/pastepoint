@@ -19,20 +19,18 @@ import { THEME_PREFERENCE_KEY } from '../../utils/constants';
   styleUrl: './not-found.component.css',
 })
 export class NotFoundComponent implements OnInit {
+  private platformId = inject(PLATFORM_ID);
+  protected translate = inject<TranslateService>(TranslateService);
+  private cdr = inject(ChangeDetectorRef);
+  private themeService = inject(ThemeService);
+  private languageService = inject(LanguageService);
+  private logger = inject(NGXLogger);
+  private migrationService = inject(MigrationService);
+  private metaService = inject(MetaService);
+
   isDarkMode = false;
   currentLanguage: LanguageCode = 'en';
   appVersion: string = packageJson.version;
-
-  constructor(
-    @Inject(PLATFORM_ID) private platformId: object,
-    @Inject(TranslateService) protected translate: TranslateService,
-    private cdr: ChangeDetectorRef,
-    private themeService: ThemeService,
-    private languageService: LanguageService,
-    private logger: NGXLogger,
-    private migrationService: MigrationService,
-    private metaService: MetaService
-  ) {}
 
   ngOnInit(): void {
     if (!isPlatformBrowser(this.platformId)) {

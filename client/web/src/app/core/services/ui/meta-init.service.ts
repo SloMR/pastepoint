@@ -9,14 +9,14 @@ import { MetaConfig, StructuredData } from '../../../utils/constants';
   providedIn: 'root',
 })
 export class MetaInitService {
+  private metaService = inject(MetaService);
+  private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
+
   /**
    * Constructor - sets up route change listener to update metadata
    */
-  constructor(
-    private metaService: MetaService,
-    private router: Router,
-    @Inject(PLATFORM_ID) private platformId: object
-  ) {
+  constructor() {
     if (isPlatformBrowser(this.platformId)) {
       // Listen for navigation events to update metadata
       this.router.events

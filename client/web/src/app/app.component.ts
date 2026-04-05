@@ -11,12 +11,10 @@ import { MetaInitService } from './core/services/ui/meta-init.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AppComponent implements OnInit {
-  title = 'PastePoint';
+  private platformId = inject(PLATFORM_ID);
+  private metaInitService = inject(MetaInitService);
 
-  constructor(
-    @Inject(PLATFORM_ID) private platformId: object,
-    private metaInitService: MetaInitService
-  ) {}
+  title = 'PastePoint';
 
   ngOnInit(): void {
     if (isPlatformBrowser(this.platformId)) {

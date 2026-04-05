@@ -8,16 +8,8 @@ import { APP_VERSION_KEY, THEME_PREFERENCE_KEY, SESSION_CODE_KEY } from '../../.
   providedIn: 'root',
 })
 export class MigrationService implements IMigrationService {
-  /**
-   * ==========================================================
-   * CONSTRUCTOR
-   * Dependency injection
-   * ==========================================================
-   */
-  constructor(
-    @Inject(PLATFORM_ID) private platformId: object,
-    private logger: NGXLogger
-  ) {}
+  private platformId = inject(PLATFORM_ID);
+  private logger = inject(NGXLogger);
 
   /**
    * ==========================================================

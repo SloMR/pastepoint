@@ -10,11 +10,9 @@ import { NGXLogger } from 'ngx-logger';
   providedIn: 'root',
 })
 export class WebRTCService implements IWebRTCService {
-  constructor(
-    private signalingService: WebRTCSignalingService,
-    private communicationService: WebRTCCommunicationService,
-    private logger: NGXLogger
-  ) {}
+  private signalingService = inject(WebRTCSignalingService);
+  private communicationService = inject(WebRTCCommunicationService);
+  private logger = inject(NGXLogger);
 
   // =============== Public Properties ===============
   /**

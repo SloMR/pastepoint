@@ -1,14 +1,10 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import {
   FILE_TRANSFER_MESSAGE_TYPES,
   FileDownload,
   PREVIEW_MIME_TYPE,
 } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
-import { WebRTCService } from '../communication/webrtc.service';
-import { TranslateService } from '@ngx-translate/core';
-import { NGXLogger } from 'ngx-logger';
-import { HotToastService } from '@ngneat/hot-toast';
 import { PreviewService } from '../../services/ui/preview.service';
 import {
   createStreamingHash,
@@ -21,16 +17,11 @@ import {
   providedIn: 'root',
 })
 export class FileDownloadService extends FileTransferBaseService {
+  private previewService = inject(PreviewService);
+
   // =============== Constructor ===============
-  constructor(
-    webrtcService: WebRTCService,
-    toaster: HotToastService,
-    translate: TranslateService,
-    logger: NGXLogger,
-    ngZone: NgZone,
-    private previewService: PreviewService
-  ) {
-    super(webrtcService, toaster, translate, logger, ngZone);
+  constructor() {
+    super();
   }
 
   // =============== Data Handling Methods ===============

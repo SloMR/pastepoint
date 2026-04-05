@@ -1,24 +1,14 @@
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { FileDownload, FILE_TRANSFER_MESSAGE_TYPES } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
-import { WebRTCService } from '../communication/webrtc.service';
-import { TranslateService } from '@ngx-translate/core';
-import { NGXLogger } from 'ngx-logger';
-import { HotToastService } from '@ngneat/hot-toast';
 
 @Injectable({
   providedIn: 'root',
 })
 export class FileOfferService extends FileTransferBaseService {
   // =============== Constructor ===============
-  constructor(
-    webrtcService: WebRTCService,
-    toaster: HotToastService,
-    translate: TranslateService,
-    logger: NGXLogger,
-    ngZone: NgZone
-  ) {
-    super(webrtcService, toaster, translate, logger, ngZone);
+  constructor() {
+    super();
   }
 
   // =============== File Offer Methods ===============

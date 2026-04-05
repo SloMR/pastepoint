@@ -22,6 +22,13 @@ import { HotToastService } from '@ngxpert/hot-toast';
   providedIn: 'root',
 })
 export class WebRTCSignalingService {
+  private wsService = inject(WebSocketConnectionService);
+  private userService = inject(UserService);
+  private toaster = inject(HotToastService);
+  private translate = inject<TranslateService>(TranslateService);
+  private logger = inject(NGXLogger);
+  private communicationService = inject(WebRTCCommunicationService);
+
   // =============== Properties ===============
   private peerConnections = new Map<string, RTCPeerConnection>();
   private reconnectAttempts = new Map<string, number>();
@@ -34,14 +41,7 @@ export class WebRTCSignalingService {
   private stateMismatchTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
   private collectedCandidates = new Map<string, RTCIceCandidate[]>();
 
-  constructor(
-    private wsService: WebSocketConnectionService,
-    private userService: UserService,
-    private toaster: HotToastService,
-    @Inject(TranslateService) private translate: TranslateService,
-    private logger: NGXLogger,
-    private communicationService: WebRTCCommunicationService
-  ) {
+  constructor() {
     this.initializeSignalMessageHandler();
     this.communicationService.dataChannelClosed$.subscribe((targetUser) => {
       if (this.wsService.isConnected() && this.peerConnections.has(targetUser)) {

@@ -8,6 +8,10 @@ import { IRoomService } from '../../interfaces/room.interface';
   providedIn: 'root',
 })
 export class RoomService implements IRoomService {
+  private wsService = inject(WebSocketConnectionService);
+  private logger = inject(NGXLogger);
+  private ngZone = inject(NgZone);
+
   /**
    * ==========================================================
    * PROPERTIES & OBSERVABLES
@@ -24,11 +28,7 @@ export class RoomService implements IRoomService {
    * Dependency injection and subscription setup
    * ==========================================================
    */
-  constructor(
-    private wsService: WebSocketConnectionService,
-    private logger: NGXLogger,
-    private ngZone: NgZone
-  ) {
+  constructor() {
     this.wsService.systemMessages$.subscribe((message) => {
       this.handleSystemMessage(message);
     });

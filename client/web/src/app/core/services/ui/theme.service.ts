@@ -13,6 +13,9 @@ import { THEME_PREFERENCE_KEY } from '../../../utils/constants';
   providedIn: 'root',
 })
 export class ThemeService implements IThemeService {
+  private platformId = inject(PLATFORM_ID);
+  private transferState = inject(TransferState);
+
   /**
    * ==========================================================
    * CONSTANTS
@@ -20,17 +23,6 @@ export class ThemeService implements IThemeService {
    * ==========================================================
    */
   private readonly THEME_KEY: StateKey<string> = makeStateKey<string>(THEME_PREFERENCE_KEY);
-
-  /**
-   * ==========================================================
-   * CONSTRUCTOR
-   * Dependency injection
-   * ==========================================================
-   */
-  constructor(
-    @Inject(PLATFORM_ID) private platformId: object,
-    private transferState: TransferState
-  ) {}
 
   /**
    * ==========================================================

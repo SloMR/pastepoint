@@ -6,6 +6,8 @@ import { environment } from '../../../../environments/environment';
   providedIn: 'root',
 })
 export class SessionService {
+  private http = inject(HttpClient);
+
   /**
    * ==========================================================
    * PROPERTIES
@@ -13,14 +15,6 @@ export class SessionService {
    * ==========================================================
    */
   private baseUrl = `https://${environment.apiUrl}`;
-
-  /**
-   * ==========================================================
-   * CONSTRUCTOR
-   * Dependency injection
-   * ==========================================================
-   */
-  constructor(private http: HttpClient) {}
 
   /**
    * ==========================================================
