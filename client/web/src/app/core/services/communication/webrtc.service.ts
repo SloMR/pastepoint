@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { BehaviorSubject, Subject } from 'rxjs';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { ChatMessage, DataChannelMessage } from '../../../utils/constants';
 import { IWebRTCService } from '../../interfaces/webrtc.interface';
 import { WebRTCSignalingService } from './webrtc-signaling.service';
@@ -15,12 +15,12 @@ export class WebRTCService implements IWebRTCService {
   private logger = inject(NGXLogger);
 
   // =============== Public Properties ===============
-  public get peerDisconnected$(): Subject<string> {
-    return this.signalingService.peerDisconnected$;
+  public get peerDisconnected$(): Observable<string> {
+    return this.signalingService.peerDisconnected$.asObservable();
   }
 
-  public get peerConnected$(): Subject<string> {
-    return this.signalingService.peerConnected$;
+  public get peerConnected$(): Observable<string> {
+    return this.signalingService.peerConnected$.asObservable();
   }
 
   /**
