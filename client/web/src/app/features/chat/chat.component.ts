@@ -882,16 +882,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     let processedText = escapeHtml(text);
     processedText = processedText.replace(/\n/g, '<br>');
 
-    let linkClasses = '';
-    if (isMyMessage) {
-      if (isDarkMode) {
-        linkClasses = 'text-blue-400 hover:text-blue-800 underline break-all';
-      } else {
-        linkClasses = 'text-blue-600 hover:text-blue-400 underline break-all';
-      }
-    } else {
-      linkClasses = 'text-blue-200 hover:text-blue-500 underline break-all';
-    }
+    const linkClasses = isMyMessage
+      ? isDarkMode
+        ? 'text-blue-400 hover:text-blue-800 underline break-all'
+        : 'text-blue-600 hover:text-blue-400 underline break-all'
+      : 'text-blue-200 hover:text-blue-500 underline break-all';
 
     const textWithLinks = Autolinker.link(processedText, {
       urls: true,

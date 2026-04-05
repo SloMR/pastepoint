@@ -34,7 +34,9 @@ export class PreviewService {
       this.pdfjsLib = pdfjsLib;
       this.pdfJsLoaded = true;
     } catch (e) {
-      throw new Error(`Failed to load pdf.js from CDN: ${(e as Error)?.message || e}`);
+      throw new Error(`Failed to load pdf.js from CDN: ${(e as Error)?.message || e}`, {
+        cause: e,
+      });
     }
   }
 
