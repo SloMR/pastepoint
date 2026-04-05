@@ -573,6 +573,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           // Filter out the local user's own name
           this.members = allMembers.filter((m) => m !== this.userService.user);
 
+          // Clear disconnect warning timeouts for members who left
+          for (const [member, timeoutId] of this.disconnectWarningTimeouts.entries()) {
+            if (!this.members.includes(member)) {
+              clearTimeout(timeoutId);
+              this.disconnectWarningTimeouts.delete(member);
+            }
+          }
+
           // Initialize connection status for new members
           this.members.forEach((member) => {
             if (!this.memberConnectionStatus.has(member)) {
@@ -636,7 +644,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           if (!this.disconnectWarningTimeouts.has(member)) {
             const timeoutId = setTimeout(() => {
               this.ngZone.run(() => {
-                if (!this.webrtcService.isConnected(member) && !this.connectionWarningDismissed) {
+                if (
+                  this.members.includes(member) &&
+                  !this.webrtcService.isConnected(member) &&
+                  !this.connectionWarningDismissed
+                ) {
                   this.showConnectionWarning = true;
                   this.cdr.detectChanges();
                 }

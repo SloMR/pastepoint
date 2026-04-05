@@ -1994,33 +1994,41 @@
                   class="flex items-center gap-6 px-2"
                   [ngClass]="isRTL ? 'flex-row-reverse' : 'flex-row'"
                 >
-                  <img
-                    [src]="'/icons/link.svg'"
-                    alt="Attach Files"
+                  <button
+                    type="button"
+                    [disabled]="hasNoConnectedPeers"
+                    (click)="fileInput.click()"
+                    class="p-0 border-0 bg-transparent disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    [attr.aria-label]="'Attach Files'"
                     title="Attach Files"
-                    (click)="hasNoConnectedPeers ? null : fileInput.click()"
-                    class="h-5 w-5"
-                    [ngClass]="
-                      hasNoConnectedPeers ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                    "
-                    loading="lazy"
-                    width="20"
-                    height="20"
-                  />
-                  <img
-                    [src]="'/icons/emoji.svg'"
-                    alt="Emoji"
-                    title="Open emoji picker"
-                    class="h-5 w-5"
-                    [ngClass]="
-                      hasNoConnectedPeers ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                    "
-                    (mouseenter)="hasNoConnectedPeers ? null : openEmojiPicker()"
+                  >
+                    <img
+                      [src]="'/icons/link.svg'"
+                      alt=""
+                      class="h-5 w-5"
+                      loading="lazy"
+                      width="20"
+                      height="20"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    [disabled]="hasNoConnectedPeers"
+                    (mouseenter)="openEmojiPicker()"
                     (mouseleave)="handleEmojiIconMouseLeave()"
-                    loading="lazy"
-                    width="20"
-                    height="20"
-                  />
+                    class="p-0 border-0 bg-transparent disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    [attr.aria-label]="'Open emoji picker'"
+                    title="Open emoji picker"
+                  >
+                    <img
+                      [src]="'/icons/emoji.svg'"
+                      alt=""
+                      class="h-5 w-5"
+                      loading="lazy"
+                      width="20"
+                      height="20"
+                    />
+                  </button>
                 </div>
                 <button
                   [disabled]="isSendDisabled"
