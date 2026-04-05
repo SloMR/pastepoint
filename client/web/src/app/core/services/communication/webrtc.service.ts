@@ -15,6 +15,14 @@ export class WebRTCService implements IWebRTCService {
   private logger = inject(NGXLogger);
 
   // =============== Public Properties ===============
+  public get peerDisconnected$(): Subject<string> {
+    return this.signalingService.peerDisconnected$;
+  }
+
+  public get peerConnected$(): Subject<string> {
+    return this.signalingService.peerConnected$;
+  }
+
   /**
    * Gets the data channel open subject
    */

@@ -17,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { WebRTCCommunicationService } from './webrtc-communication.service';
 import { HotToastService } from '@ngxpert/hot-toast';
+import { Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -30,6 +31,9 @@ export class WebRTCSignalingService {
   private communicationService = inject(WebRTCCommunicationService);
 
   // =============== Properties ===============
+  public peerDisconnected$ = new Subject<string>();
+  public peerConnected$ = new Subject<string>();
+
   private peerConnections = new Map<string, RTCPeerConnection>();
   private reconnectAttempts = new Map<string, number>();
   private connectionLocks = new Set<string>();
@@ -435,6 +439,7 @@ export class WebRTCSignalingService {
           iceGatheringTimeout = null;
         }
         this.logger.info('createPeerConnection', `Successfully connected to ${targetUser}`);
+        this.peerConnected$.next(targetUser);
       } else if (state === 'failed' || state === 'disconnected') {
         // Clear timeout on failure
         if (iceGatheringTimeout) {
@@ -475,6 +480,7 @@ export class WebRTCSignalingService {
    * @param targetUser The user to handle disconnection for
    */
   private handleDisconnection(targetUser: string) {
+    this.peerDisconnected$.next(targetUser);
     const attempts = this.reconnectAttempts.get(targetUser) ?? 0;
 
     // Log diagnostic info on first failure
