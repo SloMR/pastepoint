@@ -4,7 +4,7 @@ use crate::{
     message::{ChatMessage, Client, ClientMetadata, Room, WsChatServer},
 };
 use actix::prelude::*;
-use rand::{Rng, rng};
+use rand::{RngExt, rng};
 use std::collections::{HashMap, hash_map::Entry::Vacant};
 
 impl WsChatServer {

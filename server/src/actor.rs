@@ -2,7 +2,7 @@ use crate::{LeaveRoom, WsChatServer, WsChatSession};
 use actix::{Context, SystemService, prelude::Actor};
 use actix_broker::BrokerSubscribe;
 use actix_web_actors::ws;
-use rand::{Rng, rng};
+use rand::{RngExt, rng};
 use std::time::Instant;
 use uuid::Uuid;
 

@@ -14,7 +14,7 @@ use fake::{
     Fake,
     faker::name::{en::FirstName, en::LastName},
 };
-use rand::{Rng, rng};
+use rand::{RngExt, rng};
 use serde_json::Value;
 use std::time::{Duration, Instant};
 
