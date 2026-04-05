@@ -133,6 +133,9 @@ export class WebRTCCommunicationService {
     };
 
     channel.onerror = (ev: Event) => {
+      // Ignore events from stale data channels that have been replaced
+      if (this.dataChannels.get(targetUser) !== channel) return;
+
       if ('error' in ev) {
         const rtcErrorEvent = ev as RTCErrorEvent;
         const error = rtcErrorEvent.error;
@@ -151,6 +154,9 @@ export class WebRTCCommunicationService {
     };
 
     channel.onclose = () => {
+      // Ignore events from stale data channels that have been replaced
+      if (this.dataChannels.get(targetUser) !== channel) return;
+
       this.logger.info('setupDataChannel', `Data channel with ${targetUser} is closed`);
       this.dataChannelOpen$.next(false);
       this.dataChannels.delete(targetUser);

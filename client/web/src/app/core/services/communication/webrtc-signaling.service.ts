@@ -17,6 +17,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NGXLogger } from 'ngx-logger';
 import { WebRTCCommunicationService } from './webrtc-communication.service';
 import { HotToastService } from '@ngxpert/hot-toast';
+import { Subject } from 'rxjs';
 
 @Injectable({
   providedIn: 'root',
@@ -30,6 +31,9 @@ export class WebRTCSignalingService {
   private communicationService = inject(WebRTCCommunicationService);
 
   // =============== Properties ===============
+  public peerDisconnected$ = new Subject<string>();
+  public peerConnected$ = new Subject<string>();
+
   private peerConnections = new Map<string, RTCPeerConnection>();
   private reconnectAttempts = new Map<string, number>();
   private connectionLocks = new Set<string>();
@@ -44,7 +48,12 @@ export class WebRTCSignalingService {
   constructor() {
     this.initializeSignalMessageHandler();
     this.communicationService.dataChannelClosed$.subscribe((targetUser) => {
-      if (this.wsService.isConnected() && this.peerConnections.has(targetUser)) {
+      if (
+        this.wsService.isConnected() &&
+        this.peerConnections.has(targetUser) &&
+        !this.connectionLocks.has(targetUser) &&
+        !this.reconnectionTimeouts.has(targetUser)
+      ) {
         this.logger.info(
           'handleDataChannelClose',
           `Data channel closed with ${targetUser}, attempting reconnection`
@@ -151,12 +160,17 @@ export class WebRTCSignalingService {
       };
       dataChannel.onerror = () => {
         this.connectionLocks.delete(targetUser);
-        this.closePeerConnection(targetUser, true);
-        this.handleDisconnection(targetUser);
+        if (this.peerConnections.get(targetUser) === peerConnection) {
+          this.closePeerConnection(targetUser, true);
+          this.handleDisconnection(targetUser);
+        }
       };
       dataChannel.onclose = () => {
         this.connectionLocks.delete(targetUser);
-        if (this.wsService.isConnected()) {
+        if (
+          this.wsService.isConnected() &&
+          this.peerConnections.get(targetUser) === peerConnection
+        ) {
           this.closePeerConnection(targetUser, true);
           this.handleDisconnection(targetUser);
         }
@@ -426,6 +440,9 @@ export class WebRTCSignalingService {
     };
 
     peerConnection.onconnectionstatechange = () => {
+      // Ignore events from stale connections that have been replaced
+      if (this.peerConnections.get(targetUser) !== peerConnection) return;
+
       const state = peerConnection.connectionState;
 
       if (state === 'connected') {
@@ -434,7 +451,9 @@ export class WebRTCSignalingService {
           clearTimeout(iceGatheringTimeout);
           iceGatheringTimeout = null;
         }
+        this.reconnectAttempts.delete(targetUser);
         this.logger.info('createPeerConnection', `Successfully connected to ${targetUser}`);
+        this.peerConnected$.next(targetUser);
       } else if (state === 'failed' || state === 'disconnected') {
         // Clear timeout on failure
         if (iceGatheringTimeout) {
@@ -446,6 +465,9 @@ export class WebRTCSignalingService {
     };
 
     peerConnection.oniceconnectionstatechange = () => {
+      // Ignore events from stale connections that have been replaced
+      if (this.peerConnections.get(targetUser) !== peerConnection) return;
+
       const iceState = peerConnection.iceConnectionState;
 
       if (iceState === 'connected' || iceState === 'completed') {
@@ -475,6 +497,11 @@ export class WebRTCSignalingService {
    * @param targetUser The user to handle disconnection for
    */
   private handleDisconnection(targetUser: string) {
+    // Skip if a reconnection is already scheduled for this user
+    if (this.reconnectionTimeouts.has(targetUser)) {
+      return;
+    }
+
     const attempts = this.reconnectAttempts.get(targetUser) ?? 0;
 
     // Log diagnostic info on first failure
@@ -537,6 +564,7 @@ export class WebRTCSignalingService {
         );
       }
       this.closePeerConnection(targetUser, true);
+      this.peerDisconnected$.next(targetUser);
     }
   }
 
@@ -888,14 +916,9 @@ export class WebRTCSignalingService {
   private reconnect(targetUser: string) {
     this.logger.info('reconnect', `Reconnecting WebRTC with ${targetUser}...`);
 
-    const peerConnection = this.peerConnections.get(targetUser);
-    if (peerConnection) {
-      peerConnection.close();
-      this.peerConnections.delete(targetUser);
-    }
-
-    this.initiateConnection(targetUser);
+    this.closePeerConnection(targetUser, true);
     this.reconnectAttempts.set(targetUser, 0);
+    this.initiateConnection(targetUser);
   }
 
   /**
@@ -1013,12 +1036,17 @@ export class WebRTCSignalingService {
       };
       dataChannel.onerror = () => {
         this.connectionLocks.delete(targetUser);
-        this.closePeerConnection(targetUser, true);
-        this.handleDisconnection(targetUser);
+        if (this.peerConnections.get(targetUser) === peerConnection) {
+          this.closePeerConnection(targetUser, true);
+          this.handleDisconnection(targetUser);
+        }
       };
       dataChannel.onclose = () => {
         this.connectionLocks.delete(targetUser);
-        if (this.wsService.isConnected()) {
+        if (
+          this.wsService.isConnected() &&
+          this.peerConnections.get(targetUser) === peerConnection
+        ) {
           this.closePeerConnection(targetUser, true);
           this.handleDisconnection(targetUser);
         }

@@ -108,6 +108,12 @@
   "TERMS_GOVERNING_LAW": "تُفسَّر هذه الشروط وتُطبَّق وفقاً لقوانين الولاية القضائية التي توجد فيها جهة تشغيل الخدمة، دون اعتبار لتنازع القوانين.",
   "LEGAL_NOTICE": "هذه الوثيقة لأغراض المعلومات فقط ولا تُعد استشارة قانونية. يُرجى استشارة محامٍ مختص لملابساتك الخاصة.",
 
+  "_CONNECTION_WARNING_SECTION": "==== CONNECTION WARNING ====",
+  "CONNECTION_WARNING_TITLE": "تعذّر الاتصال ببعض الأعضاء",
+  "CONNECTION_WARNING_DESC": "قد تمنع شبكتك الاتصال المباشر بين الأجهزة. جرّب تحديث الصفحة، أو التبديل إلى شبكة أخرى، أو تعطيل VPN أو جدار الحماية.",
+  "CONNECTION_WARNING_REFRESH": "تحديث",
+  "CONNECTION_WARNING_DISMISS": "تجاهل",
+
   "_STATUS_ERRORS_SECTION": "==== STATUS & ERRORS ====",
   "CONNECTION_LOST": "تم فقد الاتصال",
   "ERROR": "حدث خطأ",
