@@ -18,8 +18,6 @@ import {
   DecimalPipe,
   isPlatformBrowser,
   NgClass,
-  NgForOf,
-  NgIf,
   NgOptimizedImage,
   NgStyle,
   UpperCasePipe,
@@ -79,8 +77,6 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 @Component({
   selector: 'app-chat',
   imports: [
-    NgIf,
-    NgForOf,
     FormsModule,
     UpperCasePipe,
     DatePipe,
