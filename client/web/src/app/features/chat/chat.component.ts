@@ -686,6 +686,25 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       })
     );
 
+    // Also clear warning when data channel opens
+    this.subscriptions.push(
+      this.webrtcService.dataChannelOpen$.subscribe((isOpen) => {
+        if (isOpen && this.showConnectionWarning) {
+          this.ngZone.run(() => {
+            const otherMembers = this.members.filter((m) => m !== this.userService.user);
+            if (
+              otherMembers.length > 0 &&
+              otherMembers.every((m) => this.webrtcService.isConnected(m))
+            ) {
+              this.showConnectionWarning = false;
+              this.connectionWarningDismissed = false;
+              this.cdr.detectChanges();
+            }
+          });
+        }
+      })
+    );
+
     // Listen for incoming file offers
     this.subscriptions.push(
       this.fileTransferService.incomingFileOffers$.subscribe((incomingFiles: FileDownload[]) => {
