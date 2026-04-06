@@ -140,9 +140,9 @@ export class WebRTCSignalingService {
       'initiateConnection',
       `Initiating connection with ${targetUser} (role: caller)`
     );
-    const peerConnection = this.createPeerConnection(targetUser);
 
     try {
+      const peerConnection = this.createPeerConnection(targetUser);
       if (!peerConnection) {
         this.logger.error(
           'initiateConnection',
@@ -157,6 +157,10 @@ export class WebRTCSignalingService {
       dataChannel.onopen = () => {
         this.connectionLocks.delete(targetUser);
         this.communicationService.sendQueuedMessages(targetUser);
+        if (peerConnection.connectionState === 'connected') {
+          this.reconnectAttempts.delete(targetUser);
+          this.peerConnected$.next(targetUser);
+        }
       };
       dataChannel.onerror = () => {
         this.connectionLocks.delete(targetUser);
@@ -258,13 +262,6 @@ export class WebRTCSignalingService {
     if (requestDelayTimeout) {
       clearTimeout(requestDelayTimeout);
       this.connectionRequestDelays.delete(targetUser);
-    }
-
-    // Clear reconnection timeout
-    const reconnectionTimeout = this.reconnectionTimeouts.get(targetUser);
-    if (reconnectionTimeout) {
-      clearTimeout(reconnectionTimeout);
-      this.reconnectionTimeouts.delete(targetUser);
     }
 
     // Clear state mismatch timeout
@@ -451,9 +448,17 @@ export class WebRTCSignalingService {
           clearTimeout(iceGatheringTimeout);
           iceGatheringTimeout = null;
         }
-        this.reconnectAttempts.delete(targetUser);
-        this.logger.info('createPeerConnection', `Successfully connected to ${targetUser}`);
-        this.peerConnected$.next(targetUser);
+        // Only clear retry counter and emit connected when data channel is also open
+        if (this.communicationService.isConnected(targetUser)) {
+          this.reconnectAttempts.delete(targetUser);
+          this.logger.info('createPeerConnection', `Successfully connected to ${targetUser}`);
+          this.peerConnected$.next(targetUser);
+        } else {
+          this.logger.info(
+            'createPeerConnection',
+            `Peer connection connected to ${targetUser}, waiting for data channel`
+          );
+        }
       } else if (state === 'failed' || state === 'disconnected') {
         // Clear timeout on failure
         if (iceGatheringTimeout) {
@@ -534,7 +539,7 @@ export class WebRTCSignalingService {
 
       const timeoutId = setTimeout(() => {
         this.reconnectionTimeouts.delete(targetUser);
-        if (!this.peerConnections.has(targetUser)) {
+        if (!this.communicationService.isConnected(targetUser)) {
           this.logger.debug(
             'handleDisconnection',
             `Attempting reconnection ${attempts + 1} to ${targetUser}`
@@ -543,8 +548,9 @@ export class WebRTCSignalingService {
         } else {
           this.logger.debug(
             'handleDisconnection',
-            `Connection already exists for ${targetUser}, skipping reconnect`
+            `Connection healthy for ${targetUser}, skipping reconnect`
           );
+          this.reconnectAttempts.delete(targetUser);
         }
       }, delay);
 
@@ -1019,20 +1025,24 @@ export class WebRTCSignalingService {
 
     // Temporarily bypass role checking and initiate connection
     this.connectionLocks.add(targetUser);
-    const peerConnection = this.createPeerConnection(targetUser);
-
-    if (!peerConnection) {
-      this.logger.error('forceInitiateConnection', `PeerConnection missing for ${targetUser}`);
-      return;
-    }
 
     try {
+      const peerConnection = this.createPeerConnection(targetUser);
+      if (!peerConnection) {
+        this.logger.error('forceInitiateConnection', `PeerConnection missing for ${targetUser}`);
+        throw new Error(`Failed to create peer connection for ${targetUser}`);
+      }
+
       const dataChannel = peerConnection.createDataChannel('data', DATA_CHANNEL_OPTIONS);
       this.communicationService.setupDataChannel(dataChannel, targetUser);
 
       dataChannel.onopen = () => {
         this.connectionLocks.delete(targetUser);
         this.communicationService.sendQueuedMessages(targetUser);
+        if (peerConnection.connectionState === 'connected') {
+          this.reconnectAttempts.delete(targetUser);
+          this.peerConnected$.next(targetUser);
+        }
       };
       dataChannel.onerror = () => {
         this.connectionLocks.delete(targetUser);

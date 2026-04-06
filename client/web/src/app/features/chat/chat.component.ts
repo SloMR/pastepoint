@@ -47,7 +47,7 @@ import {
   HEARTBEAT_TIMEOUT_DESKTOP_SEC,
   HEARTBEAT_TIMEOUT_MOBILE_SEC,
   NAVIGATION_DELAY_MS,
-  CONNECTION_WARNING_THRESHOLD_MS,
+  CONNECTION_WARNING_DELAY_MS,
   SESSION_CODE_KEY,
   THEME_PREFERENCE_KEY,
   PREVIEW_MIME_TYPE,
@@ -167,7 +167,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private emojiPickerHideTimeout: ReturnType<typeof setTimeout> | null = null;
   private statusCheckIntervalId: ReturnType<typeof setInterval> | null = null;
   private connectionWarningDismissed = false;
-  private disconnectWarningTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
+  private connectionWarningTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
 
   appVersion: string = packageJson.version;
 
@@ -375,11 +375,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.logger.debug('ngOnDestroy', 'Status check interval cleared');
     }
 
-    // Clear disconnect warning timeouts
-    for (const timeoutId of this.disconnectWarningTimeouts.values()) {
+    // Clear connection warning timeouts
+    for (const timeoutId of this.connectionWarningTimeouts.values()) {
       clearTimeout(timeoutId);
     }
-    this.disconnectWarningTimeouts.clear();
+    this.connectionWarningTimeouts.clear();
 
     if (isPlatformBrowser(this.platformId) && this.visibilityChangeListener) {
       document.removeEventListener('visibilitychange', this.visibilityChangeListener);
@@ -573,18 +573,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
           // Filter out the local user's own name
           this.members = allMembers.filter((m) => m !== this.userService.user);
 
-          // Clear disconnect warning timeouts for members who left
-          for (const [member, timeoutId] of this.disconnectWarningTimeouts.entries()) {
+          // Clean up timeouts for members who left
+          for (const [member, timeoutId] of this.connectionWarningTimeouts.entries()) {
             if (!this.members.includes(member)) {
               clearTimeout(timeoutId);
-              this.disconnectWarningTimeouts.delete(member);
+              this.connectionWarningTimeouts.delete(member);
             }
           }
 
-          // Initialize connection status for new members
+          // For new members, start a warning timeout
           this.members.forEach((member) => {
             if (!this.memberConnectionStatus.has(member)) {
-              this.memberConnectionStatus.set(member, false); // Start as disconnected
+              this.memberConnectionStatus.set(member, false);
+              this.scheduleConnectionWarning(member);
             }
           });
 
@@ -636,72 +637,25 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       })
     );
 
-    // Start precise 5s warning timeout the instant a peer disconnects
+    // When a peer disconnects after being connected, restart warning timeout
     this.subscriptions.push(
       this.webrtcService.peerDisconnected$.subscribe((member) => {
         this.ngZone.run(() => {
           this.memberConnectionStatus.set(member, false);
-          if (!this.disconnectWarningTimeouts.has(member)) {
-            const timeoutId = setTimeout(() => {
-              this.ngZone.run(() => {
-                if (
-                  this.members.includes(member) &&
-                  !this.webrtcService.isConnected(member) &&
-                  !this.connectionWarningDismissed
-                ) {
-                  this.showConnectionWarning = true;
-                  this.cdr.detectChanges();
-                }
-                this.disconnectWarningTimeouts.delete(member);
-              });
-            }, CONNECTION_WARNING_THRESHOLD_MS);
-            this.disconnectWarningTimeouts.set(member, timeoutId);
-          }
+          this.scheduleConnectionWarning(member);
           this.cdr.detectChanges();
         });
       })
     );
 
-    // Cancel the warning timeout the instant a peer reconnects
+    // When a peer connects, cancel its warning timeout and hide banner if all peers are up
     this.subscriptions.push(
       this.webrtcService.peerConnected$.subscribe((member) => {
         this.ngZone.run(() => {
           this.memberConnectionStatus.set(member, true);
-          const timeoutId = this.disconnectWarningTimeouts.get(member);
-          if (timeoutId) {
-            clearTimeout(timeoutId);
-            this.disconnectWarningTimeouts.delete(member);
-          }
-          // Hide warning if all peers are now connected
-          const otherMembers = this.members.filter((m) => m !== this.userService.user);
-          if (
-            otherMembers.length > 0 &&
-            otherMembers.every((m) => this.webrtcService.isConnected(m))
-          ) {
-            this.showConnectionWarning = false;
-            this.connectionWarningDismissed = false;
-          }
+          this.clearConnectionWarning(member);
           this.cdr.detectChanges();
         });
-      })
-    );
-
-    // Also clear warning when data channel opens
-    this.subscriptions.push(
-      this.webrtcService.dataChannelOpen$.subscribe((isOpen) => {
-        if (isOpen && this.showConnectionWarning) {
-          this.ngZone.run(() => {
-            const otherMembers = this.members.filter((m) => m !== this.userService.user);
-            if (
-              otherMembers.length > 0 &&
-              otherMembers.every((m) => this.webrtcService.isConnected(m))
-            ) {
-              this.showConnectionWarning = false;
-              this.connectionWarningDismissed = false;
-              this.cdr.detectChanges();
-            }
-          });
-        }
       })
     );
 
@@ -1774,10 +1728,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         });
 
         // Clean up warning timeouts for members who left
-        for (const [member, timeoutId] of this.disconnectWarningTimeouts.entries()) {
+        for (const [member, timeoutId] of this.connectionWarningTimeouts.entries()) {
           if (!otherMembers.includes(member)) {
             clearTimeout(timeoutId);
-            this.disconnectWarningTimeouts.delete(member);
+            this.connectionWarningTimeouts.delete(member);
           }
         }
 
@@ -1815,6 +1769,41 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   protected refreshPage(): void {
     if (isPlatformBrowser(this.platformId)) {
       window.location.reload();
+    }
+  }
+
+  private scheduleConnectionWarning(member: string): void {
+    if (this.connectionWarningTimeouts.has(member)) return;
+    const timeoutId = setTimeout(() => {
+      this.ngZone.run(() => {
+        this.connectionWarningTimeouts.delete(member);
+        if (
+          this.members.includes(member) &&
+          !this.webrtcService.isConnected(member) &&
+          !this.connectionWarningDismissed
+        ) {
+          this.showConnectionWarning = true;
+          this.cdr.detectChanges();
+        }
+      });
+    }, CONNECTION_WARNING_DELAY_MS);
+    this.connectionWarningTimeouts.set(member, timeoutId);
+  }
+
+  private clearConnectionWarning(member: string): void {
+    const timeoutId = this.connectionWarningTimeouts.get(member);
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      this.connectionWarningTimeouts.delete(member);
+    }
+    // Hide banner if all peers are now connected
+    const otherMembers = this.members.filter((m) => m !== this.userService.user);
+    if (
+      otherMembers.length > 0 &&
+      otherMembers.every((m) => this.webrtcService.isConnected(m))
+    ) {
+      this.showConnectionWarning = false;
+      this.connectionWarningDismissed = false;
     }
   }
 
