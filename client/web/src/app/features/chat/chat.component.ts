@@ -1798,10 +1798,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
     // Hide banner if all peers are now connected
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
-    if (
-      otherMembers.length > 0 &&
-      otherMembers.every((m) => this.webrtcService.isConnected(m))
-    ) {
+    if (otherMembers.length > 0 && otherMembers.every((m) => this.webrtcService.isConnected(m))) {
       this.showConnectionWarning = false;
       this.connectionWarningDismissed = false;
     }
