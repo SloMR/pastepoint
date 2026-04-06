@@ -27,6 +27,7 @@ export const NAVIGATION_DELAY_MS = 100;
 // Inactivity timeout constants
 export const IDLE_TIMEOUT = 12 * 60 * 60 * 1000; // 12 hours
 export const BACKGROUND_EXPIRY_THRESHOLD = 5 * 60 * 1000; // 5 minutes
+export const CONNECTION_WARNING_DELAY_MS = 5_000; // 5 seconds before showing connection warning
 
 // WebRTC constants
 export const MAX_RECONNECT_ATTEMPTS = 5;

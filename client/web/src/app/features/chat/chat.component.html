@@ -228,7 +228,8 @@
                 <div class="ml-auto">
                   <button
                     type="button"
-                    class="rounded-md p-1 text-textMuted hover:text-brand dark:text-textVeryMuted dark:hover:text-brandDark"
+                    [disabled]="!isConnectedToMember(member)"
+                    class="rounded-md p-1 text-textMuted hover:text-brand dark:text-textVeryMuted dark:hover:text-brandDark disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-textMuted dark:disabled:hover:text-textVeryMuted"
                     aria-label="Send file to user"
                     title="Send file to user"
                     (click)="openFilePickerForMember(member)"
@@ -736,7 +737,8 @@
                   <div class="ml-auto">
                     <button
                       type="button"
-                      class="rounded-md p-1 text-textMuted hover:text-brand dark:text-textVeryMuted dark:hover:text-brandDark"
+                      [disabled]="!isConnectedToMember(member)"
+                      class="rounded-md p-1 text-textMuted hover:text-brand dark:text-textVeryMuted dark:hover:text-brandDark disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-textMuted dark:disabled:hover:text-textVeryMuted"
                       aria-label="Send file to user"
                       title="Send file to user"
                       (click)="openFilePickerForMember(member)"
@@ -1213,7 +1215,7 @@
     </div>
 
     <!-- MARK: - Main Content -->
-    <div class="flex-1 overflow-auto px-4 py-6 bg-contentArea dark:bg-baseDark md:p-8">
+    <div class="flex-1 overflow-hidden px-4 py-6 bg-contentArea dark:bg-baseDark md:p-8">
       <div class="flex h-full w-full flex-col items-start justify-between">
         <!-- MARK: - Room Name -->
         @if (messages.length > 0) {
@@ -1240,8 +1242,75 @@
           </div>
         }
 
+        <!-- MARK: - Connection Warning Banner -->
+        @if (showConnectionWarning) {
+          <div
+            class="w-full mb-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-600/50 dark:bg-amber-900/20"
+          >
+            <div class="flex items-start gap-3">
+              <svg
+                class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                />
+              </svg>
+              <div class="flex-1 min-w-0">
+                <p class="text-sm font-expoArabicMedium text-amber-800 dark:text-amber-200">
+                  {{ 'CONNECTION_WARNING_TITLE' | translate }}
+                </p>
+                <p class="mt-1 text-xs text-amber-700 dark:text-amber-300/80">
+                  {{ 'CONNECTION_WARNING_DESC' | translate }}
+                </p>
+                <div class="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    (click)="refreshPage()"
+                    class="inline-flex items-center gap-1 rounded-md bg-amber-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+                  >
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                      />
+                    </svg>
+                    {{ 'CONNECTION_WARNING_REFRESH' | translate }}
+                  </button>
+                  <button
+                    (click)="dismissConnectionWarning()"
+                    class="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-800/30"
+                  >
+                    {{ 'CONNECTION_WARNING_DISMISS' | translate }}
+                  </button>
+                </div>
+              </div>
+              <button
+                (click)="dismissConnectionWarning()"
+                class="shrink-0 text-amber-500 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-200"
+                aria-label="Dismiss"
+              >
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+          </div>
+        }
+
         <!-- MARK: - Messages Container -->
-        <div class="w-full flex-1 overflow-auto pt-5 max-h-[90%] no-scrollbar" #messageContainer>
+        <div class="w-full flex-1 overflow-auto pt-5 min-h-0 no-scrollbar" #messageContainer>
           <div class="flex w-full flex-col items-start justify-start gap-4">
             <!-- MARK: - Welcome State (Empty Messages) -->
             @if (messages.length === 0) {
@@ -1925,30 +1994,45 @@
                   class="flex items-center gap-6 px-2"
                   [ngClass]="isRTL ? 'flex-row-reverse' : 'flex-row'"
                 >
-                  <img
-                    [src]="'/icons/link.svg'"
-                    alt="Attach Files"
-                    title="Attach Files"
+                  <button
+                    type="button"
+                    [disabled]="hasNoConnectedPeers"
                     (click)="fileInput.click()"
-                    class="h-5 w-5 cursor-pointer"
-                    loading="lazy"
-                    width="20"
-                    height="20"
-                  />
-                  <img
-                    [src]="'/icons/emoji.svg'"
-                    alt="Emoji"
-                    title="Open emoji picker"
-                    class="h-5 w-5 cursor-pointer"
+                    class="p-0 border-0 bg-transparent disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    [attr.aria-label]="'Attach Files'"
+                    title="Attach Files"
+                  >
+                    <img
+                      [src]="'/icons/link.svg'"
+                      alt=""
+                      class="h-5 w-5"
+                      loading="lazy"
+                      width="20"
+                      height="20"
+                    />
+                  </button>
+                  <button
+                    type="button"
+                    [disabled]="hasNoConnectedPeers"
                     (mouseenter)="openEmojiPicker()"
                     (mouseleave)="handleEmojiIconMouseLeave()"
-                    loading="lazy"
-                    width="20"
-                    height="20"
-                  />
+                    class="p-0 border-0 bg-transparent disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                    [attr.aria-label]="'Open emoji picker'"
+                    title="Open emoji picker"
+                  >
+                    <img
+                      [src]="'/icons/emoji.svg'"
+                      alt=""
+                      class="h-5 w-5"
+                      loading="lazy"
+                      width="20"
+                      height="20"
+                    />
+                  </button>
                 </div>
                 <button
-                  class="flex items-center justify-center gap-2 rounded-lg p-2 text-white bg-brand min-w-[100px] h-[40px] dark:bg-brandDark md:min-w-[124px] md:h-[44px]"
+                  [disabled]="isSendDisabled"
+                  class="flex items-center justify-center gap-2 rounded-lg p-2 text-white bg-brand min-w-[100px] h-[40px] dark:bg-brandDark md:min-w-[124px] md:h-[44px] disabled:opacity-50 disabled:cursor-not-allowed"
                   [ngClass]="isRTL ? 'flex-row-reverse' : 'flex-row'"
                 >
                   <span class="text-base font-expoArabicMedium">{{ 'SEND' | translate }}</span>
