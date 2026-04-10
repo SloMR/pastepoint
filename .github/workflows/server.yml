@@ -3,8 +3,14 @@ name: Server CI/CD
 on:
   push:
     branches: [main]
+    paths:
+      - 'server/**'
+      - '.github/workflows/server.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'server/**'
+      - '.github/workflows/server.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}

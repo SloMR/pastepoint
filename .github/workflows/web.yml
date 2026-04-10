@@ -3,8 +3,14 @@ name: Web CI/CD
 on:
   push:
     branches: [main]
+    paths:
+      - 'client/web/**'
+      - '.github/workflows/web.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'client/web/**'
+      - '.github/workflows/web.yml'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
