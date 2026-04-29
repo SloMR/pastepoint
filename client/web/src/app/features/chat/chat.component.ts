@@ -922,8 +922,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         .replace(/'/g, '&#039;');
     };
 
-    let processedText = escapeHtml(text);
-    processedText = processedText.replace(/\n/g, '<br>');
+    const processedText = escapeHtml(text);
 
     const linkClasses = isMyMessage
       ? isDarkMode
