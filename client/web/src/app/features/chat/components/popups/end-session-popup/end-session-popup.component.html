@@ -1,0 +1,46 @@
+<!-- MARK: - End Session Popup -->
+@if (isOpen) {
+  <div
+    class="fixed inset-0 grid place-items-end bg-black/80 z-[10000] sm:place-content-center"
+    (click)="closed.emit()"
+  >
+    <div
+      class="w-full rounded-2xl rounded-b-none bg-white px-4 py-8 pb-20 animate-slide-up dark:bg-baseDark sm:w-[500px] sm:rounded-b-2xl sm:px-8 sm:pb-8"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="flex w-full flex-col gap-8 sm:gap-10">
+        <div class="flex items-start justify-between">
+          <h2
+            class="font-semibold text-[22px] font-expoArabic text-content leading-[150%] dark:text-white"
+          >
+            {{ 'END_SESSION_HEADER' | translate }}
+          </h2>
+          <img
+            src="/icons/cross-close.svg"
+            alt="Close"
+            title="Close"
+            class="h-4 w-4 cursor-pointer"
+            (click)="closed.emit()"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+        </div>
+        <div class="flex w-full items-center justify-between gap-4">
+          <button
+            (click)="confirmed.emit()"
+            class="w-full rounded-lg text-base text-white h-[44px] bg-danger font-expoArabicMedium leading-[100%] hover:bg-danger/80"
+          >
+            {{ 'END_THE_SESSION' | translate }}
+          </button>
+          <button
+            (click)="closed.emit()"
+            class="w-full rounded-lg border bg-white text-base h-[44px] text-danger border-danger font-expoArabicMedium leading-[100%] hover:bg-danger/10 dark:bg-baseDark"
+          >
+            {{ 'CANCEL' | translate }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,66 @@
+<!-- MARK: - Connection Warning Banner -->
+@if (show) {
+  <div
+    class="w-full mb-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 dark:border-amber-600/50 dark:bg-amber-900/20"
+  >
+    <div class="flex items-start gap-3">
+      <svg
+        class="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+        />
+      </svg>
+      <div class="flex-1 min-w-0">
+        <p class="text-sm font-expoArabicMedium text-amber-800 dark:text-amber-200">
+          {{ 'CONNECTION_WARNING_TITLE' | translate }}
+        </p>
+        <p class="mt-1 text-xs text-amber-700 dark:text-amber-300/80">
+          {{ 'CONNECTION_WARNING_DESC' | translate }}
+        </p>
+        <div class="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            (click)="refreshed.emit()"
+            class="inline-flex items-center gap-1 rounded-md bg-amber-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600"
+          >
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            {{ 'CONNECTION_WARNING_REFRESH' | translate }}
+          </button>
+          <button
+            (click)="dismissed.emit()"
+            class="inline-flex items-center rounded-md px-2.5 py-1 text-xs font-medium text-amber-700 hover:bg-amber-100 dark:text-amber-300 dark:hover:bg-amber-800/30"
+          >
+            {{ 'CONNECTION_WARNING_DISMISS' | translate }}
+          </button>
+        </div>
+      </div>
+      <button
+        (click)="dismissed.emit()"
+        class="shrink-0 text-amber-500 hover:text-amber-700 dark:text-amber-400 dark:hover:text-amber-200"
+        aria-label="Dismiss"
+      >
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M6 18L18 6M6 6l12 12"
+          />
+        </svg>
+      </button>
+    </div>
+  </div>
+}

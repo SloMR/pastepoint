@@ -14,12 +14,10 @@ import {
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import {
-  DatePipe,
   DecimalPipe,
   isPlatformBrowser,
   NgClass,
   NgOptimizedImage,
-  NgStyle,
   UpperCasePipe,
 } from '@angular/common';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -68,6 +66,13 @@ import { SecurityContext } from '@angular/core';
 import { PreviewService } from '../../core/services/ui/preview.service';
 import { FileSizePipe } from '../../utils/file-size.pipe';
 import { DeviceDetectorService } from 'ngx-device-detector';
+import { JoinSessionPopupComponent } from './components/popups/join-session-popup/join-session-popup.component';
+import { CreateRoomPopupComponent } from './components/popups/create-room-popup/create-room-popup.component';
+import { EndSessionPopupComponent } from './components/popups/end-session-popup/end-session-popup.component';
+import { QrCodePopupComponent } from './components/popups/qr-code-popup/qr-code-popup.component';
+import { ConnectionWarningComponent } from './components/connection-warning/connection-warning.component';
+import { ChatInputComponent } from './components/chat-input/chat-input.component';
+import { ChatMessagesComponent } from './components/chat-messages/chat-messages.component';
 
 /**
  * ==========================================================
@@ -80,14 +85,18 @@ import { DeviceDetectorService } from 'ngx-device-detector';
   imports: [
     FormsModule,
     UpperCasePipe,
-    DatePipe,
     DecimalPipe,
     TranslateModule,
-    NgStyle,
     NgOptimizedImage,
     RouterLink,
     NgClass,
-    FileSizePipe,
+    JoinSessionPopupComponent,
+    CreateRoomPopupComponent,
+    EndSessionPopupComponent,
+    QrCodePopupComponent,
+    ConnectionWarningComponent,
+    ChatInputComponent,
+    ChatMessagesComponent,
   ],
   providers: [FileSizePipe],
   templateUrl: './chat.component.html',
@@ -206,11 +215,22 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Direct references to DOM elements for scrolling, focusing, etc.
    * ==========================================================
    */
-  @ViewChild('messageContainer') messageContainer!: ElementRef;
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
-  @ViewChild('messageTextarea', { static: false }) messageTextarea!: ElementRef;
   @ViewChild('qrCodeContainer', { static: false }) qrCodeContainer!: ElementRef;
-  @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild(ChatInputComponent) chatInput?: ChatInputComponent;
+  @ViewChild(ChatMessagesComponent) chatMessages?: ChatMessagesComponent;
+
+  protected get messageTextarea(): ElementRef {
+    return this.chatInput!.messageTextarea;
+  }
+
+  protected get fileInput(): ElementRef<HTMLInputElement> {
+    return this.chatInput!.fileInput;
+  }
+
+  protected get messageContainer(): ElementRef {
+    return this.chatMessages!.messageContainer;
+  }
 
   /**
    * ==========================================================
