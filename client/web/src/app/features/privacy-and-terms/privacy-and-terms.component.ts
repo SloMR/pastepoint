@@ -16,13 +16,7 @@ import { THEME_PREFERENCE_KEY } from '../../utils/constants';
 
 @Component({
   selector: 'app-privacy-and-terms',
-  imports: [
-    CommonModule,
-    RouterLink,
-    TranslateModule,
-    PageHeaderComponent,
-    PageFooterComponent,
-  ],
+  imports: [CommonModule, RouterLink, TranslateModule, PageHeaderComponent, PageFooterComponent],
   templateUrl: './privacy-and-terms.component.html',
   styleUrl: './privacy-and-terms.component.css',
 })

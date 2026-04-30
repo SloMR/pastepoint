@@ -78,9 +78,7 @@
             >
               <img
                 [src]="
-                  room === currentRoom
-                    ? '/icons/active-comment.svg'
-                    : '/icons/inactive-comment.svg'
+                  room === currentRoom ? '/icons/active-comment.svg' : '/icons/inactive-comment.svg'
                 "
                 alt="Join Room"
                 title="Join Room"
@@ -194,9 +192,7 @@
 
     <!-- MARK: - Members Section -->
     <div class="mt-8 flex w-full flex-col items-center justify-center">
-      <div
-        class="flex w-full items-center justify-between px-4 py-2 text-content dark:text-white"
-      >
+      <div class="flex w-full items-center justify-between px-4 py-2 text-content dark:text-white">
         <div class="flex items-center justify-center gap-2">
           <img
             [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
@@ -329,9 +325,7 @@
                   <span
                     class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted"
                   >
-                    {{
-                      ProgressValue(upload.progress, 'upload', upload.fileId) | number: '1.0-0'
-                    }}%
+                    {{ ProgressValue(upload.progress, 'upload', upload.fileId) | number: '1.0-0' }}%
                   </span>
                   <button
                     (click)="
@@ -623,9 +617,7 @@
         </div>
         <!-- Session Code Display -->
         <div class="flex w-full justify-center px-5">
-          <div
-            class="w-full rounded-lg p-2 px-3 text-center bg-inputBackground dark:bg-borderDark"
-          >
+          <div class="w-full rounded-lg p-2 px-3 text-center bg-inputBackground dark:bg-borderDark">
             <p class="truncate text-base font-light font-expoArabic dark:text-contentMuted">
               {{ sessionCode }}
             </p>
@@ -783,9 +775,7 @@
           <div class="flex w-full items-center justify-between py-2 text-content dark:text-white">
             <div class="flex items-center justify-center gap-2">
               <img
-                [src]="
-                  isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'
-                "
+                [src]="isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'"
                 alt="Active Transfers"
                 title="Active Transfers"
                 loading="lazy"

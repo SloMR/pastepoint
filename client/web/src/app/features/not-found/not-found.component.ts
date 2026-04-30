@@ -15,13 +15,7 @@ import { LanguageCode } from '../../core/i18n/translate-loader';
 import { THEME_PREFERENCE_KEY } from '../../utils/constants';
 
 @Component({
-  imports: [
-    CommonModule,
-    RouterLink,
-    TranslateModule,
-    PageHeaderComponent,
-    PageFooterComponent,
-  ],
+  imports: [CommonModule, RouterLink, TranslateModule, PageHeaderComponent, PageFooterComponent],
   selector: 'app-not-found',
   templateUrl: './not-found.component.html',
   styleUrl: './not-found.component.css',

@@ -41,9 +41,7 @@
               class="text-xl sm:text-2xl font-semibold font-expoArabicMedium text-content dark:text-white"
             >
               {{
-                sessionCode.length > 0
-                  ? ('PRIVATE_ROOM' | translate)
-                  : ('PUBLIC_ROOM' | translate)
+                sessionCode.length > 0 ? ('PRIVATE_ROOM' | translate) : ('PUBLIC_ROOM' | translate)
               }}
             </h1>
             <p
@@ -146,9 +144,7 @@
           </div>
           <!-- Feature Highlights -->
           <div class="grid grid-cols-2 gap-2 sm:gap-3 w-full mt-2">
-            <div
-              class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
-            >
+            <div class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800">
               <img
                 [src]="isDarkMode ? '/icons/lock-white.svg' : '/icons/lock.svg'"
                 alt="Encrypted"
@@ -161,9 +157,7 @@
                 >{{ 'FEATURE_ENCRYPTED' | translate }}</span
               >
             </div>
-            <div
-              class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
-            >
+            <div class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800">
               <img
                 [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
                 alt="No cloud"
@@ -176,13 +170,9 @@
                 >{{ 'FEATURE_NO_CLOUD' | translate }}</span
               >
             </div>
-            <div
-              class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
-            >
+            <div class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800">
               <img
-                [src]="
-                  isDarkMode ? '/icons/file-unknown-white.svg' : '/icons/file-unknown.svg'
-                "
+                [src]="isDarkMode ? '/icons/file-unknown-white.svg' : '/icons/file-unknown.svg'"
                 alt="Any file"
                 class="h-4 w-4 shrink-0"
                 width="16"
@@ -193,9 +183,7 @@
                 >{{ 'FEATURE_ANY_FILE' | translate }}</span
               >
             </div>
-            <div
-              class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
-            >
+            <div class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800">
               <img
                 [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
                 alt="No account"
@@ -208,15 +196,9 @@
                 >{{ 'FEATURE_NO_ACCOUNT' | translate }}</span
               >
             </div>
-            <div
-              class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
-            >
+            <div class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800">
               <img
-                [src]="
-                  isDarkMode
-                    ? '/icons/arrows-up-down-light.svg'
-                    : '/icons/arrows-up-down.svg'
-                "
+                [src]="isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'"
                 alt="Fast"
                 class="h-4 w-4 shrink-0"
                 width="16"
@@ -227,9 +209,7 @@
                 >{{ 'FEATURE_LOCAL_SPEED' | translate }}</span
               >
             </div>
-            <div
-              class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800"
-            >
+            <div class="flex items-center gap-2 p-2 sm:p-3 rounded-lg bg-stepCard dark:bg-gray-800">
               <img
                 [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
                 alt="Open source"
@@ -308,9 +288,7 @@
                                 <p
                                   class="mb-1 text-xs font-expoArabic text-white leading-5 break-words overflow-hidden [display:-webkit-box] [-webkit-line-clamp:2] [-webkit-box-orient:vertical]"
                                 >
-                                  {{
-                                    truncateFilename(message.fileTransfer?.fileName || '')
-                                  }}
+                                  {{ truncateFilename(message.fileTransfer?.fileName || '') }}
                                   ({{ message.fileTransfer?.fileSize || 0 | filesize: 2 }})
                                 </p>
                                 <p class="text-xs font-normal font-expoArabic text-white">
@@ -505,9 +483,7 @@
                           <div>
                             <div class="flex items-start gap-2 mb-3">
                               <img
-                                [src]="
-                                  isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'
-                                "
+                                [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
                                 alt="File"
                                 title="File"
                                 class="h-4 w-4 mt-0.5"
@@ -576,9 +552,7 @@
                               class="flex items-center gap-2 break-all text-xs font-expoArabic text-content dark:text-contentMuted"
                             >
                               <img
-                                [src]="
-                                  isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'
-                                "
+                                [src]="isDarkMode ? '/icons/file-white.svg' : '/icons/file.svg'"
                                 alt="File"
                                 title="File"
                                 class="h-4 w-4"
