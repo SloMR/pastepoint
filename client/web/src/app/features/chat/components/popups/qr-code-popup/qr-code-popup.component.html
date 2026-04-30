@@ -33,8 +33,8 @@
           <div
             class="flex items-center justify-center rounded-xl border-2 bg-white p-4 shadow-sm border-borderLight dark:border-borderDark dark:bg-white"
           >
-            <ng-content>
-              <!-- Loading spinner (default content) -->
+            <div #qrCodeContainer class="flex items-center justify-center">
+              <!-- Loading spinner -->
               @if (isGenerating) {
                 <div
                   class="flex items-center justify-center w-[250px] h-[250px] sm:w-[300px] sm:h-[300px]"
@@ -57,7 +57,7 @@
                   </svg>
                 </div>
               }
-            </ng-content>
+            </div>
           </div>
         </div>
         <div class="flex w-full items-center justify-center">

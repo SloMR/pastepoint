@@ -191,24 +191,15 @@
         <!-- MARK: - Message Input -->
         <app-chat-input
           [(message)]="message"
-          [isDragging]="isDragging"
           [isRTL]="isRTL"
           [isDarkMode]="isDarkMode"
           [hasNoConnectedPeers]="hasNoConnectedPeers"
           [isSendDisabled]="isSendDisabled"
-          [(isEmojiPickerVisible)]="isEmojiPickerVisible"
-          [(isHoveringOverPicker)]="isHoveringOverPicker"
           (messageSubmit)="sendMessage($event)"
           (enterKey)="onEnterKey($event.event, $event.form)"
           (autoResize)="autoResizeTextarea()"
           (filesAttached)="sendAttachments($event)"
-          (emojiClicked)="addEmoji($any($event))"
-          (openEmojiPickerRequested)="openEmojiPicker()"
-          (emojiIconLeft)="handleEmojiIconMouseLeave()"
-          (dragOver)="handleDragOver($event)"
-          (dragLeave)="handleDragLeave($event)"
-          (dragEnter)="handleDragEnter()"
-          (dropped)="handleDrop($event)"
+          (filesDropped)="handleFilesDropped($event)"
         />
       </div>
     </div>
@@ -353,11 +344,9 @@
     <app-qr-code-popup
       [isOpen]="isOpenQRCodePopup"
       [isRTL]="isRTL"
-      [isGenerating]="isGeneratingQRCode"
+      [sessionUrl]="sessionUrl"
       (closed)="closePopup('qr')"
-    >
-      <div #qrCodeContainer class="flex items-center justify-center"></div>
-    </app-qr-code-popup>
+    />
 
   </div>
 </div>

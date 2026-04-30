@@ -3,10 +3,10 @@
   #messageForm="ngForm"
   (submit)="messageSubmit.emit(messageForm); $event.preventDefault()"
   class="flex w-full"
-  (dragover)="dragOver.emit($event)"
-  (dragleave)="dragLeave.emit($event)"
-  (dragenter)="dragEnter.emit()"
-  (drop)="dropped.emit($event)"
+  (dragover)="handleDragOver($event)"
+  (dragleave)="handleDragLeave($event)"
+  (dragenter)="handleDragEnter()"
+  (drop)="handleDrop($event)"
 >
   <div
     class="relative mt-6 mb-0 flex w-full items-center justify-end gap-2 rounded-xl px-4 py-3 min-h-[110px]"
@@ -78,8 +78,8 @@
           <button
             type="button"
             [disabled]="hasNoConnectedPeers"
-            (mouseenter)="openEmojiPickerRequested.emit()"
-            (mouseleave)="emojiIconLeft.emit()"
+            (mouseenter)="openEmojiPicker()"
+            (mouseleave)="handleEmojiIconMouseLeave()"
             class="p-0 border-0 bg-transparent disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             [attr.aria-label]="'Open emoji picker'"
             title="Open emoji picker"
@@ -127,15 +127,13 @@
         opacity: isEmojiPickerVisible ? '1' : '0',
         pointerEvents: isEmojiPickerVisible ? 'auto' : 'none',
       }"
-      (mouseenter)="isHoveringOverPickerChange.emit(true)"
-      (mouseleave)="
-        isHoveringOverPickerChange.emit(false); isEmojiPickerVisibleChange.emit(false)
-      "
+      (mouseenter)="isHoveringOverPicker = true"
+      (mouseleave)="isHoveringOverPicker = false; isEmojiPickerVisible = false"
     >
       @if (isEmojiPickerVisible || isHoveringOverPicker) {
         <emoji-picker
           [class.dark]="isDarkMode"
-          (emoji-click)="emojiClicked.emit($event)"
+          (emoji-click)="addEmoji($any($event))"
         ></emoji-picker>
       }
     </div>
