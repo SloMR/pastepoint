@@ -1,0 +1,52 @@
+<!-- MARK: - Header Section -->
+<header
+  class="border-b bg-pageBackground border-borderLight dark:border-surfaceDark dark:bg-baseDark"
+>
+  <div class="mx-auto max-w-7xl pr-4 pl-16 sm:px-6 lg:px-8">
+    <div class="flex h-20 items-center justify-between">
+      <!-- MARK: - Logo & Title -->
+      <div class="flex items-center">
+        <a routerLink="/" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'" title="Home">
+          <img
+            [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
+            alt="PastePoint Logo"
+            title="PastePoint Logo"
+            class="h-12 w-auto cursor-pointer"
+            width="136"
+            height="48"
+            loading="lazy"
+          />
+        </a>
+      </div>
+
+      <!-- MARK: - Theme Toggler & Language Switcher -->
+      <div class="flex flex-row-reverse items-center gap-2 md:flex-row">
+        <!-- theme toggler -->
+        <div
+          (click)="toggleTheme.emit()"
+          class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-black w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
+        >
+          <button
+            [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+            [attr.title]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
+          >
+            <img
+              [src]="isDarkMode ? '/icons/brightness.svg' : '/icons/moon.svg'"
+              alt="Theme"
+              title="Theme"
+              class="h-5 w-5"
+            />
+          </button>
+        </div>
+
+        <!-- language switcher -->
+        <div
+          (click)="switchLanguage.emit(currentLanguage === 'ar' ? 'en' : 'ar')"
+          class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-brand w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
+        >
+          {{ currentLanguage | uppercase }}
+        </div>
+      </div>
+    </div>
+  </div>
+</header>

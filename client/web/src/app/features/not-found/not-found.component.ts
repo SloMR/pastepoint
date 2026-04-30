@@ -1,8 +1,10 @@
 import { Component, ChangeDetectorRef, PLATFORM_ID, OnInit, inject } from '@angular/core';
-import { CommonModule, isPlatformBrowser, NgOptimizedImage } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 
+import { PageHeaderComponent } from '../../core/components/layout/page-header/page-header.component';
+import { PageFooterComponent } from '../../core/components/layout/page-footer/page-footer.component';
 import { ThemeService } from '../../core/services/ui/theme.service';
 import packageJson from '../../../../package.json';
 import { NGXLogger } from 'ngx-logger';
@@ -13,7 +15,13 @@ import { LanguageCode } from '../../core/i18n/translate-loader';
 import { THEME_PREFERENCE_KEY } from '../../utils/constants';
 
 @Component({
-  imports: [CommonModule, RouterLink, NgOptimizedImage, TranslateModule],
+  imports: [
+    CommonModule,
+    RouterLink,
+    TranslateModule,
+    PageHeaderComponent,
+    PageFooterComponent,
+  ],
   selector: 'app-not-found',
   templateUrl: './not-found.component.html',
   styleUrl: './not-found.component.css',
