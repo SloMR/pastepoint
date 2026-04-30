@@ -13,13 +13,7 @@ import {
   inject,
 } from '@angular/core';
 import { Subscription } from 'rxjs';
-import {
-  DecimalPipe,
-  isPlatformBrowser,
-  NgClass,
-  NgOptimizedImage,
-  UpperCasePipe,
-} from '@angular/common';
+import { isPlatformBrowser, NgOptimizedImage, UpperCasePipe } from '@angular/common';
 import { DomSanitizer } from '@angular/platform-browser';
 import Autolinker from 'autolinker';
 
@@ -73,6 +67,7 @@ import { QrCodePopupComponent } from './components/popups/qr-code-popup/qr-code-
 import { ConnectionWarningComponent } from './components/connection-warning/connection-warning.component';
 import { ChatInputComponent } from './components/chat-input/chat-input.component';
 import { ChatMessagesComponent } from './components/chat-messages/chat-messages.component';
+import { ChatSidebarComponent } from './components/chat-sidebar/chat-sidebar.component';
 
 /**
  * ==========================================================
@@ -85,11 +80,9 @@ import { ChatMessagesComponent } from './components/chat-messages/chat-messages.
   imports: [
     FormsModule,
     UpperCasePipe,
-    DecimalPipe,
     TranslateModule,
     NgOptimizedImage,
     RouterLink,
-    NgClass,
     JoinSessionPopupComponent,
     CreateRoomPopupComponent,
     EndSessionPopupComponent,
@@ -97,6 +90,7 @@ import { ChatMessagesComponent } from './components/chat-messages/chat-messages.
     ConnectionWarningComponent,
     ChatInputComponent,
     ChatMessagesComponent,
+    ChatSidebarComponent,
   ],
   providers: [FileSizePipe],
   templateUrl: './chat.component.html',

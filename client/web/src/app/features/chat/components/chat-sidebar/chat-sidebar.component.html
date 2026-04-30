@@ -1,0 +1,1108 @@
+<!-- MARK: - Desktop Sidebar -->
+<div
+  class="relative hidden h-screen flex-col items-start justify-start overflow-auto bg-surface w-[286px] min-w-[286px] no-scrollbar dark:bg-surfaceDark md:flex"
+>
+  <!-- MARK: - Sidebar Content -->
+  <div class="h-[calc(100vh-80px)] overflow-auto flex flex-col justify-start items-start w-full">
+    <!-- MARK: - Logo Section -->
+    <div class="flex w-full items-center justify-center py-8">
+      <a routerLink="/" title="Home">
+        <img
+          [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
+          alt="PastePoint Logo"
+          title="PastePoint Logo"
+          class="h-12 w-auto cursor-pointer"
+          width="136"
+          height="48"
+          priority
+        />
+      </a>
+    </div>
+
+    <!-- MARK: - Create New Room Button -->
+    <div class="mt-6 flex w-full flex-col items-start justify-start px-4">
+      <button
+        (click)="createRoomRequested.emit(); isMenuOpenChange.emit(false)"
+        class="flex w-full items-center justify-center gap-2 rounded-lg p-2 text-white bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+      >
+        <img
+          src="/icons/white-plus.svg"
+          alt="Create New Room"
+          title="Create New Room"
+          class="h-6 w-6"
+          loading="lazy"
+          width="24"
+          height="24"
+        />
+        <span class="text-base font-expoArabicMedium">{{ 'CREATE_NEW_ROOM' | translate }}</span>
+      </button>
+    </div>
+
+    <!-- MARK: - Rooms Section -->
+    <div class="mt-8 flex w-full flex-col items-center justify-center">
+      <div class="flex w-full items-center justify-between px-4 py-2 text-content">
+        <div class="flex items-center justify-center gap-2">
+          <img
+            [src]="isDarkMode ? '/icons/home-white.svg' : '/icons/home.svg'"
+            alt="Rooms"
+            title="Rooms"
+            class=""
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+          <h2 class="pt-2 text-base font-expoArabicMedium dark:text-white">
+            {{ 'ROOMS' | translate }}
+          </h2>
+        </div>
+        <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+          {{ rooms.length }} {{ 'ROOMS_COUNT' | translate }}
+        </p>
+      </div>
+      <div class="w-full overflow-auto max-h-[200px] scrollbar">
+        @for (room of rooms; track room) {
+          <div
+            class="mt-2 flex w-full items-center justify-end py-1"
+            (click)="joinRoomRequested.emit(room)"
+          >
+            <div
+              class="flex w-full cursor-pointer items-center justify-start gap-2"
+              [class]="
+                room === currentRoom
+                  ? 'text-brand dark:text-brandDark'
+                  : 'text-content/80 hover:text-content/60 dark:text-contentMuted dark:hover:text-contentMuted/80'
+              "
+              [ngClass]="isRTL ? 'pr-10' : 'pl-10'"
+              [attr.aria-label]="'Join room ' + room"
+              [attr.title]="'Join room ' + room"
+            >
+              <img
+                [src]="
+                  room === currentRoom
+                    ? '/icons/active-comment.svg'
+                    : '/icons/inactive-comment.svg'
+                "
+                alt="Join Room"
+                title="Join Room"
+                class=""
+                loading="lazy"
+                width="20"
+                height="20"
+              />
+              <p class="truncate pt-2 text-base font-expoArabicMedium">{{ room }}</p>
+              <p></p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- MARK: - Session Code Section -->
+    @if (sessionCode.length > 0) {
+      <div class="flex w-full items-center gap-3 px-4 py-3">
+        <img
+          [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
+          alt="Session Code"
+          title="Session Code"
+          class="h-4 w-4"
+          loading="lazy"
+          width="16"
+          height="16"
+        />
+        <p class="truncate pt-1 text-base font-expoArabicMedium dark:text-white">
+          {{ 'CODE' | translate }}
+        </p>
+      </div>
+    }
+
+    @if (sessionCode.length > 0) {
+      <div class="flex w-full items-center gap-3 px-4">
+        <div
+          class="flex items-center justify-start rounded-lg p-2 px-3 w-[150px] h-[44px] bg-inputBackground dark:bg-borderDark"
+        >
+          <p class="truncate text-base font-light font-expoArabic dark:text-contentMuted">
+            {{ sessionCode }}
+          </p>
+        </div>
+        <div
+          class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-2 text-white w-[90px] h-[44px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+          (click)="copySessionCodeRequested.emit()"
+        >
+          <img
+            src="/icons/copy.svg"
+            alt="Copy"
+            title="Copy"
+            class="h-4 w-4"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+        </div>
+        <div
+          class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-2 text-white w-[90px] h-[44px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+          (click)="qrCodeRequested.emit()"
+        >
+          <img
+            src="/icons/qrcode.svg"
+            alt="QR Code"
+            title="QR Code"
+            class="h-4 w-4"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+        </div>
+      </div>
+    }
+
+    <!-- MARK: - Private Session Controls -->
+    @if (sessionCode.length === 0) {
+      <div class="flex w-full flex-col items-center justify-center">
+        <!-- create private session -->
+        <div class="mt-8 flex w-full flex-col items-start justify-start px-4">
+          <button
+            (click)="createPrivateSessionRequested.emit()"
+            class="flex w-full items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
+          >
+            <img
+              src="/icons/blue-plus.svg"
+              alt="Create Private Session"
+              title="Create Private Session"
+              class="h-6 w-6"
+              loading="lazy"
+              width="24"
+              height="24"
+            />
+            <span class="text-base font-expoArabicMedium">
+              {{ 'CREATE_PRIVATE_SESSION' | translate }}
+            </span>
+          </button>
+        </div>
+        <!-- join private session -->
+        <div class="mt-3 flex w-full flex-col items-start justify-start px-4">
+          <button
+            (click)="joinPrivateSessionRequested.emit()"
+            class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
+          >
+            <span class="text-base font-expoArabicMedium">{{
+              'JOIN_PRIVATE_SESSION' | translate
+            }}</span>
+          </button>
+        </div>
+      </div>
+    }
+
+    <!-- MARK: - Members Section -->
+    <div class="mt-8 flex w-full flex-col items-center justify-center">
+      <div
+        class="flex w-full items-center justify-between px-4 py-2 text-content dark:text-white"
+      >
+        <div class="flex items-center justify-center gap-2">
+          <img
+            [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+            alt="Members"
+            title="Members"
+            class=""
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+          <h2 class="pt-2 text-base font-expoArabicMedium">{{ 'MEMBERS' | translate }}</h2>
+        </div>
+        <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+          {{ members.length }} {{ 'ONLINE_MEMBERS_COUNT' | translate }}
+        </p>
+      </div>
+      <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar">
+        @for (member of members; track member) {
+          <div>
+            <div
+              class="flex w-full items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+            >
+              <div
+                class="h-4 w-4 rounded-full transition-colors duration-300"
+                [class.bg-green-500]="isConnectedToMember(member)"
+                [class.bg-red-500]="!isConnectedToMember(member)"
+                [attr.title]="isConnectedToMember(member) ? 'Connected' : 'Not connected'"
+              ></div>
+              <p class="truncate text-base font-expoArabicMedium">{{ member }}</p>
+              <div class="ml-auto">
+                <button
+                  type="button"
+                  [disabled]="!isConnectedToMember(member)"
+                  class="rounded-md p-1 text-textMuted hover:text-brand dark:text-textVeryMuted dark:hover:text-brandDark disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-textMuted dark:disabled:hover:text-textVeryMuted"
+                  aria-label="Send file to user"
+                  title="Send file to user"
+                  (click)="filePickerRequested.emit(member)"
+                >
+                  <img
+                    [src]="'/icons/link.svg'"
+                    alt="Send file"
+                    title="Send file"
+                    class="h-4 w-4"
+                    loading="lazy"
+                    width="16"
+                    height="16"
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+        @if (members.length === 0) {
+          <div>
+            <div
+              class="flex w-full items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+            >
+              <p class="truncate text-base font-expoArabicMedium">
+                {{ 'NO_MEMBERS_ONLINE' | translate }}
+              </p>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- MARK: - File Transfer Section -->
+    @if (activeUploads.length > 0 || activeDownloads.length > 0) {
+      <div class="mt-8 flex w-full flex-col items-center justify-center px-4">
+        <!-- Header -->
+        <div class="flex w-full items-center justify-between py-2 text-content dark:text-white">
+          <div class="flex items-center justify-center gap-2">
+            <img
+              [src]="isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'"
+              alt="Active Transfers"
+              title="Active Transfers"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
+            <h2 class="pt-2 text-base font-expoArabicMedium">
+              {{ 'FILE_TRANSFER' | translate }}
+            </h2>
+          </div>
+          <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+            {{ activeUploads.length + activeDownloads.length }}
+            {{ 'ACTIVE_TRANSFERS_COUNT' | translate }}
+          </p>
+        </div>
+        <!-- Scrollable Transfers -->
+        <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar space-y-3">
+          <!-- Uploads -->
+          @for (upload of activeUploads; track upload) {
+            <div class="text-sm">
+              <div class="mb-1 flex items-center justify-between">
+                <div class="flex items-start justify-start gap-2 min-w-0">
+                  <img
+                    [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
+                    alt="Uploading"
+                    title="Uploading"
+                    class="h-4 w-4"
+                    loading="lazy"
+                    width="16"
+                    height="16"
+                  />
+                  <div class="flex flex-col min-w-0">
+                    <span
+                      class="text-xs font-expoArabicMedium text-content dark:text-white break-words"
+                      dir="auto"
+                    >
+                      {{ truncateFilename(upload.file.name) }}
+                    </span>
+                    <div
+                      class="mt-0.5 flex items-center gap-1 text-[11px] text-textMuted dark:text-textVeryMuted"
+                    >
+                      <img
+                        [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+                        alt="User"
+                        title="User"
+                        class="h-3.5 w-3.5 opacity-80"
+                        loading="lazy"
+                        width="14"
+                        height="14"
+                      />
+                      <span class="break-words" dir="auto">{{ upload.targetUser }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center justify-end gap-1">
+                  <span
+                    class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted"
+                  >
+                    {{
+                      ProgressValue(upload.progress, 'upload', upload.fileId) | number: '1.0-0'
+                    }}%
+                  </span>
+                  <button
+                    (click)="
+                      $event.stopPropagation();
+                      $event.preventDefault();
+                      cancelUploadRequested.emit(upload)
+                    "
+                    class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                    aria-label="Cancel upload"
+                    title="Cancel upload"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div
+                class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark overflow-hidden"
+              >
+                <div
+                  class="h-full rounded-full bg-brand dark:bg-brandDark transition-all duration-300 ease-out"
+                  [style.width]="getProgressBarWidth(upload.progress, 'upload', upload.fileId)"
+                  [style.max-width]="'100%'"
+                ></div>
+              </div>
+            </div>
+          }
+          <!-- Downloads -->
+          @for (download of activeDownloads; track download) {
+            <div class="text-sm">
+              <div class="mb-1 flex items-center justify-between">
+                <div class="flex items-start justify-start gap-2 min-w-0">
+                  <img
+                    [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
+                    alt="Downloading"
+                    title="Downloading"
+                    class="h-4 w-4"
+                    loading="lazy"
+                    width="16"
+                    height="16"
+                  />
+                  <div class="flex flex-col min-w-0">
+                    <span
+                      class="text-xs font-expoArabicMedium text-content dark:text-white break-words"
+                      dir="auto"
+                    >
+                      {{ truncateFilename(download.fileName) }}
+                    </span>
+                    <div
+                      class="mt-0.5 flex items-center gap-1 text-[11px] text-textMuted dark:text-textVeryMuted"
+                    >
+                      <img
+                        [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+                        alt="User"
+                        title="User"
+                        class="h-3.5 w-3.5 opacity-80"
+                        loading="lazy"
+                        width="14"
+                        height="14"
+                      />
+                      <span class="break-words" dir="auto">{{ download.fromUser }}</span>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex items-center justify-end gap-1">
+                  <span
+                    class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted"
+                  >
+                    {{
+                      ProgressValue(download.progress, 'download', download.fileId)
+                        | number: '1.0-0'
+                    }}%
+                  </span>
+                  <button
+                    (click)="
+                      $event.stopPropagation();
+                      $event.preventDefault();
+                      cancelDownloadRequested.emit(download)
+                    "
+                    class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                    aria-label="Cancel download"
+                    title="Cancel download"
+                  >
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              <div
+                class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark overflow-hidden"
+              >
+                <div
+                  class="h-full rounded-full bg-brand dark:bg-brandDark transition-all duration-300 ease-out"
+                  [style.width]="
+                    getProgressBarWidth(download.progress, 'download', download.fileId)
+                  "
+                  [style.max-width]="'100%'"
+                ></div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- MARK: - Exit Button -->
+  @if (sessionCode.length > 0) {
+    <div
+      class="absolute bottom-4 flex w-full items-center justify-center"
+      (click)="endSessionRequested.emit()"
+    >
+      <div class="flex w-full cursor-pointer items-center justify-center gap-2 px-3 py-3">
+        <img
+          class=""
+          alt="End Session"
+          title="End Session"
+          src="/icons/cross-small.svg"
+          loading="lazy"
+          width="16"
+          height="16"
+        />
+        <h6 class="text-base font-medium text-danger font-expoArabicMedium">
+          {{ 'END_SESSION' | translate }}
+        </h6>
+      </div>
+    </div>
+  }
+</div>
+
+<!-- MARK: - Mobile Sidebar -->
+<aside
+  class="fixed top-0 h-full transition-transform ease-in-out w-[360px] min-w-[360px] bg-surface z-[10000] dark:bg-surfaceDark md:hidden"
+  [style.left]="isRTL ? 'auto' : 0"
+  [style.right]="isRTL ? 0 : 'auto'"
+  [ngClass]="[
+    isMenuOpen ? 'translate-x-0' : isRTL ? 'translate-x-full' : '-translate-x-full',
+    skipDrawerAnim ? 'duration-0' : 'duration-300',
+  ]"
+>
+  <div class="relative flex h-full w-full flex-col items-start justify-start">
+    <!-- MARK: - Mobile Sidebar Content -->
+    <div
+      class="flex w-full flex-1 flex-col items-start justify-start overflow-y-auto overflow-x-hidden pb-20"
+    >
+      <!-- MARK: - Mobile User Info -->
+      <div class="flex w-full items-center justify-between gap-2 px-4 py-8">
+        <!-- avatar + name -->
+        <div class="flex items-center gap-2 overflow-hidden">
+          <img
+            src="/icons/Group.svg"
+            alt="User"
+            title="User"
+            class="h-10 w-10"
+            loading="lazy"
+            width="40"
+            height="40"
+          />
+          <p
+            class="truncate text-base font-expoArabicMedium"
+            [class.text-content]="currentUser"
+            [class.dark:text-white]="currentUser"
+            [class.text-gray-400]="!currentUser"
+          >
+            {{ currentUser || 'Connecting…' }}
+          </p>
+        </div>
+
+        <!-- close icon -->
+        <img
+          [src]="isDarkMode ? '/icons/cross-close-white.svg' : '/icons/cross-close.svg'"
+          alt="Close"
+          title="Close"
+          class="h-4 w-4 shrink-0 cursor-pointer"
+          (click)="isMenuOpenChange.emit(false)"
+          loading="lazy"
+          width="16"
+          height="16"
+        />
+      </div>
+
+      <!-- MARK: - Mobile Create Room Button -->
+      <div class="mt-6 flex w-full flex-col items-start justify-start px-4">
+        <button
+          (click)="createRoomRequested.emit()"
+          class="flex w-full items-center justify-center gap-2 rounded-lg p-2 text-white bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+        >
+          <img
+            src="/icons/white-plus.svg"
+            alt="Create New Room"
+            title="Create New Room"
+            class="h-6 w-6"
+            loading="lazy"
+            width="24"
+            height="24"
+          />
+          <span class="text-base font-expoArabicMedium">{{ 'CREATE_NEW_ROOM' | translate }}</span>
+        </button>
+      </div>
+
+      <!-- MARK: - Mobile Rooms Section -->
+      <div class="mt-8 flex w-full flex-col items-center justify-center">
+        <div
+          class="flex w-full items-center justify-between px-4 py-2 text-content dark:text-white"
+        >
+          <div class="flex items-center justify-center gap-2">
+            <img
+              [src]="isDarkMode ? '/icons/home-white.svg' : '/icons/home.svg'"
+              alt="Rooms"
+              title="Rooms"
+              class=""
+              loading="lazy"
+              width="16"
+              height="16"
+            />
+            <h2 class="pt-2 text-base font-expoArabicMedium dark:text-white">
+              {{ 'ROOMS' | translate }}
+            </h2>
+          </div>
+          <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+            {{ rooms.length }} {{ 'ROOMS_COUNT' | translate }}
+          </p>
+        </div>
+        <div class="w-full overflow-auto max-h-[200px] scrollbar">
+          @for (room of rooms; track room) {
+            <div
+              class="mt-2 flex w-full items-center justify-end py-1"
+              (click)="joinRoomRequested.emit(room); isMenuOpenChange.emit(false)"
+            >
+              <div
+                class="flex w-full cursor-pointer items-center justify-start gap-2"
+                [ngClass]="isRTL ? 'pr-10' : 'pl-10'"
+                [class]="
+                  room === currentRoom
+                    ? 'text-brand dark:text-brandDark'
+                    : 'text-content/80 hover:text-content/60 dark:text-contentMuted dark:hover:text-contentMuted/80'
+                "
+                [attr.aria-label]="'Join room ' + room"
+                [attr.title]="'Join room ' + room"
+              >
+                <img
+                  [src]="
+                    room === currentRoom
+                      ? '/icons/active-comment.svg'
+                      : '/icons/inactive-comment.svg'
+                  "
+                  alt="Home"
+                  title="Join Room"
+                  class=""
+                  loading="lazy"
+                  width="20"
+                  height="20"
+                />
+                <p class="truncate pt-2 text-base font-expoArabicMedium">{{ room }}</p>
+                <p></p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- MARK: - Mobile Session Code Section -->
+      @if (sessionCode.length > 0) {
+        <div class="flex w-full items-center gap-3 px-4 py-3">
+          <img
+            [src]="isDarkMode ? '/icons/code-white.svg' : '/icons/code.svg'"
+            alt="Session Code"
+            title="Session Code"
+            class="h-4 w-4"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+          <p class="truncate pt-1 text-base font-expoArabicMedium dark:text-white">
+            {{ 'CODE' | translate }}
+          </p>
+        </div>
+        <!-- Session Code Display -->
+        <div class="flex w-full justify-center px-5">
+          <div
+            class="w-full rounded-lg p-2 px-3 text-center bg-inputBackground dark:bg-borderDark"
+          >
+            <p class="truncate text-base font-light font-expoArabic dark:text-contentMuted">
+              {{ sessionCode }}
+            </p>
+          </div>
+        </div>
+        <!-- Buttons Row -->
+        <div class="mt-4 flex w-full justify-center px-4">
+          <div class="flex gap-3">
+            <div
+              class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-white w-[48px] h-[48px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+              (click)="copySessionCodeRequested.emit()"
+            >
+              <img
+                src="/icons/copy.svg"
+                alt="Copy"
+                title="Copy"
+                class="h-6 w-6"
+                loading="lazy"
+                width="24"
+                height="24"
+              />
+            </div>
+            <div
+              class="flex cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-white w-[48px] h-[48px] bg-brand hover:bg-brand/80 dark:bg-brandDark dark:hover:bg-brandDark/80"
+              (click)="qrCodeRequested.emit()"
+            >
+              <img
+                src="/icons/qrcode.svg"
+                alt="QR Code"
+                title="QR Code"
+                class="h-6 w-6"
+                loading="lazy"
+                width="24"
+                height="24"
+              />
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- MARK: - Mobile Private Session Controls -->
+      @if (sessionCode.length === 0) {
+        <div class="flex w-full flex-col items-center justify-center">
+          <!-- create private session -->
+          <div class="mt-8 flex w-full flex-col items-start justify-start px-4">
+            <button
+              (click)="createPrivateSessionRequested.emit()"
+              class="flex w-full items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
+            >
+              <img
+                src="/icons/blue-plus.svg"
+                alt="Create Private Session"
+                title="Create Private Session"
+                class="h-6 w-6"
+                loading="lazy"
+                width="24"
+                height="24"
+              />
+              <span class="text-base font-expoArabicMedium">
+                {{ 'CREATE_PRIVATE_SESSION' | translate }}
+              </span>
+            </button>
+          </div>
+          <!-- join private session -->
+          <div class="mt-3 flex w-full flex-col items-start justify-start px-4">
+            <button
+              (click)="joinPrivateSessionRequested.emit()"
+              class="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg border p-2 border-brand text-brand hover:bg-brand/10 dark:border-brandDark dark:text-brandDark dark:hover:bg-brandDark/10"
+            >
+              <span class="text-base font-expoArabicMedium">{{
+                'JOIN_PRIVATE_SESSION' | translate
+              }}</span>
+            </button>
+          </div>
+        </div>
+      }
+
+      <!-- MARK: - Mobile Members Section -->
+      <div class="mt-8 flex w-full flex-col items-center justify-center">
+        <div
+          class="flex w-full items-center justify-between px-4 py-2 text-content dark:text-white"
+        >
+          <div class="flex items-center justify-center gap-2">
+            <img
+              [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+              alt="Members"
+              title="Members"
+              class=""
+              loading="lazy"
+              width="16"
+              height="16"
+            />
+            <h2 class="pt-2 text-base font-expoArabicMedium dark:text-white">
+              {{ 'MEMBERS' | translate }}
+            </h2>
+          </div>
+          <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+            {{ members.length }} {{ 'ONLINE_MEMBERS_COUNT' | translate }}
+          </p>
+        </div>
+        <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar">
+          @for (member of members; track member) {
+            <div>
+              <div
+                class="flex w-full items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+              >
+                <div
+                  class="h-4 w-4 rounded-full transition-colors duration-300"
+                  [class.bg-green-500]="isConnectedToMember(member)"
+                  [class.bg-red-500]="!isConnectedToMember(member)"
+                  [attr.title]="isConnectedToMember(member) ? 'Connected' : 'Not connected'"
+                ></div>
+                <p class="truncate text-base font-expoArabicMedium">{{ member }}</p>
+                <div class="ml-auto">
+                  <button
+                    type="button"
+                    [disabled]="!isConnectedToMember(member)"
+                    class="rounded-md p-1 text-textMuted hover:text-brand dark:text-textVeryMuted dark:hover:text-brandDark disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:text-textMuted dark:disabled:hover:text-textVeryMuted"
+                    aria-label="Send file to user"
+                    title="Send file to user"
+                    (click)="filePickerRequested.emit(member)"
+                  >
+                    <img
+                      [src]="'/icons/link.svg'"
+                      alt="Send file"
+                      title="Send file"
+                      class="h-4 w-4"
+                      loading="lazy"
+                      width="16"
+                      height="16"
+                    />
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+          @if (members.length === 0) {
+            <div>
+              <div
+                class="flex w-full items-center justify-start gap-2 px-4 py-2 text-content dark:text-white"
+              >
+                <p class="truncate text-base font-expoArabicMedium">
+                  {{ 'NO_MEMBERS_ONLINE' | translate }}
+                </p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- MARK: - Mobile File Transfer Section -->
+      @if (activeUploads.length > 0 || activeDownloads.length > 0) {
+        <div class="mt-8 flex w-full flex-col items-center justify-center px-4">
+          <!-- Header -->
+          <div class="flex w-full items-center justify-between py-2 text-content dark:text-white">
+            <div class="flex items-center justify-center gap-2">
+              <img
+                [src]="
+                  isDarkMode ? '/icons/arrows-up-down-light.svg' : '/icons/arrows-up-down.svg'
+                "
+                alt="Active Transfers"
+                title="Active Transfers"
+                loading="lazy"
+                width="16"
+                height="16"
+              />
+              <h2 class="pt-2 text-base font-expoArabicMedium">
+                {{ 'FILE_TRANSFER' | translate }}
+              </h2>
+            </div>
+            <p class="pt-2 text-[10px] font-expoArabicMedium text-textMuted">
+              {{ activeUploads.length + activeDownloads.length }}
+              {{ 'ACTIVE_TRANSFERS_COUNT' | translate }}
+            </p>
+          </div>
+          <!-- Scrollable Transfers -->
+          <div class="mt-4 w-full overflow-auto max-h-[200px] scrollbar space-y-3">
+            <!-- Uploads -->
+            @for (upload of activeUploads; track upload) {
+              <div class="text-sm">
+                <div class="mb-1 flex items-center justify-between">
+                  <div class="flex items-start justify-start gap-2 min-w-0">
+                    <img
+                      [src]="isDarkMode ? '/icons/upload-light.svg' : '/icons/upload.svg'"
+                      alt="Uploading"
+                      title="Uploading"
+                      class="h-4 w-4"
+                      loading="lazy"
+                      width="16"
+                      height="16"
+                    />
+                    <div class="flex flex-col min-w-0">
+                      <span
+                        class="text-xs font-expoArabicMedium text-content dark:text-white break-words"
+                        dir="auto"
+                      >
+                        {{ truncateFilename(upload.file.name) }}
+                      </span>
+                      <div
+                        class="mt-0.5 flex items-center gap-1 text-[11px] text-textMuted dark:text-textVeryMuted"
+                      >
+                        <img
+                          [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+                          alt="User"
+                          title="User"
+                          class="h-3.5 w-3.5 opacity-80"
+                          loading="lazy"
+                          width="14"
+                          height="14"
+                        />
+                        <span class="break-words" dir="auto">{{ upload.targetUser }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-end gap-1">
+                    <span
+                      class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted"
+                    >
+                      {{
+                        ProgressValue(upload.progress, 'upload', upload.fileId) | number: '1.0-0'
+                      }}%
+                    </span>
+                    <button
+                      (click)="
+                        $event.stopPropagation();
+                        $event.preventDefault();
+                        cancelUploadRequested.emit(upload)
+                      "
+                      class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                      aria-label="Cancel upload"
+                      title="Cancel upload"
+                    >
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div
+                  class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark overflow-hidden"
+                >
+                  <div
+                    class="h-full rounded-full bg-brand dark:bg-brandDark transition-all duration-300 ease-out"
+                    [style.width]="getProgressBarWidth(upload.progress, 'upload', upload.fileId)"
+                    [style.max-width]="'100%'"
+                  ></div>
+                </div>
+              </div>
+            }
+            <!-- Downloads -->
+            @for (download of activeDownloads; track download) {
+              <div class="text-sm">
+                <div class="mb-1 flex items-center justify-between">
+                  <div class="flex items-start justify-start gap-2 min-w-0">
+                    <img
+                      [src]="isDarkMode ? '/icons/download-light.svg' : '/icons/download.svg'"
+                      alt="Downloading"
+                      title="Downloading"
+                      class="h-4 w-4"
+                      loading="lazy"
+                      width="16"
+                      height="16"
+                    />
+                    <div class="flex flex-col min-w-0">
+                      <span
+                        class="text-xs font-expoArabicMedium text-content dark:text-white break-words"
+                        dir="auto"
+                      >
+                        {{ truncateFilename(download.fileName) }}
+                      </span>
+                      <div
+                        class="mt-0.5 flex items-center gap-1 text-[11px] text-textMuted dark:text-textVeryMuted"
+                      >
+                        <img
+                          [src]="isDarkMode ? '/icons/users-white.svg' : '/icons/users.svg'"
+                          alt="User"
+                          title="User"
+                          class="h-3.5 w-3.5 opacity-80"
+                          loading="lazy"
+                          width="14"
+                          height="14"
+                        />
+                        <span class="break-words" dir="auto">{{ download.fromUser }}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="flex items-center justify-end gap-1">
+                    <span
+                      class="text-xs font-expoArabicMedium text-textMuted dark:text-textVeryMuted"
+                    >
+                      {{
+                        ProgressValue(download.progress, 'download', download.fileId)
+                          | number: '1.0-0'
+                      }}%
+                    </span>
+                    <button
+                      (click)="
+                        $event.stopPropagation();
+                        $event.preventDefault();
+                        cancelDownloadRequested.emit(download)
+                      "
+                      class="rounded-md text-textMuted hover:text-danger dark:text-textVeryMuted dark:hover:text-danger"
+                      aria-label="Cancel download"
+                      title="Cancel download"
+                    >
+                      <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M6 18L18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+                <div
+                  class="w-full rounded-full bg-textMuted/20 h-1.5 dark:bg-borderDark overflow-hidden"
+                >
+                  <div
+                    class="h-full rounded-full bg-brand dark:bg-brandDark transition-all duration-300 ease-out"
+                    [style.width]="
+                      getProgressBarWidth(download.progress, 'download', download.fileId)
+                    "
+                    [style.max-width]="'100%'"
+                  ></div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- MARK: - Mobile Exit Button -->
+    @if (sessionCode.length > 0) {
+      <div class="w-full flex-shrink-0 border-t border-borderLight dark:border-surfaceDark">
+        <div
+          class="flex w-full items-center justify-center py-4"
+          (click)="endSessionRequested.emit()"
+        >
+          <div class="flex w-full cursor-pointer items-center justify-center gap-2 px-3 py-3">
+            <img
+              class=""
+              alt="End Session"
+              title="End Session"
+              src="/icons/cross-small.svg"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
+            <h6 class="text-base font-medium text-danger font-expoArabicMedium">
+              {{ 'END_SESSION' | translate }}
+            </h6>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- MARK: - Footer Mobile -->
+    <div
+      class="flex w-full flex-col items-center gap-2 border-t px-4 py-4 dark:bg-baseDark dark:border-surfaceDark md:h-[58px] md:flex-row md:items-center md:justify-between md:px-8 md:py-0"
+    >
+      <!-- Social links Mobile -->
+      <div class="order-1 flex items-center gap-4">
+        <!-- LinkedIn Mobile -->
+        <a
+          href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
+          title="LinkedIn"
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          class="inline-flex items-center gap-2 hover:opacity-75"
+        >
+          <img
+            src="/icons/linkedin.svg"
+            alt="LinkedIn"
+            title="LinkedIn"
+            class="h-4 w-4"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+        </a>
+
+        <!-- GitHub Mobile -->
+        <a
+          href="https://github.com/SloMR/pastepoint"
+          title="GitHub"
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          class="inline-flex items-center gap-2 hover:opacity-75"
+        >
+          <img
+            src="/icons/github.svg"
+            alt="GitHub"
+            title="GitHub"
+            class="h-4 w-4"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+        </a>
+        <!-- X Icon & Link -->
+        <a
+          href="https://x.com/PastePoint"
+          title="X (Twitter)"
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          class="inline-flex items-center gap-2 hover:opacity-75"
+        >
+          <img
+            src="/icons/x-icon.svg"
+            alt="X (Twitter)"
+            title="X (Twitter)"
+            class="h-4 w-4"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+        </a>
+        <!-- Instagram Icon & Link -->
+        <a
+          href="https://www.instagram.com/paste_point/"
+          title="Instagram"
+          target="_blank"
+          rel="noopener noreferrer nofollow"
+          class="inline-flex items-center gap-2 hover:opacity-75"
+        >
+          <img
+            src="/icons/instagram-icon.svg"
+            alt="Instagram"
+            title="Instagram"
+            class="h-4 w-4"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+        </a>
+      </div>
+
+      <!-- Version & Privacy Mobile -->
+      <div class="order-2 flex items-center gap-2">
+        <a
+          href="/privacy"
+          title="Privacy and Terms"
+          target="_self"
+          rel="noopener noreferrer nofollow"
+          class="inline-flex items-center gap-2 text-brand dark:text-brandDark"
+        >
+          <p class="text-xs font-expoArabicMedium text-brand">
+            {{ 'PRIVACY_AND_TERMS' | translate }}
+          </p>
+          <img
+            src="/icons/privacy-and-terms.svg"
+            alt="Privacy and Terms"
+            title="Privacy and Terms"
+            class="h-4 w-4"
+            loading="lazy"
+            width="16"
+            height="16"
+          />
+        </a>
+      </div>
+
+      <p class="order-3 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+        {{ 'VERSION' | translate }} {{ appVersion }}
+      </p>
+
+      <!-- ©2026 Mobile -->
+      <p class="order-4 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted">
+        {{ 'COPYRIGHT_NOTICE' | translate }}
+      </p>
+    </div>
+  </div>
+</aside>
