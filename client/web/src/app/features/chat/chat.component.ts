@@ -14,8 +14,6 @@ import {
 } from '@angular/core';
 import { Subscription } from 'rxjs';
 import { isPlatformBrowser, NgOptimizedImage, UpperCasePipe } from '@angular/common';
-import { DomSanitizer } from '@angular/platform-browser';
-import Autolinker from 'autolinker';
 
 import { ThemeService } from '../../core/services/ui/theme.service';
 import { ChatService } from '../../core/services/communication/chat.service';
@@ -56,7 +54,6 @@ import { LanguageCode } from '../../core/i18n/translate-loader';
 import { Router } from '@angular/router';
 import { HotToastService } from '@ngxpert/hot-toast';
 import * as QRCode from 'qrcode';
-import { SecurityContext } from '@angular/core';
 import { PreviewService } from '../../core/services/ui/preview.service';
 import { FileSizePipe } from '../../utils/file-size.pipe';
 import { DeviceDetectorService } from 'ngx-device-detector';
@@ -117,7 +114,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private migrationService = inject(MigrationService);
   private metaService = inject(MetaService);
   private router = inject(Router);
-  private sanitizer = inject(DomSanitizer);
   private previewService = inject(PreviewService);
   private fileSizePipe = inject(FileSizePipe);
   private deviceDetectorService = inject(DeviceDetectorService);
@@ -900,68 +896,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
-   * TRACK MESSAGE
-   * Used to track the messages in the chat.
-   * ==========================================================
-   */
-  trackMessage(index: number, message: ChatMessage): string {
-    if (message.type === ChatMessageType.ATTACHMENT && message.fileTransfer?.fileId) {
-      return `att-${message.fileTransfer.fileId}`;
-    }
-
-    const ts =
-      message.timestamp instanceof Date ? message.timestamp.getTime() : `${message.timestamp}`;
-    return `${message.from}-${ts}`;
-  }
-
-  /**
-   * ==========================================================
-   * CONVERT URLS TO LINKS
-   * Detects URLs in message text and converts them to clickable links
-   * ==========================================================
-   */
-  protected convertUrlsToLinks(
-    text: string,
-    isDarkMode: boolean,
-    isMyMessage: boolean = false
-  ): string {
-    if (!text) return this.sanitizer.sanitize(SecurityContext.HTML, '') || '';
-
-    const escapeHtml = (unsafe: string): string => {
-      return unsafe
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    };
-
-    const processedText = escapeHtml(text);
-
-    const linkClasses = isMyMessage
-      ? isDarkMode
-        ? 'text-blue-400 hover:text-blue-800 underline break-all'
-        : 'text-blue-600 hover:text-blue-400 underline break-all'
-      : 'text-blue-200 hover:text-blue-500 underline break-all';
-
-    const textWithLinks = Autolinker.link(processedText, {
-      urls: true,
-      email: false,
-      phone: false,
-      mention: false,
-      hashtag: false,
-      newWindow: true,
-      className: linkClasses,
-      stripPrefix: false,
-      sanitizeHtml: true,
-    });
-
-    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, textWithLinks);
-    return sanitizedHtml || '';
-  }
-
-  /**
-   * ==========================================================
    * TRUNCATE FILENAME
    * Truncates a filename while preserving the file extension
    * ==========================================================
@@ -985,41 +919,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     return baseName.slice(0, availableLength) + '...' + extension;
-  }
-
-  /**
-   * ==========================================================
-   * PROGRESS BAR METHODS
-   * Methods to help track progress bar accuracy issues
-   * ==========================================================
-   */
-  protected ProgressValue(progress: number, type: 'upload' | 'download', fileId: string): number {
-    const clampedProgress = Math.min(100, Math.max(0, progress));
-
-    if (progress !== clampedProgress) {
-      this.logger.warn(
-        'ProgressValue',
-        `Progress out of range for ${type} ${fileId}: ${progress} -> ${clampedProgress}`
-      );
-    }
-
-    if (clampedProgress % 10 < 2) {
-      this.logger.debug(
-        'ProgressValue',
-        `${type.charAt(0).toUpperCase() + type.slice(1)} progress ${fileId}: ${clampedProgress.toFixed(2)}%`
-      );
-    }
-
-    return clampedProgress;
-  }
-
-  protected getProgressBarWidth(
-    progress: number,
-    type: 'upload' | 'download' = 'upload',
-    fileId: string = 'unknown'
-  ): string {
-    const safeProgress = this.ProgressValue(progress, type, fileId);
-    return `${safeProgress}%`;
   }
 
   /**
@@ -1598,16 +1497,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     this.SessionCode = '';
-  }
-
-  /**
-   * ==========================================================
-   * CHECK IF MESSAGE IS FROM CURRENT USER
-   * Useful for styling: returns true if this user's message.
-   * ==========================================================
-   */
-  isMyMessage(msg: ChatMessage): boolean {
-    return msg.from === this.userService.user;
   }
 
   /**
