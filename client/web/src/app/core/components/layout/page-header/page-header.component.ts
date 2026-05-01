@@ -7,6 +7,7 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-page-header',
   imports: [CommonModule, RouterLink, NgOptimizedImage, TranslateModule],
   templateUrl: './page-header.component.html',
+  styleUrl: './page-header.component.css',
 })
 export class PageHeaderComponent {
   @Input() isDarkMode = false;

@@ -20,6 +20,7 @@ import * as QRCode from 'qrcode';
   selector: 'app-qr-code-popup',
   imports: [CommonModule, TranslateModule],
   templateUrl: './qr-code-popup.component.html',
+  styleUrl: './qr-code-popup.component.css',
 })
 export class QrCodePopupComponent implements OnChanges {
   @Input() isOpen = false;

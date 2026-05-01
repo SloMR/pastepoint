@@ -10,6 +10,7 @@ import { FileDownload, FileUpload } from '../../../../utils/constants';
   selector: 'app-chat-sidebar',
   imports: [CommonModule, DecimalPipe, NgOptimizedImage, RouterLink, TranslateModule],
   templateUrl: './chat-sidebar.component.html',
+  styleUrl: './chat-sidebar.component.css',
 })
 export class ChatSidebarComponent {
   @Input() rooms: string[] = [];

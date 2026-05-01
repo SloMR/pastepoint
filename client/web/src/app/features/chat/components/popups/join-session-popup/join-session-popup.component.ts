@@ -7,6 +7,7 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-join-session-popup',
   imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './join-session-popup.component.html',
+  styleUrl: './join-session-popup.component.css',
 })
 export class JoinSessionPopupComponent {
   @Input() isOpen = false;

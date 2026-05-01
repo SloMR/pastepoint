@@ -7,6 +7,7 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-create-room-popup',
   imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './create-room-popup.component.html',
+  styleUrl: './create-room-popup.component.css',
 })
 export class CreateRoomPopupComponent {
   @Input() isOpen = false;

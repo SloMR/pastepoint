@@ -8,6 +8,7 @@ import { SocialLinksComponent } from '../social-links/social-links.component';
   selector: 'app-page-footer',
   imports: [CommonModule, RouterLink, TranslateModule, SocialLinksComponent],
   templateUrl: './page-footer.component.html',
+  styleUrl: './page-footer.component.css',
 })
 export class PageFooterComponent {
   @Input() appVersion = '';

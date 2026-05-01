@@ -21,6 +21,7 @@ import { FileSizePipe } from '../../../../utils/file-size.pipe';
   imports: [CommonModule, DatePipe, FileSizePipe, TranslateModule],
   providers: [FileSizePipe],
   templateUrl: './chat-messages.component.html',
+  styleUrl: './chat-messages.component.css',
 })
 export class ChatMessagesComponent {
   @Input() messages: ChatMessage[] = [];

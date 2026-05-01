@@ -24,6 +24,7 @@ export interface EnterKeyEvent {
   selector: 'app-chat-input',
   imports: [CommonModule, FormsModule, TranslateModule],
   templateUrl: './chat-input.component.html',
+  styleUrl: './chat-input.component.css',
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
 })
 export class ChatInputComponent implements OnDestroy {

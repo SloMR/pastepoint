@@ -6,6 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-end-session-popup',
   imports: [CommonModule, TranslateModule],
   templateUrl: './end-session-popup.component.html',
+  styleUrl: './end-session-popup.component.css',
 })
 export class EndSessionPopupComponent {
   @Input() isOpen = false;

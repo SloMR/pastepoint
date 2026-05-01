@@ -6,6 +6,7 @@ import { TranslateModule } from '@ngx-translate/core';
   selector: 'app-connection-warning',
   imports: [CommonModule, TranslateModule],
   templateUrl: './connection-warning.component.html',
+  styleUrl: './connection-warning.component.css',
 })
 export class ConnectionWarningComponent {
   @Input() show = false;
