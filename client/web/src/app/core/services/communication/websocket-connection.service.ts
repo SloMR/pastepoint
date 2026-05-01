@@ -175,9 +175,11 @@ export class WebSocketConnectionService implements OnDestroy {
     const wsUri = `${this.webSocketProto}://${this.host}/ws${code ? `/${code}` : ''}`;
     return new Promise<void>((resolve, reject) => {
       this.logger.info('connect', `Connecting to WebSocket at ${wsUri}`);
-      this.socket = new WebSocket(wsUri);
+      const socket = new WebSocket(wsUri);
+      this.socket = socket;
 
-      this.socket.onopen = () => {
+      socket.onopen = () => {
+        if (socket !== this.socket) return;
         this.logger.info('connect', 'WebSocket connected');
         if (this.reconnectAttempts > 0) {
           this.reconnected$.next();
@@ -189,7 +191,8 @@ export class WebSocketConnectionService implements OnDestroy {
         resolve();
       };
 
-      this.socket.onmessage = (ev) => {
+      socket.onmessage = (ev) => {
+        if (socket !== this.socket) return;
         if (typeof ev.data === 'string') {
           const message = ev.data.trim();
 
@@ -215,7 +218,16 @@ export class WebSocketConnectionService implements OnDestroy {
         }
       };
 
-      this.socket.onclose = (event) => {
+      socket.onclose = (event) => {
+        // Ignore stale close events from a socket that has already been replaced.
+        // Without this guard, a late-firing onclose from a previous socket would
+        // null-out the current `this.socket` and trigger a phantom reconnect,
+        // causing the server to register the client as multiple distinct users.
+        if (socket !== this.socket) {
+          this.logger.debug('onclose', `Ignoring stale close event (code ${event.code})`);
+          return;
+        }
+
         this.isConnecting = false;
         this.stopKeepAlive();
         this.socket = undefined;
@@ -247,7 +259,8 @@ export class WebSocketConnectionService implements OnDestroy {
         }
       };
 
-      this.socket.onerror = (error) => {
+      socket.onerror = (error) => {
+        if (socket !== this.socket) return;
         this.logger.error('connect', 'WebSocket error: ' + error);
         this.isConnecting = false;
         this.stopKeepAlive();
@@ -321,10 +334,15 @@ export class WebSocketConnectionService implements OnDestroy {
       this.reconnectTimer = null;
     }
 
-    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+    const socket = this.socket;
+    this.socket = undefined;
+
+    if (
+      socket &&
+      (socket.readyState === WebSocket.OPEN || socket.readyState === WebSocket.CONNECTING)
+    ) {
       this.logger.info('disconnect', 'Closing WebSocket connection.');
-      this.socket.close();
-      this.socket = undefined;
+      socket.close();
     } else {
       this.logger.warn('disconnect', 'WebSocket is already closed or not initialized.');
     }
