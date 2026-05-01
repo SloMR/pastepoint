@@ -1,0 +1,38 @@
+:host {
+  display: contents;
+}
+
+/* emoji-picker-element — sized and themed to match the app */
+emoji-picker {
+  width: 100%;
+  height: 360px;
+  border: none;
+  border-radius: 0.5rem;
+  --num-columns: 7;
+
+  /* Light mode — primary-100 palette */
+  --background: #e0f2fe;
+  --border-color: transparent;
+  --input-border-color: #7dd3fc;
+  --input-font-color: #333333;
+  --input-placeholder-color: #9ca3af;
+  --category-font-color: #6b7280;
+  --button-hover-background: #bae6fd;
+  --button-active-background: #7dd3fc;
+  --indicator-color: #3c54f0;
+  --outline-color: #3c54f0;
+}
+
+emoji-picker.dark {
+  /* Dark mode — secondary-800 palette */
+  --background: #1f2937;
+  --border-color: transparent;
+  --input-border-color: #4b5563;
+  --input-font-color: #e0f2fe;
+  --input-placeholder-color: #9ca3af;
+  --category-font-color: #9ca3af;
+  --button-hover-background: #374151;
+  --button-active-background: #4b5563;
+  --indicator-color: #6366f1;
+  --outline-color: #6366f1;
+}

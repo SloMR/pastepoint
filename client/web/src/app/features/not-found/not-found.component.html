@@ -4,57 +4,13 @@
   class="flex h-screen flex-col bg-pageBackground dark:bg-baseDark"
 >
   <!-- MARK: - Header Section -->
-  <header
-    class="border-b bg-pageBackground border-borderLight dark:border-surfaceDark dark:bg-baseDark"
-  >
-    <div class="mx-auto max-w-7xl pr-4 pl-16 sm:px-6 lg:px-8">
-      <div class="flex h-20 items-center justify-between">
-        <!-- MARK: - Logo & Title -->
-        <div class="flex items-center">
-          <a routerLink="/" [replaceUrl]="true" [class]="isRTL ? 'ml-4' : 'mr-4'" title="Home">
-            <img
-              [ngSrc]="isDarkMode ? '/icons/pastepoint-dark.svg' : '/icons/pastepoint-light.svg'"
-              alt="PastePoint Logo"
-              title="PastePoint Logo"
-              class="h-12 w-auto cursor-pointer"
-              width="136"
-              height="48"
-              loading="lazy"
-            />
-          </a>
-        </div>
-
-        <!-- MARK: - Theme Toggler & Language Switcher -->
-        <div class="flex flex-row-reverse items-center gap-2 md:flex-row">
-          <!-- theme toggler -->
-          <div
-            (click)="toggleTheme()"
-            class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-black w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
-          >
-            <button
-              [attr.aria-label]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-              [attr.title]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'"
-            >
-              <img
-                [src]="isDarkMode ? '/icons/brightness.svg' : '/icons/moon.svg'"
-                alt="Theme"
-                title="Theme"
-                class="h-5 w-5"
-              />
-            </button>
-          </div>
-
-          <!-- language switcher -->
-          <div
-            (click)="switchLanguage(translate.currentLang === 'ar' ? 'en' : 'ar')"
-            class="flex cursor-pointer items-center justify-center gap-4 rounded-lg border text-brand w-[44px] h-[44px] border-borderButton dark:bg-surfaceDark dark:border-borderDark md:w-[56px] md:h-[56px]"
-          >
-            {{ translate.currentLang | uppercase }}
-          </div>
-        </div>
-      </div>
-    </div>
-  </header>
+  <app-page-header
+    [isDarkMode]="isDarkMode"
+    [isRTL]="isRTL"
+    [currentLanguage]="translate.currentLang"
+    (toggleTheme)="toggleTheme()"
+    (switchLanguage)="switchLanguage($event)"
+  />
 
   <!-- MARK: - Main Content Area -->
   <main class="flex flex-1 items-center justify-center bg-pageBackground dark:bg-baseDark">
@@ -116,123 +72,5 @@
   </main>
 
   <!-- MARK: - Footer -->
-  <div
-    class="flex w-full flex-col items-center gap-2 border-t px-4 py-4 dark:bg-baseDark dark:border-surfaceDark md:h-[58px] md:flex-row md:items-center md:justify-between md:px-8 md:py-0"
-  >
-    <!-- Social links -->
-    <div class="order-1 flex items-center gap-4 md:order-2">
-      <!-- LinkedIn -->
-      <a
-        href="https://www.linkedin.com/in/sulaiman-alromaih-845700202/"
-        title="LinkedIn"
-        target="_blank"
-        rel="noopener noreferrer nofollow"
-        class="inline-flex items-center gap-2 hover:opacity-75"
-      >
-        <img
-          src="/icons/linkedin.svg"
-          alt="LinkedIn"
-          title="LinkedIn"
-          class="h-6 w-6"
-          loading="lazy"
-          width="24"
-          height="24"
-        />
-      </a>
-
-      <!-- GitHub -->
-      <a
-        href="https://github.com/SloMR/pastepoint"
-        title="GitHub"
-        target="_blank"
-        rel="noopener noreferrer nofollow"
-        class="inline-flex items-center gap-2 hover:opacity-75"
-      >
-        <img
-          src="/icons/github.svg"
-          alt="GitHub"
-          title="GitHub"
-          class="h-6 w-6"
-          loading="lazy"
-          width="24"
-          height="24"
-        />
-      </a>
-
-      <!-- X Icon & Link -->
-      <a
-        href="https://x.com/PastePoint"
-        title="X (Twitter)"
-        target="_blank"
-        rel="noopener noreferrer nofollow"
-        class="inline-flex items-center gap-2 hover:opacity-75"
-      >
-        <img
-          src="/icons/x-icon.svg"
-          alt="X (Twitter)"
-          title="X (Twitter)"
-          class="h-6 w-6"
-          loading="lazy"
-          width="24"
-          height="24"
-        />
-      </a>
-
-      <!-- Instagram Icon & Link -->
-      <a
-        href="https://www.instagram.com/paste_point/"
-        title="Instagram"
-        target="_blank"
-        rel="noopener noreferrer nofollow"
-        class="inline-flex items-center gap-2 hover:opacity-75"
-      >
-        <img
-          src="/icons/instagram-icon.svg"
-          alt="Instagram"
-          title="Instagram"
-          class="h-6 w-6"
-          loading="lazy"
-          width="24"
-          height="24"
-        />
-      </a>
-    </div>
-
-    <!-- Version & Privacy -->
-    <div class="order-2 flex items-center gap-4 md:order-3">
-      <a
-        routerLink="/privacy"
-        title="Privacy and Terms"
-        class="inline-flex items-center gap-2 text-brand dark:text-brandDark"
-      >
-        <p class="text-xs font-expoArabicMedium text-brand">
-          {{ 'PRIVACY_AND_TERMS' | translate }}
-        </p>
-        <img
-          src="/icons/privacy-and-terms.svg"
-          alt="Privacy and Terms"
-          title="Privacy and Terms"
-          class="h-6 w-6"
-          loading="lazy"
-          width="24"
-          height="24"
-        />
-      </a>
-      <p class="hidden text-xs font-expoArabicMedium text-content dark:text-textVeryMuted md:block">
-        {{ 'VERSION' | translate }} {{ appVersion }}
-      </p>
-    </div>
-
-    <!-- Version (Mobile Only) -->
-    <p class="order-3 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted md:hidden">
-      {{ 'VERSION' | translate }} {{ appVersion }}
-    </p>
-
-    <!-- ©2026 -->
-    <p
-      class="order-4 text-xs font-expoArabicMedium text-content dark:text-textVeryMuted md:order-1"
-    >
-      {{ 'COPYRIGHT_NOTICE' | translate }}
-    </p>
-  </div>
+  <app-page-footer [appVersion]="appVersion" [showPrivacyLink]="true" />
 </div>

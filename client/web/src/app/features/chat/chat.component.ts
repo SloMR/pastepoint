@@ -13,20 +13,11 @@ import {
   inject,
 } from '@angular/core';
 import { Subscription } from 'rxjs';
-import {
-  DatePipe,
-  DecimalPipe,
-  isPlatformBrowser,
-  NgClass,
-  NgOptimizedImage,
-  NgStyle,
-  UpperCasePipe,
-} from '@angular/common';
-import { DomSanitizer } from '@angular/platform-browser';
-import Autolinker from 'autolinker';
+import { isPlatformBrowser, NgOptimizedImage, UpperCasePipe } from '@angular/common';
 
 import { ThemeService } from '../../core/services/ui/theme.service';
 import { ChatService } from '../../core/services/communication/chat.service';
+import { HeartbeatService } from '../../core/services/communication/heartbeat.service';
 import { RoomService } from '../../core/services/room-management/room.service';
 import { FileTransferService } from '../../core/services/file-management/file-transfer.service';
 import { WebRTCService } from '../../core/services/communication/webrtc.service';
@@ -42,17 +33,12 @@ import {
   FileTransferStatus,
   FileUpload,
   MB,
-  HEARTBEAT_INTERVAL_DESKTOP_SEC,
-  HEARTBEAT_INTERVAL_MOBILE_SEC,
-  HEARTBEAT_TIMEOUT_DESKTOP_SEC,
-  HEARTBEAT_TIMEOUT_MOBILE_SEC,
   NAVIGATION_DELAY_MS,
   CONNECTION_WARNING_DELAY_MS,
   SESSION_CODE_KEY,
   THEME_PREFERENCE_KEY,
   PREVIEW_MIME_TYPE,
 } from '../../utils/constants';
-import type { EmojiClickEvent } from 'emoji-picker-element/shared';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { SessionService } from '../../core/services/session/session.service';
 import packageJson from '../../../../package.json';
@@ -63,11 +49,16 @@ import { LanguageService } from '../../core/services/ui/language.service';
 import { LanguageCode } from '../../core/i18n/translate-loader';
 import { Router } from '@angular/router';
 import { HotToastService } from '@ngxpert/hot-toast';
-import * as QRCode from 'qrcode';
-import { SecurityContext } from '@angular/core';
 import { PreviewService } from '../../core/services/ui/preview.service';
 import { FileSizePipe } from '../../utils/file-size.pipe';
-import { DeviceDetectorService } from 'ngx-device-detector';
+import { JoinSessionPopupComponent } from './components/popups/join-session-popup/join-session-popup.component';
+import { CreateRoomPopupComponent } from './components/popups/create-room-popup/create-room-popup.component';
+import { EndSessionPopupComponent } from './components/popups/end-session-popup/end-session-popup.component';
+import { QrCodePopupComponent } from './components/popups/qr-code-popup/qr-code-popup.component';
+import { ConnectionWarningComponent } from './components/connection-warning/connection-warning.component';
+import { ChatInputComponent } from './components/chat-input/chat-input.component';
+import { ChatMessagesComponent } from './components/chat-messages/chat-messages.component';
+import { ChatSidebarComponent } from './components/chat-sidebar/chat-sidebar.component';
 
 /**
  * ==========================================================
@@ -80,14 +71,17 @@ import { DeviceDetectorService } from 'ngx-device-detector';
   imports: [
     FormsModule,
     UpperCasePipe,
-    DatePipe,
-    DecimalPipe,
     TranslateModule,
-    NgStyle,
     NgOptimizedImage,
     RouterLink,
-    NgClass,
-    FileSizePipe,
+    JoinSessionPopupComponent,
+    CreateRoomPopupComponent,
+    EndSessionPopupComponent,
+    QrCodePopupComponent,
+    ConnectionWarningComponent,
+    ChatInputComponent,
+    ChatMessagesComponent,
+    ChatSidebarComponent,
   ],
   providers: [FileSizePipe],
   templateUrl: './chat.component.html',
@@ -98,6 +92,7 @@ import { DeviceDetectorService } from 'ngx-device-detector';
 export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   userService = inject(UserService);
   private chatService = inject(ChatService);
+  private heartbeatService = inject(HeartbeatService);
   private roomService = inject(RoomService);
   private fileTransferService = inject(FileTransferService);
   private webrtcService = inject(WebRTCService);
@@ -114,11 +109,8 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private migrationService = inject(MigrationService);
   private metaService = inject(MetaService);
   private router = inject(Router);
-  private sanitizer = inject(DomSanitizer);
   private previewService = inject(PreviewService);
   private fileSizePipe = inject(FileSizePipe);
-  private deviceDetectorService = inject(DeviceDetectorService);
-  private elementRef = inject(ElementRef);
   protected translate = inject<TranslateService>(TranslateService);
   private platformId = inject(PLATFORM_ID);
 
@@ -145,26 +137,20 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   isDarkMode = false;
   currentLanguage: LanguageCode = 'en';
   isMenuOpen = false;
-  isEmojiPickerVisible = false;
-  isDragging = false;
 
   isOpenCreateRoom = false;
   isOpenJoinSessionPopup = false;
   isOpenEndSessionPopup = false;
   isOpenQRCodePopup = false;
-  isGeneratingQRCode = false;
   skipDrawerAnim = false;
 
   activeUploads: FileUpload[] = [];
   activeDownloads: FileDownload[] = [];
 
-  private heartbeatIntervalId: ReturnType<typeof setInterval> | null = null;
-  private lastHeartbeat: number = Date.now();
   private isNavigatingIntentionally = false;
   private lastMessagesLength: number = 0;
   private connectionInitTimeouts: ReturnType<typeof setTimeout>[] = [];
   private navigationTimeout: ReturnType<typeof setTimeout> | null = null;
-  private emojiPickerHideTimeout: ReturnType<typeof setTimeout> | null = null;
   private statusCheckIntervalId: ReturnType<typeof setInterval> | null = null;
   private connectionWarningDismissed = false;
   private connectionWarningTimeouts = new Map<string, ReturnType<typeof setTimeout>>();
@@ -194,8 +180,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * ==========================================================
    */
   private subscriptions: Subscription[] = [];
-  private emojiPickerTimeout: ReturnType<typeof setTimeout> | null = null;
-  public isHoveringOverPicker = false;
   public FileTransferStatus = FileTransferStatus;
   private overrideRecipients: string[] | null = null;
   private createdPreviewUrls: string[] = [];
@@ -206,11 +190,21 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    * Direct references to DOM elements for scrolling, focusing, etc.
    * ==========================================================
    */
-  @ViewChild('messageContainer') messageContainer!: ElementRef;
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
-  @ViewChild('messageTextarea', { static: false }) messageTextarea!: ElementRef;
-  @ViewChild('qrCodeContainer', { static: false }) qrCodeContainer!: ElementRef;
-  @ViewChild('fileInput', { static: false }) fileInput!: ElementRef<HTMLInputElement>;
+  @ViewChild(ChatInputComponent) chatInput?: ChatInputComponent;
+  @ViewChild(ChatMessagesComponent) chatMessages?: ChatMessagesComponent;
+
+  protected get messageTextarea(): ElementRef {
+    return this.chatInput!.messageTextarea;
+  }
+
+  protected get fileInput(): ElementRef<HTMLInputElement> {
+    return this.chatInput!.fileInput;
+  }
+
+  protected get messageContainer(): ElementRef {
+    return this.chatMessages!.messageContainer;
+  }
 
   /**
    * ==========================================================
@@ -260,17 +254,17 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         const sessionCode = params.get('code');
         const storedSessionCode = localStorage.getItem(SESSION_CODE_KEY);
 
-        if (sessionCode && this.isValidSessionCode(sessionCode)) {
-          this.SessionCode = this.sanitizeSessionCode(sessionCode);
+        if (sessionCode && this.sessionService.isValidSessionCode(sessionCode)) {
+          this.SessionCode = this.sessionService.sanitizeSessionCode(sessionCode);
           this.metaService.updateChatMetadata(true);
-        } else if (storedSessionCode && this.isValidSessionCode(storedSessionCode)) {
-          this.SessionCode = this.sanitizeSessionCode(storedSessionCode);
+        } else if (storedSessionCode && this.sessionService.isValidSessionCode(storedSessionCode)) {
+          this.SessionCode = this.sessionService.sanitizeSessionCode(storedSessionCode);
           this.metaService.updateChatMetadata(true);
         } else {
-          if (sessionCode && !this.isValidSessionCode(sessionCode)) {
+          if (sessionCode && !this.sessionService.isValidSessionCode(sessionCode)) {
             this.logger.warn('ngOnInit', 'Invalid session code in URL, clearing');
           }
-          if (storedSessionCode && !this.isValidSessionCode(storedSessionCode)) {
+          if (storedSessionCode && !this.sessionService.isValidSessionCode(storedSessionCode)) {
             this.logger.warn('ngOnInit', 'Invalid session code in localStorage, clearing');
             this.clearSessionCode();
           }
@@ -330,9 +324,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     this.unsubscribeAll();
     this.closeConnections();
     this.clearMessages();
-    if (this.emojiPickerTimeout) {
-      clearTimeout(this.emojiPickerTimeout);
-    }
 
     for (const url of this.createdPreviewUrls) {
       try {
@@ -347,10 +338,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       this.clearSessionCode();
     }
 
-    if (this.heartbeatIntervalId) {
-      clearInterval(this.heartbeatIntervalId);
-      this.logger.debug('ngOnDestroy', 'Heartbeat monitor cleared');
-    }
+    this.heartbeatService.stop();
 
     // Clear all connection initialization timeouts
     this.connectionInitTimeouts.forEach((timeout) => clearTimeout(timeout));
@@ -360,12 +348,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (this.navigationTimeout) {
       clearTimeout(this.navigationTimeout);
       this.navigationTimeout = null;
-    }
-
-    // Clear emoji picker hide timeout
-    if (this.emojiPickerHideTimeout) {
-      clearTimeout(this.emojiPickerHideTimeout);
-      this.emojiPickerHideTimeout = null;
     }
 
     // Clear status check interval
@@ -429,45 +411,22 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   /**
    * ==========================================================
    * HEARTBEAT MONITOR
-   * Monitors the heartbeat to detect if the app is hidden or suspended.
-   * Uses different intervals for desktop vs mobile devices.
-   * If the heartbeat is missed, it closes all connections and notifies the user.
+   * Subscribes to HeartbeatService.suspended$ and reacts to suspensions
+   * by warning the user and forcing a page reload.
    * ==========================================================
    */
   private startHeartbeatMonitor(): void {
-    const isDesktop = this.deviceDetectorService.isDesktop();
-
-    const heartbeatInterval = isDesktop
-      ? HEARTBEAT_INTERVAL_DESKTOP_SEC
-      : HEARTBEAT_INTERVAL_MOBILE_SEC;
-    const heartbeatTimeout = isDesktop
-      ? HEARTBEAT_TIMEOUT_DESKTOP_SEC
-      : HEARTBEAT_TIMEOUT_MOBILE_SEC;
-
-    this.logger.debug(
-      'startHeartbeatMonitor',
-      `Starting heartbeat monitor for ${isDesktop ? 'desktop' : 'mobile'} device with ${heartbeatInterval}sec interval`
-    );
-
-    this.heartbeatIntervalId = setInterval(() => {
-      const now = Date.now();
-      const diff = (now - this.lastHeartbeat) / 1000;
-
-      // Simulate heartbeat update
-      this.lastHeartbeat = now;
-      // Detect suspension
-      if (diff > heartbeatTimeout) {
-        this.logger.warn('Heartbeat', `Suspension detected: last beat was ${diff}sec ago.`);
+    this.subscriptions.push(
+      this.heartbeatService.suspended$.subscribe(() => {
         this.toaster.warning(this.translate.instant('AUTO_REFRESH_NOTICE'));
-
-        // Force page refresh to completely reset the app state if needed
         if (isPlatformBrowser(this.platformId)) {
           setTimeout(() => {
             window.location.reload();
           }, 2000);
         }
-      }
-    }, heartbeatInterval * 1000);
+      })
+    );
+    this.heartbeatService.start();
   }
 
   /**
@@ -886,68 +845,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
-   * TRACK MESSAGE
-   * Used to track the messages in the chat.
-   * ==========================================================
-   */
-  trackMessage(index: number, message: ChatMessage): string {
-    if (message.type === ChatMessageType.ATTACHMENT && message.fileTransfer?.fileId) {
-      return `att-${message.fileTransfer.fileId}`;
-    }
-
-    const ts =
-      message.timestamp instanceof Date ? message.timestamp.getTime() : `${message.timestamp}`;
-    return `${message.from}-${ts}`;
-  }
-
-  /**
-   * ==========================================================
-   * CONVERT URLS TO LINKS
-   * Detects URLs in message text and converts them to clickable links
-   * ==========================================================
-   */
-  protected convertUrlsToLinks(
-    text: string,
-    isDarkMode: boolean,
-    isMyMessage: boolean = false
-  ): string {
-    if (!text) return this.sanitizer.sanitize(SecurityContext.HTML, '') || '';
-
-    const escapeHtml = (unsafe: string): string => {
-      return unsafe
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    };
-
-    const processedText = escapeHtml(text);
-
-    const linkClasses = isMyMessage
-      ? isDarkMode
-        ? 'text-blue-400 hover:text-blue-800 underline break-all'
-        : 'text-blue-600 hover:text-blue-400 underline break-all'
-      : 'text-blue-200 hover:text-blue-500 underline break-all';
-
-    const textWithLinks = Autolinker.link(processedText, {
-      urls: true,
-      email: false,
-      phone: false,
-      mention: false,
-      hashtag: false,
-      newWindow: true,
-      className: linkClasses,
-      stripPrefix: false,
-      sanitizeHtml: true,
-    });
-
-    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, textWithLinks);
-    return sanitizedHtml || '';
-  }
-
-  /**
-   * ==========================================================
    * TRUNCATE FILENAME
    * Truncates a filename while preserving the file extension
    * ==========================================================
@@ -971,41 +868,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     return baseName.slice(0, availableLength) + '...' + extension;
-  }
-
-  /**
-   * ==========================================================
-   * PROGRESS BAR METHODS
-   * Methods to help track progress bar accuracy issues
-   * ==========================================================
-   */
-  protected ProgressValue(progress: number, type: 'upload' | 'download', fileId: string): number {
-    const clampedProgress = Math.min(100, Math.max(0, progress));
-
-    if (progress !== clampedProgress) {
-      this.logger.warn(
-        'ProgressValue',
-        `Progress out of range for ${type} ${fileId}: ${progress} -> ${clampedProgress}`
-      );
-    }
-
-    if (clampedProgress % 10 < 2) {
-      this.logger.debug(
-        'ProgressValue',
-        `${type.charAt(0).toUpperCase() + type.slice(1)} progress ${fileId}: ${clampedProgress.toFixed(2)}%`
-      );
-    }
-
-    return clampedProgress;
-  }
-
-  protected getProgressBarWidth(
-    progress: number,
-    type: 'upload' | 'download' = 'upload',
-    fileId: string = 'unknown'
-  ): string {
-    const safeProgress = this.ProgressValue(progress, type, fileId);
-    return `${safeProgress}%`;
   }
 
   /**
@@ -1366,7 +1228,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    if (!this.isValidSessionCode(code)) {
+    if (!this.sessionService.isValidSessionCode(code)) {
       this.logger.error('joinPrivateSession', 'Invalid session code format');
       this.toaster.error(this.translate.instant('INVALID_SESSION_CODE_FORMAT'));
       return;
@@ -1399,23 +1261,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
-   * VALIDATE SESSION CODE
-   * Validates that the session code contains only allowed characters
-   * ==========================================================
-   */
-  private isValidSessionCode(code: string): boolean {
-    const sessionCodeRegex = /^[a-zA-Z0-9]+$/;
-    return sessionCodeRegex.test(code) && code.length === 10;
-  }
-
-  /**
-   * ==========================================================
    * OPEN CHAT SESSION
    * Redirects the user to /private/:code in the same browser tab.
    * ==========================================================
    */
   private openChatSession(code: string): void {
-    if (!this.isValidSessionCode(code)) {
+    if (!this.sessionService.isValidSessionCode(code)) {
       this.logger.error('openChatSession', 'Invalid session code format, navigation aborted');
       this.toaster.error(this.translate.instant('INVALID_SESSION_CODE_FORMAT'));
       return;
@@ -1448,7 +1299,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         this.cdr.detectChanges();
       });
 
-      const sanitizedCode = this.sanitizeSessionCode(code);
+      const sanitizedCode = this.sessionService.sanitizeSessionCode(code);
       localStorage.setItem(SESSION_CODE_KEY, sanitizedCode);
 
       // Clear any existing navigation timeout
@@ -1461,16 +1312,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         window.open(`/private/${sanitizedCode}`, '_self');
       }, NAVIGATION_DELAY_MS);
     }
-  }
-
-  /**
-   * ==========================================================
-   * SANITIZE SESSION CODE
-   * Removes any potentially dangerous characters from the session code
-   * ==========================================================
-   */
-  private sanitizeSessionCode(code: string): string {
-    return code.replace(/[^a-zA-Z0-9]/g, '');
   }
 
   /**
@@ -1497,78 +1338,25 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   /**
    * ==========================================================
    * GET SESSION URL
-   * Returns the full URL for the current session.
+   * Returns the full URL for the current session (used by QR popup).
    * ==========================================================
    */
-  private getSessionUrl(): string {
-    if (!this.SessionCode) {
+  protected get sessionUrl(): string {
+    if (!this.SessionCode || !isPlatformBrowser(this.platformId)) {
       return '';
     }
-
-    const sessionUrl = `${window.location.origin}/private/${this.SessionCode}`;
-    return sessionUrl;
-  }
-
-  /**
-   * ==========================================================
-   * GENERATE QR CODE
-   * Generates a QR code for the current session URL.
-   * ==========================================================
-   */
-  private async generateQRCode(): Promise<void> {
-    if (!isPlatformBrowser(this.platformId)) {
-      return;
-    }
-
-    if (!this.SessionCode || !this.qrCodeContainer) {
-      return;
-    }
-
-    try {
-      this.isGeneratingQRCode = true;
-      this.cdr.detectChanges();
-
-      const sessionUrl = this.getSessionUrl();
-      const qrCodeElement = this.qrCodeContainer.nativeElement;
-      const isMobile = window.innerWidth < 640;
-      while (qrCodeElement.firstChild) {
-        qrCodeElement.removeChild(qrCodeElement.firstChild);
-      }
-
-      const canvas = document.createElement('canvas');
-      await QRCode.toCanvas(canvas, sessionUrl, {
-        width: isMobile ? 250 : 300,
-        margin: 2,
-        errorCorrectionLevel: 'L',
-        color: {
-          dark: '#000000',
-          light: '#FFFFFF',
-        },
-      });
-
-      qrCodeElement.appendChild(canvas);
-      this.logger.info('generateQRCode', 'QR code generated successfully');
-    } catch (error) {
-      this.logger.error('generateQRCode', 'Failed to generate QR code:', error);
-      this.toaster.error(this.translate.instant('QR_CODE_GENERATION_FAILED'));
-    } finally {
-      this.isGeneratingQRCode = false;
-      this.cdr.detectChanges();
-    }
+    return `${window.location.origin}/private/${this.SessionCode}`;
   }
 
   /**
    * ==========================================================
    * OPEN QR CODE POPUP
-   * Opens the QR code popup and generates the QR code.
+   * Opens the QR code popup; the popup itself handles generation.
    * ==========================================================
    */
-  async openQRCodePopup(): Promise<void> {
+  openQRCodePopup(): void {
     this.isOpenQRCodePopup = true;
     this.cdr.detectChanges();
-    requestAnimationFrame(() => {
-      this.generateQRCode();
-    });
   }
 
   /**
@@ -1584,16 +1372,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     }
 
     this.SessionCode = '';
-  }
-
-  /**
-   * ==========================================================
-   * CHECK IF MESSAGE IS FROM CURRENT USER
-   * Useful for styling: returns true if this user's message.
-   * ==========================================================
-   */
-  isMyMessage(msg: ChatMessage): boolean {
-    return msg.from === this.userService.user;
   }
 
   /**
@@ -1832,131 +1610,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
   /**
    * ==========================================================
-   * HANDLE EMOJI ICON MOUSE LEAVE
-   * Delays hiding the emoji picker if the pointer left the icon.
+   * HANDLE FILES DROPPED
+   * Processes files dropped into the chat input area
    * ==========================================================
    */
-  protected handleEmojiIconMouseLeave(): void {
-    // Clear any existing emoji picker hide timeout
-    if (this.emojiPickerHideTimeout) {
-      clearTimeout(this.emojiPickerHideTimeout);
-    }
-
-    this.emojiPickerHideTimeout = setTimeout(() => {
-      this.emojiPickerHideTimeout = null;
-      if (!this.isHoveringOverPicker) {
-        this.ngZone.run(() => {
-          this.isEmojiPickerVisible = false;
-          this.cdr.detectChanges();
-        });
-      }
-    }, 150);
-  }
-
-  /**
-   * ==========================================================
-   * ADD EMOJI
-   * Inserts the selected emoji into the current message text.
-   * ==========================================================
-   */
-  protected addEmoji(event: EmojiClickEvent): void {
-    const { emoji, skinTone } = event.detail;
-    if (!('unicode' in emoji)) return;
-
-    const unicode =
-      skinTone && emoji.skins?.[skinTone - 1]?.unicode
-        ? emoji.skins[skinTone - 1].unicode
-        : emoji.unicode;
-
-    this.ngZone.run(() => {
-      this.message += unicode;
-      this.cdr.detectChanges();
-    });
-  }
-
-  protected openEmojiPicker(): void {
-    this.isEmojiPickerVisible = true;
-    // Inject scrollbar styles into the picker's shadow root after it renders.
-    setTimeout(() => this.injectEmojiPickerScrollbarStyles());
-  }
-
-  private injectEmojiPickerScrollbarStyles(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    const picker = this.elementRef.nativeElement.querySelector('emoji-picker') as HTMLElement & {
-      shadowRoot: ShadowRoot | null;
-    };
-    if (!picker?.shadowRoot || picker.shadowRoot.querySelector('#pp-scrollbar')) return;
-
-    const style = document.createElement('style');
-    style.id = 'pp-scrollbar';
-    style.textContent = `
-      .tabpanel { scrollbar-width: thin; scrollbar-color: rgba(125,211,252,.5) transparent; }
-      .tabpanel::-webkit-scrollbar { width: 4px; }
-      .tabpanel::-webkit-scrollbar-track { background: transparent; }
-      .tabpanel::-webkit-scrollbar-thumb { background: rgba(125,211,252,.5); border-radius: 9999px; }
-      :host(.dark) .tabpanel { scrollbar-color: rgba(75,85,99,.6) transparent; }
-      :host(.dark) .tabpanel::-webkit-scrollbar-thumb { background: rgba(75,85,99,.6); }
-      .nav { overflow-x: auto; scrollbar-width: none; }
-      .nav::-webkit-scrollbar { display: none; }
-    `;
-    picker.shadowRoot.appendChild(style);
-  }
-
-  /**
-   * ==========================================================
-   * HANDLE DRAG ENTER
-   * Manages the drag enter state
-   * ==========================================================
-   */
-  protected handleDragEnter(): void {
-    if (!this.isDragging) {
-      this.ngZone.run(() => {
-        this.isDragging = true;
-        this.cdr.detectChanges();
-      });
-    }
-  }
-
-  /**
-   * ==========================================================
-   * HANDLE DRAG LEAVE
-   * Manages the drag leave state
-   * ==========================================================
-   */
-  protected handleDragLeave(event: DragEvent): void {
-    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-    const x = event.clientX;
-    const y = event.clientY;
-
-    if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
-      this.ngZone.run(() => {
-        this.isDragging = false;
-        this.cdr.detectChanges();
-      });
-    }
-  }
-
-  /**
-   * ==========================================================
-   * HANDLE DRAG OVER
-   * Provides visual feedback during drag
-   * ==========================================================
-   */
-  protected handleDragOver(event: DragEvent): void {
-    event.preventDefault();
-    if (event.dataTransfer) {
-      event.dataTransfer.dropEffect = 'copy';
-    }
-  }
-
-  /**
-   * ==========================================================
-   * HANDLE DROP
-   * Processes files dropped into the chat area
-   * ==========================================================
-   */
-  protected async handleDrop(event: DragEvent): Promise<void> {
-    event.preventDefault();
+  protected async handleFilesDropped(files: File[]): Promise<void> {
     const otherMembers = this.members.filter((m) => m !== this.userService.user);
 
     if (otherMembers.length === 0) {
@@ -1964,13 +1622,6 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       return;
     }
 
-    this.ngZone.run(() => {
-      this.isDragging = false;
-      this.cdr.detectChanges();
-    });
-    if (!event.dataTransfer?.files) return;
-
-    const files = Array.from(event.dataTransfer.files);
     if (files.length === 0) return;
 
     // Create local chat messages for each file being sent
@@ -1981,7 +1632,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       for (const member of otherMembers) {
         await this.fileTransferService.prepareFileForSending(fileToSend, member);
         if (!this.webrtcService.isConnectedOrConnecting(member)) {
-          this.logger.info('handleDrop', `Initiating connection to ${member} for file transfer`);
+          this.logger.info(
+            'handleFilesDropped',
+            `Initiating connection to ${member} for file transfer`
+          );
           this.webrtcService.initiateConnection(member);
         }
       }
@@ -1993,7 +1647,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       if (connectionReady) {
         await this.fileTransferService.sendAllFileOffers(member);
-        this.logger.debug('handleDrop', `Sent ${files.length} files to ${member}`);
+        this.logger.debug('handleFilesDropped', `Sent ${files.length} files to ${member}`);
       }
     }
   }
