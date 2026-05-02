@@ -336,6 +336,7 @@ export class WebSocketConnectionService implements OnDestroy {
 
     const socket = this.socket;
     this.socket = undefined;
+    this.isConnecting = false;
 
     if (
       socket &&

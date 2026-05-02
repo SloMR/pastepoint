@@ -194,16 +194,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild(ChatInputComponent) chatInput?: ChatInputComponent;
   @ViewChild(ChatMessagesComponent) chatMessages?: ChatMessagesComponent;
 
-  protected get messageTextarea(): ElementRef {
-    return this.chatInput!.messageTextarea;
+  protected get messageTextarea(): ElementRef | undefined {
+    return this.chatInput?.messageTextarea;
   }
 
-  protected get fileInput(): ElementRef<HTMLInputElement> {
-    return this.chatInput!.fileInput;
+  protected get fileInput(): ElementRef<HTMLInputElement> | undefined {
+    return this.chatInput?.fileInput;
   }
 
-  protected get messageContainer(): ElementRef {
-    return this.chatMessages!.messageContainer;
+  protected get messageContainer(): ElementRef | undefined {
+    return this.chatMessages?.messageContainer;
   }
 
   /**
@@ -1590,8 +1590,10 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   private scrollToBottom(): void {
     if (!isPlatformBrowser(this.platformId)) return;
     try {
-      this.messageContainer.nativeElement.scrollTop =
-        this.messageContainer.nativeElement.scrollHeight;
+      const container = this.messageContainer?.nativeElement;
+      if (container) {
+        container.scrollTop = container.scrollHeight;
+      }
     } catch (err) {
       this.logger.error('scrollToBottom', `Could not scroll to bottom: ${err}`);
     }

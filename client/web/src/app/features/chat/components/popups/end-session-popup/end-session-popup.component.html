@@ -15,16 +15,21 @@
           >
             {{ 'END_SESSION_HEADER' | translate }}
           </h2>
-          <img
-            src="/icons/cross-close.svg"
-            alt="Close"
-            title="Close"
-            class="h-4 w-4 cursor-pointer"
+          <button
+            type="button"
             (click)="closed.emit()"
-            loading="lazy"
-            width="16"
-            height="16"
-          />
+            aria-label="Close"
+            class="flex items-center justify-center rounded-full p-2 transition-colors hover:bg-gray-100 dark:hover:bg-gray-700"
+          >
+            <img
+              src="/icons/cross-close.svg"
+              alt=""
+              class="h-4 w-4"
+              loading="lazy"
+              width="16"
+              height="16"
+            />
+          </button>
         </div>
         <div class="flex w-full items-center justify-between gap-4">
           <button

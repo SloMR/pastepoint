@@ -46,7 +46,7 @@ export class ChatSidebarComponent {
     return this.memberConnectionStatus.get(member) ?? false;
   }
 
-  protected ProgressValue(progress: number, type: 'upload' | 'download', fileId: string): number {
+  protected progressValue(progress: number, type: 'upload' | 'download', fileId: string): number {
     const clampedProgress = Math.min(100, Math.max(0, progress));
 
     if (progress !== clampedProgress) {
@@ -71,7 +71,7 @@ export class ChatSidebarComponent {
     type: 'upload' | 'download' = 'upload',
     fileId: string = 'unknown'
   ): string {
-    const safeProgress = this.ProgressValue(progress, type, fileId);
+    const safeProgress = this.progressValue(progress, type, fileId);
     return `${safeProgress}%`;
   }
 
