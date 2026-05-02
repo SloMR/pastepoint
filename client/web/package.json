@@ -1,6 +1,6 @@
 {
   "name": "web",
-  "version": "0.16.0",
+  "version": "0.16.1",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
@@ -40,6 +40,7 @@
     "express": "^4.22.1",
     "flowbite": "^3.1.2",
     "hash-wasm": "^4.12.0",
+    "jsqr": "^1.4.0",
     "ngx-device-detector": "^11.0.0",
     "ngx-logger": "^5.0.12",
     "qrcode": "^1.5.4",
