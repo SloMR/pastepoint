@@ -50,6 +50,7 @@
   "ENTER_SESSION_CODE": "أدخل رمز الجلسة",
   "SESSION_CODE_PLACEHOLDER": "رمز الجلسة",
   "SESSION_CODE_DESCRIPTION": "أدخل رمز الجلسة للانضمام",
+  "SESSION_CODE_DESCRIPTION_WITH_QR": "أدخل رمز الجلسة الخاصة للانضمام أو امسح رمز QR الخاص بها",
   "DONE": "تم",
 
   "_MEMBERS_SECTION": "==== MEMBERS ====",
@@ -64,7 +65,11 @@
 
   "_QR_CODE_SECTION": "==== QR CODE ====",
   "QR_CODE_GENERATION_FAILED": "تعذّر إنشاء رمز الاستجابة السريعة. الرجاء المحاولة مرة أخرى.",
+  "QR_CODE_INVALID_URL": "رمز QR غير صالح: الرابط لا ينتمي إلى هذا الموقع.",
   "SCAN_QR_CODE_TO_JOIN_THE_SESSION": "امسح الرمز باستخدام جهاز آخر للانضمام إلى الجلسة",
+  "SCAN_QR_CODE": "مسح رمز QR",
+  "POINT_CAMERA_AT_QR": "وجّه الكاميرا نحو رمز PastePoint",
+  "CAMERA_NOT_AVAILABLE": "تعذّر الوصول إلى الكاميرا.",
 
   "_FILE_TRANSFER_SECTION": "==== FILE TRANSFER ====",
   "FILE_TRANSFER": "نقل الملفات",

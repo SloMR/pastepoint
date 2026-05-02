@@ -50,6 +50,7 @@
   "ENTER_SESSION_CODE": "Enter the Session Code",
   "SESSION_CODE_PLACEHOLDER": "Session code",
   "SESSION_CODE_DESCRIPTION": "Enter the code to join a private chat.",
+  "SESSION_CODE_DESCRIPTION_WITH_QR": "Enter the code or scan a QR code to join a private chat.",
   "DONE": "Done",
 
   "_MEMBERS_SECTION": "==== MEMBERS ====",
@@ -64,7 +65,11 @@
 
   "_QR_CODE_SECTION": "==== QR CODE ====",
   "QR_CODE_GENERATION_FAILED": "Couldn't generate QR code. Try again.",
+  "QR_CODE_INVALID_URL": "Invalid QR code: URL does not belong to this site.",
   "SCAN_QR_CODE_TO_JOIN_THE_SESSION": "Scan the QR code on another device to join the session",
+  "SCAN_QR_CODE": "Scan QR Code",
+  "POINT_CAMERA_AT_QR": "Point your camera at a PastePoint QR code",
+  "CAMERA_NOT_AVAILABLE": "Camera access denied or unavailable.",
 
   "_FILE_TRANSFER_SECTION": "==== FILE TRANSFER ====",
   "FILE_TRANSFER": "File Transfer",

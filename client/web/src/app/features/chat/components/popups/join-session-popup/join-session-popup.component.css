@@ -1,0 +1,19 @@
+:host .scanner-active {
+  padding: 1rem;
+}
+
+/* Pulsing corner brackets — mirrors iOS scaleEffect 1.0 → 1.04, 1.8s, repeatForever. */
+@keyframes scanner-bracket-pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+.scanner-brackets {
+  animation: scanner-bracket-pulse 1.8s ease-in-out infinite;
+  transform-origin: center;
+}
