@@ -51,7 +51,7 @@ export class QrCodePopupComponent implements OnChanges {
     try {
       const parsedUrl = new URL(this.sessionUrl);
       if (parsedUrl.origin !== window.location.origin) {
-        this.logger.warn('generateQRCode', 'Rejected QR code for external URL:', this.sessionUrl);
+        this.logger.warn('generateQRCode', 'Rejected QR code for external URL');
         this.toaster.error(this.translate.instant('QR_CODE_INVALID_URL'));
         return;
       }

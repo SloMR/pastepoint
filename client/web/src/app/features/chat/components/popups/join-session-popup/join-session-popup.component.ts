@@ -5,8 +5,10 @@ import {
   EventEmitter,
   Input,
   NgZone,
+  OnChanges,
   OnDestroy,
   Output,
+  SimpleChanges,
   ViewChild,
   inject,
 } from '@angular/core';
@@ -23,7 +25,7 @@ type JsQrFn = typeof import('jsqr').default;
   templateUrl: './join-session-popup.component.html',
   styleUrl: './join-session-popup.component.css',
 })
-export class JoinSessionPopupComponent implements OnDestroy {
+export class JoinSessionPopupComponent implements OnChanges, OnDestroy {
   @Input() isOpen = false;
   @Input() sessionCode = '';
 
@@ -47,6 +49,12 @@ export class JoinSessionPopupComponent implements OnDestroy {
   private scannerErrorTimeout: ReturnType<typeof setTimeout> | null = null;
   private jsQR: JsQrFn | null = null;
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['isOpen']?.currentValue === false && this.isScannerOpen) {
+      this.closeScanner();
+    }
+  }
+
   get isMobile(): boolean {
     return !this.deviceDetector.isDesktop();
   }
@@ -58,9 +66,16 @@ export class JoinSessionPopupComponent implements OnDestroy {
     // Pre-load jsQR once so the per-frame scan loop doesn't pay
     // dynamic-import overhead on every requestAnimationFrame tick.
     if (!this.jsQR) {
-      void import('jsqr').then((m) => {
-        this.jsQR = m.default;
-      });
+      void import('jsqr')
+        .then((m) => {
+          this.jsQR = m.default;
+        })
+        .catch(() => {
+          this.ngZone.run(() => {
+            this.scannerError = 'CAMERA_NOT_AVAILABLE';
+            this.closeScanner();
+          });
+        });
     }
 
     // Give the DOM a tick to render the <video> element before binding the stream.
@@ -79,6 +94,11 @@ export class JoinSessionPopupComponent implements OnDestroy {
       clearTimeout(this.startCameraTimeout);
       this.startCameraTimeout = null;
     }
+    if (this.scannerErrorTimeout) {
+      clearTimeout(this.scannerErrorTimeout);
+      this.scannerErrorTimeout = null;
+    }
+    this.scannerError = '';
     this.stopCamera();
   }
 
@@ -95,7 +115,7 @@ export class JoinSessionPopupComponent implements OnDestroy {
       const video = this.videoEl.nativeElement;
       video.srcObject = this.stream;
       await video.play();
-      this.scanFrame();
+      this.ngZone.runOutsideAngular(() => this.scanFrame());
     } catch {
       this.ngZone.run(() => {
         this.scannerError = 'CAMERA_NOT_AVAILABLE';
@@ -116,7 +136,10 @@ export class JoinSessionPopupComponent implements OnDestroy {
     canvas.width = video.videoWidth;
     canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      this.ngZone.run(() => this.closeScanner());
+      return;
+    }
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
