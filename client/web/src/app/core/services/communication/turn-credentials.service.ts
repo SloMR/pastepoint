@@ -15,10 +15,9 @@ interface TurnCredentialsResponse {
 }
 
 /**
- * Fetches short-lived TURN credentials from `GET /turn-credentials` and exposes
- * the ICE server list (STUN + relay). Refreshed on each WebSocket connect so a
- * long-idle tab never relays with an expired credential; failures fall back to
- * STUN-only (direct/STUN connections still work).
+ * Fetches short-lived TURN credentials from `GET /turn-credentials` and caches
+ * the ICE server list (STUN + relay) until shortly before the credential
+ * expires; failures fall back to STUN-only (direct/STUN connections still work).
  */
 @Injectable({ providedIn: 'root' })
 export class TurnCredentialsService {
@@ -28,7 +27,7 @@ export class TurnCredentialsService {
 
   private servers: RTCIceServer[] = [...ICE_SERVERS];
   private inflight: Promise<void> | null = null;
-  private hasServerAnswered = false;
+  private expiresAt = 0;
   private nextRetryAt = 0;
 
   constructor() {
@@ -36,18 +35,19 @@ export class TurnCredentialsService {
     void this.refresh();
   }
 
+  /** STUN + relay while the credential is valid; STUN-only once it has expired. */
   get iceServers(): RTCIceServer[] {
-    return this.servers;
+    return Date.now() < this.expiresAt ? this.servers : [...ICE_SERVERS];
   }
 
   /**
-   * Resolves once the server has answered, so a peer connection is never built
-   * STUN-only while the first fetch is in flight. A failure is retried, but only
-   * after `TURN_RETRY_COOLDOWN` — an unreachable endpoint would otherwise be hit
-   * again on every peer. `TURN_READY_TIMEOUT` caps how long a peer waits.
+   * Resolves once a valid credential is cached, so a peer connection is never
+   * built with an expired one. A failure is retried, but only after
+   * `TURN_RETRY_COOLDOWN` — an unreachable endpoint would otherwise be hit again
+   * on every peer. `TURN_READY_TIMEOUT` caps how long a peer waits.
    */
   async ready(): Promise<void> {
-    if (!isPlatformBrowser(this.platformId) || this.hasServerAnswered) return;
+    if (!isPlatformBrowser(this.platformId) || Date.now() < this.expiresAt) return;
     if (Date.now() < this.nextRetryAt) return;
 
     await Promise.race([
@@ -73,6 +73,8 @@ export class TurnCredentialsService {
           ...ICE_SERVERS,
           { urls: res.urls, username: res.username, credential: res.credential },
         ];
+        // Refresh a minute before the credential actually expires
+        this.expiresAt = Date.now() + Math.max(res.ttl - 60, 60) * 1000;
         this.logger.info(
           'TurnCredentialsService',
           `TURN credentials fetched — relay available (ttl ${res.ttl}s, urls: ${res.urls.join(', ')})`
@@ -80,12 +82,13 @@ export class TurnCredentialsService {
       } else {
         // 204 / disabled — stay STUN-only.
         this.servers = [...ICE_SERVERS];
+        this.expiresAt = 0;
+        this.nextRetryAt = Date.now() + TURN_RETRY_COOLDOWN;
         this.logger.info(
           'TurnCredentialsService',
           'No TURN relay configured on server — STUN-only'
         );
       }
-      this.hasServerAnswered = true;
     } catch (error) {
       this.nextRetryAt = Date.now() + TURN_RETRY_COOLDOWN;
       this.logger.debug('TurnCredentialsService', 'TURN fetch failed, STUN-only', error);
