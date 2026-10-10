@@ -5,6 +5,7 @@ use crate::{
     SESSION_CODE_LENGTH, ServerConfig, ServerError, SessionStore, TurnConfig,
     rate_limit::forwarded_ip,
 };
+use actix_http::ws::verify_handshake;
 use actix_web::{Error, HttpRequest, HttpResponse, Responder, get, http::header, web};
 use base64::{Engine, engine::general_purpose::STANDARD};
 use hmac::{Hmac, KeyInit, Mac};
@@ -234,70 +235,13 @@ fn validate_websocket_origin(req: &HttpRequest, config: &ServerConfig) -> Result
     }
 }
 
-// Helper function to validate WebSocket connection headers
+/// Rejects anything that isn't a WebSocket upgrade, before a session is looked up for it.
 fn validate_websocket_headers(req: &HttpRequest) -> Result<(), ServerError> {
-    let connection = req
-        .headers()
-        .get("Connection")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("");
-
-    let upgrade = req
-        .headers()
-        .get("Upgrade")
-        .and_then(|v| v.to_str().ok())
-        .unwrap_or("");
-
-    let websocket_key = req
-        .headers()
-        .get("Sec-WebSocket-Key")
-        .and_then(|v| v.to_str().ok());
-
-    let websocket_version = req
-        .headers()
-        .get("Sec-WebSocket-Version")
-        .and_then(|v| v.to_str().ok());
-
-    let x_real_ip = req.headers().get("X-Real-IP").and_then(|v| v.to_str().ok());
-
-    let x_forwarded_for = req
-        .headers()
-        .get("X-Forwarded-For")
-        .and_then(|v| v.to_str().ok());
-
-    // Check if this is a proper WebSocket upgrade request
-    if !connection.to_lowercase().contains("upgrade")
-        || !upgrade.eq_ignore_ascii_case("websocket")
-        || websocket_key.is_none()
-        || websocket_version.is_none()
-    {
-        log::warn!(
-            target: "Websocket",
-            "Invalid WebSocket connection attempt - Connection: '{}', Upgrade: '{}', Key present: {}, Version present: {}, X-Real-IP: '{}', X-Forwarded-For: '{}'",
-            connection,
-            upgrade,
-            websocket_key.is_some(),
-            websocket_version.is_some(),
-            x_real_ip.is_some(),
-            x_forwarded_for.is_some()
-        );
-
-        return Err(ServerError::BadRequest(
+    verify_handshake(req.head()).map_err(|error| {
+        log::warn!(target: "Websocket", "Invalid WebSocket connection attempt: {error}");
+        ServerError::BadRequest(
             "This endpoint requires a WebSocket connection. Please use a WebSocket client."
                 .to_string(),
-        ));
-    }
-
-    log::debug!(
-        target: "Websocket",
-        "Valid WebSocket connection - Connection: '{}', Upgrade: '{}', Key: present={}, Version: present={}, X-Real-IP: present={}, X-Forwarded-For: present={}",
-        connection,
-        upgrade,
-        websocket_key.is_some(),
-        websocket_version.is_some(),
-        x_real_ip.is_some(),
-        x_forwarded_for.is_some()
-    );
-
-    Ok(())
+        )
+    })
 }
