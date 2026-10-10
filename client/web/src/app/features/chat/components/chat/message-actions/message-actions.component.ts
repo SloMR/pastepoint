@@ -1,11 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   EventEmitter,
-  HostListener,
   Input,
   Output,
+  Renderer2,
   inject,
   signal,
 } from '@angular/core';
@@ -27,32 +28,45 @@ export class MessageActionsComponent {
   protected readonly isOpen = signal(false);
 
   private host = inject(ElementRef<HTMLElement>);
+  private renderer = inject(Renderer2);
+  private removeDocumentListeners: (() => void)[] = [];
+
+  constructor() {
+    inject(DestroyRef).onDestroy(() => this.setOpen(false));
+  }
 
   protected toggle(): void {
-    this.isOpen.update((open) => !open);
+    this.setOpen(!this.isOpen());
   }
 
   protected block(): void {
-    this.isOpen.set(false);
+    this.setOpen(false);
     this.blockRequested.emit();
   }
 
   protected report(): void {
-    this.isOpen.set(false);
+    this.setOpen(false);
     this.reportRequested.emit();
   }
 
-  @HostListener('document:click', ['$event'])
-  protected onDocumentClick(event: MouseEvent): void {
-    if (!this.isOpen()) return;
-    const target = event.target as Node | null;
-    if (target && !this.host.nativeElement.contains(target)) {
-      this.isOpen.set(false);
-    }
+  /** Listens on the document only while the menu is open; every incoming bubble has a menu. */
+  private setOpen(open: boolean): void {
+    this.isOpen.set(open);
+    this.removeDocumentListeners.forEach((remove) => remove());
+    this.removeDocumentListeners = open
+      ? [
+          this.renderer.listen('document', 'click', (event: MouseEvent) =>
+            this.onDocumentClick(event)
+          ),
+          this.renderer.listen('document', 'keydown.escape', () => this.setOpen(false)),
+        ]
+      : [];
   }
 
-  @HostListener('document:keydown.escape')
-  protected onEscape(): void {
-    if (this.isOpen()) this.isOpen.set(false);
+  private onDocumentClick(event: MouseEvent): void {
+    const target = event.target as Node | null;
+    if (target && !this.host.nativeElement.contains(target)) {
+      this.setOpen(false);
+    }
   }
 }
