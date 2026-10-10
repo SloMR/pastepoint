@@ -15,6 +15,7 @@ export class PreviewService {
   private pdfJsLoaded = false;
   private pdfjsLib: any | null = null;
   private imageThumbnails = new WeakMap<Blob, Promise<{ dataUrl: string; mime: string }>>();
+  private pdfThumbnails = new WeakMap<Blob, Promise<string | undefined>>();
 
   private static readonly PDFJS_CDN_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149';
   private static readonly PDFJS_LIB_URL = `${PreviewService.PDFJS_CDN_BASE}/pdf.min.mjs`;
@@ -140,38 +141,38 @@ export class PreviewService {
   private static readonly MAX_PDF_SIZE_FOR_PREVIEW = 100 * 1024 * 1024; // 100MB
 
   /**
-   * Creates a thumbnail from a PDF file.
+   * Creates a thumbnail of a PDF's first page, once per file.
    * Skips large PDFs to avoid memory spikes.
    */
-  public async createPdfThumbnailFromFile(
-    file: File,
-    maxWidth: number = 320
-  ): Promise<string | undefined> {
-    // Skip large PDFs to avoid memory spikes
-    if (file.size > PreviewService.MAX_PDF_SIZE_FOR_PREVIEW) {
+  public createPdfThumbnail(pdf: Blob): Promise<string | undefined> {
+    let thumbnail = this.pdfThumbnails.get(pdf);
+    if (!thumbnail) {
+      thumbnail = this.renderPdfThumbnail(pdf);
+      this.pdfThumbnails.set(pdf, thumbnail);
+    }
+    return thumbnail;
+  }
+
+  private async renderPdfThumbnail(pdf: Blob): Promise<string | undefined> {
+    if (pdf.size > PreviewService.MAX_PDF_SIZE_FOR_PREVIEW) {
       return undefined;
     }
 
     try {
       await this.ensurePdfJsLoaded();
-      const buffer = await file.arrayBuffer();
-      const result = await this.createPdfThumbnailFromBytes(new Uint8Array(buffer), maxWidth);
-      // buffer will be garbage collected
-      return result;
+      const buffer = await pdf.arrayBuffer();
+      return await this.renderPdfPage(new Uint8Array(buffer));
     } catch {
       return undefined;
     }
   }
 
   /**
-   * Creates a thumbnail from PDF bytes.
+   * Renders page 1 to a JPEG data URL.
    * Properly cleans up PDF.js resources after rendering.
    * Uses JPEG format with quality setting to keep file size small for WebRTC transfer.
    */
-  public async createPdfThumbnailFromBytes(
-    data: Uint8Array,
-    maxWidth: number = 320
-  ): Promise<string | undefined> {
+  private async renderPdfPage(data: Uint8Array): Promise<string | undefined> {
     let pdf: any = null;
     let page: any = null;
 
@@ -184,7 +185,7 @@ export class PreviewService {
       page = await pdf.getPage(1);
 
       const viewport = page.getViewport({ scale: 1 });
-      const ratio = Math.min(maxWidth / viewport.width, 1);
+      const ratio = Math.min(PreviewService.THUMBNAIL_MAX_WIDTH / viewport.width, 1);
       const scaled = page.getViewport({ scale: ratio });
 
       const canvas = document.createElement('canvas');

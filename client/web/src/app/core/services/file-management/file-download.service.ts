@@ -389,14 +389,11 @@ export class FileDownloadService extends FileTransferBaseService {
       `File assembled (${(receivedBlob.size / 1024 / 1024).toFixed(2)}MB)`
     );
 
-    // Update preview after completion (only for small files to avoid memory issues)
+    // Update preview after completion
     try {
       if (blobType === 'application/pdf') {
         if (!fileDownload.previewDataUrl) {
-          const buffer = await receivedBlob.arrayBuffer();
-          const thumb = await this.previewService.createPdfThumbnailFromBytes(
-            new Uint8Array(buffer)
-          );
+          const thumb = await this.previewService.createPdfThumbnail(receivedBlob);
           if (thumb) {
             fileDownload.previewDataUrl = thumb;
             fileDownload.previewMime = PREVIEW_MIME_TYPE;

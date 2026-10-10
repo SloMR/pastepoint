@@ -501,7 +501,7 @@ export class FileUploadService extends FileTransferBaseService {
           previewDataUrl = thumb.dataUrl;
           previewMime = thumb.mime;
         } else if (mime === 'application/pdf') {
-          previewDataUrl = await this.previewService.createPdfThumbnailFromFile(fileTransfer.file);
+          previewDataUrl = await this.previewService.createPdfThumbnail(fileTransfer.file);
           if (previewDataUrl) {
             previewMime = PREVIEW_MIME_TYPE;
           }

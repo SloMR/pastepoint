@@ -1264,7 +1264,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       } else if (mime === 'application/pdf') {
         try {
-          const thumb = await this.previewService.createPdfThumbnailFromFile(file);
+          const thumb = await this.previewService.createPdfThumbnail(file);
           if (thumb) {
             previewUrl = thumb;
             previewMime = PREVIEW_MIME_TYPE;
