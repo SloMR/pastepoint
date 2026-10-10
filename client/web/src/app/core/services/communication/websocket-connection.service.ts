@@ -446,7 +446,7 @@ export class WebSocketConnectionService implements OnDestroy {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(message);
     } else {
-      this.logger.error('send', 'WebSocket is not open. Message not sent.');
+      this.logger.warn('send', 'WebSocket is not open. Message not sent.');
     }
   }
 
