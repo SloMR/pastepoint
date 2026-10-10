@@ -21,8 +21,14 @@ private extension JSONDecoder {
   }()
 }
 
+/// Keys of the wire envelope `{type, payload}`.
+private nonisolated enum EnvelopeKey: String, CodingKey {
+  case type
+  case payload
+}
+
 /// Wire format; do not change raw values.
-nonisolated enum DataChannelMessageType: String {
+nonisolated enum DataChannelMessageType: String, Encodable {
   case chat
   case fileOffer = "file-offer"
   case fileAccept = "file-accept"
@@ -39,18 +45,17 @@ nonisolated enum DataChannelMessage {
 
   // MARK: Encoding
 
-  /// Encode a DataChannelMessageType into the wire envelope: `{type:"chat", payload:{...}}`
+  /// The wire envelope: `{type:"chat", payload:{...}}`.
+  private struct Envelope<Payload: Encodable>: Encodable {
+    let type: DataChannelMessageType
+    let payload: Payload
+  }
+
   private static func encodeEnvelope<T: Encodable>(
     type: DataChannelMessageType,
     payload: T,
   ) throws -> Data {
-    let payloadData = try JSONEncoder.dataChannel.encode(payload)
-    let payloadObj = try JSONSerialization.jsonObject(with: payloadData)
-    let envelope: [String: Any] = [
-      "type": type.rawValue,
-      "payload": payloadObj,
-    ]
-    return try JSONSerialization.data(withJSONObject: envelope)
+    try JSONEncoder.dataChannel.encode(Envelope(type: type, payload: payload))
   }
 
   static func encodeChat(_ chat: ChatMessage) throws -> Data {
@@ -85,7 +90,7 @@ nonisolated enum DataChannelMessage {
 
   /// Decoded inbound envelope. One case per JSON message type, plus `.unknown` for any
   /// `type` the receiver doesn't recognize (including binary-only `file-chunk`).
-  enum Decoded: Sendable {
+  enum Decoded: Decodable, Sendable {
     case chat(ChatMessage)
     case fileOffer(FileOfferPayload)
     case fileAccept(FileAcceptPayload)
@@ -94,49 +99,33 @@ nonisolated enum DataChannelMessage {
     case fileCancelDownload(FileCancelPayload)
     case fileReceived(FileReceivedPayload)
     case unknown(type: String)
-  }
 
-  private static func decodePayload<T: Decodable>(
-    _ payloadObj: Any,
-    as _: T.Type,
-  ) throws -> T {
-    let payloadData = try JSONSerialization.data(withJSONObject: payloadObj)
-    return try JSONDecoder.dataChannel.decode(T.self, from: payloadData)
+    init(from decoder: any Decoder) throws {
+      let envelope = try decoder.container(keyedBy: EnvelopeKey.self)
+      let type = try envelope.decode(String.self, forKey: .type)
+
+      switch DataChannelMessageType(rawValue: type) {
+      case .chat:
+        self = .chat(try envelope.decode(ChatMessage.self, forKey: .payload))
+      case .fileOffer:
+        self = .fileOffer(try envelope.decode(FileOfferPayload.self, forKey: .payload))
+      case .fileAccept:
+        self = .fileAccept(try envelope.decode(FileAcceptPayload.self, forKey: .payload))
+      case .fileDecline:
+        self = .fileDecline(try envelope.decode(FileDeclinePayload.self, forKey: .payload))
+      case .fileCancelUpload:
+        self = .fileCancelUpload(try envelope.decode(FileCancelPayload.self, forKey: .payload))
+      case .fileCancelDownload:
+        self = .fileCancelDownload(try envelope.decode(FileCancelPayload.self, forKey: .payload))
+      case .fileReceived:
+        self = .fileReceived(try envelope.decode(FileReceivedPayload.self, forKey: .payload))
+      case .fileChunk, nil:
+        self = .unknown(type: type)
+      }
+    }
   }
 
   static func decode(_ data: Data) throws -> Decoded {
-    guard
-      let obj = try JSONSerialization.jsonObject(with: data) as? [String: Any],
-      let typeRaw = obj["type"] as? String
-    else {
-      throw DecodingError.dataCorrupted(
-        .init(codingPath: [], debugDescription: "Bad envelope"),
-      )
-    }
-
-    guard let payloadObj = obj["payload"] else {
-      throw DecodingError.dataCorrupted(
-        .init(codingPath: [], debugDescription: "Missing payload"),
-      )
-    }
-
-    switch DataChannelMessageType(rawValue: typeRaw) {
-    case .chat:
-      return .chat(try decodePayload(payloadObj, as: ChatMessage.self))
-    case .fileOffer:
-      return .fileOffer(try decodePayload(payloadObj, as: FileOfferPayload.self))
-    case .fileAccept:
-      return .fileAccept(try decodePayload(payloadObj, as: FileAcceptPayload.self))
-    case .fileDecline:
-      return .fileDecline(try decodePayload(payloadObj, as: FileDeclinePayload.self))
-    case .fileCancelUpload:
-      return .fileCancelUpload(try decodePayload(payloadObj, as: FileCancelPayload.self))
-    case .fileCancelDownload:
-      return .fileCancelDownload(try decodePayload(payloadObj, as: FileCancelPayload.self))
-    case .fileReceived:
-      return .fileReceived(try decodePayload(payloadObj, as: FileReceivedPayload.self))
-    case .fileChunk, nil:
-      return .unknown(type: typeRaw)
-    }
+    try JSONDecoder.dataChannel.decode(Decoded.self, from: data)
   }
 }
