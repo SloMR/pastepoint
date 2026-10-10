@@ -3,6 +3,7 @@
 //  SPDX-License-Identifier: GPL-3.0-only
 //
 
+import Foundation
 import SwiftUI
 
 enum MessageAlignment {
@@ -25,6 +26,8 @@ struct ChatMessageBubble: View {
   let onDecline: (() -> Void)?
   var onBlock: (() -> Void)?
   var onReport: (() -> Void)?
+
+  private static let linkDetector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
 
   private var bubbleMaxWidth: CGFloat {
     isIPad ? 280 : 260
@@ -114,9 +117,10 @@ struct ChatMessageBubble: View {
   }
 
   private var textBody: some View {
-    Text(text)
+    Text(attributedText)
       .font(.callout)
       .foregroundStyle(alignment == .trailing ? .textPrimary : .white)
+      .tint(alignment == .trailing ? .brand : .white)
       .padding(.horizontal, 12)
       .padding(.vertical, 10)
       .frame(maxWidth: bubbleMaxWidth, minHeight: 60, alignment: .leading)
@@ -131,6 +135,23 @@ struct ChatMessageBubble: View {
         .fill(alignment == .trailing ? .inputBackground : .brand),
       )
       .fixedSize(horizontal: false, vertical: true)
+  }
+
+  private var attributedText: AttributedString {
+    var attributedText = AttributedString(text)
+    let matches = Self.linkDetector?.matches(in: text, range: NSRange(text.startIndex..., in: text)) ?? []
+    for match in matches {
+      guard
+        let url = match.url,
+        let scheme = url.scheme?.lowercased(),
+        scheme == "http" || scheme == "https",
+        let textRange = Range(match.range, in: text),
+        let linkRange = Range(textRange, in: attributedText)
+      else { continue }
+      attributedText[linkRange].link = url
+      attributedText[linkRange].underlineStyle = .single
+    }
+    return attributedText
   }
 
   private var shouldBlurPreview: Bool {
