@@ -53,6 +53,12 @@ export class TelemetryService {
     span.end(end.endTimeMs);
   }
 
+  /** Records the milliseconds since the span started under `key`. */
+  public markElapsed(span: TelemetrySpan | undefined, key: string): void {
+    if (!span) return;
+    span.setAttribute(key, Math.round(Date.now() - this.startTimeMs(span)));
+  }
+
   /** Epoch milliseconds at which the span started. */
   public startTimeMs(span: TelemetrySpan): number {
     return (Sentry.spanToJSON(span).start_timestamp ?? 0) * 1000;
