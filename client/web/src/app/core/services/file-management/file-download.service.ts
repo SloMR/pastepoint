@@ -7,6 +7,7 @@ import {
   FileTransferStatus,
   MIN_CHUNK_SIZE,
   PREVIEW_MIME_TYPE,
+  PROGRESS_FLUSH_INTERVAL_MS,
 } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { PreviewService } from '../ui/preview.service';
@@ -29,6 +30,7 @@ export class FileDownloadService extends FileTransferBaseService {
 
   private activeReceiveSpans = new Map<string, TelemetrySpan>();
   private stallWatchdog: ReturnType<typeof setInterval> | null = null;
+  private lastProgressFlush = 0;
   public downloadStatus$ = new Subject<{ fileId: string; status: FileTransferStatus }>();
 
   // =============== Constructor ===============
@@ -223,7 +225,11 @@ export class FileDownloadService extends FileTransferBaseService {
       );
     }
 
-    await this.updateActiveDownloads();
+    const now = Date.now();
+    if (now - this.lastProgressFlush >= PROGRESS_FLUSH_INTERVAL_MS) {
+      this.lastProgressFlush = now;
+      await this.updateActiveDownloads();
+    }
 
     // Check if all chunks received
     if (fileDownload.receivedChunks.size === fileDownload.totalChunks) {

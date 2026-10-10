@@ -12,6 +12,7 @@ export const MAX_QUEUED_MESSAGES = 64;
 export const MAX_CHAT_MESSAGES = 500;
 export const MAX_PENDING_OFFERS_PER_PEER = 100;
 export const MAX_QUEUED_CANDIDATES = 128;
+export const PROGRESS_FLUSH_INTERVAL_MS = 250;
 
 // Heartbeat constants
 export const HEARTBEAT_INTERVAL_DESKTOP_SEC = 60;

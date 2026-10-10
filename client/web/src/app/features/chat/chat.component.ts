@@ -741,19 +741,21 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     // Listen for active file downloads
     this.subscriptions.push(
       this.fileTransferService.activeDownloads$.subscribe((downloads: FileDownload[]) => {
-        this.logger.info('activeDownloads', `Active downloads: ${downloads.length} (length)`);
+        this.logger.debug('activeDownloads', `Active downloads: ${downloads.length} (length)`);
         this.ngZone.run(() => {
           this.activeDownloads = downloads;
-          const currentMessages = this.chatService.messages$.value;
-          const updatedMessages = currentMessages.map((msg) => {
+          let previewChanged = false;
+          const updatedMessages = this.chatService.messages$.value.map((msg) => {
             if (msg.type === ChatMessageType.ATTACHMENT && msg.fileTransfer) {
               const fileTransfer = msg.fileTransfer;
-              const match =
-                fileTransfer &&
-                downloads.find(
-                  (d) => d.fileId === fileTransfer.fileId && d.fromUser === fileTransfer.fromUser
-                );
-              if (match && match.previewDataUrl) {
+              const match = downloads.find(
+                (d) => d.fileId === fileTransfer.fileId && d.fromUser === fileTransfer.fromUser
+              );
+              if (
+                match?.previewDataUrl &&
+                (msg.previewUrl !== match.previewDataUrl || msg.previewMime !== match.previewMime)
+              ) {
+                previewChanged = true;
                 return {
                   ...msg,
                   previewUrl: match.previewDataUrl,
@@ -763,8 +765,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
             }
             return msg;
           });
-          this.chatService.replaceMessages(updatedMessages);
-          this.cdr.detectChanges();
+
+          // A new preview redraws through messages$; progress alone redraws here.
+          if (previewChanged) {
+            this.chatService.replaceMessages(updatedMessages);
+          } else {
+            this.cdr.detectChanges();
+          }
         });
       })
     );
