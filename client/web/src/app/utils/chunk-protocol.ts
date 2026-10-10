@@ -1,4 +1,4 @@
-import { createBLAKE3, IHasher } from 'hash-wasm';
+import { createBLAKE3, createCRC32, IHasher } from 'hash-wasm';
 
 // Re-export IHasher type for consumers
 export type { IHasher };
@@ -19,27 +19,29 @@ export type { IHasher };
  */
 
 // =============== CRC32 ===============
-// CRC32 lookup table (pre-computed for performance)
-const CRC32_TABLE = new Uint32Array(256);
-(function initCRC32Table() {
-  for (let i = 0; i < 256; i++) {
-    let crc = i;
-    for (let j = 0; j < 8; j++) {
-      crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
-    }
-    CRC32_TABLE[i] = crc >>> 0;
-  }
-})();
+let crcHasher: IHasher | undefined;
+let crcHasherLoading: Promise<void> | undefined;
+
+/**
+ * Loads the CRC32 hasher; await it before the first encodeChunk or decodeChunk.
+ */
+export function prepareChunkChecksum(): Promise<void> {
+  crcHasherLoading ??= createCRC32().then((hasher) => {
+    crcHasher = hasher;
+  });
+  return crcHasherLoading;
+}
 
 /**
  * Calculates CRC32 checksum for data integrity verification
  */
 function crc32(data: Uint8Array): number {
-  let crc = 0xffffffff;
-  for (let i = 0; i < data.length; i++) {
-    crc = CRC32_TABLE[(crc ^ data[i]) & 0xff] ^ (crc >>> 8);
+  if (!crcHasher) {
+    throw new Error('CRC32 hasher not loaded; await prepareChunkChecksum() first');
   }
-  return (crc ^ 0xffffffff) >>> 0;
+  crcHasher.init();
+  crcHasher.update(data);
+  return parseInt(crcHasher.digest('hex'), 16);
 }
 
 // =============== Streaming Hash ===============

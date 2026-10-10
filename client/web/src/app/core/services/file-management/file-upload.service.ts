@@ -17,6 +17,7 @@ import {
   encodeChunk,
   calculateTotalChunks,
   calculateFileHashStreaming,
+  prepareChunkChecksum,
 } from '../../../utils/chunk-protocol';
 import { UserService } from '../user-management/user.service';
 
@@ -565,6 +566,7 @@ export class FileUploadService extends FileTransferBaseService {
    * Each chunk contains embedded fileId, eliminating chunk mismatching.
    */
   private async sendFileChunks(fileTransfer: FileUpload): Promise<void> {
+    await prepareChunkChecksum();
     const key = this.sendSpanKey(fileTransfer.targetUser, fileTransfer.fileId);
     let span = this.sendSpans.get(key);
     if (!span) {
