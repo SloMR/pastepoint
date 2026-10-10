@@ -6,7 +6,7 @@
 import Foundation
 
 private extension JSONEncoder {
-  static let dataChannel: JSONEncoder = {
+  nonisolated static let dataChannel: JSONEncoder = {
     let encoder = JSONEncoder()
     encoder.dateEncodingStrategy = .iso8601
     return encoder
@@ -14,7 +14,7 @@ private extension JSONEncoder {
 }
 
 private extension JSONDecoder {
-  static let dataChannel: JSONDecoder = {
+  nonisolated static let dataChannel: JSONDecoder = {
     let decoder = JSONDecoder()
     decoder.dateDecodingStrategy = .iso8601
     return decoder
@@ -22,7 +22,7 @@ private extension JSONDecoder {
 }
 
 /// Wire format; do not change raw values.
-enum DataChannelMessageType: String {
+nonisolated enum DataChannelMessageType: String {
   case chat
   case fileOffer = "file-offer"
   case fileAccept = "file-accept"
@@ -35,7 +35,7 @@ enum DataChannelMessageType: String {
   case fileChunk = "file-chunk"
 }
 
-enum DataChannelMessage {
+nonisolated enum DataChannelMessage {
 
   // MARK: Encoding
 
@@ -85,7 +85,7 @@ enum DataChannelMessage {
 
   /// Decoded inbound envelope. One case per JSON message type, plus `.unknown` for any
   /// `type` the receiver doesn't recognize (including binary-only `file-chunk`).
-  enum Decoded {
+  enum Decoded: Sendable {
     case chat(ChatMessage)
     case fileOffer(FileOfferPayload)
     case fileAccept(FileAcceptPayload)

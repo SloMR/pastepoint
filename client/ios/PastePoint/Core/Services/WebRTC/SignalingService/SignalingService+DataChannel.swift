@@ -164,35 +164,44 @@ extension SignalingService: RTCDataChannelDelegate {
 
   nonisolated func dataChannel(_ dataChannel: RTCDataChannel, didReceiveMessageWith buffer: RTCDataBuffer) {
     let dataChannelID = ObjectIdentifier(dataChannel)
-    let bytes = buffer.data
-    let isBinary = buffer.isBinary
 
-    Task { @MainActor [weak self] in
-      guard let self else { return }
-
-      guard let peer = self.peer(forChannelID: dataChannelID) else {
-        log.warning("unknown channel")
-        return
+    // Decoded here on libwebrtc's thread, so the main actor only routes the result.
+    if buffer.isBinary {
+      let chunk = BinaryChunk.decode(buffer.data)
+      Task { @MainActor [weak self] in
+        self?.receiveChunk(chunk, onChannel: dataChannelID)
       }
-
-      if isBinary {
-        guard let parsed = BinaryChunk.decode(bytes) else {
-          log.warning("dropped malformed binary chunk")
-          telemetry.breadcrumb(category: "webrtc.datachannel", message: "chunk decode failed", level: .error)
-          return
-        }
-
-        self.chunkReceived.send((parsed, from: peer))
-        return
-      }
-
-      do {
-        let decoded = try DataChannelMessage.decode(bytes)
-        self.route(decoded, from: peer)
-      } catch {
-        log.warning("dropping a data-channel message that failed to decode")
+    } else {
+      let message = try? DataChannelMessage.decode(buffer.data)
+      Task { @MainActor [weak self] in
+        self?.receiveMessage(message, onChannel: dataChannelID)
       }
     }
+  }
+
+  private func receiveChunk(_ chunk: ParsedChunk?, onChannel channelID: ObjectIdentifier) {
+    guard let peer = peer(forChannelID: channelID) else {
+      log.warning("unknown channel")
+      return
+    }
+    guard let chunk else {
+      log.warning("dropped malformed binary chunk")
+      telemetry.breadcrumb(category: "webrtc.datachannel", message: "chunk decode failed", level: .error)
+      return
+    }
+    chunkReceived.send((chunk, from: peer))
+  }
+
+  private func receiveMessage(_ message: DataChannelMessage.Decoded?, onChannel channelID: ObjectIdentifier) {
+    guard let peer = peer(forChannelID: channelID) else {
+      log.warning("unknown channel")
+      return
+    }
+    guard let message else {
+      log.warning("dropping a data-channel message that failed to decode")
+      return
+    }
+    route(message, from: peer)
   }
 
   private func route(_ decoded: DataChannelMessage.Decoded, from peer: String) {

@@ -8,7 +8,7 @@ import Foundation
 // MARK: Payloads
 
 /// Wire format; do not rename fields.
-struct FileOfferPayload: Codable, Sendable {
+nonisolated struct FileOfferPayload: Codable, Sendable {
   let fileId: String
   let fileName: String
   let fileSize: Int64
@@ -19,22 +19,22 @@ struct FileOfferPayload: Codable, Sendable {
 }
 
 /// Wire format; do not rename fields.
-struct FileAcceptPayload: Codable, Sendable {
+nonisolated struct FileAcceptPayload: Codable, Sendable {
   let fileId: String
 }
 
 /// Wire format; do not rename fields.
-struct FileDeclinePayload: Codable, Sendable {
+nonisolated struct FileDeclinePayload: Codable, Sendable {
   let fileId: String
 }
 
 /// Wire format; do not rename fields.
-struct FileCancelPayload: Codable, Sendable {
+nonisolated struct FileCancelPayload: Codable, Sendable {
   let fileId: String
 }
 
 /// Wire format; do not rename fields.
-struct FileReceivedPayload: Codable, Sendable {
+nonisolated struct FileReceivedPayload: Codable, Sendable {
   let fileId: String
 }
 
