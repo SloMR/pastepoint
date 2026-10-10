@@ -1944,19 +1944,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       this.ngZone.run(() => {
         const otherMembers = this.members.filter((m) => m !== this.userService.user);
+        let changed = false;
 
         // Keep the status maps in sync for the UI (red/yellow/green circles)
         otherMembers.forEach((member) => {
           const connected = this.webrtcService.isConnected(member);
+          const state = connected
+            ? 'connected'
+            : this.webrtcService.isConnecting(member)
+              ? 'connecting'
+              : 'disconnected';
+          changed ||= this.memberConnectionState.get(member) !== state;
           this.memberConnectionStatus.set(member, connected);
-          this.memberConnectionState.set(
-            member,
-            connected
-              ? 'connected'
-              : this.webrtcService.isConnecting(member)
-                ? 'connecting'
-                : 'disconnected'
-          );
+          this.memberConnectionState.set(member, state);
         });
 
         // Clean up warning timeouts for members who left
@@ -1970,9 +1970,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.showConnectionWarning && !this.isIsolatedFromPeers) {
           this.showConnectionWarning = false;
           this.connectionWarningDismissed = false;
+          changed = true;
         }
 
-        this.cdr.detectChanges();
+        if (changed) {
+          this.cdr.detectChanges();
+        }
       });
     }, 3000);
   }
