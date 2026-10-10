@@ -14,6 +14,7 @@ export class PreviewService {
 
   private pdfJsLoaded = false;
   private pdfjsLib: any | null = null;
+  private imageThumbnails = new WeakMap<Blob, Promise<{ dataUrl: string; mime: string }>>();
 
   private static readonly PDFJS_CDN_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.4.149';
   private static readonly PDFJS_LIB_URL = `${PreviewService.PDFJS_CDN_BASE}/pdf.min.mjs`;
@@ -45,55 +46,47 @@ export class PreviewService {
   }
 
   /**
-   * Creates a thumbnail from an image file.
-   * Uses createObjectURL instead of readAsDataURL to avoid loading entire file into memory.
+   * Creates a thumbnail from an image file, once per file: every recipient of a send reuses it.
    */
-  public async createImageThumbnail(
-    file: File,
-    maxWidth: number = 320,
-    maxHeight: number = 192
-  ): Promise<{ dataUrl: string; mime: string }> {
-    return new Promise<{ dataUrl: string; mime: string }>((resolve, reject) => {
+  public createImageThumbnail(file: Blob): Promise<{ dataUrl: string; mime: string }> {
+    let thumbnail = this.imageThumbnails.get(file);
+    if (!thumbnail) {
+      thumbnail = this.renderImageThumbnail(file);
+      this.imageThumbnails.set(file, thumbnail);
+    }
+    return thumbnail;
+  }
+
+  /**
+   * Decodes with createImageBitmap, which works off the main thread; an <img> covers the
+   * formats it can't decode, such as SVG.
+   */
+  private async renderImageThumbnail(file: Blob): Promise<{ dataUrl: string; mime: string }> {
+    let image: ImageBitmap | HTMLImageElement;
+    try {
+      image = await createImageBitmap(file, { imageOrientation: 'from-image' });
+    } catch {
+      image = await this.loadImage(file);
+    }
+
+    try {
+      return this.drawThumbnail(image, image.width, image.height);
+    } finally {
+      if ('close' in image) {
+        image.close();
+      }
+    }
+  }
+
+  private loadImage(file: Blob): Promise<HTMLImageElement> {
+    return new Promise<HTMLImageElement>((resolve, reject) => {
       // Use createObjectURL - more memory efficient than readAsDataURL
-      // It creates a reference to the file, not a copy
       const objectUrl = URL.createObjectURL(file);
 
       const img = new Image();
       img.onload = () => {
-        // Revoke the object URL immediately after loading - free memory
         URL.revokeObjectURL(objectUrl);
-
-        let { width, height } = img;
-        const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
-        width = Math.floor(width * ratio);
-        height = Math.floor(height * ratio);
-
-        const canvas = document.createElement('canvas');
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) {
-          reject(new Error('Canvas context not available'));
-          return;
-        }
-
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const png = canvas.toDataURL('image/png');
-        const result =
-          png.length > MAX_PREVIEW_DATA_URL_SIZE
-            ? {
-                dataUrl: canvas.toDataURL(PREVIEW_MIME_TYPE, PREVIEW_QUALITY),
-                mime: PREVIEW_MIME_TYPE,
-              }
-            : { dataUrl: png, mime: 'image/png' };
-
-        // Clear canvas to help garbage collection
-        canvas.width = 0;
-        canvas.height = 0;
-
-        resolve(result);
+        resolve(img);
       };
       img.onerror = () => {
         URL.revokeObjectURL(objectUrl);
@@ -102,6 +95,46 @@ export class PreviewService {
       img.src = objectUrl;
     });
   }
+
+  private drawThumbnail(
+    source: CanvasImageSource,
+    sourceWidth: number,
+    sourceHeight: number
+  ): { dataUrl: string; mime: string } {
+    const ratio = Math.min(
+      PreviewService.THUMBNAIL_MAX_WIDTH / sourceWidth,
+      PreviewService.THUMBNAIL_MAX_HEIGHT / sourceHeight,
+      1
+    );
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.floor(sourceWidth * ratio);
+    canvas.height = Math.floor(sourceHeight * ratio);
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) {
+      throw new Error('Canvas context not available');
+    }
+
+    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+
+    const png = canvas.toDataURL('image/png');
+    const result =
+      png.length > MAX_PREVIEW_DATA_URL_SIZE
+        ? {
+            dataUrl: canvas.toDataURL(PREVIEW_MIME_TYPE, PREVIEW_QUALITY),
+            mime: PREVIEW_MIME_TYPE,
+          }
+        : { dataUrl: png, mime: 'image/png' };
+
+    // Clear canvas to help garbage collection
+    canvas.width = 0;
+    canvas.height = 0;
+
+    return result;
+  }
+
+  private static readonly THUMBNAIL_MAX_WIDTH = 320;
+  private static readonly THUMBNAIL_MAX_HEIGHT = 192;
 
   // Skip PDF preview for files larger than this (too memory intensive)
   private static readonly MAX_PDF_SIZE_FOR_PREVIEW = 100 * 1024 * 1024; // 100MB
