@@ -15,7 +15,6 @@ import {
   createStreamingHash,
   updateStreamingHash,
   finalizeStreamingHash,
-  IHasher,
 } from '../../../utils/chunk-protocol';
 
 @Injectable({
@@ -214,6 +213,11 @@ export class FileDownloadService extends FileTransferBaseService {
     fileDownload.receivedSize += chunk.byteLength;
     fileDownload.lastActivity = Date.now();
 
+    if (fileDownload.hasher && fileDownload.hashedChunks === chunkIndex) {
+      updateStreamingHash(fileDownload.hasher, new Uint8Array(chunk));
+      fileDownload.hashedChunks = chunkIndex + 1;
+    }
+
     const progress = (fileDownload.receivedChunks.size / totalChunks) * 100;
     fileDownload.progress = parseFloat(progress.toFixed(2));
 
@@ -337,14 +341,8 @@ export class FileDownloadService extends FileTransferBaseService {
     }
 
     // Verify file integrity via streaming BLAKE3 hash (memory efficient!)
-    // Hashes chunk-by-chunk without loading entire file into memory.
     try {
-      const hasher = await createStreamingHash();
-      for (const chunkBlob of orderedChunks) {
-        const chunkBuffer = await chunkBlob.arrayBuffer();
-        updateStreamingHash(hasher as IHasher, new Uint8Array(chunkBuffer));
-      }
-      const actualHash = finalizeStreamingHash(hasher as IHasher);
+      const actualHash = await this.fileHash(fileDownload, orderedChunks);
 
       if (actualHash !== fileDownload.expectedHash) {
         this.logger.error('assembleAndDownloadFile', `Hash mismatch for ${fileDownload.fileId}!`);
@@ -454,6 +452,18 @@ export class FileDownloadService extends FileTransferBaseService {
   }
 
   // =============== Helper Methods ===============
+  /** The file's BLAKE3 hash; chunks are read back only if they didn't arrive in order. */
+  private async fileHash(fileDownload: FileDownload, orderedChunks: Blob[]): Promise<string> {
+    if (fileDownload.hasher && fileDownload.hashedChunks === fileDownload.totalChunks) {
+      return finalizeStreamingHash(fileDownload.hasher);
+    }
+    const hasher = await createStreamingHash();
+    for (const chunkBlob of orderedChunks) {
+      updateStreamingHash(hasher, new Uint8Array(await chunkBlob.arrayBuffer()));
+    }
+    return finalizeStreamingHash(hasher);
+  }
+
   /**
    * Rejects (never saves) a fully-received file that failed integrity: toasts,
    * frees the assembled chunk memory, closes the span, and tears down (which

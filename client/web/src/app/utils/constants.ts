@@ -1,3 +1,5 @@
+import type { IHasher } from 'hash-wasm';
+
 // File transfer constants
 const KB = 1024;
 export const MB = 1024 * KB;
@@ -199,6 +201,8 @@ export interface FileDownload {
   previewDataUrl?: string;
   previewMime?: string;
   expectedHash?: string;
+  hasher?: IHasher;
+  hashedChunks?: number;
 }
 
 export interface FileOffer {
