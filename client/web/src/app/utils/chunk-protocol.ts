@@ -69,7 +69,7 @@ export function finalizeStreamingHash(hasher: IHasher): string {
 }
 
 // =============== File Hash ===============
-const HASH_SLICE_SIZE = 8 * 1024 * 1024;
+const HASH_SLICE_SIZE = 2 * 1024 * 1024;
 
 /**
  * Calculates the BLAKE3 hash of a File by streaming it in fixed-size slices.
