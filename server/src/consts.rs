@@ -17,7 +17,8 @@ pub(crate) const DEFAULT_ROOM: &str = "main";
 pub(crate) const MAX_ROOMS_PER_SESSION: usize = 50;
 pub(crate) const MAX_SESSIONS: usize = 100_000;
 pub const MAX_UNJOINED_CODES_PER_CLIENT: usize = 20;
-pub(crate) const MAX_WS_MESSAGES_PER_SEC: usize = 30;
+pub(crate) const MAX_WS_MESSAGES_PER_SEC: u32 = 30;
+pub(crate) const MAX_WS_MESSAGE_BURST: u32 = 60;
 
 // Timing intervals
 pub const KEEP_ALIVE_INTERVAL: Duration = Duration::from_secs(3600);
