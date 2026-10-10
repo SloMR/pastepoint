@@ -31,7 +31,7 @@ import { BlurredPreviewComponent } from '../blurred-preview/blurred-preview.comp
   ],
   providers: [FileSizePipe],
   templateUrl: './chat-messages.component.html',
-  changeDetection: ChangeDetectionStrategy.Eager,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   styleUrl: './chat-messages.component.css',
 })
 export class ChatMessagesComponent {
