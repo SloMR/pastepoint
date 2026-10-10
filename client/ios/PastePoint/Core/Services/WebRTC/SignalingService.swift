@@ -53,6 +53,7 @@ final class SignalingService: NSObject, ObservableObject {
   var peerConnections: [String: RTCPeerConnection] = [:]
   private var dataChannels: [String: RTCDataChannel] = [:]
   private var candidateQueues: [String: [RTCIceCandidate]] = [:]
+  private var describedConnections: Set<ObjectIdentifier> = []
   var collectedCandidates: [String: [String]] = [:]
   private var connectionLocks: Set<String> = []
 
@@ -155,26 +156,11 @@ final class SignalingService: NSObject, ObservableObject {
       return
     }
 
-    guard let pc = PeerConnectionFactory.shared.makePeerConnection(iceServers: iceServers, delegate: self) else {
-      log.error("factory returned nil")
-      connectionLocks.remove(peer)
-      return
-    }
-    peerConnections[peer] = pc
+    guard let pc = await makeCallerConnection(for: peer, iceServers: iceServers) else { return }
 
-    guard let channel = pc.dataChannel(forLabel: "data", configuration: WebRTCConfig.dataChannelConfig) else {
-      log.error("failed to create data channel")
-      peerConnections[peer] = nil
-      connectionLocks.remove(peer)
-      return
-    }
-    channel.delegate = self
-    dataChannels[peer] = channel
-
-    let constraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
+    let offerSdp: String
     do {
-      let offer = try await pc.offer(for: constraints)
-      try await pc.setLocalDescription(offer)
+      offerSdp = try await WebRTCQueue.makeLocalDescription(.offer, on: pc)
     } catch {
       guard peerConnections[peer] === pc else {
         log.debug("offer for \(peer) superseded during SDP setup")
@@ -189,12 +175,40 @@ final class SignalingService: NSObject, ObservableObject {
     guard peerConnections[peer] === pc else { return }
 
     let offerMessage = SignalMessage(
-      payload: .offer(sdp: pc.localDescription?.sdp ?? ""),
+      payload: .offer(sdp: offerSdp),
       from: userService.user,
       to: peer,
     )
     await wsService.sendSignal(offerMessage)
     log.info("offer sent")
+  }
+
+  /// Creates and registers the caller's connection and data channel; nil if the attempt ended meanwhile.
+  private func makeCallerConnection(for peer: String, iceServers: [RTCIceServer]) async -> RTCPeerConnection? {
+    guard let pc = await PeerConnectionFactory.shared.makePeerConnection(iceServers: iceServers, delegate: self) else {
+      log.error("factory returned nil")
+      connectionLocks.remove(peer)
+      return nil
+    }
+    let channel = await WebRTCQueue.makeDataChannel(on: pc, label: "data")
+
+    // Same check after these suspensions; a teardown in between also released the lock.
+    guard peerConnections[peer] == nil, connectionLocks.contains(peer) else {
+      log.debug("attempt for \(peer) superseded while creating its connection")
+      WebRTCQueue.close(pc, channel: channel)
+      return nil
+    }
+    peerConnections[peer] = pc
+
+    guard let channel else {
+      log.error("failed to create data channel")
+      peerConnections[peer] = nil
+      connectionLocks.remove(peer)
+      return nil
+    }
+    channel.delegate = self
+    dataChannels[peer] = channel
+    return pc
   }
 
   /// The guards that run before the first suspension; ends the span as skipped where web does.
@@ -311,21 +325,30 @@ extension SignalingService {
       log.error("payload is not .offer (received \(message.payload.typeString))")
       return
     }
-    let remoteSdp = RTCSessionDescription(type: .offer, sdp: sdpString)
 
-    guard let pc = PeerConnectionFactory.shared.makePeerConnection(iceServers: await turnCredentials.iceServers(), delegate: self) else {
+    let iceServers = await turnCredentials.iceServers()
+    guard let pc = await PeerConnectionFactory.shared.makePeerConnection(iceServers: iceServers, delegate: self) else {
       log.error("factory returned nil")
       connectionLocks.remove(message.from)
       return
     }
-    peerConnections[message.from] = pc
 
+    // A teardown while the connection was being created released the lock.
+    guard connectionLocks.contains(message.from) else {
+      log.debug("offer from \(message.from) superseded while creating its connection")
+      WebRTCQueue.close(pc, channel: nil)
+      return
+    }
+    if let replaced = peerConnections.updateValue(pc, forKey: message.from) {
+      describedConnections.remove(ObjectIdentifier(replaced))
+    }
+
+    let answerSdp: String
     do {
-      try await pc.setRemoteDescription(remoteSdp)
+      try await WebRTCQueue.setRemoteDescription(.offer, sdp: sdpString, on: pc)
+      markRemoteDescriptionSet(on: pc, for: message.from)
       await drainCandidateQueue(for: message.from)
-      let constraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
-      let answer = try await pc.answer(for: constraints)
-      try await pc.setLocalDescription(answer)
+      answerSdp = try await WebRTCQueue.makeLocalDescription(.answer, on: pc)
     } catch {
       guard peerConnections[message.from] === pc else {
         log.debug("answer for \(message.from) superseded during SDP setup")
@@ -339,7 +362,7 @@ extension SignalingService {
     guard peerConnections[message.from] === pc else { return }
 
     let response = SignalMessage(
-      payload: .answer(sdp: pc.localDescription?.sdp ?? ""),
+      payload: .answer(sdp: answerSdp),
       from: userService.user,
       to: message.from,
     )
@@ -357,10 +380,10 @@ extension SignalingService {
       log.error("payload is not .answer")
       return
     }
-    let remoteSdp = RTCSessionDescription(type: .answer, sdp: sdpString)
 
     do {
-      try await pc.setRemoteDescription(remoteSdp)
+      try await WebRTCQueue.setRemoteDescription(.answer, sdp: sdpString, on: pc)
+      markRemoteDescriptionSet(on: pc, for: message.from)
       await drainCandidateQueue(for: message.from)
       log.info("remote description set")
     } catch {
@@ -379,7 +402,7 @@ extension SignalingService {
     }
     let candidate = RTCIceCandidate(sdp: sdpString, sdpMLineIndex: sdpMLineIndex, sdpMid: sdpMid)
 
-    guard let pc = peerConnections[message.from], pc.remoteDescription != nil else {
+    guard let pc = peerConnections[message.from], describedConnections.contains(ObjectIdentifier(pc)) else {
       guard candidateQueues[message.from, default: []].count < Self.maxQueuedCandidates else {
         log.warning("dropping ICE candidate: queue is full")
         return
@@ -390,7 +413,7 @@ extension SignalingService {
     }
 
     do {
-      try await pc.add(candidate)
+      try await WebRTCQueue.add(candidate, to: pc)
       log.debug("candidate added for \(message.from)")
     } catch {
       guard peerConnections[message.from] === pc else {
@@ -406,6 +429,12 @@ extension SignalingService {
     await initiateConnection(to: message.from)
   }
 
+  /// Lets candidates go straight to `pc` from now on, unless it was replaced while the description applied.
+  private func markRemoteDescriptionSet(on pc: RTCPeerConnection, for peer: String) {
+    guard peerConnections[peer] === pc else { return }
+    describedConnections.insert(ObjectIdentifier(pc))
+  }
+
   private func drainCandidateQueue(for peer: String) async {
     guard let pc = peerConnections[peer] else { return }
     guard let queued = candidateQueues[peer], !queued.isEmpty else { return }
@@ -414,7 +443,7 @@ extension SignalingService {
 
     for candidate in queued {
       do {
-        try await pc.add(candidate)
+        try await WebRTCQueue.add(candidate, to: pc)
       } catch {
         log.warning("queued candidate add failed")
       }
@@ -497,7 +526,7 @@ extension SignalingService {
     connectionTimeouts[peer] = Task { [weak self] in
       try? await Task.sleep(nanoseconds: UInt64(Self.connectionTimeout * 1_000_000_000))
 
-      if let state = self?.peerConnections[peer]?.iceConnectionState, [.checking, .connected, .completed].contains(state) {
+      if let pc = self?.peerConnections[peer], [.checking, .connected, .completed].contains(await WebRTCQueue.states(of: pc).ice) {
         try? await Task.sleep(nanoseconds: UInt64((Self.connectionCeiling - Self.connectionTimeout) * 1_000_000_000))
       }
 
@@ -561,13 +590,10 @@ extension SignalingService {
 
     let dataChannel = dataChannels.removeValue(forKey: peer)
     let peerConnection = peerConnections.removeValue(forKey: peer)
-    if dataChannel != nil || peerConnection != nil {
-      let closing = UnsafeSendable(value: (dataChannel, peerConnection))
-      Task.detached {
-        closing.value.0?.close()
-        closing.value.1?.close()
-      }
+    if let peerConnection {
+      describedConnections.remove(ObjectIdentifier(peerConnection))
     }
+    WebRTCQueue.close(peerConnection, channel: dataChannel)
 
     candidateQueues[peer] = nil
     collectedCandidates[peer] = nil
@@ -596,11 +622,7 @@ extension SignalingService {
 
     guard let data = encodeChatForWire(message) else { return [] }
 
-    let openPeers = dataChannels
-      .filter { $0.value.readyState == .open }
-      .map { $0.key }
-
-    return Array(Set(openPeers).union(connectingPeers)).filter {
+    return Array(connectedPeers.union(connectingPeers)).filter {
       send(data, to: $0)
     }
   }
@@ -615,7 +637,8 @@ extension SignalingService {
       return enqueue(data, for: peer)
     }
 
-    guard let channel = dataChannels[peer], channel.readyState == .open else {
+    // `connectedPeers` follows the channel's open state, so no blocking `readyState` read here.
+    guard let channel = dataChannels[peer], connectedPeers.contains(peer) else {
       // Chunks are never queued; they only flow after an accept on an open channel.
       if !isBinary, connectingPeers.contains(peer) {
         return enqueue(data, for: peer)
@@ -796,6 +819,9 @@ extension SignalingService: RTCPeerConnectionDelegate {
     let peerConnectionID = ObjectIdentifier(peerConnection)
     let box = UnsafeSendable(value: dataChannel)
 
+    // Read here on libwebrtc's thread; the same read on the main actor would block.
+    let isOpen = dataChannel.readyState == .open
+
     Task { @MainActor [weak self] in
       guard let self else { return }
 
@@ -807,7 +833,7 @@ extension SignalingService: RTCPeerConnectionDelegate {
       box.value.delegate = self
       self.dataChannels[peer] = box.value
       log.info("data channel attached")
-      if box.value.readyState == .open {
+      if isOpen {
         self.handleChannelOpened(peer)
       }
     }

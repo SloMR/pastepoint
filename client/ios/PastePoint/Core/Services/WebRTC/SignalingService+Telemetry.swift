@@ -27,13 +27,16 @@ extension SignalingService {
     let hasRelay = candidates.contains("relay")
     let hasSrflx = candidates.contains("srflx")
 
-    var report = "Connection FAILED:\n"
-    report += "  State: \(pc.connectionState.rawValue) / ICE: \(pc.iceConnectionState.rawValue)\n"
-    report += "  Candidates: \(candidates.count) total (relay: \(hasRelay ? "✓" : "✗"), srflx: \(hasSrflx ? "✓" : "✗"))"
-    if !hasRelay {
-      report += "\n  ISSUE: No TURN relay candidates — connection will fail behind symmetric NAT"
+    Task {
+      let states = await WebRTCQueue.states(of: pc)
+      var report = "Connection FAILED:\n"
+      report += "  State: \(states.peer.rawValue) / ICE: \(states.ice.rawValue)\n"
+      report += "  Candidates: \(candidates.count) total (relay: \(hasRelay ? "✓" : "✗"), srflx: \(hasSrflx ? "✓" : "✗"))"
+      if !hasRelay {
+        report += "\n  ISSUE: No TURN relay candidates — connection will fail behind symmetric NAT"
+      }
+      log.warning("\(report)")
     }
-    log.warning("\(report)")
   }
 
   /// Gathered ICE candidates per type, e.g. `["host": 2, "relay": 1]`.
@@ -166,12 +169,12 @@ extension SignalingService {
 
   /// Ends the span as failed with the connection state and candidate mix attached.
   func finishConnectSpanAsFailed(_ peer: String, reason: ConnectFailureReason) {
-    guard connectSpans[peer] != nil else { return }
+    guard let span = connectSpans[peer] else { return }
     let candidates = collectedCandidates[peer] ?? []
     var diagnostics: Telemetry.Attributes = [
       "failure_reason": reason.rawValue,
-      "webrtc.peer_state": peerConnections[peer].map { Self.name($0.connectionState) } ?? "unknown",
-      "webrtc.ice_state": peerConnections[peer].map { Self.name($0.iceConnectionState) } ?? "unknown",
+      "webrtc.peer_state": "unknown",
+      "webrtc.ice_state": "unknown",
       "webrtc.has_relay": candidates.contains("relay"),
       "webrtc.has_srflx": candidates.contains("srflx"),
       "webrtc.candidate_total": candidates.count,
@@ -179,7 +182,19 @@ extension SignalingService {
     for (type, count) in candidateTypeCounts(for: peer) {
       diagnostics["webrtc.candidate.\(type)"] = count
     }
-    finishConnectSpan(peer, ok: false, outcome: .failed, message: reason.rawValue, attributes: diagnostics)
+    let pc = peerConnections[peer]
+    clearConnectSpan(peer)
+
+    // The states are read off the main actor, so the span ends a moment later.
+    Task { [diagnostics] in
+      var attributes = diagnostics
+      if let pc {
+        let states = await WebRTCQueue.states(of: pc)
+        attributes["webrtc.peer_state"] = Self.name(states.peer)
+        attributes["webrtc.ice_state"] = Self.name(states.ice)
+      }
+      telemetry.endSpan(span, ok: false, outcome: ConnectOutcome.failed.rawValue, message: reason.rawValue, attributes: attributes)
+    }
   }
 
   /// Ends the span as connected, adding the selected ICE path once the stats report arrives.
