@@ -167,8 +167,7 @@ final class SignalingService: NSObject, ObservableObject {
         return
       }
       log.error("SDP offer failed: \(error.localizedDescription)")
-      peerConnections[peer] = nil
-      dataChannels[peer] = nil
+      WebRTCQueue.close(peerConnections.removeValue(forKey: peer), channel: dataChannels.removeValue(forKey: peer))
       connectionLocks.remove(peer)
       return
     }
@@ -204,7 +203,7 @@ final class SignalingService: NSObject, ObservableObject {
 
     guard let channel else {
       log.error("failed to create data channel")
-      peerConnections[peer] = nil
+      WebRTCQueue.close(peerConnections.removeValue(forKey: peer), channel: nil)
       connectionLocks.remove(peer)
       return nil
     }

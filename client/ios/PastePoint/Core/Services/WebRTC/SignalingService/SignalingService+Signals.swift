@@ -84,6 +84,7 @@ extension SignalingService {
     }
     if let replaced = peerConnections.updateValue(pc, forKey: message.from) {
       describedConnections.remove(ObjectIdentifier(replaced))
+      WebRTCQueue.close(replaced, channel: nil)
     }
     telemetry.markElapsed("webrtc.pc_created_ms", on: connectSpans[message.from])
 
@@ -100,6 +101,8 @@ extension SignalingService {
       }
       log.error("SDP exchange failed: \(error.localizedDescription)")
       peerConnections[message.from] = nil
+      describedConnections.remove(ObjectIdentifier(pc))
+      WebRTCQueue.close(pc, channel: nil)
       connectionLocks.remove(message.from)
       return
     }
