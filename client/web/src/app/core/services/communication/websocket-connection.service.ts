@@ -257,6 +257,9 @@ export class WebSocketConnectionService implements OnDestroy {
         if (this.reconnectAttempts > 0) {
           this.telemetry.event('ws.reconnected', { attempts: this.reconnectAttempts });
           this.reconnected$.next();
+
+          // A tab that stays hidden never re-checks on visibilitychange
+          void this.updateService.check();
         }
         this.reconnectAttempts = 0;
         this.reconnectDelay = 1000;
