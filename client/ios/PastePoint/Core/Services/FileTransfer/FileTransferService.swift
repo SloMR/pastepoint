@@ -833,7 +833,7 @@ extension FileTransferService {
       }.value
 
       // Clean up scratch chunks regardless of outcome.
-      try? FileManager.default.removeItem(at: dir)
+      Self.removeChunkDirectory(dir)
 
       guard result.ok else {
         log.error("finalize failed for \(download.id), reason: \(result.reason ?? .assembly)")
@@ -939,8 +939,7 @@ extension FileTransferService {
 
     stopStallWatchdogIfIdle()
     pendingChunkIndices[fileId] = nil
-    let dir = chunkDirectory(for: fileId)
-    try? FileManager.default.removeItem(at: dir)
+    Self.removeChunkDirectory(chunkDirectory(for: fileId))
   }
 
   private func releaseSourceFile(of upload: FileUpload) {
@@ -976,6 +975,13 @@ extension FileTransferService {
   }
 
   // MARK: Helpers
+
+  /// Deletes a chunk directory off the main actor; it holds one file per received chunk.
+  private nonisolated static func removeChunkDirectory(_ dir: URL) {
+    DispatchQueue.global(qos: .utility).async {
+      try? FileManager.default.removeItem(at: dir)
+    }
+  }
 
   /// Per-file scratch directory for incoming chunks: <tmp>/incoming/<hashed fileId>/.
   private func chunkDirectory(for fileId: String) -> URL {
