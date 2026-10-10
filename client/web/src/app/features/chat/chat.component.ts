@@ -223,6 +223,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
   @ViewChild(ChatInputComponent) chatInput?: ChatInputComponent;
   @ViewChild(ChatMessagesComponent) chatMessages?: ChatMessagesComponent;
+  @ViewChild('chatArea') chatArea?: ElementRef<HTMLElement>;
 
   protected get messageTextarea(): ElementRef | undefined {
     return this.chatInput?.messageTextarea;
@@ -436,6 +437,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (isPlatformBrowser(this.platformId) && this.onlineListener) {
       window.removeEventListener('online', this.onlineListener);
     }
+
+    const chatArea = this.chatArea?.nativeElement;
+    chatArea?.removeEventListener('dragover', this.onChatDragOver);
+    chatArea?.removeEventListener('dragenter', this.onChatDragEnter);
+    chatArea?.removeEventListener('dragleave', this.onChatDragLeave);
   }
 
   /**
@@ -919,6 +925,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     document.addEventListener('visibilitychange', this.visibilityChangeListener);
     window.addEventListener('beforeunload', this.beforeUnloadHandler);
     window.addEventListener('online', this.onlineListener);
+
+    // Drag events fire many times a second; they only redraw when the overlay toggles.
+    this.ngZone.runOutsideAngular(() => {
+      const chatArea = this.chatArea?.nativeElement;
+      chatArea?.addEventListener('dragover', this.onChatDragOver);
+      chatArea?.addEventListener('dragenter', this.onChatDragEnter);
+      chatArea?.addEventListener('dragleave', this.onChatDragLeave);
+    });
 
     this.cdr.detectChanges();
     if (this.messageInput?.nativeElement) {
@@ -2091,20 +2105,20 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   protected isDraggingFiles = false;
 
-  protected onChatDragOver(event: DragEvent): void {
+  private onChatDragOver = (event: DragEvent): void => {
     event.preventDefault();
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'copy';
     }
-  }
+  };
 
-  protected onChatDragEnter(event: DragEvent): void {
+  private onChatDragEnter = (event: DragEvent): void => {
     if (event.dataTransfer && Array.from(event.dataTransfer.types).includes('Files')) {
-      this.isDraggingFiles = true;
+      this.setDraggingFiles(true);
     }
-  }
+  };
 
-  protected onChatDragLeave(event: DragEvent): void {
+  private onChatDragLeave = (event: DragEvent): void => {
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
     if (
       event.clientX <= rect.left ||
@@ -2112,8 +2126,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       event.clientY <= rect.top ||
       event.clientY >= rect.bottom
     ) {
-      this.isDraggingFiles = false;
+      this.setDraggingFiles(false);
     }
+  };
+
+  private setDraggingFiles(dragging: boolean): void {
+    if (this.isDraggingFiles === dragging) return;
+    this.ngZone.run(() => {
+      this.isDraggingFiles = dragging;
+      this.cdr.detectChanges();
+    });
   }
 
   protected onChatDrop(event: DragEvent): void {

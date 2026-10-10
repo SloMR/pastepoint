@@ -39,9 +39,7 @@
     <!-- MARK: - Chat Region (messages scroll behind the frosted bar) -->
     <div
       class="relative flex flex-1 flex-col overflow-hidden px-4 pb-6 bg-contentArea dark:bg-baseDark md:px-8"
-      (dragover)="onChatDragOver($event)"
-      (dragenter)="onChatDragEnter($event)"
-      (dragleave)="onChatDragLeave($event)"
+      #chatArea
       (drop)="onChatDrop($event)"
       (paste)="onChatPaste($event)"
     >
