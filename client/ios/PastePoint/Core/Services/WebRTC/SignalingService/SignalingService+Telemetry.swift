@@ -152,18 +152,26 @@ extension SignalingService {
 
   /// Ends the span as skipped when a usable connection already exists.
   func finishConnectSpanAsSkipped(_ peer: String, existing pc: RTCPeerConnection) {
-    let state = Self.name(pc.connectionState)
-    let iceState = Self.name(pc.iceConnectionState)
-    switch (pc.connectionState, pc.iceConnectionState) {
-    case (.connected, _), (.connecting, _):
-      finishConnectSpan(peer, ok: true, outcome: .skipped(state: state), message: state)
-    case (.failed, _), (.disconnected, _), (_, .failed), (_, .disconnected):
-      // A span with no attempt on it was opened by this very call; drop it rather than let it age out.
-      if connectAttemptCounts[peer] == nil {
-        clearConnectSpan(peer)
+    guard let span = connectSpans[peer] else { return }
+
+    // The states are read off the main actor; a new attempt may own the span by the time they arrive.
+    Task {
+      let states = await WebRTCQueue.states(of: pc)
+      guard connectSpans[peer] === span else { return }
+
+      let state = Self.name(states.peer)
+      switch (states.peer, states.ice) {
+      case (.connected, _), (.connecting, _):
+        finishConnectSpan(peer, ok: true, outcome: .skipped(state: state), message: state)
+      case (.failed, _), (.disconnected, _), (_, .failed), (_, .disconnected):
+        // A span with no attempt on it was opened by this very call; drop it rather than let it age out.
+        if connectAttemptCounts[peer] == nil {
+          clearConnectSpan(peer)
+        }
+      default:
+        let outcome = ConnectOutcome.skippedUnexpected(state: state, iceState: Self.name(states.ice))
+        finishConnectSpan(peer, ok: true, outcome: outcome, message: "unexpected_state")
       }
-    default:
-      finishConnectSpan(peer, ok: true, outcome: .skippedUnexpected(state: state, iceState: iceState), message: "unexpected_state")
     }
   }
 
