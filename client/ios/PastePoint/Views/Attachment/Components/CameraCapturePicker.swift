@@ -8,7 +8,7 @@ import UIKit
 import UniformTypeIdentifiers
 
 enum CameraCapture {
-  case photo(Data)
+  case photo(UIImage)
   case video(URL)
 }
 
@@ -43,11 +43,8 @@ struct CameraCapturePicker: UIViewControllerRepresentable {
     ) {
       if let url = info[.mediaURL] as? URL {
         onCapture(.video(url))
-      } else if
-        let image = info[.originalImage] as? UIImage,
-        let data = image.jpegData(compressionQuality: 0.9)
-      {
-        onCapture(.photo(data))
+      } else if let image = info[.originalImage] as? UIImage {
+        onCapture(.photo(image))
       } else {
         onCapture(nil)
       }
