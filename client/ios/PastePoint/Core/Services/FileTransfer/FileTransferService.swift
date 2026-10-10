@@ -473,7 +473,7 @@ extension FileTransferService {
         data: chunkData,
       )
 
-      // Back-pressure: poll-retry. `send` returns false when bufferedAmount is
+      // Back-pressure: poll-retry. `sendChunk` returns false when bufferedAmount is
       // above maxBufferedAmount — we sleep briefly and retry until it accepts.
       guard await sendEncodedChunk(encoded, to: targetUser) else {
         log.info("chunk loop cancelled (back-pressure wait) for \(uploadId)")
@@ -519,10 +519,7 @@ extension FileTransferService {
   /// Sends one encoded chunk, waiting out back-pressure. False if cancelled.
   private nonisolated func sendEncodedChunk(_ encoded: Data, to targetUser: String) async -> Bool {
     while true {
-      let sent = await MainActor.run {
-        signalingService.send(encoded, to: targetUser, isBinary: true)
-      }
-      if sent { return true }
+      if await signalingService.sendChunk(encoded, to: targetUser) { return true }
       try? await Task.sleep(nanoseconds: 50_000_000) // 50 ms
       if Task.isCancelled { return false }
     }

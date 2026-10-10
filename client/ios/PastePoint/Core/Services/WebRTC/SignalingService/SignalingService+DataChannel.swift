@@ -29,31 +29,36 @@ extension SignalingService {
   }
 
   /// Transport hook: send a pre-encoded data-channel envelope to one peer.
-  /// Returns false if the channel is closed or back-pressured.
+  /// Returns false when there's no open channel and the frame can't be queued.
   /// Called by services that build their own envelopes (e.g. `FileTransferService`).
-  func send(_ data: Data, to peer: String, isBinary: Bool = false) -> Bool {
+  func send(_ data: Data, to peer: String) -> Bool {
     // The channel can open before the flush runs. Keep queueing until the queue is
     // drained, or a frame sent in that window arrives ahead of older ones.
-    if !isBinary, pendingMessages[peer] != nil {
+    if pendingMessages[peer] != nil {
       return enqueue(data, for: peer)
     }
 
     // `connectedPeers` follows the channel's open state, so no blocking `readyState` read here.
     guard let channel = dataChannels[peer], connectedPeers.contains(peer) else {
-      // Chunks are never queued; they only flow after an accept on an open channel.
-      if !isBinary, connectingPeers.contains(peer) {
+      if connectingPeers.contains(peer) {
         return enqueue(data, for: peer)
       }
       log.warning("no open channel to peer")
       return false
     }
 
-    guard !isBinary || channel.bufferedAmount < WebRTCConfig.maxBufferedAmount else {
-      log.debug("channel to \(peer) back-pressured (\(channel.bufferedAmount) bytes)")
+    WebRTCQueue.send(data, on: channel)
+    return true
+  }
+
+  /// Sends one file chunk; false when the channel is closed or back-pressured, so the caller retries.
+  func sendChunk(_ data: Data, to peer: String) async -> Bool {
+    // Chunks are never queued; they only flow after an accept on an open channel.
+    guard let channel = dataChannels[peer], connectedPeers.contains(peer) else {
+      log.warning("no open channel to peer")
       return false
     }
-
-    return channel.sendData(RTCDataBuffer(data: data, isBinary: isBinary))
+    return await WebRTCQueue.sendChunk(data, on: channel)
   }
 
   /// Holds a frame for a connecting peer; false once full, so a peer that never

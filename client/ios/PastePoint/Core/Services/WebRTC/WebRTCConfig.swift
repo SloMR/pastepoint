@@ -7,7 +7,7 @@ import Foundation
 import WebRTC
 
 enum WebRTCConfig {
-  static let maxBufferedAmount: UInt64 = 16 * 1024 * 1024 // 16MB
+  nonisolated static let maxBufferedAmount: UInt64 = 16 * 1024 * 1024 // 16MB
   static let bufferedAmountLowThreshold: UInt64 = 8 * 1024 * 1024 // 8MB
 
   /// Public STUN servers only.

@@ -57,6 +57,21 @@ nonisolated enum WebRTCQueue {
     }
   }
 
+  static func send(_ data: Data, on channel: RTCDataChannel) {
+    queue.async {
+      if !channel.sendData(RTCDataBuffer(data: data, isBinary: false)) {
+        log.warning("data channel refused a frame")
+      }
+    }
+  }
+
+  static func sendChunk(_ data: Data, on channel: RTCDataChannel) async -> Bool {
+    await run {
+      guard channel.bufferedAmount < WebRTCConfig.maxBufferedAmount else { return false }
+      return channel.sendData(RTCDataBuffer(data: data, isBinary: true))
+    }
+  }
+
   static func add(_ candidate: RTCIceCandidate, to pc: RTCPeerConnection) async throws {
     try await perform { done in
       pc.add(candidate, completionHandler: done)
