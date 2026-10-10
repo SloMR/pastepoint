@@ -12,8 +12,8 @@ final class FileTransferService: ObservableObject {
   private let userService: UserService
 
   @Published private(set) var activeUploads: [FileUpload] = []
-  @Published private(set) var activeDownloads: [FileDownload] = []
   @Published private(set) var incomingFileOffers: [FileDownload] = []
+  private(set) var activeDownloads: [FileDownload] = []
 
   let attachmentMessages = PassthroughSubject<ChatMessage, Never>()
   let outgoingAttachment = PassthroughSubject<ChatMessage, Never>()
@@ -24,6 +24,7 @@ final class FileTransferService: ObservableObject {
   let fileTransferFailed = PassthroughSubject<(fileId: String, reason: FileTransferFailureReason), Never>()
 
   let downloadStallTimeout: TimeInterval = 30
+  var lastDownloadFlush = Date.distantPast
   private var pendingChunkIndices: [String: Set<Int>] = [:]
   private var uploadTasks: [String: Task<Void, Never>] = [:]
   var uploadBatches: [String: UploadBatch] = [:]
@@ -296,6 +297,7 @@ final class FileTransferService: ObservableObject {
 
     var download = incomingFileOffers.remove(at: idx)
     download.lastActivityAt = Date()
+    objectWillChange.send()
     activeDownloads.append(download)
     startStallWatchdog()
 
@@ -439,7 +441,6 @@ extension FileTransferService {
     var chunkIndex: UInt32 = 0
     var bytesSent: Int64 = 0
 
-    let progressFlushInterval: TimeInterval = 0.25
     var lastProgressFlush = Date.distantPast
 
     // 3. Send loop.
@@ -485,7 +486,7 @@ extension FileTransferService {
       chunkIndex += 1
 
       let now = Date()
-      if now.timeIntervalSince(lastProgressFlush) >= progressFlushInterval {
+      if now.timeIntervalSince(lastProgressFlush) >= Self.progressFlushInterval {
         lastProgressFlush = now
         await applyUploadProgress(uploadId: uploadId, bytesSent: bytesSent, fileSize: snapshot.fileSize)
       }
@@ -779,7 +780,10 @@ extension FileTransferService {
 
       log.info("all \(total) chunks received for \(download.id)")
       activeDownloads[i].isFinalizing = true
+      flushDownloadProgress(force: true)
       finalizeDownload(download, from: peer)
+    } else {
+      flushDownloadProgress()
     }
   }
 
@@ -847,6 +851,7 @@ extension FileTransferService {
 
       sendFileReceived(fileId: download.id, to: peer)
       endReceiveSpan(fileId: download.id, outcome: .completed)
+      objectWillChange.send()
       activeDownloads.removeAll { $0.id == download.id && $0.fromUser == peer }
       stopStallWatchdogIfIdle()
 
@@ -927,6 +932,7 @@ extension FileTransferService {
   /// Every non-completed download leaves through here, so the receive span is closed exactly once.
   func cleanupDownload(fileId: String, fromUser: String, outcome: ReceiveOutcome, attributes: Telemetry.Attributes = [:]) {
     endReceiveSpan(fileId: fileId, outcome: outcome, attributes: attributes)
+    objectWillChange.send()
     activeDownloads.removeAll { file in
       file.id == fileId && file.fromUser == fromUser
     }
