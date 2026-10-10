@@ -1,4 +1,4 @@
-import { Injectable, PLATFORM_ID, OnDestroy, effect, inject } from '@angular/core';
+import { Injectable, NgZone, PLATFORM_ID, OnDestroy, effect, inject } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { TelemetryService, TelemetrySpan } from '../monitoring/telemetry.service';
 import { environment } from '../../../../environments/environment';
@@ -23,6 +23,7 @@ export class WebSocketConnectionService implements OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private updateService = inject(AppUpdateService);
   private telemetry = inject(TelemetryService);
+  private ngZone = inject(NgZone);
 
   /**
    * ==========================================================
@@ -269,32 +270,35 @@ export class WebSocketConnectionService implements OnDestroy {
         settleResolve();
       };
 
-      socket.onmessage = (ev) => {
-        if (socket !== this.socket) return;
-        if (typeof ev.data === 'string') {
-          const message = ev.data.trim();
+      // Signal frames arrive in bursts while peers connect; only system frames reach the UI.
+      this.ngZone.runOutsideAngular(() => {
+        socket.onmessage = (ev) => {
+          if (socket !== this.socket) return;
+          if (typeof ev.data === 'string') {
+            const message = ev.data.trim();
 
-          if (message.startsWith('[SignalMessage]')) {
-            try {
-              const signalMessage = JSON.parse(message.replace('[SignalMessage]', '').trim());
-              this.signalMessages$.next(signalMessage);
-            } catch (e) {
-              this.logger.error(
-                'connect',
-                `Failed to parse signal message: ${e instanceof Error ? e.message : String(e)}`,
-                e
-              );
-              return;
+            if (message.startsWith('[SignalMessage]')) {
+              try {
+                const signalMessage = JSON.parse(message.replace('[SignalMessage]', '').trim());
+                this.signalMessages$.next(signalMessage);
+              } catch (e) {
+                this.logger.error(
+                  'connect',
+                  `Failed to parse signal message: ${e instanceof Error ? e.message : String(e)}`,
+                  e
+                );
+                return;
+              }
+            } else if (this.isSystemMessage(message)) {
+              this.ngZone.run(() => this.systemMessages$.next(message));
+            } else {
+              this.messages$.next(message);
             }
-          } else if (this.isSystemMessage(message)) {
-            this.systemMessages$.next(message);
           } else {
-            this.messages$.next(message);
+            this.logger.warn('connect', 'Received non-string message from WebSocket');
           }
-        } else {
-          this.logger.warn('connect', 'Received non-string message from WebSocket');
-        }
-      };
+        };
+      });
 
       socket.onclose = (event) => {
         // Must run before the stale-event guard — the promise belongs to
