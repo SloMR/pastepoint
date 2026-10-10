@@ -389,6 +389,30 @@ export class FileDownloadService extends FileTransferBaseService {
       `File assembled (${(receivedBlob.size / 1024 / 1024).toFixed(2)}MB)`
     );
 
+    // Trigger download
+    const anchor = document.createElement('a');
+    anchor.href = downloadUrl;
+    anchor.download = fileName;
+    document.body.appendChild(anchor);
+    anchor.click();
+    document.body.removeChild(anchor);
+
+    // Revoke the object URL after a short delay to allow download to start
+    setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
+    this.toaster.success(this.translate.instant('FILE_DOWNLOAD_COMPLETED', { fileName }));
+
+    this.sendData(
+      {
+        type: FILE_TRANSFER_MESSAGE_TYPES.FILE_RECEIVED,
+        payload: {
+          fileId: fileDownload.fileId,
+        },
+      },
+      fromUser
+    );
+
+    this.finishReceiveSpan(fromUser, fileDownload.fileId, 'completed');
+
     // Update preview after completion
     try {
       if (blobType === 'application/pdf') {
@@ -413,30 +437,6 @@ export class FileDownloadService extends FileTransferBaseService {
         `Failed to generate preview for ${fileDownload.fileId}`
       );
     }
-
-    // Trigger download
-    const anchor = document.createElement('a');
-    anchor.href = downloadUrl;
-    anchor.download = fileName;
-    document.body.appendChild(anchor);
-    anchor.click();
-    document.body.removeChild(anchor);
-
-    // Revoke the object URL after a short delay to allow download to start
-    setTimeout(() => URL.revokeObjectURL(downloadUrl), 1000);
-    this.toaster.success(this.translate.instant('FILE_DOWNLOAD_COMPLETED', { fileName }));
-
-    this.sendData(
-      {
-        type: FILE_TRANSFER_MESSAGE_TYPES.FILE_RECEIVED,
-        payload: {
-          fileId: fileDownload.fileId,
-        },
-      },
-      fromUser
-    );
-
-    this.finishReceiveSpan(fromUser, fileDownload.fileId, 'completed');
 
     // Cleanup
     userMap.delete(fileDownload.fileId);
