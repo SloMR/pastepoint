@@ -209,6 +209,7 @@ final class WebSocketConnectionService: ObservableObject {
           }
 
           log.error("Receive error: \(error.localizedDescription)")
+          teardownConnection()
           scheduleReconnect()
           break
         }
