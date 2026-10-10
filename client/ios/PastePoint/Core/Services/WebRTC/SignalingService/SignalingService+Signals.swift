@@ -54,6 +54,9 @@ extension SignalingService {
         log.debug("canceling our initiation for \(message.from) (we are the designated callee)")
         closePeerConnection(message.from, resetReconnectState: false)
       }
+    } else if peerConnections[message.from] != nil {
+      log.debug("replacing the connection to \(message.from) with its new offer")
+      closePeerConnection(message.from, resetReconnectState: false)
     }
 
     connectionLocks.insert(message.from)
