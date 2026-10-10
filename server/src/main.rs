@@ -14,7 +14,7 @@ use server::{
     private_chat_ws, turn_credentials, version as version_route,
 };
 use std::borrow::Cow;
-use std::io::Result;
+use std::io::{Error, Result};
 use std::net::{IpAddr, Ipv4Addr};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
@@ -92,7 +92,7 @@ async fn main() -> Result<()> {
     let sentry_cfg = SentryConfig::load();
     let _sentry_guard = init_sentry(&sentry_cfg);
 
-    let config = ServerConfig::load(None).expect("Failed to load server configuration");
+    let config = ServerConfig::load(None).map_err(Error::other)?;
 
     let log_filter = format!(
         "{lvl},reqwest=warn,hyper=warn,hyper_util=warn,h2=warn,rustls=warn,tokio_util=warn",
@@ -112,7 +112,7 @@ async fn main() -> Result<()> {
             log::Level::Info => sentry::integrations::log::LogFilter::Breadcrumb,
             log::Level::Debug | log::Level::Trace => sentry::integrations::log::LogFilter::Ignore,
         });
-    log::set_boxed_logger(Box::new(sentry_logger)).expect("Failed to set logger");
+    log::set_boxed_logger(Box::new(sentry_logger)).map_err(Error::other)?;
     log::set_max_level(max_level);
 
     if _sentry_guard.is_some() {
@@ -126,7 +126,9 @@ async fn main() -> Result<()> {
         .key_extractor(ClientIpKeyExtractor::new(!ServerConfig::is_dev_env()))
         .use_headers()
         .finish()
-        .expect("Invalid rate limit configuration");
+        .ok_or_else(|| {
+            Error::other("rate_limit_per_second and rate_limit_burst_size must be above 0")
+        })?;
 
     log::debug!(target: "Websocket", "Rate limiting configured: {governor_conf:?}");
 
@@ -142,12 +144,12 @@ async fn main() -> Result<()> {
     let mut builder = SslAcceptor::mozilla_intermediate(SslMethod::tls())?;
     builder
         .set_private_key_file(&config.key_file_path, SslFiletype::PEM)
-        .map_err(|e| log::error!(target: "Websocket","Failed to load private key: {e}"))
-        .expect("Cannot find private key file");
+        .inspect_err(|e| log::error!(target: "Websocket", "Failed to load private key: {e}"))?;
     builder
         .set_certificate_chain_file(&config.cert_file_path)
-        .map_err(|e| log::error!(target: "Websocket","Failed to load certificate chain file: {e}"))
-        .expect("Cannot find certificate chain file");
+        .inspect_err(
+            |e| log::error!(target: "Websocket", "Failed to load certificate chain file: {e}"),
+        )?;
 
     log::debug!(target: "Websocket","Using key file: {}", config.key_file_path);
     log::debug!(target: "Websocket","Using cert file: {}", config.cert_file_path);
