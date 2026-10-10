@@ -85,6 +85,7 @@ final class AppServices: ObservableObject {
     startTerminationObserver()
     startUpdateGateObserver()
     forwardServiceChanges()
+    PeerConnectionFactory.prepare()
   }
 
 #if DEBUG

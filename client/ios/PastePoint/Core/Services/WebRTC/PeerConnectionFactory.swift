@@ -19,6 +19,10 @@ final nonisolated class PeerConnectionFactory: @unchecked Sendable {
     factory = RTCPeerConnectionFactory(encoderFactory: nil, decoderFactory: nil)
   }
 
+  static func prepare() {
+    Task { await WebRTCQueue.run { _ = shared } }
+  }
+
   func makePeerConnection(
     iceServers: [RTCIceServer],
     delegate: RTCPeerConnectionDelegate,
