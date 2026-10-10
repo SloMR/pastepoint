@@ -10,6 +10,7 @@ import {
   FileTransferStatus,
   MAX_PREVIEW_DATA_URL_SIZE,
   PREVIEW_MIME_TYPE,
+  PROGRESS_FLUSH_INTERVAL_MS,
 } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { PreviewService } from '../ui/preview.service';
@@ -31,6 +32,7 @@ export class FileUploadService extends FileTransferBaseService {
 
   // =============== Private Properties ===============
   private processingQueues = new Map<string, boolean>();
+  private lastProgressFlush = 0;
   private userFileQueues = new Map<string, string[]>(); // Queue of fileIds per user for sequential transfer
   private activeFilePerUser = new Map<string, string | null>(); // Currently transferring file per user
   private consecutiveErrorCounts = new Map<string, number>();
@@ -608,9 +610,6 @@ export class FileUploadService extends FileTransferBaseService {
     this.telemetry.setAttributes(span, { total_chunks: totalChunks });
     let chunkIndex = Math.floor(fileTransfer.currentOffset / CHUNK_SIZE);
 
-    const PROGRESS_FLUSH_INTERVAL_MS = 250;
-    let lastProgressFlush = 0;
-
     this.logger.info(
       'sendFileChunks',
       `Starting: size=${fileTransfer.file.size}, chunks=${totalChunks}`
@@ -706,11 +705,11 @@ export class FileUploadService extends FileTransferBaseService {
 
           const now = Date.now();
           if (
-            now - lastProgressFlush >= PROGRESS_FLUSH_INTERVAL_MS &&
+            now - this.lastProgressFlush >= PROGRESS_FLUSH_INTERVAL_MS &&
             !fileTransfer.isPaused &&
             userMap.has(fileTransfer.fileId)
           ) {
-            lastProgressFlush = now;
+            this.lastProgressFlush = now;
             userMap.set(fileTransfer.fileId, fileTransfer);
             await this.setFileTransfers(fileTransfer.targetUser, userMap);
             await this.updateActiveUploads();
