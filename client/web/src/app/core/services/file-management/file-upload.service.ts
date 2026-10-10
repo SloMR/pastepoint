@@ -660,7 +660,10 @@ export class FileUploadService extends FileTransferBaseService {
 
         // Check buffer before sending
         if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT * 0.7) {
-          this.logger.warn('sendFileChunks', `Buffer high, pausing for ${fileTransfer.targetUser}`);
+          this.logger.debug(
+            'sendFileChunks',
+            `Buffer high, pausing for ${fileTransfer.targetUser}`
+          );
           fileTransfer.isPaused = true;
           break;
         }
@@ -718,7 +721,7 @@ export class FileUploadService extends FileTransferBaseService {
           // Log progress every MB
           if (fileTransfer.currentOffset % MB < CHUNK_SIZE) {
             const mbSent = (fileTransfer.currentOffset / MB).toFixed(2);
-            this.logger.info('sendFileChunks', `${fileTransfer.fileId}: ${mbSent}MB sent`);
+            this.logger.debug('sendFileChunks', `${fileTransfer.fileId}: ${mbSent}MB sent`);
           }
         } catch (error) {
           this.logger.error('sendFileChunks', `Error preparing chunk: ${error}`);

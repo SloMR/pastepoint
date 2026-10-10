@@ -701,7 +701,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     // Listen for active file uploads
     this.subscriptions.push(
       this.fileTransferService.activeUploads$.subscribe((uploads: FileUpload[]) => {
-        this.logger.info('activeUploads', `Active uploads: ${uploads.length} (length)`);
+        this.logger.debug('activeUploads', `Active uploads: ${uploads.length} (length)`);
         this.ngZone.run(() => {
           this.activeUploads = uploads;
           this.cdr.detectChanges();
