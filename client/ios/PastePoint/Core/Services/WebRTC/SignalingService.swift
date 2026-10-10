@@ -180,6 +180,7 @@ final class SignalingService: NSObject, ObservableObject {
       to: peer,
     )
     await wsService.sendSignal(offerMessage)
+    telemetry.markElapsed("webrtc.offer_sent_ms", on: connectSpans[peer])
     log.info("offer sent")
   }
 
@@ -199,6 +200,7 @@ final class SignalingService: NSObject, ObservableObject {
       return nil
     }
     peerConnections[peer] = pc
+    telemetry.markElapsed("webrtc.pc_created_ms", on: connectSpans[peer])
 
     guard let channel else {
       log.error("failed to create data channel")
@@ -342,6 +344,7 @@ extension SignalingService {
     if let replaced = peerConnections.updateValue(pc, forKey: message.from) {
       describedConnections.remove(ObjectIdentifier(replaced))
     }
+    telemetry.markElapsed("webrtc.pc_created_ms", on: connectSpans[message.from])
 
     let answerSdp: String
     do {
@@ -367,6 +370,7 @@ extension SignalingService {
       to: message.from,
     )
     await wsService.sendSignal(response)
+    telemetry.markElapsed("webrtc.answer_sent_ms", on: connectSpans[message.from])
     log.info("answer sent")
   }
 
@@ -433,6 +437,7 @@ extension SignalingService {
   private func markRemoteDescriptionSet(on pc: RTCPeerConnection, for peer: String) {
     guard peerConnections[peer] === pc else { return }
     describedConnections.insert(ObjectIdentifier(pc))
+    telemetry.markElapsed("webrtc.remote_sdp_ms", on: connectSpans[peer])
   }
 
   private func drainCandidateQueue(for peer: String) async {
@@ -779,6 +784,10 @@ extension SignalingService: RTCPeerConnectionDelegate {
         level: state == .failed ? .error : .info,
       )
       switch state {
+      case .checking:
+        telemetry.markElapsed("webrtc.ice_checking_ms", on: self.connectSpans[peer])
+      case .connected, .completed:
+        telemetry.markElapsed("webrtc.ice_connected_ms", on: self.connectSpans[peer])
       case .failed, .disconnected:
         self.scheduleReconnect(to: peer)
       case .closed:
