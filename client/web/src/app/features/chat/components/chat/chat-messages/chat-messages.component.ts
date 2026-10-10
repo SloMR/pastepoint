@@ -4,18 +4,15 @@ import {
   EventEmitter,
   Input,
   Output,
-  SecurityContext,
   ViewChild,
-  inject,
   ChangeDetectionStrategy,
 } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
-import { DomSanitizer } from '@angular/platform-browser';
 import { TranslatePipe } from '@ngx-translate/core';
-import Autolinker from 'autolinker';
 
 import { ChatMessage, ChatMessageType, FileTransferStatus } from '../../../../../utils/constants';
 import { FileSizePipe } from '../../../../../utils/file-size.pipe';
+import { LinkifyPipe } from '../../../../../utils/linkify.pipe';
 import { middleTruncateFilename as middleTruncateFilenameUtil } from '../../../../../utils/filename.util';
 import { avatarFor } from '../../../../../utils/avatar.util';
 import { MessageActionsComponent } from '../message-actions/message-actions.component';
@@ -27,6 +24,7 @@ import { BlurredPreviewComponent } from '../blurred-preview/blurred-preview.comp
     CommonModule,
     DatePipe,
     FileSizePipe,
+    LinkifyPipe,
     TranslatePipe,
     MessageActionsComponent,
     BlurredPreviewComponent,
@@ -53,8 +51,6 @@ export class ChatMessagesComponent {
   protected readonly ChatMessageType = ChatMessageType;
   protected readonly FileTransferStatus = FileTransferStatus;
   private readonly revealedPreviews = new Set<string>();
-
-  private sanitizer = inject(DomSanitizer);
 
   protected isPreviewRevealed(msg: ChatMessage): boolean {
     const id = msg.fileTransfer?.fileId;
@@ -84,46 +80,6 @@ export class ChatMessagesComponent {
 
   protected avatarFor(msg: ChatMessage): string {
     return avatarFor(msg.from, this.isMyMessage(msg));
-  }
-
-  protected convertUrlsToLinks(
-    text: string,
-    isDarkMode: boolean,
-    isMyMessage: boolean = false
-  ): string {
-    if (!text) return this.sanitizer.sanitize(SecurityContext.HTML, '') || '';
-
-    const escapeHtml = (unsafe: string): string => {
-      return unsafe
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    };
-
-    const processedText = escapeHtml(text);
-
-    const linkClasses = isMyMessage
-      ? isDarkMode
-        ? 'text-blue-400 hover:text-blue-800 underline break-all'
-        : 'text-blue-600 hover:text-blue-400 underline break-all'
-      : 'text-blue-200 hover:text-blue-500 underline break-all';
-
-    const textWithLinks = Autolinker.link(processedText, {
-      urls: true,
-      email: false,
-      phone: false,
-      mention: false,
-      hashtag: false,
-      newWindow: true,
-      className: linkClasses,
-      stripPrefix: false,
-      sanitizeHtml: true,
-    });
-
-    const sanitizedHtml = this.sanitizer.sanitize(SecurityContext.HTML, textWithLinks);
-    return sanitizedHtml || '';
   }
 
   protected middleTruncateFilename(filename: string, maxLength = 30): string {

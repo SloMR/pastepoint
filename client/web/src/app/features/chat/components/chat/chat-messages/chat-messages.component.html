@@ -73,7 +73,7 @@
                     @if (message.type === ChatMessageType.TEXT) {
                       <p
                         class="whitespace-pre-wrap break-all text-white text-[18px] font-expoArabic"
-                        [innerHTML]="convertUrlsToLinks(message.text, isDarkMode, false)"
+                        [innerHTML]="message.text | linkify: isDarkMode : false"
                       ></p>
                     }
                     <!-- Attachment Message -->
@@ -305,7 +305,7 @@
                     @if (message.type === ChatMessageType.TEXT) {
                       <p
                         class="whitespace-pre-wrap break-all text-[18px] font-expoArabic text-content dark:text-contentMuted"
-                        [innerHTML]="convertUrlsToLinks(message.text, isDarkMode, true)"
+                        [innerHTML]="message.text | linkify: isDarkMode : true"
                       ></p>
                     }
                     <!-- Attachment Message (My Message) -->
