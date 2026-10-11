@@ -9,6 +9,7 @@ import {
   SESSION_CODE_KEY,
   WS_PREFIX_KEEP_ALIVE,
   WS_KEEP_ALIVE_INTERVAL_MS,
+  WS_CONNECT_TIMEOUT_MS,
 } from '../../../utils/constants';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { AppUpdateService } from '../update/app-update.service';
@@ -237,19 +238,35 @@ export class WebSocketConnectionService implements OnDestroy {
       // concurrent disconnect replaces this.socket and the stale-event guards
       // below skip the natural reject path.
       let settled = false;
+      let connectTimeout: ReturnType<typeof setTimeout> | undefined;
       const settleResolve = () => {
         if (settled) return;
         settled = true;
+        clearTimeout(connectTimeout);
         this.telemetry.endSpan(connectSpan, { ok: true, outcome: 'connected' });
         resolve();
       };
       const settleReject = (err: unknown) => {
         if (settled) return;
         settled = true;
+        clearTimeout(connectTimeout);
         const msg = err instanceof Error ? err.message : String(err);
         this.telemetry.endSpan(connectSpan, { ok: false, outcome: 'failed', message: msg });
         reject(err);
       };
+
+      // A handshake can hang with no error while the server is down; fail it so the next retry runs.
+      connectTimeout = setTimeout(() => {
+        if (socket !== this.socket) return;
+        this.logger.warn('connect', 'WebSocket handshake timed out (will attempt reconnect)');
+        this.isConnecting = false;
+        this.socket = undefined;
+        socket.close();
+        settleReject(new Error('WebSocket handshake timed out'));
+        if (!this.manualDisconnect) {
+          this.scheduleReconnect();
+        }
+      }, WS_CONNECT_TIMEOUT_MS);
 
       socket.onopen = () => {
         if (socket !== this.socket) return;

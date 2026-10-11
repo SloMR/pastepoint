@@ -25,6 +25,8 @@ export const HEARTBEAT_TIMEOUT_MOBILE_SEC = 30;
 // WebSocket keepalive — sent every 25 seconds to prevent idle timeouts on the server and intermediate proxies
 export const WS_PREFIX_KEEP_ALIVE = '[KeepAlive]';
 export const WS_KEEP_ALIVE_INTERVAL_MS = 25_000;
+// A handshake still pending after this long counts as failed, so the next retry runs
+export const WS_CONNECT_TIMEOUT_MS = 10_000;
 
 // Local storage keys
 export const SESSION_CODE_KEY = 'session_code';
