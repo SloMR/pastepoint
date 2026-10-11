@@ -10,6 +10,8 @@ import UniformTypeIdentifiers
 
 extension FileTransferService {
 
+  // MARK: Outcomes
+
   /// Wire values of the `file.transfer.receive` span outcome.
   enum ReceiveOutcome: String {
     case completed
@@ -36,6 +38,8 @@ extension FileTransferService {
     case peerLeft = "peer_left"
   }
 
+  // MARK: Receive Span
+
   /// Opens the receive span once the first chunk reveals the chunk count.
   func startReceiveSpan(for download: FileDownload) {
     guard receiveSpans[download.id] == nil else { return }
@@ -52,16 +56,6 @@ extension FileTransferService {
     telemetry.endSpan(span, ok: outcome == .completed, outcome: outcome.rawValue, attributes: attributes)
   }
 
-  /// Records how the chunk loop ended on the send span.
-  nonisolated func markSendSpan(_ span: TelemetrySpan, _ outcome: SendOutcome, message: String? = nil) {
-    telemetry.markSpan(span, ok: outcome == .queuedAllChunks, outcome: outcome.rawValue, message: message)
-  }
-
-  /// The models carry no MIME type, so derive it from the file extension.
-  nonisolated static func mime(forFileName name: String) -> String {
-    UTType(filenameExtension: (name as NSString).pathExtension)?.preferredMIMEType ?? "unknown"
-  }
-
   /// Maps an assembly failure to its span outcome.
   nonisolated static func finalizeOutcome(_ reason: FileTransferFailureReason?) -> ReceiveOutcome {
     switch reason {
@@ -69,5 +63,19 @@ extension FileTransferService {
     case .noHash: .noHash
     default: .missingChunks
     }
+  }
+
+  // MARK: Send Span
+
+  /// Records how the chunk loop ended on the send span.
+  nonisolated func markSendSpan(_ span: TelemetrySpan, _ outcome: SendOutcome, message: String? = nil) {
+    telemetry.markSpan(span, ok: outcome == .queuedAllChunks, outcome: outcome.rawValue, message: message)
+  }
+
+  // MARK: Attributes
+
+  /// The models carry no MIME type, so derive it from the file extension.
+  nonisolated static func mime(forFileName name: String) -> String {
+    UTType(filenameExtension: (name as NSString).pathExtension)?.preferredMIMEType ?? "unknown"
   }
 }
