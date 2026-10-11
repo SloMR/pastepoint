@@ -18,10 +18,7 @@ struct ChatView: View {
     GeometryReader { geometry in
       ScrollViewReader { proxy in
         ScrollView {
-          // TODO: Change VStack to be LazyVStack
-          VStack(alignment: .leading, spacing: 16) {
-            Spacer(minLength: 0)
-
+          LazyVStack(alignment: .leading, spacing: 16) {
             ForEach(messages) { message in
               ChatMessageBubble(
                 alignment: alignment(for: message),
@@ -42,7 +39,7 @@ struct ChatView: View {
             }
           }
           .scrollTargetLayout()
-          .frame(maxWidth: .infinity, minHeight: max(0, geometry.size.height - 16), alignment: .leading)
+          .frame(maxWidth: .infinity, minHeight: max(0, geometry.size.height - 16), alignment: .bottomLeading)
           .padding(.horizontal, 16)
           .padding(.bottom, 16)
           .contentShape(Rectangle())

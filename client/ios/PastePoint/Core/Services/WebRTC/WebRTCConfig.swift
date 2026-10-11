@@ -7,7 +7,7 @@ import Foundation
 import WebRTC
 
 enum WebRTCConfig {
-  static let maxBufferedAmount: UInt64 = 16 * 1024 * 1024 // 16MB
+  nonisolated static let maxBufferedAmount: UInt64 = 16 * 1024 * 1024 // 16MB
   static let bufferedAmountLowThreshold: UInt64 = 8 * 1024 * 1024 // 8MB
 
   /// Public STUN servers only.
@@ -21,7 +21,7 @@ enum WebRTCConfig {
 
   /// Builds a peer-connection config with the given ICE servers (STUN, plus a
   /// relay when credentials are available).
-  static func makeConfiguration(iceServers: [RTCIceServer]) -> RTCConfiguration {
+  nonisolated static func makeConfiguration(iceServers: [RTCIceServer]) -> RTCConfiguration {
     let config = RTCConfiguration()
     config.iceServers = iceServers
     config.sdpSemantics = .unifiedPlan
@@ -30,9 +30,9 @@ enum WebRTCConfig {
     return config
   }
 
-  static let dataChannelConfig: RTCDataChannelConfiguration = {
+  nonisolated static var dataChannelConfig: RTCDataChannelConfiguration {
     let config = RTCDataChannelConfiguration()
     config.isOrdered = true
     return config
-  }()
+  }
 }

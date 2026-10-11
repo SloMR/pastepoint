@@ -1,4 +1,4 @@
-import { Injectable, PLATFORM_ID, OnDestroy, effect, inject } from '@angular/core';
+import { Injectable, NgZone, PLATFORM_ID, OnDestroy, effect, inject } from '@angular/core';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { TelemetryService, TelemetrySpan } from '../monitoring/telemetry.service';
 import { environment } from '../../../../environments/environment';
@@ -9,6 +9,7 @@ import {
   SESSION_CODE_KEY,
   WS_PREFIX_KEEP_ALIVE,
   WS_KEEP_ALIVE_INTERVAL_MS,
+  WS_CONNECT_TIMEOUT_MS,
 } from '../../../utils/constants';
 import { HotToastService } from '@ngxpert/hot-toast';
 import { AppUpdateService } from '../update/app-update.service';
@@ -23,6 +24,7 @@ export class WebSocketConnectionService implements OnDestroy {
   private platformId = inject(PLATFORM_ID);
   private updateService = inject(AppUpdateService);
   private telemetry = inject(TelemetryService);
+  private ngZone = inject(NgZone);
 
   /**
    * ==========================================================
@@ -236,19 +238,35 @@ export class WebSocketConnectionService implements OnDestroy {
       // concurrent disconnect replaces this.socket and the stale-event guards
       // below skip the natural reject path.
       let settled = false;
+      let connectTimeout: ReturnType<typeof setTimeout> | undefined;
       const settleResolve = () => {
         if (settled) return;
         settled = true;
+        clearTimeout(connectTimeout);
         this.telemetry.endSpan(connectSpan, { ok: true, outcome: 'connected' });
         resolve();
       };
       const settleReject = (err: unknown) => {
         if (settled) return;
         settled = true;
+        clearTimeout(connectTimeout);
         const msg = err instanceof Error ? err.message : String(err);
         this.telemetry.endSpan(connectSpan, { ok: false, outcome: 'failed', message: msg });
         reject(err);
       };
+
+      // A handshake can hang with no error while the server is down; fail it so the next retry runs.
+      connectTimeout = setTimeout(() => {
+        if (socket !== this.socket) return;
+        this.logger.warn('connect', 'WebSocket handshake timed out (will attempt reconnect)');
+        this.isConnecting = false;
+        this.socket = undefined;
+        socket.close();
+        settleReject(new Error('WebSocket handshake timed out'));
+        if (!this.manualDisconnect) {
+          this.scheduleReconnect();
+        }
+      }, WS_CONNECT_TIMEOUT_MS);
 
       socket.onopen = () => {
         if (socket !== this.socket) return;
@@ -257,6 +275,9 @@ export class WebSocketConnectionService implements OnDestroy {
         if (this.reconnectAttempts > 0) {
           this.telemetry.event('ws.reconnected', { attempts: this.reconnectAttempts });
           this.reconnected$.next();
+
+          // A tab that stays hidden never re-checks on visibilitychange
+          void this.updateService.check();
         }
         this.reconnectAttempts = 0;
         this.reconnectDelay = 1000;
@@ -266,32 +287,35 @@ export class WebSocketConnectionService implements OnDestroy {
         settleResolve();
       };
 
-      socket.onmessage = (ev) => {
-        if (socket !== this.socket) return;
-        if (typeof ev.data === 'string') {
-          const message = ev.data.trim();
+      // Signal frames arrive in bursts while peers connect; only system frames reach the UI.
+      this.ngZone.runOutsideAngular(() => {
+        socket.onmessage = (ev) => {
+          if (socket !== this.socket) return;
+          if (typeof ev.data === 'string') {
+            const message = ev.data.trim();
 
-          if (message.startsWith('[SignalMessage]')) {
-            try {
-              const signalMessage = JSON.parse(message.replace('[SignalMessage]', '').trim());
-              this.signalMessages$.next(signalMessage);
-            } catch (e) {
-              this.logger.error(
-                'connect',
-                `Failed to parse signal message: ${e instanceof Error ? e.message : String(e)}`,
-                e
-              );
-              return;
+            if (message.startsWith('[SignalMessage]')) {
+              try {
+                const signalMessage = JSON.parse(message.replace('[SignalMessage]', '').trim());
+                this.signalMessages$.next(signalMessage);
+              } catch (e) {
+                this.logger.error(
+                  'connect',
+                  `Failed to parse signal message: ${e instanceof Error ? e.message : String(e)}`,
+                  e
+                );
+                return;
+              }
+            } else if (this.isSystemMessage(message)) {
+              this.ngZone.run(() => this.systemMessages$.next(message));
+            } else {
+              this.messages$.next(message);
             }
-          } else if (this.isSystemMessage(message)) {
-            this.systemMessages$.next(message);
           } else {
-            this.messages$.next(message);
+            this.logger.warn('connect', 'Received non-string message from WebSocket');
           }
-        } else {
-          this.logger.warn('connect', 'Received non-string message from WebSocket');
-        }
-      };
+        };
+      });
 
       socket.onclose = (event) => {
         // Must run before the stale-event guard — the promise belongs to
@@ -446,7 +470,7 @@ export class WebSocketConnectionService implements OnDestroy {
     if (this.socket && this.socket.readyState === WebSocket.OPEN) {
       this.socket.send(message);
     } else {
-      this.logger.error('send', 'WebSocket is not open. Message not sent.');
+      this.logger.warn('send', 'WebSocket is not open. Message not sent.');
     }
   }
 

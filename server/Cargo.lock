@@ -2654,7 +2654,7 @@ dependencies = [
 
 [[package]]
 name = "server"
-version = "0.13.0"
+version = "0.13.1"
 dependencies = [
  "actix-codec",
  "actix-cors",
@@ -2673,8 +2673,10 @@ dependencies = [
  "env_logger",
  "fake",
  "futures-util",
+ "governor",
  "hmac",
  "log",
+ "nonzero_ext",
  "openssl",
  "rand 0.10.3",
  "sentry",

@@ -1,3 +1,5 @@
+import type { IHasher } from 'hash-wasm';
+
 // File transfer constants
 const KB = 1024;
 export const MB = 1024 * KB;
@@ -12,6 +14,7 @@ export const MAX_QUEUED_MESSAGES = 64;
 export const MAX_CHAT_MESSAGES = 500;
 export const MAX_PENDING_OFFERS_PER_PEER = 100;
 export const MAX_QUEUED_CANDIDATES = 128;
+export const PROGRESS_FLUSH_INTERVAL_MS = 250;
 
 // Heartbeat constants
 export const HEARTBEAT_INTERVAL_DESKTOP_SEC = 60;
@@ -22,6 +25,8 @@ export const HEARTBEAT_TIMEOUT_MOBILE_SEC = 30;
 // WebSocket keepalive — sent every 25 seconds to prevent idle timeouts on the server and intermediate proxies
 export const WS_PREFIX_KEEP_ALIVE = '[KeepAlive]';
 export const WS_KEEP_ALIVE_INTERVAL_MS = 25_000;
+// A handshake still pending after this long counts as failed, so the next retry runs
+export const WS_CONNECT_TIMEOUT_MS = 10_000;
 
 // Local storage keys
 export const SESSION_CODE_KEY = 'session_code';
@@ -198,6 +203,8 @@ export interface FileDownload {
   previewDataUrl?: string;
   previewMime?: string;
   expectedHash?: string;
+  hasher?: IHasher;
+  hashedChunks?: number;
 }
 
 export interface FileOffer {

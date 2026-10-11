@@ -4,12 +4,12 @@
 //
 
 import Foundation
-import WebRTC
+@preconcurrency import WebRTC
 
 // `@unchecked Sendable`: the wrapped `RTCPeerConnectionFactory` is internally
 // thread-safe (libwebrtc handles its own locking), and our only stored property
 // is `let factory`. Safe to share across actors.
-final class PeerConnectionFactory: @unchecked Sendable {
+final nonisolated class PeerConnectionFactory: @unchecked Sendable {
   static let shared = PeerConnectionFactory()
 
   private let factory: RTCPeerConnectionFactory
@@ -19,15 +19,21 @@ final class PeerConnectionFactory: @unchecked Sendable {
     factory = RTCPeerConnectionFactory(encoderFactory: nil, decoderFactory: nil)
   }
 
+  static func prepare() {
+    Task { await WebRTCQueue.run { _ = shared } }
+  }
+
   func makePeerConnection(
     iceServers: [RTCIceServer],
     delegate: RTCPeerConnectionDelegate,
-  ) -> RTCPeerConnection? {
-    let constraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
-    return factory.peerConnection(
-      with: WebRTCConfig.makeConfiguration(iceServers: iceServers),
-      constraints: constraints,
-      delegate: delegate,
-    )
+  ) async -> RTCPeerConnection? {
+    await WebRTCQueue.run {
+      let constraints = RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
+      return self.factory.peerConnection(
+        with: WebRTCConfig.makeConfiguration(iceServers: iceServers),
+        constraints: constraints,
+        delegate: delegate,
+      )
+    }
   }
 }

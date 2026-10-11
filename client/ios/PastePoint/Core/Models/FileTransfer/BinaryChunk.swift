@@ -5,6 +5,7 @@
 
 import BlakeHash
 import Foundation
+import zlib
 
 struct ParsedChunk: Sendable {
   let fileId: String
@@ -24,25 +25,12 @@ enum BinaryChunk {
 
   // MARK: CRC32
 
-  private nonisolated static let crc32Table: [UInt32] = {
-    var table = [UInt32](repeating: 0, count: 256)
-    for i in 0..<256 {
-      var crc = UInt32(i)
-      for _ in 0..<8 {
-        crc = (crc & 1 == 1) ? (crc >> 1) ^ 0xedb88320 : crc >> 1
-      }
-      table[i] = crc
-    }
-    return table
-  }()
-
-  /// Standard CRC32 — polynomial 0xedb88320, init 0xffffffff, final XOR 0xffffffff.
+  /// Standard CRC32 — polynomial 0xedb88320, init 0xffffffff, final XOR 0xffffffff — from zlib.
   nonisolated static func crc32(_ bytes: Data) -> UInt32 {
-    var crc: UInt32 = 0xffffffff
-    for byte in bytes {
-      crc = crc32Table[Int((crc ^ UInt32(byte)) & 0xff)] ^ (crc >> 8)
+    let crc = bytes.withUnsafeBytes { raw in
+      zlib.crc32(0, raw.bindMemory(to: Bytef.self).baseAddress, uInt(raw.count))
     }
-    return crc ^ 0xffffffff
+    return UInt32(crc)
   }
 
   // MARK: Encode

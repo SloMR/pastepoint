@@ -223,6 +223,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('messageInput', { static: true }) messageInput!: ElementRef;
   @ViewChild(ChatInputComponent) chatInput?: ChatInputComponent;
   @ViewChild(ChatMessagesComponent) chatMessages?: ChatMessagesComponent;
+  @ViewChild('chatArea') chatArea?: ElementRef<HTMLElement>;
 
   protected get messageTextarea(): ElementRef | undefined {
     return this.chatInput?.messageTextarea;
@@ -436,6 +437,11 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     if (isPlatformBrowser(this.platformId) && this.onlineListener) {
       window.removeEventListener('online', this.onlineListener);
     }
+
+    const chatArea = this.chatArea?.nativeElement;
+    chatArea?.removeEventListener('dragover', this.onChatDragOver);
+    chatArea?.removeEventListener('dragenter', this.onChatDragEnter);
+    chatArea?.removeEventListener('dragleave', this.onChatDragLeave);
   }
 
   /**
@@ -695,7 +701,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     // Listen for active file uploads
     this.subscriptions.push(
       this.fileTransferService.activeUploads$.subscribe((uploads: FileUpload[]) => {
-        this.logger.info('activeUploads', `Active uploads: ${uploads.length} (length)`);
+        this.logger.debug('activeUploads', `Active uploads: ${uploads.length} (length)`);
         this.ngZone.run(() => {
           this.activeUploads = uploads;
           this.cdr.detectChanges();
@@ -741,19 +747,21 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     // Listen for active file downloads
     this.subscriptions.push(
       this.fileTransferService.activeDownloads$.subscribe((downloads: FileDownload[]) => {
-        this.logger.info('activeDownloads', `Active downloads: ${downloads.length} (length)`);
+        this.logger.debug('activeDownloads', `Active downloads: ${downloads.length} (length)`);
         this.ngZone.run(() => {
           this.activeDownloads = downloads;
-          const currentMessages = this.chatService.messages$.value;
-          const updatedMessages = currentMessages.map((msg) => {
+          let previewChanged = false;
+          const updatedMessages = this.chatService.messages$.value.map((msg) => {
             if (msg.type === ChatMessageType.ATTACHMENT && msg.fileTransfer) {
               const fileTransfer = msg.fileTransfer;
-              const match =
-                fileTransfer &&
-                downloads.find(
-                  (d) => d.fileId === fileTransfer.fileId && d.fromUser === fileTransfer.fromUser
-                );
-              if (match && match.previewDataUrl) {
+              const match = downloads.find(
+                (d) => d.fileId === fileTransfer.fileId && d.fromUser === fileTransfer.fromUser
+              );
+              if (
+                match?.previewDataUrl &&
+                (msg.previewUrl !== match.previewDataUrl || msg.previewMime !== match.previewMime)
+              ) {
+                previewChanged = true;
                 return {
                   ...msg,
                   previewUrl: match.previewDataUrl,
@@ -763,8 +771,13 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
             }
             return msg;
           });
-          this.chatService.replaceMessages(updatedMessages);
-          this.cdr.detectChanges();
+
+          // A new preview redraws through messages$; progress alone redraws here.
+          if (previewChanged) {
+            this.chatService.replaceMessages(updatedMessages);
+          } else {
+            this.cdr.detectChanges();
+          }
         });
       })
     );
@@ -912,6 +925,14 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
     document.addEventListener('visibilitychange', this.visibilityChangeListener);
     window.addEventListener('beforeunload', this.beforeUnloadHandler);
     window.addEventListener('online', this.onlineListener);
+
+    // Drag events fire many times a second; they only redraw when the overlay toggles.
+    this.ngZone.runOutsideAngular(() => {
+      const chatArea = this.chatArea?.nativeElement;
+      chatArea?.addEventListener('dragover', this.onChatDragOver);
+      chatArea?.addEventListener('dragenter', this.onChatDragEnter);
+      chatArea?.addEventListener('dragleave', this.onChatDragLeave);
+    });
 
     this.cdr.detectChanges();
     if (this.messageInput?.nativeElement) {
@@ -1257,7 +1278,7 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         }
       } else if (mime === 'application/pdf') {
         try {
-          const thumb = await this.previewService.createPdfThumbnailFromFile(file);
+          const thumb = await this.previewService.createPdfThumbnail(file);
           if (thumb) {
             previewUrl = thumb;
             previewMime = PREVIEW_MIME_TYPE;
@@ -1937,19 +1958,19 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
 
       this.ngZone.run(() => {
         const otherMembers = this.members.filter((m) => m !== this.userService.user);
+        let changed = false;
 
         // Keep the status maps in sync for the UI (red/yellow/green circles)
         otherMembers.forEach((member) => {
           const connected = this.webrtcService.isConnected(member);
+          const state = connected
+            ? 'connected'
+            : this.webrtcService.isConnecting(member)
+              ? 'connecting'
+              : 'disconnected';
+          changed ||= this.memberConnectionState.get(member) !== state;
           this.memberConnectionStatus.set(member, connected);
-          this.memberConnectionState.set(
-            member,
-            connected
-              ? 'connected'
-              : this.webrtcService.isConnecting(member)
-                ? 'connecting'
-                : 'disconnected'
-          );
+          this.memberConnectionState.set(member, state);
         });
 
         // Clean up warning timeouts for members who left
@@ -1963,9 +1984,12 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
         if (this.showConnectionWarning && !this.isIsolatedFromPeers) {
           this.showConnectionWarning = false;
           this.connectionWarningDismissed = false;
+          changed = true;
         }
 
-        this.cdr.detectChanges();
+        if (changed) {
+          this.cdr.detectChanges();
+        }
       });
     }, 3000);
   }
@@ -2081,20 +2105,20 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   protected isDraggingFiles = false;
 
-  protected onChatDragOver(event: DragEvent): void {
+  private onChatDragOver = (event: DragEvent): void => {
     event.preventDefault();
     if (event.dataTransfer) {
       event.dataTransfer.dropEffect = 'copy';
     }
-  }
+  };
 
-  protected onChatDragEnter(event: DragEvent): void {
+  private onChatDragEnter = (event: DragEvent): void => {
     if (event.dataTransfer && Array.from(event.dataTransfer.types).includes('Files')) {
-      this.isDraggingFiles = true;
+      this.setDraggingFiles(true);
     }
-  }
+  };
 
-  protected onChatDragLeave(event: DragEvent): void {
+  private onChatDragLeave = (event: DragEvent): void => {
     const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
     if (
       event.clientX <= rect.left ||
@@ -2102,8 +2126,16 @@ export class ChatComponent implements OnInit, OnDestroy, AfterViewInit {
       event.clientY <= rect.top ||
       event.clientY >= rect.bottom
     ) {
-      this.isDraggingFiles = false;
+      this.setDraggingFiles(false);
     }
+  };
+
+  private setDraggingFiles(dragging: boolean): void {
+    if (this.isDraggingFiles === dragging) return;
+    this.ngZone.run(() => {
+      this.isDraggingFiles = dragging;
+      this.cdr.detectChanges();
+    });
   }
 
   protected onChatDrop(event: DragEvent): void {

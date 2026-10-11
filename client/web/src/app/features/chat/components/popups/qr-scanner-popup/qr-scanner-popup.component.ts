@@ -45,7 +45,11 @@ export class QrScannerPopupComponent implements OnChanges, OnDestroy {
   scannerError = '';
 
   private stream: MediaStream | null = null;
+  private static readonly SCAN_INTERVAL_MS = 200;
+  private static readonly SCAN_WIDTH = 400;
   private rafId: number | null = null;
+  private lastScanAt = 0;
+  private scanContext: CanvasRenderingContext2D | null = null;
   private startCameraTimeout: ReturnType<typeof setTimeout> | null = null;
   private scannerErrorTimeout: ReturnType<typeof setTimeout> | null = null;
   private jsQR: JsQrFn | null = null;
@@ -151,31 +155,43 @@ export class QrScannerPopupComponent implements OnChanges, OnDestroy {
 
     const video = this.videoEl?.nativeElement;
     const canvas = this.canvasEl?.nativeElement;
+    const now = performance.now();
 
-    if (!video || !canvas || video.readyState < 2) {
+    // jsQR not loaded yet, or the last scan was too recent: try again next frame.
+    if (
+      !video ||
+      !canvas ||
+      video.readyState < 2 ||
+      !this.jsQR ||
+      now - this.lastScanAt < QrScannerPopupComponent.SCAN_INTERVAL_MS
+    ) {
       this.rafId = requestAnimationFrame(() => this.scanFrame());
       return;
     }
+    this.lastScanAt = now;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    const scale = Math.min(1, QrScannerPopupComponent.SCAN_WIDTH / video.videoWidth);
+    const width = Math.round(video.videoWidth * scale);
+    const height = Math.round(video.videoHeight * scale);
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
 
-    const ctx = canvas.getContext('2d');
+    if (this.scanContext?.canvas !== canvas) {
+      this.scanContext = canvas.getContext('2d', { willReadFrequently: true });
+    }
+    const ctx = this.scanContext;
     if (!ctx) {
       this.ngZone.run(() => this.closeScanner());
       return;
     }
 
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(video, 0, 0, width, height);
+    const imageData = ctx.getImageData(0, 0, width, height);
 
-    if (!this.jsQR) {
-      // Library not loaded yet — keep polling on next frame.
-      this.rafId = requestAnimationFrame(() => this.scanFrame());
-      return;
-    }
-
-    const result = this.jsQR(imageData.data, imageData.width, imageData.height);
+    // Both apps draw their QR codes dark on light, so skip the inverted pass.
+    const result = this.jsQR(imageData.data, width, height, { inversionAttempts: 'dontInvert' });
     if (result?.data && this.isScannerOpen) {
       const code = extractSessionCodeFromUrl(result.data);
 

@@ -20,14 +20,20 @@ struct QRCodeView: View {
           .resizable()
           .scaledToFit()
           .frame(width: size, height: size)
+          .transition(.opacity)
       } else {
-        Color.clear.frame(width: size, height: size)
+        ProgressView()
+          .frame(width: size, height: size)
       }
     }
-    .task(id: text) { qrImage = Self.generateQRCode(from: text) }
+    .animation(.easeInOut(duration: 0.2), value: qrImage != nil)
+    .task(id: text) { qrImage = await Self.generateQRCode(from: text) }
   }
 
-  private static func generateQRCode(from text: String) -> UIImage? {
+  private nonisolated static let context = CIContext()
+
+  @concurrent
+  private static func generateQRCode(from text: String) async -> UIImage? {
     let filter = CIFilter.qrCodeGenerator()
 
     filter.message = Data(text.utf8)
@@ -35,7 +41,7 @@ struct QRCodeView: View {
 
     guard
       let outputImage = filter.outputImage,
-      let cgImage = CIContext().createCGImage(outputImage, from: outputImage.extent)
+      let cgImage = context.createCGImage(outputImage, from: outputImage.extent)
     else { return nil }
 
     return UIImage(cgImage: cgImage)

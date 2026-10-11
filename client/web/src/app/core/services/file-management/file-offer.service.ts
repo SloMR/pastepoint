@@ -7,6 +7,7 @@ import {
   MAX_PENDING_OFFERS_PER_PEER,
 } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
+import { createStreamingHash, prepareChunkChecksum } from '../../../utils/chunk-protocol';
 
 @Injectable({
   providedIn: 'root',
@@ -87,6 +88,8 @@ export class FileOfferService extends FileTransferBaseService {
    * Accepts a file offer and notifies the sender
    */
   public async acceptFileOffer(fromUser: string, fileId: string): Promise<void> {
+    await prepareChunkChecksum();
+    const hasher = await createStreamingHash();
     const userMap = await this.getIncomingFileTransfers(fromUser);
     if (!userMap) {
       this.logger.error('acceptFileOffer', `No incoming file map found from user: ${fromUser}`);
@@ -101,6 +104,8 @@ export class FileOfferService extends FileTransferBaseService {
     if (fileDownload.isAccepted) return;
 
     fileDownload.isAccepted = true;
+    fileDownload.hasher = hasher;
+    fileDownload.hashedChunks = 0;
     fileDownload.lastActivity = Date.now();
     await this.setIncomingFileTransfers(fromUser, userMap);
     await this.updateIncomingFileOffers();

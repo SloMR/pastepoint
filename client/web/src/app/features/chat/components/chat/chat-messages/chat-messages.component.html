@@ -13,7 +13,7 @@
             class="flex justify-start"
             [ngClass]="isRTL ? 'animate-slide-in-right' : 'animate-slide-in-left'"
           >
-            <div class="flex items-start justify-start gap-3 max-w-[85%] md:max-w-[65%]">
+            <div class="flex w-full items-start justify-start gap-3 max-w-[85%] md:max-w-[80%]">
               <img
                 [src]="avatarFor(message)"
                 [alt]="message.from"
@@ -23,7 +23,7 @@
                 width="32"
                 height="32"
               />
-              <div class="flex min-w-0 flex-col gap-1">
+              <div class="flex min-w-0 max-w-[760px] flex-1 flex-col gap-1">
                 <div class="flex items-center gap-2 px-2">
                   <span class="text-xs text-gray-700 font-expoArabic dark:text-gray-300">
                     {{ message.from }}
@@ -66,14 +66,14 @@
                   </div>
                 </div>
                 <div
-                  class="flex min-h-[60px] w-[250px] flex-col justify-center rounded-xl p-3 bg-brand md:w-[280px] lg:w-[400px] xl:w-[480px] 2xl:w-[560px] dark:bg-brandDark"
+                  class="flex min-h-[60px] w-full flex-col justify-center rounded-xl p-3 bg-brand dark:bg-brandDark"
                   [ngClass]="isRTL ? 'rounded-tr-none' : 'rounded-tl-none'"
                 >
                   <div>
                     @if (message.type === ChatMessageType.TEXT) {
                       <p
-                        class="whitespace-pre-wrap break-all text-white text-[18px] font-expoArabic"
-                        [innerHTML]="convertUrlsToLinks(message.text, isDarkMode, false)"
+                        class="whitespace-pre-wrap wrap-break-word text-white text-[18px] font-expoArabic"
+                        [innerHTML]="message.text | linkify: isDarkMode : false"
                       ></p>
                     }
                     <!-- Attachment Message -->
@@ -263,8 +263,8 @@
             class="flex justify-end"
             [ngClass]="isRTL ? 'animate-slide-in-left' : 'animate-slide-in-right'"
           >
-            <div class="flex items-start justify-end gap-3 max-w-[85%] md:max-w-[65%]">
-              <div class="flex min-w-0 flex-col items-end gap-1">
+            <div class="flex w-full items-start justify-end gap-3 max-w-[85%] md:max-w-[80%]">
+              <div class="flex min-w-0 max-w-[760px] flex-1 flex-col items-end gap-1">
                 <div class="flex items-center justify-end gap-2 self-stretch px-2">
                   @if (message.type === ChatMessageType.TEXT) {
                     <button
@@ -298,14 +298,14 @@
                   </span>
                 </div>
                 <div
-                  class="flex min-h-[60px] w-[250px] flex-col justify-center rounded-xl p-3 bg-messageBackground md:w-[280px] lg:w-[400px] xl:w-[480px] 2xl:w-[560px] dark:bg-surfaceDark"
+                  class="flex min-h-[60px] w-full flex-col justify-center rounded-xl p-3 bg-messageBackground dark:bg-surfaceDark"
                   [ngClass]="isRTL ? 'rounded-tl-none' : 'rounded-tr-none'"
                 >
                   <div>
                     @if (message.type === ChatMessageType.TEXT) {
                       <p
-                        class="whitespace-pre-wrap break-all text-[18px] font-expoArabic text-content dark:text-contentMuted"
-                        [innerHTML]="convertUrlsToLinks(message.text, isDarkMode, true)"
+                        class="whitespace-pre-wrap wrap-break-word text-[18px] font-expoArabic text-content dark:text-contentMuted"
+                        [innerHTML]="message.text | linkify: isDarkMode : true"
                       ></p>
                     }
                     <!-- Attachment Message (My Message) -->

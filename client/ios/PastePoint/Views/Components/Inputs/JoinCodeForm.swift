@@ -37,6 +37,8 @@ struct JoinCodeForm: View {
         .accessibilityLabel(Text(.scanQrCode))
         .padding(.trailing, 4)
       }
+      .submitLabel(.join)
+      .onSubmit { Task { await joinSession(code: sessionCode) } }
 
       // Buttons
       HStack(spacing: 12) {
@@ -69,7 +71,7 @@ struct JoinCodeForm: View {
 
   private func joinSession(code: String) async {
     let trimmed = code.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmed.isEmpty else { return }
+    guard !trimmed.isEmpty, !isJoining else { return }
 
     guard let resolved = SessionService.sessionCode(fromPayload: trimmed) else {
       log.warning("Invalid session code entered")

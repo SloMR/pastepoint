@@ -360,6 +360,11 @@ export class WebRTCCommunicationService {
       return;
     }
 
+    if (data instanceof ArrayBuffer) {
+      this.handleChunkFrame(data, targetUser);
+      return;
+    }
+
     this.zone.run(() => {
       if (typeof data === 'string') {
         let message: DataChannelMessage;
@@ -447,35 +452,6 @@ export class WebRTCCommunicationService {
           default:
             this.logger.warn('handleDataChannelMessage', `Unknown message type from ${targetUser}`);
         }
-      } else if (data instanceof ArrayBuffer) {
-        const parsed = decodeChunk(data);
-
-        if (parsed) {
-          const { metadata, data: chunkData, isValid } = parsed;
-
-          // Log first chunk for each file
-          if (metadata.chunkIndex === 0) {
-            this.logger.info(
-              'handleDataChannelMessage',
-              `First chunk received for ${metadata.fileId.substring(0, 8)}... (${chunkData.byteLength} bytes, CRC: ${isValid ? 'OK' : 'FAIL'})`
-            );
-          }
-
-          this.incomingFileChunk$.next({
-            fromUser: targetUser,
-            fileId: metadata.fileId,
-            chunkIndex: metadata.chunkIndex,
-            totalChunks: metadata.totalChunks,
-            chunk: chunkData,
-            isValid,
-          });
-        } else {
-          this.logger.warn(
-            'handleDataChannelMessage',
-            `Failed to decode chunk from ${targetUser}, size: ${data.byteLength}`
-          );
-          this.telemetry.breadcrumb('webrtc.datachannel', 'chunk decode failed', 'error');
-        }
       } else {
         this.logger.warn(
           'handleDataChannelMessage',
@@ -483,6 +459,38 @@ export class WebRTCCommunicationService {
         );
       }
     });
+  }
+
+  /** Decodes a file chunk outside the Angular zone; only the throttled progress update re-enters it. */
+  private handleChunkFrame(data: ArrayBuffer, targetUser: string): void {
+    const parsed = decodeChunk(data);
+
+    if (parsed) {
+      const { metadata, data: chunkData, isValid } = parsed;
+
+      // Log first chunk for each file
+      if (metadata.chunkIndex === 0) {
+        this.logger.info(
+          'handleDataChannelMessage',
+          `First chunk received for ${metadata.fileId.substring(0, 8)}... (${chunkData.byteLength} bytes, CRC: ${isValid ? 'OK' : 'FAIL'})`
+        );
+      }
+
+      this.incomingFileChunk$.next({
+        fromUser: targetUser,
+        fileId: metadata.fileId,
+        chunkIndex: metadata.chunkIndex,
+        totalChunks: metadata.totalChunks,
+        chunk: chunkData,
+        isValid,
+      });
+    } else {
+      this.logger.warn(
+        'handleDataChannelMessage',
+        `Failed to decode chunk from ${targetUser}, size: ${data.byteLength}`
+      );
+      this.telemetry.breadcrumb('webrtc.datachannel', 'chunk decode failed', 'error');
+    }
   }
 
   // =============== Helper Methods ===============

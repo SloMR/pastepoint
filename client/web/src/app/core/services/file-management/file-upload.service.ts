@@ -10,6 +10,7 @@ import {
   FileTransferStatus,
   MAX_PREVIEW_DATA_URL_SIZE,
   PREVIEW_MIME_TYPE,
+  PROGRESS_FLUSH_INTERVAL_MS,
 } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { PreviewService } from '../ui/preview.service';
@@ -17,6 +18,7 @@ import {
   encodeChunk,
   calculateTotalChunks,
   calculateFileHashStreaming,
+  prepareChunkChecksum,
 } from '../../../utils/chunk-protocol';
 import { UserService } from '../user-management/user.service';
 
@@ -30,6 +32,7 @@ export class FileUploadService extends FileTransferBaseService {
 
   // =============== Private Properties ===============
   private processingQueues = new Map<string, boolean>();
+  private lastProgressFlush = 0;
   private userFileQueues = new Map<string, string[]>(); // Queue of fileIds per user for sequential transfer
   private activeFilePerUser = new Map<string, string | null>(); // Currently transferring file per user
   private consecutiveErrorCounts = new Map<string, number>();
@@ -498,7 +501,7 @@ export class FileUploadService extends FileTransferBaseService {
           previewDataUrl = thumb.dataUrl;
           previewMime = thumb.mime;
         } else if (mime === 'application/pdf') {
-          previewDataUrl = await this.previewService.createPdfThumbnailFromFile(fileTransfer.file);
+          previewDataUrl = await this.previewService.createPdfThumbnail(fileTransfer.file);
           if (previewDataUrl) {
             previewMime = PREVIEW_MIME_TYPE;
           }
@@ -565,6 +568,7 @@ export class FileUploadService extends FileTransferBaseService {
    * Each chunk contains embedded fileId, eliminating chunk mismatching.
    */
   private async sendFileChunks(fileTransfer: FileUpload): Promise<void> {
+    await prepareChunkChecksum();
     const key = this.sendSpanKey(fileTransfer.targetUser, fileTransfer.fileId);
     let span = this.sendSpans.get(key);
     if (!span) {
@@ -605,9 +609,6 @@ export class FileUploadService extends FileTransferBaseService {
 
     this.telemetry.setAttributes(span, { total_chunks: totalChunks });
     let chunkIndex = Math.floor(fileTransfer.currentOffset / CHUNK_SIZE);
-
-    const PROGRESS_FLUSH_INTERVAL_MS = 250;
-    let lastProgressFlush = 0;
 
     this.logger.info(
       'sendFileChunks',
@@ -659,7 +660,10 @@ export class FileUploadService extends FileTransferBaseService {
 
         // Check buffer before sending
         if (dataChannel.bufferedAmount > MAX_BUFFERED_AMOUNT * 0.7) {
-          this.logger.warn('sendFileChunks', `Buffer high, pausing for ${fileTransfer.targetUser}`);
+          this.logger.debug(
+            'sendFileChunks',
+            `Buffer high, pausing for ${fileTransfer.targetUser}`
+          );
           fileTransfer.isPaused = true;
           break;
         }
@@ -704,11 +708,11 @@ export class FileUploadService extends FileTransferBaseService {
 
           const now = Date.now();
           if (
-            now - lastProgressFlush >= PROGRESS_FLUSH_INTERVAL_MS &&
+            now - this.lastProgressFlush >= PROGRESS_FLUSH_INTERVAL_MS &&
             !fileTransfer.isPaused &&
             userMap.has(fileTransfer.fileId)
           ) {
-            lastProgressFlush = now;
+            this.lastProgressFlush = now;
             userMap.set(fileTransfer.fileId, fileTransfer);
             await this.setFileTransfers(fileTransfer.targetUser, userMap);
             await this.updateActiveUploads();
@@ -717,7 +721,7 @@ export class FileUploadService extends FileTransferBaseService {
           // Log progress every MB
           if (fileTransfer.currentOffset % MB < CHUNK_SIZE) {
             const mbSent = (fileTransfer.currentOffset / MB).toFixed(2);
-            this.logger.info('sendFileChunks', `${fileTransfer.fileId}: ${mbSent}MB sent`);
+            this.logger.debug('sendFileChunks', `${fileTransfer.fileId}: ${mbSent}MB sent`);
           }
         } catch (error) {
           this.logger.error('sendFileChunks', `Error preparing chunk: ${error}`);

@@ -4,15 +4,17 @@ use crate::{
     WS_PREFIX_SYSTEM_ROOMS, WS_PREFIX_USER_COMMAND, WS_PREFIX_USER_DISCONNECTED,
     chat_server::{ChatServerHandle, Client, WsChatServer},
     consts::{
-        DEFAULT_ROOM, MAX_CONTINUATION_SIZE, MAX_FRAME_SIZE, MAX_SIGNAL_SIZE,
+        DEFAULT_ROOM, MAX_CONTINUATION_SIZE, MAX_FRAME_SIZE, MAX_SIGNAL_SIZE, MAX_WS_MESSAGE_BURST,
         MAX_WS_MESSAGES_PER_SEC,
     },
     error::ServerError,
 };
 use actix_ws::{AggregatedMessage, MessageStream, Session};
 use futures_util::StreamExt;
+use governor::{DefaultDirectRateLimiter, Quota, RateLimiter};
+use nonzero_ext::nonzero;
 use serde_json::Value;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 use tokio::sync::mpsc::Receiver;
 use tokio::time::MissedTickBehavior;
 
@@ -25,8 +27,7 @@ pub(crate) struct WsChatSession {
     auto_join: bool,                 // flag to control auto-join
     session_store: SessionStore,     // reference to SessionStore
     last_heartbeat: Option<Instant>, // last heartbeat time
-    message_count: usize,            // rate limiting: messages in current window
-    rate_limit_reset: Instant,       // rate limiting: when to reset counter
+    rate_limiter: DefaultDirectRateLimiter,
 }
 
 /// A parsed `[UserCommand]` sent by a client.
@@ -65,8 +66,10 @@ impl WsChatSession {
             auto_join,
             session_store,
             last_heartbeat: None,
-            message_count: 0,
-            rate_limit_reset: Instant::now() + Duration::from_secs(1),
+            rate_limiter: RateLimiter::direct(
+                Quota::per_second(nonzero!(MAX_WS_MESSAGES_PER_SEC))
+                    .allow_burst(nonzero!(MAX_WS_MESSAGE_BURST)),
+            ),
         }
     }
 
@@ -346,13 +349,8 @@ impl WsChatSession {
     }
 
     fn handle_text(&mut self, text: &str, server: &ChatServerHandle, tx: &Client) {
-        let now = Instant::now();
-        if now > self.rate_limit_reset {
-            self.message_count = 0;
-            self.rate_limit_reset = now + Duration::from_secs(1);
-        }
-        self.message_count += 1;
-        if self.message_count > MAX_WS_MESSAGES_PER_SEC {
+        // Bursts of up to MAX_WS_MESSAGE_BURST, then MAX_WS_MESSAGES_PER_SEC per second.
+        if self.rate_limiter.check().is_err() {
             log::warn!(target: "Websocket", "Rate limit exceeded, dropping message");
             return;
         }

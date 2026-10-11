@@ -6,6 +6,7 @@
 import Foundation
 import PhotosUI
 import SwiftUI
+import UIKit
 
 /// Receives a picked photo/video as a file (not bytes), so we never load the
 /// whole asset into RAM. The system's temp file is deleted after the importing
@@ -82,7 +83,7 @@ enum FileStaging {
     return staged
   }
 
-  /// Camera capture: photo bytes → write to tmp; video temp file → copy to tmp.
+  /// Camera capture: photo → JPEG in tmp; video temp file → copy to tmp.
   /// Both are owned temp files.
   static func stage(camera capture: CameraCapture) async -> [StagedFile] {
     let stamp = Self.photoNameFormatter.string(from: Date())
@@ -90,12 +91,11 @@ enum FileStaging {
 
     do {
       switch capture {
-      case .photo(let data):
+      case .photo(let image):
         let name = "Photo-\(stamp)-\(suffix).jpg"
-        let size = Int64(data.count)
         let dest = FileManager.default.temporaryDirectory.appendingPathComponent(name)
 
-        try data.write(to: dest)
+        let size = try await writeJPEG(image, to: dest)
         return [StagedFile(id: UUID(), name: name, size: size, url: dest, kind: .ownedTemp)]
       case .video(let src):
         let ext = src.pathExtension.isEmpty ? "mov" : src.pathExtension
@@ -111,5 +111,13 @@ enum FileStaging {
       log.error("failed to stage camera capture: \(error.codeDescription)")
       return []
     }
+  }
+
+  /// Encodes and writes a camera photo off the main actor; a full-size JPEG encode takes a noticeable moment.
+  @concurrent
+  private static func writeJPEG(_ image: UIImage, to url: URL) async throws -> Int64 {
+    guard let data = image.jpegData(compressionQuality: 0.9) else { throw CocoaError(.fileWriteUnknown) }
+    try data.write(to: url)
+    return Int64(data.count)
   }
 }

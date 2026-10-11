@@ -7,6 +7,7 @@ import {
   FileTransferStatus,
   MIN_CHUNK_SIZE,
   PREVIEW_MIME_TYPE,
+  PROGRESS_FLUSH_INTERVAL_MS,
 } from '../../../utils/constants';
 import { FileTransferBaseService } from './file-transfer-base.service';
 import { PreviewService } from '../ui/preview.service';
@@ -14,7 +15,6 @@ import {
   createStreamingHash,
   updateStreamingHash,
   finalizeStreamingHash,
-  IHasher,
 } from '../../../utils/chunk-protocol';
 
 @Injectable({
@@ -29,6 +29,7 @@ export class FileDownloadService extends FileTransferBaseService {
 
   private activeReceiveSpans = new Map<string, TelemetrySpan>();
   private stallWatchdog: ReturnType<typeof setInterval> | null = null;
+  private lastProgressFlush = 0;
   public downloadStatus$ = new Subject<{ fileId: string; status: FileTransferStatus }>();
 
   // =============== Constructor ===============
@@ -212,6 +213,11 @@ export class FileDownloadService extends FileTransferBaseService {
     fileDownload.receivedSize += chunk.byteLength;
     fileDownload.lastActivity = Date.now();
 
+    if (fileDownload.hasher && fileDownload.hashedChunks === chunkIndex) {
+      updateStreamingHash(fileDownload.hasher, new Uint8Array(chunk));
+      fileDownload.hashedChunks = chunkIndex + 1;
+    }
+
     const progress = (fileDownload.receivedChunks.size / totalChunks) * 100;
     fileDownload.progress = parseFloat(progress.toFixed(2));
 
@@ -223,7 +229,11 @@ export class FileDownloadService extends FileTransferBaseService {
       );
     }
 
-    await this.updateActiveDownloads();
+    const now = Date.now();
+    if (now - this.lastProgressFlush >= PROGRESS_FLUSH_INTERVAL_MS) {
+      this.lastProgressFlush = now;
+      await this.updateActiveDownloads();
+    }
 
     // Check if all chunks received
     if (fileDownload.receivedChunks.size === fileDownload.totalChunks) {
@@ -331,14 +341,8 @@ export class FileDownloadService extends FileTransferBaseService {
     }
 
     // Verify file integrity via streaming BLAKE3 hash (memory efficient!)
-    // Hashes chunk-by-chunk without loading entire file into memory.
     try {
-      const hasher = await createStreamingHash();
-      for (const chunkBlob of orderedChunks) {
-        const chunkBuffer = await chunkBlob.arrayBuffer();
-        updateStreamingHash(hasher as IHasher, new Uint8Array(chunkBuffer));
-      }
-      const actualHash = finalizeStreamingHash(hasher as IHasher);
+      const actualHash = await this.fileHash(fileDownload, orderedChunks);
 
       if (actualHash !== fileDownload.expectedHash) {
         this.logger.error('assembleAndDownloadFile', `Hash mismatch for ${fileDownload.fileId}!`);
@@ -385,34 +389,6 @@ export class FileDownloadService extends FileTransferBaseService {
       `File assembled (${(receivedBlob.size / 1024 / 1024).toFixed(2)}MB)`
     );
 
-    // Update preview after completion (only for small files to avoid memory issues)
-    try {
-      if (blobType === 'application/pdf') {
-        if (!fileDownload.previewDataUrl) {
-          const buffer = await receivedBlob.arrayBuffer();
-          const thumb = await this.previewService.createPdfThumbnailFromBytes(
-            new Uint8Array(buffer)
-          );
-          if (thumb) {
-            fileDownload.previewDataUrl = thumb;
-            fileDownload.previewMime = PREVIEW_MIME_TYPE;
-          }
-        } else {
-          fileDownload.previewMime = PREVIEW_MIME_TYPE;
-        }
-      } else if (blobType.startsWith('image/')) {
-        fileDownload.previewMime = blobType;
-        fileDownload.previewDataUrl = downloadUrl;
-      }
-      await this.updateActiveDownloads();
-      await this.updateIncomingFileOffers();
-    } catch {
-      this.logger.warn(
-        'assembleAndDownloadFile',
-        `Failed to generate preview for ${fileDownload.fileId}`
-      );
-    }
-
     // Trigger download
     const anchor = document.createElement('a');
     anchor.href = downloadUrl;
@@ -437,6 +413,31 @@ export class FileDownloadService extends FileTransferBaseService {
 
     this.finishReceiveSpan(fromUser, fileDownload.fileId, 'completed');
 
+    // Update preview after completion
+    try {
+      if (blobType === 'application/pdf') {
+        if (!fileDownload.previewDataUrl) {
+          const thumb = await this.previewService.createPdfThumbnail(receivedBlob);
+          if (thumb) {
+            fileDownload.previewDataUrl = thumb;
+            fileDownload.previewMime = PREVIEW_MIME_TYPE;
+          }
+        } else {
+          fileDownload.previewMime = PREVIEW_MIME_TYPE;
+        }
+      } else if (blobType.startsWith('image/')) {
+        fileDownload.previewMime = blobType;
+        fileDownload.previewDataUrl = downloadUrl;
+      }
+      await this.updateActiveDownloads();
+      await this.updateIncomingFileOffers();
+    } catch {
+      this.logger.warn(
+        'assembleAndDownloadFile',
+        `Failed to generate preview for ${fileDownload.fileId}`
+      );
+    }
+
     // Cleanup
     userMap.delete(fileDownload.fileId);
     if (userMap.size === 0) {
@@ -448,6 +449,18 @@ export class FileDownloadService extends FileTransferBaseService {
   }
 
   // =============== Helper Methods ===============
+  /** The file's BLAKE3 hash; chunks are read back only if they didn't arrive in order. */
+  private async fileHash(fileDownload: FileDownload, orderedChunks: Blob[]): Promise<string> {
+    if (fileDownload.hasher && fileDownload.hashedChunks === fileDownload.totalChunks) {
+      return finalizeStreamingHash(fileDownload.hasher);
+    }
+    const hasher = await createStreamingHash();
+    for (const chunkBlob of orderedChunks) {
+      updateStreamingHash(hasher, new Uint8Array(await chunkBlob.arrayBuffer()));
+    }
+    return finalizeStreamingHash(hasher);
+  }
+
   /**
    * Rejects (never saves) a fully-received file that failed integrity: toasts,
    * frees the assembled chunk memory, closes the span, and tears down (which

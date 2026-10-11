@@ -59,6 +59,12 @@ struct Telemetry: Sendable {
     }
   }
 
+  /// Records the milliseconds since the span started under `key`; no-op for `nil`.
+  nonisolated func markElapsed(_ key: String, on span: TelemetrySpan?) {
+    guard let span, let start = span.startTimestamp else { return }
+    span.setData(value: Int(Date().timeIntervalSince(start) * 1000), key: key)
+  }
+
   /// Records how a span concluded without ending it.
   nonisolated func markSpan(
     _ span: TelemetrySpan?,

@@ -209,6 +209,7 @@ final class WebSocketConnectionService: ObservableObject {
           }
 
           log.error("Receive error: \(error.localizedDescription)")
+          teardownConnection()
           scheduleReconnect()
           break
         }
@@ -273,7 +274,7 @@ final class WebSocketConnectionService: ObservableObject {
     do {
       try await task?.send(.string(text))
     } catch {
-      log.error("Send error: \(error.localizedDescription)")
+      log.warning("Send error: \(error.localizedDescription)")
     }
   }
 

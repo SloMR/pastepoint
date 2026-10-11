@@ -158,6 +158,15 @@ export class WebRTCSignalingService {
   }
 
   /**
+   * Records how far into the connect span a phase was reached
+   * @param targetUser The user whose span to mark
+   * @param key The attribute that holds the elapsed milliseconds
+   */
+  private markPhase(targetUser: string, key: string): void {
+    this.telemetry.markElapsed(this.activeConnectSpans.get(targetUser), key);
+  }
+
+  /**
    * Checks whether an attempt with a target user is in flight
    * @param targetUser The user to check
    */
@@ -378,6 +387,8 @@ export class WebRTCSignalingService {
         throw new Error(`Failed to create peer connection for ${targetUser}`);
       }
 
+      this.markPhase(targetUser, 'webrtc.pc_created_ms');
+
       const dataChannel = peerConnection.createDataChannel('data', DATA_CHANNEL_OPTIONS);
       this.communicationService.setupDataChannel(dataChannel, targetUser);
 
@@ -408,6 +419,7 @@ export class WebRTCSignalingService {
             data: peerConnection.localDescription,
             to: targetUser,
           });
+          this.markPhase(targetUser, 'webrtc.offer_sent_ms');
         })
         .catch((error: unknown) => {
           this.logger.error('initiateConnection', `Offer creation failed: ${error}`);
@@ -704,7 +716,7 @@ export class WebRTCSignalingService {
     };
 
     iceGatheringTimeout = setTimeout(() => {
-      if (!iceGatheringComplete) {
+      if (!iceGatheringComplete && peerConnection.connectionState !== 'closed') {
         this.logger.warn('createPeerConnection', `ICE gathering timeout for ${targetUser}`);
       }
     }, ICE_GATHERING_TIMEOUT);
@@ -769,7 +781,10 @@ export class WebRTCSignalingService {
         iceState === 'failed' ? 'error' : 'info'
       );
 
-      if (iceState === 'connected' || iceState === 'completed') {
+      if (iceState === 'checking') {
+        this.markPhase(targetUser, 'webrtc.ice_checking_ms');
+      } else if (iceState === 'connected' || iceState === 'completed') {
+        this.markPhase(targetUser, 'webrtc.ice_connected_ms');
         // Clear ICE gathering timeout when ICE connection is established
         if (iceGatheringTimeout) {
           clearTimeout(iceGatheringTimeout);
@@ -1118,9 +1133,12 @@ export class WebRTCSignalingService {
       return;
     }
 
+    this.markPhase(targetUser, 'webrtc.pc_created_ms');
+
     peerConnection
       .setRemoteDescription(new RTCSessionDescription(message.data as RTCSessionDescriptionInit))
       .then(() => {
+        this.markPhase(targetUser, 'webrtc.remote_sdp_ms');
         return peerConnection.createAnswer();
       })
       .then((answer) => {
@@ -1136,6 +1154,7 @@ export class WebRTCSignalingService {
           to: targetUser,
         };
         this.wsService.sendSignalMessage(response);
+        this.markPhase(targetUser, 'webrtc.answer_sent_ms');
         this.processCandidateQueue(targetUser);
       })
       .catch((error) => {
@@ -1180,6 +1199,7 @@ export class WebRTCSignalingService {
       .setRemoteDescription(newDescription)
       .then(() => {
         this.logger.debug('handleAnswer', `Remote answer set for ${targetUser}`);
+        this.markPhase(targetUser, 'webrtc.remote_sdp_ms');
         this.processCandidateQueue(targetUser);
 
         if (peerConnection.signalingState !== RTC_SIGNALING_STATES.STABLE) {
@@ -1448,6 +1468,8 @@ export class WebRTCSignalingService {
         throw new Error(`Failed to create peer connection for ${targetUser}`);
       }
 
+      this.markPhase(targetUser, 'webrtc.pc_created_ms');
+
       const dataChannel = peerConnection.createDataChannel('data', DATA_CHANNEL_OPTIONS);
       this.communicationService.setupDataChannel(dataChannel, targetUser);
 
@@ -1478,6 +1500,7 @@ export class WebRTCSignalingService {
             data: peerConnection.localDescription,
             to: targetUser,
           });
+          this.markPhase(targetUser, 'webrtc.offer_sent_ms');
         })
         .catch((error: unknown) => {
           this.logger.error('forceInitiateConnection', `Offer creation failed: ${error}`);

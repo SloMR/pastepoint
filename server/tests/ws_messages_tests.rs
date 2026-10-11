@@ -101,6 +101,33 @@ async fn relayed_signals_carry_the_senders_name() {
 }
 
 #[actix_rt::test]
+async fn a_burst_of_signals_is_relayed_in_full() {
+    let srv = init_test_server(true);
+    let mut alice = connect(&srv).await;
+    read_name(&mut alice).await;
+    let mut bob = connect(&srv).await;
+    let bob_name = read_name(&mut bob).await;
+
+    // A client catching up on its ICE candidates sends this many at once.
+    for index in 0..50 {
+        let signal = json!({
+            "type": "candidate",
+            "to": bob_name,
+            "data": { "candidate": format!("candidate:{index}") },
+        });
+        send_text(&mut alice, &format!("[SignalMessage] {signal}")).await;
+    }
+
+    for index in 0..50 {
+        let text = wait_for(&mut bob, "[SignalMessage]").await;
+        assert!(
+            text.contains(&format!("\"candidate:{index}\"")),
+            "Signal {index}: {text}"
+        );
+    }
+}
+
+#[actix_rt::test]
 async fn an_unknown_command_gets_a_system_error() {
     let srv = init_test_server(false);
     let mut socket = connect(&srv).await;

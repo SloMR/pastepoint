@@ -110,3 +110,22 @@ async fn socket_refuses_a_cross_site_origin() {
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), StatusCode::SWITCHING_PROTOCOLS);
 }
+
+#[actix_rt::test]
+async fn a_plain_request_is_not_upgraded() {
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(SessionStore::default()))
+            .app_data(web::Data::new(load_config()))
+            .service(chat_ws),
+    )
+    .await;
+
+    let req = test::TestRequest::get()
+        .uri("/ws")
+        .peer_addr("127.0.0.1:12345".parse().unwrap())
+        .to_request();
+    let resp = test::call_service(&app, req).await;
+
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+}
