@@ -38,6 +38,7 @@ final class FileTransferService: ObservableObject {
   init(signalingService: SignalingService, userService: UserService, peerDirectory: PeerDirectory) {
     self.signalingService = signalingService
     self.userService = userService
+    Self.removeLeftoverScratch()
 
     signalingService.fileEvent
       .sink { [weak self] event in
@@ -791,8 +792,7 @@ extension FileTransferService {
     Task { @MainActor in
       let dir = chunkDirectory(for: download.id)
 
-      let completedDir = FileManager.default.temporaryDirectory
-        .appendingPathComponent("completed", isDirectory: true)
+      let completedDir = Self.completedRoot
         .appendingPathComponent(FileTransferValidation.directoryName(for: download.id), isDirectory: true)
       try? FileManager.default.createDirectory(at: completedDir, withIntermediateDirectories: true)
       let finalURL = completedDir.appendingPathComponent(download.fileName)
@@ -972,22 +972,5 @@ extension FileTransferService {
       fileId: fileId,
       reason: reason,
     ))
-  }
-
-  // MARK: Helpers
-
-  /// Deletes a chunk directory off the main actor; it holds one file per received chunk.
-  private nonisolated static func removeChunkDirectory(_ dir: URL) {
-    DispatchQueue.global(qos: .utility).async {
-      try? FileManager.default.removeItem(at: dir)
-    }
-  }
-
-  /// Per-file scratch directory for incoming chunks: <tmp>/incoming/<hashed fileId>/.
-  private func chunkDirectory(for fileId: String) -> URL {
-    // TODO: Change the path name from incoming to something better.
-    FileManager.default.temporaryDirectory
-      .appendingPathComponent("incoming", isDirectory: true)
-      .appendingPathComponent(FileTransferValidation.directoryName(for: fileId), isDirectory: true)
   }
 }
