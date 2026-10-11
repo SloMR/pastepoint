@@ -8,16 +8,15 @@ import Foundation
 // MARK: - Download Storage
 
 extension FileTransferService {
-  // TODO: Change the path name from incoming to something better.
-  nonisolated static let incomingRoot = FileManager.default.temporaryDirectory
-    .appendingPathComponent("incoming", isDirectory: true)
+  nonisolated static let receivedChunksRoot = FileManager.default.temporaryDirectory
+    .appendingPathComponent("received-chunks", isDirectory: true)
 
   nonisolated static let completedRoot = FileManager.default.temporaryDirectory
     .appendingPathComponent("completed", isDirectory: true)
 
-  /// Per-file scratch directory for incoming chunks: <tmp>/incoming/<hashed fileId>/.
+  /// Per-file folder for received chunks: <tmp>/received-chunks/<hashed fileId>/.
   func chunkDirectory(for fileId: String) -> URL {
-    Self.incomingRoot
+    Self.receivedChunksRoot
       .appendingPathComponent(FileTransferValidation.directoryName(for: fileId), isDirectory: true)
   }
 
@@ -30,7 +29,9 @@ extension FileTransferService {
 
   /// Clears files a killed download left behind. The rename keeps new downloads out of the slow delete.
   nonisolated static func removeLeftoverDownloadFiles() {
-    for root in [incomingRoot, completedRoot] {
+    // TODO: Remove once no one runs a version that kept chunks in <tmp>/incoming.
+    let oldChunksRoot = FileManager.default.temporaryDirectory.appendingPathComponent("incoming", isDirectory: true)
+    for root in [receivedChunksRoot, completedRoot, oldChunksRoot] {
       let aside = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString, isDirectory: true)
       guard (try? FileManager.default.moveItem(at: root, to: aside)) != nil else { continue }
       removeChunkDirectory(aside)
