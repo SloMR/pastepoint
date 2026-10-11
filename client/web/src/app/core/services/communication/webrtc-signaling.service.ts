@@ -716,7 +716,7 @@ export class WebRTCSignalingService {
     };
 
     iceGatheringTimeout = setTimeout(() => {
-      if (!iceGatheringComplete) {
+      if (!iceGatheringComplete && peerConnection.connectionState !== 'closed') {
         this.logger.warn('createPeerConnection', `ICE gathering timeout for ${targetUser}`);
       }
     }, ICE_GATHERING_TIMEOUT);
