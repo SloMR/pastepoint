@@ -26,9 +26,9 @@ export class LinkifyPipe implements PipeTransform {
 
     const linkClasses = isMyMessage
       ? isDarkMode
-        ? 'text-blue-400 hover:text-blue-800 underline break-all'
-        : 'text-blue-600 hover:text-blue-400 underline break-all'
-      : 'text-blue-200 hover:text-blue-500 underline break-all';
+        ? 'text-blue-400 hover:text-blue-800 underline'
+        : 'text-blue-600 hover:text-blue-400 underline'
+      : 'text-blue-200 hover:text-blue-500 underline';
 
     const textWithLinks = Autolinker.link(processedText, {
       urls: true,
