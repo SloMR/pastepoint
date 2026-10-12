@@ -16,7 +16,7 @@ PastePoint sends chat messages and files between devices, peer to peer over WebR
 
 - The Rust server gives each connection a random name, keeps rooms in memory and relays WebRTC setup messages (offers, answers and ICE candidates) between room members.
 - Each client opens a WebRTC data channel to every other member. Chat and files travel over these encrypted channels, directly or through a TURN relay when a direct path fails.
-- Devices that reach the server from the same IP address, usually the same Wi-Fi, share a room automatically. Devices on other networks join an invite-only room with a 10-character code, a QR code or an invite link.
+- Devices on the same network, usually the same Wi-Fi, share a room automatically: the same public IPv4 address, or the same IPv6 /64. Devices on other networks join an invite-only room with a 10-character code, a QR code or an invite link.
 - The web and iOS clients speak the same protocol, so they chat and share files with each other.
 
 ## Features
@@ -160,7 +160,9 @@ Devices on different networks sometimes can't reach each other directly and need
 make prod
 ```
 
-Open ports 80 and 443 in the firewall. Follow the logs with `make logs`.
+Open ports 80 and 443 in the firewall, for IPv4 and IPv6. Follow the logs with `make logs`.
+
+IPv6 clients also need an AAAA record and Docker 27 or later, which forwards IPv6 without hiding the client's address.
 
 ## Troubleshooting
 
@@ -168,6 +170,7 @@ Open ports 80 and 443 in the firewall. Follow the logs with `make logs`.
 - **The page loads but never connects.** Open the exact address from your config: `https://127.0.0.1`, or the IP you gave `configure-network.sh`. `make logs` shows `disallowed origin` when the server refuses the page.
 - **`cert-checker` exits with "Missing or unreadable SSL certificates".** Generate the certificate, or give the key to the `TLS_KEY_GID` group. See [Certificate Management](#certificate-management).
 - **nginx returns 502 Bad Gateway.** Set `HOST=0.0.0.0` in your env file. Older copies of `.env.development.example` had `127.0.0.1`, which nginx can't reach.
+- **IPv6 users on different networks share a public room.** Docker is hiding their addresses. Use Docker 27 or later, and don't set `"ip6tables": false` in `/etc/docker/daemon.json`.
 
 ## Privacy and security
 

@@ -69,7 +69,7 @@ Start the stack as the [root readme](../README.md) describes. For the server con
 
 The Docker values come from `SERVER_ENV` in the example `.env` files.
 
-`development` and `docker-dev` are development mode: the server uses the TCP peer address. Any other value is production mode: the server trusts only the forwarding headers that nginx sets, and refuses requests without them. The client address keys the public session, the rate limit and the unjoined-code cap.
+`development` and `docker-dev` are development mode: the server uses the TCP peer address. Any other value is production mode: the server trusts only the forwarding headers that nginx sets, and refuses requests without them. The client address keys the public session, the unjoined-code cap and the rate limit. The first two group IPv6 addresses by their /64, which is one home network. The rate limit groups them by /56.
 
 The config file and its `[server]` table are required. Without them, startup fails with `Failed to load server configuration`. The other tables are optional. Without them, Sentry and TURN are off, and `/version` serves empty values.
 
