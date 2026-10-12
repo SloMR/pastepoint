@@ -11,6 +11,7 @@ use base64::{Engine, engine::general_purpose::STANDARD};
 use hmac::{Hmac, KeyInit, Mac};
 use serde_json::json;
 use sha1::Sha1;
+use std::net::{IpAddr, Ipv6Addr};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 type HmacSha1 = Hmac<Sha1>;
@@ -173,17 +174,15 @@ pub async fn private_chat_ws(
 fn get_client_ip(req: &HttpRequest, is_dev_mode: bool) -> Result<String, Error> {
     if !is_dev_mode {
         log::info!(target: "Websocket", "Production mode detected, checking headers for IP");
-        forwarded_ip(req.headers())
-            .map(|ip| ip.to_string())
-            .ok_or_else(|| {
-                log::warn!(target: "Websocket", "Production connection attempt without proper headers");
-                actix_web::error::ErrorForbidden("Access denied: Missing required headers")
-            })
+        forwarded_ip(req.headers()).map(network_key).ok_or_else(|| {
+            log::warn!(target: "Websocket", "Production connection attempt without proper headers");
+            actix_web::error::ErrorForbidden("Access denied: Missing required headers")
+        })
     } else {
         log::info!(target: "Websocket", "Development mode detected, using direct peer IP");
         req.peer_addr()
             .map(|peer| {
-                let peer_ip = peer.ip().to_string();
+                let peer_ip = network_key(peer.ip());
                 log::info!(target: "Websocket", "Using direct peer IP in dev mode: {peer_ip}");
                 peer_ip
             })
@@ -191,6 +190,18 @@ fn get_client_ip(req: &HttpRequest, is_dev_mode: bool) -> Result<String, Error> 
                 log::warn!(target: "Websocket", "Development connection with no determinable IP");
                 actix_web::error::ErrorBadRequest("Client IP could not be determined")
             })
+    }
+}
+
+/// Devices on one network share a public room: the IPv4 address behind their NAT, or the IPv6 /64.
+fn network_key(ip: IpAddr) -> String {
+    match ip.to_canonical() {
+        IpAddr::V6(ipv6) => {
+            let mut octets = ipv6.octets();
+            octets[8..].fill(0);
+            format!("{}/64", Ipv6Addr::from(octets))
+        }
+        IpAddr::V4(ipv4) => ipv4.to_string(),
     }
 }
 
