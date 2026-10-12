@@ -223,6 +223,7 @@ struct ContentView: View {
                 .minimumScaleFactor(0.75)
                 .truncationMode(.tail)
             }
+            .id(isIPad)
           }
 
           ToolbarItemGroup(placement: .topBarTrailing) {
