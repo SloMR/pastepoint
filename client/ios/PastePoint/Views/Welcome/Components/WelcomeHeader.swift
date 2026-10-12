@@ -20,8 +20,8 @@ struct WelcomeHeader: View {
         .font(.subheadline)
         .foregroundStyle(.textSecondary)
         .multilineTextAlignment(.center)
-        .padding(.horizontal, 16)
     }
+    .padding(.horizontal, 16)
   }
 }
 
