@@ -122,3 +122,7 @@ services:
 networks:
   internal:
     driver: bridge
+    enable_ipv6: true
+    ipam:
+      config:
+        - subnet: fd4e:7a2b:9c11::/64

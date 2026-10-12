@@ -15,6 +15,8 @@ final nonisolated class PeerConnectionFactory: @unchecked Sendable {
   private let factory: RTCPeerConnectionFactory
 
   private init() {
+    // Use only interfaces iOS routes over; carrier-internal cellular links stall connects. Deprecated: issues.webrtc.org/issues/572483460
+    RTCInitFieldTrialDictionary([kRTCFieldTrialUseNWPathMonitor: kRTCFieldTrialEnabledValue])
     RTCInitializeSSL()
     factory = RTCPeerConnectionFactory(encoderFactory: nil, decoderFactory: nil)
   }

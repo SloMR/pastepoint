@@ -1,7 +1,9 @@
 use actix_cors::Cors;
 use actix_web::{App, http::StatusCode, test, web};
 use bytes::Bytes;
-use server::{ServerConfig, SessionStore, create_session, health, index};
+use server::{
+    MAX_UNJOINED_CODES_PER_CLIENT, ServerConfig, SessionStore, create_session, health, index,
+};
 
 #[actix_rt::test]
 async fn index_redirects_to_health() {
@@ -81,4 +83,32 @@ async fn create_session_refuses_cross_site_requests() {
         .to_request();
     let resp = test::call_service(&app, req).await;
     assert_eq!(resp.status(), StatusCode::OK);
+}
+
+#[actix_rt::test]
+async fn create_session_counts_one_ipv6_network_as_one_client() {
+    let app = test::init_service(
+        App::new()
+            .app_data(web::Data::new(SessionStore::default()))
+            .service(create_session),
+    )
+    .await;
+    let request = |peer: String| {
+        test::TestRequest::get()
+            .uri("/create-session")
+            .peer_addr(peer.parse().unwrap())
+            .to_request()
+    };
+
+    for host in 1..=MAX_UNJOINED_CODES_PER_CLIENT {
+        let resp = test::call_service(&app, request(format!("[2001:db8:1:2::{host:x}]:443"))).await;
+        assert_eq!(resp.status(), StatusCode::OK);
+    }
+
+    let same_network =
+        test::call_service(&app, request("[2001:db8:1:2:ffff::1]:443".to_owned())).await;
+    assert_eq!(same_network.status(), StatusCode::TOO_MANY_REQUESTS);
+
+    let next_network = test::call_service(&app, request("[2001:db8:1:3::1]:443".to_owned())).await;
+    assert_eq!(next_network.status(), StatusCode::OK);
 }
