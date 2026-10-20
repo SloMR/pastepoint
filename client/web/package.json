@@ -57,7 +57,7 @@
     "@angular-eslint/eslint-plugin": "^22.5.0",
     "@angular-eslint/schematics": "^22.5.0",
     "@angular-eslint/template-parser": "^22.5.0",
-    "@angular/cli": "^22.2.0",
+    "@angular/cli": "^22.2.3",
     "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/compression": "^1.8.1",
