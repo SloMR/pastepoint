@@ -13,7 +13,7 @@ fn upgrade_request(uri: &str) -> test::TestRequest {
         .insert_header(("Upgrade", "websocket"))
         .insert_header(("Connection", "Upgrade"))
         .insert_header(("Sec-WebSocket-Version", "13"))
-        .insert_header(("Sec-WebSocket-Key", "test_key"))
+        .insert_header(("Sec-WebSocket-Key", "AAAAAAAAAAAAAAAAAAAAAA=="))
         .peer_addr("127.0.0.1:12345".parse().unwrap())
 }
 

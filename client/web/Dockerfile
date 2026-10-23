@@ -1,5 +1,5 @@
 # ---------- Stage 1: Build the Angular app ----------
-FROM node:24.21.0-slim AS builder
+FROM node:24.22.1-slim AS builder
 WORKDIR /usr/src/app
 
 ARG NPM_BUILD_CONFIG=docker
@@ -21,7 +21,7 @@ RUN --mount=type=cache,target=/root/.npm \
     npm run build -- --configuration=$NPM_BUILD_CONFIG
 
 # ---------- Stage 2: SSR Server ----------
-FROM node:24.21.0-alpine AS ssr
+FROM node:24.22.1-alpine AS ssr
 WORKDIR /usr/src/app
 
 # hadolint ignore=DL3018
@@ -56,7 +56,7 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 CMD ["node", "dist/web/server/server.mjs"]
 
 # ---------- Stage 3: NGINX to reverse proxy SSR ----------
-FROM nginx:1.31-alpine-slim AS nginx
+FROM nginx:1.31.8-alpine-slim AS nginx
 
 # Install only necessary packages
 # hadolint ignore=DL3018
